@@ -12,12 +12,53 @@ interface Toast {
 }
 
 interface ToastContextType {
-  success: (message: string) => void;
-  error: (message: string) => void;
-  info: (message: string) => void;
+  success: (message: unknown) => void;
+  error: (message: unknown) => void;
+  info: (message: unknown) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
+
+function formatToastMessage(message: unknown): string {
+  if (typeof message === "string") {
+    return message;
+  }
+
+  if (message instanceof Error) {
+    return message.message;
+  }
+
+  if (message == null) {
+    return "Unexpected error";
+  }
+
+  if (typeof message === "object") {
+    const payload = message as Record<string, unknown>;
+    const errorCode = typeof payload.error === "string" ? payload.error : null;
+    const expected = payload.expected;
+    const provided = payload.provided;
+
+    if (errorCode === "section_unit_mismatch") {
+      return `Section location is stale. Expected ${String(expected)}, but the page sent ${String(provided)}. Refresh and try again.`;
+    }
+
+    if (typeof payload.message === "string") {
+      return payload.message;
+    }
+
+    if (typeof payload.detail === "string") {
+      return payload.detail;
+    }
+
+    try {
+      return JSON.stringify(message);
+    } catch {
+      return "Unexpected error";
+    }
+  }
+
+  return String(message);
+}
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -26,9 +67,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const addToast = useCallback((type: ToastType, message: string) => {
+  const addToast = useCallback((type: ToastType, message: unknown) => {
     const id = Math.random().toString(36).substring(7);
-    setToasts((prev) => [...prev, { id, type, message }]);
+    setToasts((prev) => [...prev, { id, type, message: formatToastMessage(message) }]);
 
     // Auto-remove after 5 seconds
     setTimeout(() => {
@@ -36,9 +77,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }, 5000);
   }, [removeToast]);
 
-  const success = useCallback((message: string) => addToast("success", message), [addToast]);
-  const error = useCallback((message: string) => addToast("error", message), [addToast]);
-  const info = useCallback((message: string) => addToast("info", message), [addToast]);
+  const success = useCallback((message: unknown) => addToast("success", message), [addToast]);
+  const error = useCallback((message: unknown) => addToast("error", message), [addToast]);
+  const info = useCallback((message: unknown) => addToast("info", message), [addToast]);
 
   return (
     <ToastContext.Provider value={{ success, error, info }}>

@@ -85,6 +85,10 @@ describe('LessonBlueprintsListPage', () => {
     render(<LessonBlueprintsListPage />);
 
     expect(screen.getByText('Lesson Blueprints')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'New Blueprint' })).toHaveAttribute(
+      'href',
+      '/content/curriculum/lesson-blueprints/new'
+    );
 
     const table = screen.getByRole('table');
     const t = within(table);

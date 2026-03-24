@@ -5,29 +5,45 @@ import userEvent from '@testing-library/user-event';
 import CurriculumEditorPage from '@/app/(admin)/(others-pages)/content/curriculum/editor/page';
 import { renderWithProviders as render } from '@/test-utils';
 
+jest.mock('next/navigation', () => ({
+  useSearchParams: () => ({
+    get: () => null,
+  }),
+}));
+
 const mockUseAdminCoursesList = jest.fn();
 const mockUseCourseCurriculumByKey = jest.fn();
+const mockUseConfig = jest.fn();
 
 jest.mock('@/hooks/useApi', () => ({
   useAdminCoursesList: (params: any) => mockUseAdminCoursesList(params),
   useCourseCurriculumByKey: (courseKey: string | null) => mockUseCourseCurriculumByKey(courseKey),
+  useConfig: () => mockUseConfig(),
 }));
 
 const mockReorderUnits = jest.fn().mockResolvedValue({ ok: true });
 const mockReorderSections = jest.fn().mockResolvedValue({ ok: true });
 const mockMoveSection = jest.fn().mockResolvedValue({ ok: true });
+const mockReorderAtomicV2 = jest.fn().mockResolvedValue({ ok: true });
 
 jest.mock('@/lib/adminCurriculumApi', () => ({
   reorderCourseUnits: (...args: any[]) => mockReorderUnits(...args),
   reorderCourseSections: (...args: any[]) => mockReorderSections(...args),
   moveCourseSection: (...args: any[]) => mockMoveSection(...args),
+  reorderCourseAtomicV2: (...args: any[]) => mockReorderAtomicV2(...args),
 }));
 
 let mockDropSpecs: any[] = [];
 
 jest.mock('react-dnd', () => ({
   DndProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useDrag: () => [{ isDragging: false }, jest.fn()],
+  useDrag: () => [{ isDragging: false }, jest.fn(), jest.fn()],
+  useDragLayer: () => ({
+    item: null,
+    itemType: null,
+    isDragging: false,
+    currentOffset: null,
+  }),
   useDrop: (spec: any) => {
     mockDropSpecs.push(spec);
     return [{}, jest.fn()];
@@ -47,6 +63,7 @@ const baseCurriculum = {
   status: 'published',
   enabled: true,
   availability: 'available',
+  course_revision: 3,
   units: [
     {
       id: 'u1',
@@ -104,20 +121,30 @@ const baseCurriculum = {
 };
 
 describe('CurriculumEditorPage', () => {
+  let mockRefresh: jest.Mock;
+
   beforeEach(() => {
     mockDropSpecs = [];
     jest.clearAllMocks();
+    mockRefresh = jest.fn();
 
     mockUseAdminCoursesList.mockReturnValue({
       data: { items: [{ id: 'c1', course_key: 'abidii_yoruba_v1', title: 'Abidii Yoruba' }] },
       isLoading: false,
     });
 
+    mockUseConfig.mockReturnValue({
+      config: [],
+      isLoading: false,
+      isError: false,
+      refresh: jest.fn(),
+    });
+
     mockUseCourseCurriculumByKey.mockReturnValue({
       curriculum: baseCurriculum,
       isLoading: false,
       isError: false,
-      refresh: jest.fn(),
+      refresh: mockRefresh,
     });
   });
 
@@ -159,7 +186,7 @@ describe('CurriculumEditorPage', () => {
       section_key: 's1',
       from_unit_key: 'u1',
       to_unit_key: 'u2',
-      order_index: 0,
+      order_index: 1,
     });
   });
 
@@ -190,5 +217,127 @@ describe('CurriculumEditorPage', () => {
     const unit2 = screen.getByText('Unit 2');
     const order = unit1.compareDocumentPosition(unit2);
     expect(order & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('renders structured backend errors as readable toast messages', async () => {
+    mockMoveSection.mockRejectedValueOnce({
+      response: {
+        status: 400,
+        data: {
+          detail: {
+            error: 'section_unit_mismatch',
+            expected: 'u2',
+            provided: 'u1',
+          },
+        },
+      },
+    });
+
+    render(<CurriculumEditorPage />);
+
+    const dnd = jest.requireMock('react-dnd');
+    const specs = dnd.__getDropSpecs();
+    const sectionDrops = specs.filter((s: any) => s.accept === 'SECTION' && typeof s.drop === 'function');
+
+    await act(async () => {
+      sectionDrops[1].drop({ type: 'SECTION', unitKey: 'u1', index: 0 });
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(
+      await screen.findByText('This curriculum is out of date. Refresh the editor and try the move again.')
+    ).toBeInTheDocument();
+  });
+
+  it('uses legacy reorder endpoints when curriculum_atomic_reorder_v2 is disabled', async () => {
+    render(<CurriculumEditorPage />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(mockReorderAtomicV2).not.toHaveBeenCalled();
+    expect(mockReorderUnits).toHaveBeenCalled();
+    expect(mockReorderSections).toHaveBeenCalled();
+  });
+
+  it('uses atomic reorder endpoint with revision precondition when flag is enabled', async () => {
+    mockUseConfig.mockReturnValue({
+      config: [
+        {
+          key: 'curriculum_atomic_reorder_v2',
+          value_bool: true,
+          is_active: true,
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      refresh: jest.fn(),
+    });
+
+    render(<CurriculumEditorPage />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(mockReorderAtomicV2).toHaveBeenCalledWith('abidii_yoruba_v1', {
+      expected_revision: 3,
+      units: [
+        {
+          unit_key: 'u1',
+          order_index: 0,
+          sections: [
+            { section_key: 's1', order_index: 0 },
+            { section_key: 's2', order_index: 1 },
+          ],
+        },
+        {
+          unit_key: 'u2',
+          order_index: 1,
+          sections: [{ section_key: 's3', order_index: 0 }],
+        },
+      ],
+    });
+    expect(mockReorderUnits).not.toHaveBeenCalled();
+    expect(mockReorderSections).not.toHaveBeenCalled();
+    expect(mockMoveSection).not.toHaveBeenCalled();
+  });
+
+  it('prompts refresh and retry guidance when atomic reorder returns 409 conflict', async () => {
+    mockUseConfig.mockReturnValue({
+      config: [
+        {
+          key: 'curriculum_atomic_reorder_v2',
+          value_bool: true,
+          is_active: true,
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      refresh: jest.fn(),
+    });
+    mockReorderAtomicV2.mockRejectedValueOnce({
+      response: {
+        status: 409,
+        data: {
+          detail: {
+            error: 'revision_conflict',
+            expected_revision: 3,
+            current_revision: 4,
+          },
+        },
+      },
+    });
+    const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(<CurriculumEditorPage />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(mockRefresh).toHaveBeenCalled();
+    expect(
+      await screen.findByText('This curriculum was updated by someone else. Please refresh and retry your save.')
+    ).toBeInTheDocument();
+
+    confirmSpy.mockRestore();
   });
 });

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Alert from '@/components/ui/alert/SimpleAlert';
@@ -11,6 +12,38 @@ import StatusBadge from '@/components/admin/StatusBadge';
 import ValidationResultViewer from '@/components/admin/curriculum/ValidationResultViewer';
 import { useAdminCourse, useCourseCurriculum } from '@/hooks/useApi';
 import { useCurriculumManagement } from '@/hooks/useCurriculumManagement';
+import { markSectionsComingSoon } from '@/lib/adminCurriculumApi';
+import type { CurriculumSection, CurriculumUnit } from '@/types/curriculum';
+
+type SectionPublishRow = {
+  unit: CurriculumUnit;
+  section: CurriculumSection;
+  hasPublishedBlueprint: boolean;
+  hasDraftOrArchivedBlueprint: boolean;
+  isExplicitComingSoon: boolean;
+  blocksPublish: boolean;
+};
+
+function formatCourseActionError(err: any): string {
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === 'string') {
+    return detail;
+  }
+  if (detail?.error === 'sections_have_published_blueprints') {
+    return 'One or more selected sections already have published blueprints. Open the blueprint instead of marking those sections as coming soon.';
+  }
+  if (detail?.error === 'unknown_section_ids') {
+    return 'One or more sections no longer exist in this course. Refresh and try again.';
+  }
+  return err?.message || 'Request failed';
+}
+
+function getStatusBadge(status: string) {
+  if (status === 'published') return <StatusBadge status="published" />;
+  if (status === 'draft') return <StatusBadge status="draft" />;
+  if (status === 'archived') return <StatusBadge status="archived" />;
+  return <StatusBadge status="info" label={status || 'Unknown'} />;
+}
 
 export default function AdminCourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: courseId } = React.use(params);
@@ -27,6 +60,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
     curriculum,
     isLoading: isLoadingCurriculum,
     isError: curriculumError,
+    refresh: refreshCurriculum,
   } = useCourseCurriculum(courseId);
 
   const {
@@ -42,10 +76,38 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
   const [errorMessage, setErrorMessage] = useState('');
   const [confirmPublishOpen, setConfirmPublishOpen] = useState(false);
   const [confirmUnpublishOpen, setConfirmUnpublishOpen] = useState(false);
+  const [pendingSectionIds, setPendingSectionIds] = useState<string[]>([]);
+  const [isBulkMarkingComingSoon, setIsBulkMarkingComingSoon] = useState(false);
 
   const course = adminData?.course;
   const validation = adminData?.validation;
   const canPublish = !!validation?.can_publish;
+  const sectionRows = useMemo<SectionPublishRow[]>(() => {
+    if (!curriculum) return [];
+
+    return curriculum.units.flatMap((unit) =>
+      unit.sections.map((section) => {
+        const blueprintStatus = (section.blueprint_status || '').toLowerCase();
+        const hasPublishedBlueprint = !!section.lesson_blueprint_id && blueprintStatus === 'published';
+        const hasDraftOrArchivedBlueprint = !!section.lesson_blueprint_id && blueprintStatus !== 'published';
+        const isExplicitComingSoon = !hasPublishedBlueprint && section.status === 'published' && !section.enabled;
+
+        return {
+          unit,
+          section,
+          hasPublishedBlueprint,
+          hasDraftOrArchivedBlueprint,
+          isExplicitComingSoon,
+          blocksPublish: !hasPublishedBlueprint && !isExplicitComingSoon,
+        };
+      })
+    );
+  }, [curriculum]);
+
+  const blockingSections = useMemo(
+    () => sectionRows.filter((row) => row.blocksPublish),
+    [sectionRows]
+  );
 
   const statusBadge = useMemo(() => {
     const status = course?.status;
@@ -85,7 +147,33 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
       await mutateAdmin(next, { revalidate: false });
       setSuccessMessage('Course validation completed.');
     } catch (err: any) {
-      setErrorMessage(err?.response?.data?.detail || err?.message || 'Failed to validate course');
+      setErrorMessage(formatCourseActionError(err) || 'Failed to validate course');
+    }
+  };
+
+  const handleMarkSectionsComingSoon = async (sectionIds: string[]) => {
+    if (!course?.course_key || sectionIds.length === 0) return;
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    setPendingSectionIds(sectionIds);
+    setIsBulkMarkingComingSoon(sectionIds.length > 1);
+
+    try {
+      await markSectionsComingSoon(course.course_key, sectionIds);
+      await refreshCurriculum();
+      const next = await validateCourse(courseId);
+      await mutateAdmin(next, { revalidate: false });
+      setSuccessMessage(
+        sectionIds.length === 1
+          ? 'Section marked as coming soon.'
+          : `${sectionIds.length} sections marked as coming soon.`
+      );
+    } catch (err: any) {
+      setErrorMessage(formatCourseActionError(err));
+    } finally {
+      setPendingSectionIds([]);
+      setIsBulkMarkingComingSoon(false);
     }
   };
 
@@ -102,7 +190,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
         setErrorMessage('Publish blocked by server validation (409). Review issues below.');
       }
     } catch (err: any) {
-      setErrorMessage(err?.response?.data?.detail || err?.message || 'Failed to publish course');
+      setErrorMessage(formatCourseActionError(err) || 'Failed to publish course');
     }
   };
 
@@ -114,7 +202,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
       setSuccessMessage('Course unpublished (archived).');
       await refreshAdmin();
     } catch (err: any) {
-      setErrorMessage(err?.response?.data?.detail || err?.message || 'Failed to unpublish course');
+      setErrorMessage(formatCourseActionError(err) || 'Failed to unpublish course');
     }
   };
 
@@ -186,6 +274,111 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
         <Toast type="error" message={errorMessage} onClose={() => setErrorMessage('')} />
       )}
 
+      {course?.status === 'published' && validation?.status === 'invalid' && (
+        <Alert variant="warning">
+          This course is still marked as published in the database, but it no longer passes current publish rules.
+          Fix the blocked sections below, then validate again before republishing.
+        </Alert>
+      )}
+
+      {blockingSections.length > 0 && course && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Publish Blockers</h2>
+              <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                {blockingSections.length} section{blockingSections.length === 1 ? '' : 's'} cannot publish because
+                there is no published blueprint and the section is not explicitly configured as coming soon.
+              </p>
+              <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                Fast rule: either publish a blueprint for the section, or mark the section as coming soon
+                (`published` + `disabled`).
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={`/content/curriculum/editor?courseKey=${encodeURIComponent(course.course_key)}`}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                Open Curriculum Editor
+              </Link>
+              <button
+                onClick={() => handleMarkSectionsComingSoon(blockingSections.map((row) => row.section.id))}
+                disabled={isBulkMarkingComingSoon || pendingSectionIds.length > 0}
+                className="rounded-lg bg-amber-600 px-3 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isBulkMarkingComingSoon ? 'Marking…' : `Mark All ${blockingSections.length} as Coming Soon`}
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {blockingSections.map((row) => {
+              const isPending = pendingSectionIds.includes(row.section.id);
+              const blueprintHref = row.section.lesson_blueprint_id
+                ? `/content/curriculum/lesson-blueprints/${row.section.lesson_blueprint_id}`
+                : `/content/curriculum/lesson-blueprints/new?courseKey=${encodeURIComponent(course.course_key)}&sectionId=${encodeURIComponent(row.section.id)}`;
+
+              return (
+                <div
+                  key={row.section.id}
+                  className="rounded-lg border border-amber-200 bg-white p-3 dark:border-amber-900/60 dark:bg-gray-900"
+                >
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {row.unit.title} / {row.section.title}
+                      </div>
+                      <div className="mt-1 text-xs font-mono text-gray-600 dark:text-gray-400">
+                        {row.unit.unit_key}.{row.section.section_key}
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {getStatusBadge(row.section.status)}
+                        {row.section.enabled ? (
+                          <StatusBadge status="active" label="Enabled" />
+                        ) : (
+                          <StatusBadge status="inactive" label="Disabled" />
+                        )}
+                        {row.section.lesson_blueprint_id ? (
+                          <StatusBadge
+                            status={row.hasPublishedBlueprint ? 'success' : 'warning'}
+                            label={row.section.blueprint_status || 'Blueprint'}
+                          />
+                        ) : (
+                          <StatusBadge status="warning" label="No blueprint" />
+                        )}
+                      </div>
+                      <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                        {row.hasDraftOrArchivedBlueprint
+                          ? 'A blueprint exists, but it is not published yet.'
+                          : 'This section does not have any published blueprint yet.'}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        href={blueprintHref}
+                        className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-100 dark:border-brand-900 dark:bg-brand-950/20 dark:text-brand-300 dark:hover:bg-brand-950/40"
+                      >
+                        {row.section.lesson_blueprint_id ? 'Open Blueprint' : 'Create Blueprint'}
+                      </Link>
+                      <button
+                        onClick={() => handleMarkSectionsComingSoon([row.section.id])}
+                        disabled={isPending || pendingSectionIds.length > 0}
+                        className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-900 dark:bg-gray-900 dark:text-amber-300 dark:hover:bg-amber-950/30"
+                      >
+                        {isPending ? 'Saving…' : 'Mark Coming Soon'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Course summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
@@ -235,7 +428,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Units & Sections</h3>
           <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-            Minimal overview: availability + blueprint presence per section
+            Publish-readiness view: raw section state, public availability, blueprint state, and direct actions
           </p>
         </div>
 
@@ -276,8 +469,9 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                           <thead>
                             <tr className="text-left text-gray-600 dark:text-gray-400">
                               <th className="py-2">Section</th>
-                              <th className="py-2">Availability</th>
+                              <th className="py-2">Publish State</th>
                               <th className="py-2">Blueprint</th>
+                              <th className="py-2">Actions</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -290,21 +484,42 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                                   </div>
                                 </td>
                                 <td className="py-2">
-                                  <StatusBadge
-                                    status={
-                                      section.availability === 'available'
-                                        ? 'success'
-                                        : section.availability === 'coming_soon'
-                                        ? 'pending'
-                                        : 'inactive'
-                                    }
-                                    label={section.availability}
-                                  />
+                                  <div className="space-y-2">
+                                    <div className="flex flex-wrap gap-2">
+                                      {getStatusBadge(section.status)}
+                                      {section.enabled ? (
+                                        <StatusBadge status="active" label="Enabled" />
+                                      ) : (
+                                        <StatusBadge status="inactive" label="Disabled" />
+                                      )}
+                                    </div>
+                                    <div>
+                                      <StatusBadge
+                                        status={
+                                          section.availability === 'available'
+                                            ? 'success'
+                                            : section.availability === 'coming_soon'
+                                            ? 'pending'
+                                            : 'inactive'
+                                        }
+                                        label={section.availability}
+                                      />
+                                    </div>
+                                  </div>
                                 </td>
                                 <td className="py-2">
                                   {section.lesson_blueprint_id ? (
                                     <div className="space-y-1">
-                                      <StatusBadge status="success" label="Present" />
+                                      <StatusBadge
+                                        status={section.blueprint_status === 'published' ? 'success' : 'warning'}
+                                        label={section.blueprint_status || 'Present'}
+                                      />
+                                      {typeof section.blueprint_enabled === 'boolean' && (
+                                        <StatusBadge
+                                          status={section.blueprint_enabled ? 'active' : 'inactive'}
+                                          label={section.blueprint_enabled ? 'Enabled' : 'Disabled'}
+                                        />
+                                      )}
                                       {section.blueprint_key && (
                                         <div className="text-xs text-gray-600 dark:text-gray-400 font-mono break-all">
                                           {section.blueprint_key}
@@ -314,6 +529,29 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                                   ) : (
                                     <StatusBadge status="warning" label="Missing" />
                                   )}
+                                </td>
+                                <td className="py-2">
+                                  <div className="flex flex-wrap gap-2">
+                                    <Link
+                                      href={
+                                        section.lesson_blueprint_id
+                                          ? `/content/curriculum/lesson-blueprints/${section.lesson_blueprint_id}`
+                                          : `/content/curriculum/lesson-blueprints/new?courseKey=${encodeURIComponent(curriculum.course_key)}&sectionId=${encodeURIComponent(section.id)}`
+                                      }
+                                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                    >
+                                      {section.lesson_blueprint_id ? 'Open Blueprint' : 'Create Blueprint'}
+                                    </Link>
+                                    {section.blueprint_status !== 'published' && (section.status !== 'published' || section.enabled) && (
+                                      <button
+                                        onClick={() => handleMarkSectionsComingSoon([section.id])}
+                                        disabled={pendingSectionIds.length > 0}
+                                        className="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-900 dark:text-amber-300 dark:hover:bg-amber-950/30"
+                                      >
+                                        {pendingSectionIds.includes(section.id) ? 'Saving…' : 'Mark Coming Soon'}
+                                      </button>
+                                    )}
+                                  </div>
                                 </td>
                               </tr>
                             ))}

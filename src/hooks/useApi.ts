@@ -15,6 +15,7 @@ import type {
   CourseAdminListResponse,
   CourseCurriculumResponse,
   CourseValidationResponse,
+  LessonBlueprintAuthoringCapabilitiesResponse,
   LessonBlueprintAdminListResponse,
   LessonBlueprintValidationResponse,
   PublicLessonBlueprintResponse,
@@ -321,6 +322,27 @@ export function useLessons(filters?: { language_id?: number; status?: string; pa
 export function useAdminBlueprint(blueprintId: string | null) {
   const { data, error, mutate } = useSWR<LessonBlueprintValidationResponse>(
     blueprintId ? `/api/v1/admin/lesson-blueprints/${blueprintId}` : null,
+    fetcher,
+    {
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      shouldRetryOnError: false,
+    }
+  );
+
+  return {
+    data,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+    mutate,
+  };
+}
+
+export function useAdminBlueprintCapabilities() {
+  const { data, error, mutate } = useSWR<LessonBlueprintAuthoringCapabilitiesResponse>(
+    '/api/v1/admin/lesson-blueprints/capabilities',
     fetcher,
     {
       refreshInterval: 0,

@@ -1,18 +1,26 @@
 import {
+  cloneAdminBlueprint,
+  createAdminBlueprint,
+  getAdminBlueprintCapabilities,
+  markSectionsComingSoon,
   publishAdminBlueprint,
   publishAdminCourse,
+  previewAdminBlueprintDraft,
+  updateAdminBlueprint,
 } from '@/lib/adminCurriculumApi';
 
 jest.mock('@/lib/api', () => ({
   apiClient: {
     get: jest.fn(),
     post: jest.fn(),
+    put: jest.fn(),
   },
 }));
 
 const mockApiClient = jest.requireMock('@/lib/api').apiClient as {
   get: jest.Mock;
   post: jest.Mock;
+  put: jest.Mock;
 };
 
 describe('adminCurriculumApi publish 409 handling', () => {
@@ -147,5 +155,67 @@ describe('adminCurriculumApi publish 409 handling', () => {
     mockApiClient.post.mockRejectedValue({ response: { status: 500 } });
 
     await expect(publishAdminCourse('c1')).rejects.toBeTruthy();
+  });
+
+  it('previewAdminBlueprintDraft posts the draft payload', async () => {
+    const payload = {
+      blueprint_key: 'bp.preview',
+      course_id: 'c1',
+      section_id: 's1',
+      lesson_kind: 'structured_micro_lesson',
+      schema_version: 1,
+      payload: { id: 'bp.preview', steps: [] },
+    };
+    mockApiClient.post.mockResolvedValue({ data: { ok: true } });
+
+    await previewAdminBlueprintDraft(payload);
+
+    expect(mockApiClient.post).toHaveBeenCalledWith('/api/v1/admin/lesson-blueprints/preview', payload);
+  });
+
+  it('getAdminBlueprintCapabilities loads backend-authored editor capabilities', async () => {
+    mockApiClient.get.mockResolvedValue({ data: { lesson_kinds: [] } });
+
+    await getAdminBlueprintCapabilities();
+
+    expect(mockApiClient.get).toHaveBeenCalledWith('/api/v1/admin/lesson-blueprints/capabilities');
+  });
+
+  it('create/update/clone blueprint authoring helpers call the expected endpoints', async () => {
+    const payload = {
+      blueprint_key: 'bp.new',
+      course_id: 'c1',
+      section_id: 's1',
+      lesson_kind: 'structured_micro_lesson',
+      schema_version: 1,
+      payload: { id: 'bp.new', steps: [] },
+    };
+    mockApiClient.post.mockResolvedValue({ data: { ok: true } });
+    mockApiClient.put.mockResolvedValue({ data: { ok: true } });
+
+    await createAdminBlueprint(payload);
+    await updateAdminBlueprint('b1', payload);
+    await cloneAdminBlueprint('b1', { blueprint_key: 'bp.clone', course_id: 'c1', section_id: 's1' });
+
+    expect(mockApiClient.post).toHaveBeenCalledWith('/api/v1/admin/lesson-blueprints', payload);
+    expect(mockApiClient.put).toHaveBeenCalledWith('/api/v1/admin/lesson-blueprints/b1', payload);
+    expect(mockApiClient.post).toHaveBeenCalledWith('/api/v1/admin/lesson-blueprints/b1/clone', {
+      blueprint_key: 'bp.clone',
+      course_id: 'c1',
+      section_id: 's1',
+    });
+  });
+
+  it('markSectionsComingSoon posts the targeted section ids', async () => {
+    mockApiClient.post.mockResolvedValue({ data: { ok: true } });
+
+    await markSectionsComingSoon('abidii_yoruba_v1', ['s1', 's2']);
+
+    expect(mockApiClient.post).toHaveBeenCalledWith(
+      '/api/v1/admin/curriculum/courses/abidii_yoruba_v1/sections/mark-coming-soon',
+      {
+        section_ids: ['s1', 's2'],
+      }
+    );
   });
 });

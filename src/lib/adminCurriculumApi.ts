@@ -1,6 +1,11 @@
 import { apiClient } from '@/lib/api';
 import type {
+  AtomicReorderRequest,
+  AtomicReorderResponse,
   CurriculumUpdateResponse,
+  LessonBlueprintCloneRequest,
+  LessonBlueprintAuthoringCapabilitiesResponse,
+  LessonBlueprintDraftUpsertRequest,
   CourseAdminResponse,
   CourseAdminListResponse,
   CourseCurriculumResponse,
@@ -46,9 +51,54 @@ export async function listAdminBlueprints(params?: {
   return res.data;
 }
 
+export async function getAdminBlueprintCapabilities() {
+  const res = await apiClient.get<LessonBlueprintAuthoringCapabilitiesResponse>(
+    '/api/v1/admin/lesson-blueprints/capabilities'
+  );
+  return res.data;
+}
+
 export async function validateAdminBlueprint(blueprintId: string) {
   const res = await apiClient.post<LessonBlueprintValidationResponse>(
     `/api/v1/admin/lesson-blueprints/${blueprintId}/validate`
+  );
+  return res.data;
+}
+
+export async function previewAdminBlueprintDraft(payload: LessonBlueprintDraftUpsertRequest) {
+  const res = await apiClient.post<LessonBlueprintValidationResponse>(
+    '/api/v1/admin/lesson-blueprints/preview',
+    payload
+  );
+  return res.data;
+}
+
+export async function createAdminBlueprint(payload: LessonBlueprintDraftUpsertRequest) {
+  const res = await apiClient.post<LessonBlueprintValidationResponse>(
+    '/api/v1/admin/lesson-blueprints',
+    payload
+  );
+  return res.data;
+}
+
+export async function updateAdminBlueprint(
+  blueprintId: string,
+  payload: LessonBlueprintDraftUpsertRequest
+) {
+  const res = await apiClient.put<LessonBlueprintValidationResponse>(
+    `/api/v1/admin/lesson-blueprints/${blueprintId}`,
+    payload
+  );
+  return res.data;
+}
+
+export async function cloneAdminBlueprint(
+  blueprintId: string,
+  payload: LessonBlueprintCloneRequest
+) {
+  const res = await apiClient.post<LessonBlueprintValidationResponse>(
+    `/api/v1/admin/lesson-blueprints/${blueprintId}/clone`,
+    payload
   );
   return res.data;
 }
@@ -194,5 +244,26 @@ export async function moveCourseSection(
   payload: { section_key: string; to_unit_key: string; order_index: number; from_unit_key?: string }
 ) {
   const res = await apiClient.patch<CurriculumUpdateResponse>(`/api/v1/admin/curriculum/courses/${courseKey}/sections/move`, payload);
+  return res.data;
+}
+
+export async function markSectionsComingSoon(courseKey: string, sectionIds: string[]) {
+  const res = await apiClient.post<CurriculumUpdateResponse>(
+    `/api/v1/admin/curriculum/courses/${courseKey}/sections/mark-coming-soon`,
+    {
+      section_ids: sectionIds,
+    }
+  );
+  return res.data;
+}
+
+export async function reorderCourseAtomicV2(
+  courseKey: string,
+  payload: AtomicReorderRequest
+) {
+  const res = await apiClient.patch<AtomicReorderResponse>(
+    `/api/v1/admin/curriculum/courses/${courseKey}/reorder-atomic-v2`,
+    payload
+  );
   return res.data;
 }

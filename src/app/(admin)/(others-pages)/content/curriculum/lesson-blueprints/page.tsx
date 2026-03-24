@@ -250,7 +250,15 @@ export default function LessonBlueprintsListPage() {
 
   return (
     <div className="space-y-6">
-      <PageBreadCrumb pageTitle="Lesson Blueprints" />
+      <div className="flex items-start justify-between gap-4">
+        <PageBreadCrumb pageTitle="Lesson Blueprints" />
+        <Link
+          href="/content/curriculum/lesson-blueprints/new"
+          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+        >
+          New Blueprint
+        </Link>
+      </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="p-5">
@@ -492,6 +500,11 @@ export default function LessonBlueprintsListPage() {
                       {bp.blueprint_key}
                     </Link>
                     <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{bp.lesson_kind}</div>
+                    {(bp.target_language_code || bp.section_key) && (
+                      <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        {[bp.target_language_code?.toUpperCase(), bp.section_key].filter(Boolean).join(' • ')}
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <StatusBadge status={bp.status as any} />

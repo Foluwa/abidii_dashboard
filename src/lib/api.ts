@@ -18,11 +18,20 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8
  */
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 20000,
   headers: {
     'Content-Type': 'application/json',
   },
   withCredentials: true, // Important: enables httpOnly cookies
 });
+
+function buildIdempotencyKey() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `req_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
 
 /**
  * Request interceptor
@@ -52,6 +61,11 @@ apiClient.interceptors.request.use(
     const adminMonitoringToken = process.env.NEXT_PUBLIC_ADMIN_MONITORING_TOKEN;
     if (adminMonitoringToken && config.url?.startsWith('/api/v1/admin/')) {
       config.headers['x-admin-token'] = adminMonitoringToken;
+    }
+
+    const method = config.method?.toLowerCase();
+    if (method && ['post', 'put', 'patch', 'delete'].includes(method) && !config.headers['Idempotency-Key']) {
+      config.headers['Idempotency-Key'] = buildIdempotencyKey();
     }
 
     return config;
