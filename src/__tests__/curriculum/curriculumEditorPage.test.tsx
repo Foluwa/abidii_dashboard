@@ -25,12 +25,14 @@ const mockReorderUnits = jest.fn().mockResolvedValue({ ok: true });
 const mockReorderSections = jest.fn().mockResolvedValue({ ok: true });
 const mockMoveSection = jest.fn().mockResolvedValue({ ok: true });
 const mockReorderAtomicV2 = jest.fn().mockResolvedValue({ ok: true });
+const mockGetPublicBlueprint = jest.fn();
 
 jest.mock('@/lib/adminCurriculumApi', () => ({
   reorderCourseUnits: (...args: any[]) => mockReorderUnits(...args),
   reorderCourseSections: (...args: any[]) => mockReorderSections(...args),
   moveCourseSection: (...args: any[]) => mockMoveSection(...args),
   reorderCourseAtomicV2: (...args: any[]) => mockReorderAtomicV2(...args),
+  getPublicBlueprint: (...args: any[]) => mockGetPublicBlueprint(...args),
 }));
 
 let mockDropSpecs: any[] = [];
@@ -146,6 +148,26 @@ describe('CurriculumEditorPage', () => {
       isError: false,
       refresh: mockRefresh,
     });
+
+    mockGetPublicBlueprint.mockResolvedValue({
+      id: 'bp1',
+      blueprint_key: 'bp-1',
+      lesson_kind: 'reading_practice',
+      schema_version: 1,
+      status: 'draft',
+      enabled: true,
+      availability: 'available',
+      payload: {
+        id: 'lesson_reading_practice_01',
+        title: 'Reading Practice',
+        flowMode: 'reading_batched',
+        targetVocabIds: ['vocab_kaabo', 'vocab_odabo'],
+      },
+      validation_status: 'valid',
+      validated_at: '2026-03-24T00:00:00Z',
+      created_at: '2026-03-24T00:00:00Z',
+      updated_at: '2026-03-24T00:00:00Z',
+    });
   });
 
   it('calls reorder API after unit drag reorder', async () => {
@@ -183,6 +205,7 @@ describe('CurriculumEditorPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(mockMoveSection).toHaveBeenCalledWith('abidii_yoruba_v1', {
+      section_id: 's1',
       section_key: 's1',
       from_unit_key: 'u1',
       to_unit_key: 'u2',
@@ -326,18 +349,26 @@ describe('CurriculumEditorPage', () => {
         },
       },
     });
-    const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
 
     render(<CurriculumEditorPage />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Refresh now' }));
 
-    expect(confirmSpy).toHaveBeenCalled();
     expect(mockRefresh).toHaveBeenCalled();
     expect(
       await screen.findByText('This curriculum was updated by someone else. Please refresh and retry your save.')
     ).toBeInTheDocument();
+  });
 
-    confirmSpy.mockRestore();
+  it('loads learner preview for a playable section', async () => {
+    render(<CurriculumEditorPage />);
+
+    await userEvent.click(screen.getAllByRole('button', { name: 'Preview' })[0]);
+
+    expect(await screen.findByText('What the learner sees')).toBeInTheDocument();
+    expect(await screen.findByText('Reading Practice')).toBeInTheDocument();
+    expect(await screen.findByText('Vocabulary bindings')).toBeInTheDocument();
+    expect(mockGetPublicBlueprint).toHaveBeenCalledWith('bp1');
   });
 });

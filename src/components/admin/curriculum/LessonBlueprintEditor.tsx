@@ -1,26 +1,35 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 
 import Alert from '@/components/ui/alert/SimpleAlert';
+import MediaLinkPreview from '@/components/admin/curriculum/MediaLinkPreview';
+import { LessonRuntimePreview } from '@/components/admin/curriculum/LessonRuntimePreview';
 import ValidationResultViewer from '@/components/admin/curriculum/ValidationResultViewer';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { useToast } from '@/contexts/ToastContext';
 import {
+  useAdminBlueprintAssetLibrary,
   useAdminBlueprintCapabilities,
   useAdminCoursesList,
   useCourseCurriculumByKey,
+  useCurriculumVocabLibrary,
+  usePhonicsContrasts,
 } from '@/hooks/useApi';
 import {
   cloneAdminBlueprint,
   createAdminBlueprint,
   previewAdminBlueprintDraft,
+  uploadBlueprintAsset,
   updateAdminBlueprint,
 } from '@/lib/adminCurriculumApi';
 import type {
   CourseAdminListItem,
   CurriculumSection,
   LessonBlueprintAdminResponse,
+  LessonBlueprintAssetLibraryItem,
+  LessonBlueprintMediaBinding,
   LessonKindCapability,
   LessonBlueprintValidationResponse,
   LessonBlueprintDraftUpsertRequest,
@@ -32,7 +41,15 @@ type SectionOption = {
   value: string;
   label: string;
   section: CurriculumSection;
+  unitKey: string;
 };
+
+const lessonLaunchRouteOptions = [
+  { value: 'structuredLesson', label: 'Structured lesson' },
+  { value: 'alphabetLesson', label: 'Alphabet lesson' },
+  { value: 'phonicsLesson', label: 'Phonics lesson' },
+  { value: 'numbersLesson', label: 'Numbers lesson' },
+];
 
 function extractErrorMessage(error: any): string {
   if (error?.code === 'ECONNABORTED') {
@@ -53,6 +70,270 @@ function formatJson(input: string): string {
     return input;
   }
 }
+
+function safeParsePayload(input: string): Record<string, unknown> | null {
+  try {
+    const next = JSON.parse(input);
+    if (!next || typeof next !== 'object' || Array.isArray(next)) {
+      return null;
+    }
+    return next as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function getString(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+function getBoolean(value: unknown, fallback = false): boolean {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+function getStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean);
+}
+
+function getNumberArray(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is number => typeof item === 'number');
+}
+
+function getObjectArray(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (item): item is Record<string, unknown> =>
+      typeof item === 'object' && item !== null && !Array.isArray(item)
+  );
+}
+
+function getObject(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function parseTokenList(input: string): string[] {
+  return input
+    .split(/[\n,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function uniqueTokens(values: string[]): string[] {
+  return Array.from(new Set(values.map((item) => item.trim()).filter(Boolean)));
+}
+
+function toTextList(values: string[]): string {
+  return values.join('\n');
+}
+
+function getVocabDisplayLabel(externalId: string, lemma?: string | null): string {
+  const normalizedLemma = lemma?.trim();
+  if (normalizedLemma) {
+    return normalizedLemma;
+  }
+  return externalId.replace(/^vocab_/i, '').replace(/[_-]+/g, ' ').trim() || externalId;
+}
+
+function getMediaBindings(payload: Record<string, unknown>): Record<string, LessonBlueprintMediaBinding> {
+  const raw = payload.mediaBindings;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return {};
+  }
+  return Object.entries(raw).reduce<Record<string, LessonBlueprintMediaBinding>>((acc, [fieldPath, value]) => {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      acc[fieldPath] = value as LessonBlueprintMediaBinding;
+    }
+    return acc;
+  }, {});
+}
+
+function inferAssetKindFromFieldPath(fieldPath: string): 'image' | 'audio' | 'video' {
+  const normalized = fieldPath.toLowerCase();
+  if (normalized.includes('audio')) return 'audio';
+  if (normalized.includes('video')) return 'video';
+  return 'image';
+}
+
+function isMediaBindingCompatible(binding: LessonBlueprintMediaBinding, targetFieldPath: string): boolean {
+  const targetKind = inferAssetKindFromFieldPath(targetFieldPath);
+  return (binding.asset_kind || inferAssetKindFromFieldPath(binding.field_path || targetFieldPath)) === targetKind;
+}
+
+function setPayloadFieldValue(payload: Record<string, unknown>, fieldPath: string, value: unknown) {
+  const next = JSON.parse(JSON.stringify(payload || {})) as Record<string, unknown>;
+  const stepMatch = fieldPath.match(/^steps\[(\d+)\]\.([A-Za-z_][A-Za-z0-9_]*)$/);
+  if (stepMatch) {
+    const [, rawIndex, fieldName] = stepMatch;
+    const steps = getObjectArray(next.steps);
+    const index = Number(rawIndex);
+    if (!steps[index]) {
+      steps[index] = {};
+    }
+    steps[index] = {
+      ...steps[index],
+      [fieldName]: value,
+    };
+    next.steps = steps;
+    return next;
+  }
+  next[fieldPath] = value;
+  return next;
+}
+
+function getStarterSteps(lessonKind: string): Record<string, unknown>[] | null {
+  switch (lessonKind) {
+    case 'reading_practice':
+      return [
+        { type: 'guessMeaning', title: 'Meaning check', prompt: 'Pick the best meaning' },
+        { type: 'matchingPairs', title: 'Match vocab', prompt: 'Match the words and meanings' },
+        { type: 'wordBuilder', title: 'Build the word', prompt: 'Assemble the target word' },
+        { type: 'dialogueContext', title: 'Read in context', prompt: 'Read the short dialogue' },
+        { type: 'listeningTiles', title: 'Tap what you hear', prompt: 'Listen and tap the phrase' },
+        { type: 'recognitionTask', title: 'Recognition check', prompt: 'Select the correct answer' },
+      ];
+    case 'greetings_core':
+      return [
+        { type: 'lessonStart', title: 'Greeting intro', prompt: 'Introduce the core greeting' },
+        { type: 'matchingPairs', title: 'Match greeting pairs', prompt: 'Match greeting to meaning' },
+        { type: 'listeningTiles', title: 'Hear the greeting', prompt: 'Tap the greeting you hear' },
+        { type: 'recognitionTask', title: 'Use the greeting', prompt: 'Choose the right greeting for the context' },
+      ];
+    case 'tone_marks_drill':
+      return [
+        { type: 'lessonStart', title: 'Contrast intro', prompt: 'Introduce the tone contrast' },
+        { type: 'listeningTiles', title: 'Tone listening', prompt: 'Tap the tone you hear' },
+        { type: 'conceptCheck', title: 'Contrast check', prompt: 'Identify the correct tone mark' },
+      ];
+    case 'numbers_1_10':
+      return [
+        { type: 'lessonStart', title: 'Count intro', prompt: 'Introduce the target number range' },
+        { type: 'recognitionTask', title: 'Recognize the number', prompt: 'Select the number you hear' },
+        { type: 'conceptCheck', title: 'Count check', prompt: 'Confirm the quantity' },
+        { type: 'matchingPairs', title: 'Match quantity and form', prompt: 'Match the numeral to the phrase' },
+      ];
+    case 'alphabet_drill':
+      return [
+        { type: 'lessonStart', title: 'Letter intro', prompt: 'Introduce the letter focus' },
+        { type: 'listeningTiles', title: 'Hear the letter', prompt: 'Tap the letter sound you hear' },
+        { type: 'recognitionTask', title: 'Recognize the letter', prompt: 'Pick the correct letter' },
+      ];
+    default:
+      return null;
+  }
+}
+
+function getStepTypeOptions(lessonKind: string): Array<{ value: string; label: string }> {
+  const common = [
+    { value: 'lessonStart', label: 'Lesson Start' },
+    { value: 'recognitionTask', label: 'Recognition Task' },
+    { value: 'listeningTiles', label: 'Listening Tiles' },
+    { value: 'matchingPairs', label: 'Matching Pairs' },
+    { value: 'conceptCheck', label: 'Concept Check' },
+    { value: 'cultureTip', label: 'Culture Tip' },
+  ];
+
+  switch (lessonKind) {
+    case 'reading_practice':
+      return [
+        { value: 'guessMeaning', label: 'Guess Meaning' },
+        { value: 'matchingPairs', label: 'Matching Pairs' },
+        { value: 'wordBuilder', label: 'Word Builder' },
+        { value: 'dialogueContext', label: 'Dialogue Context' },
+        { value: 'listeningTiles', label: 'Listening Tiles' },
+        { value: 'recognitionTask', label: 'Recognition Task' },
+      ];
+    case 'tone_marks_drill':
+      return [
+        { value: 'lessonStart', label: 'Lesson Start' },
+        { value: 'listeningTiles', label: 'Listening Tiles' },
+        { value: 'conceptCheck', label: 'Concept Check' },
+        { value: 'matchingPairs', label: 'Matching Pairs' },
+        { value: 'cultureTip', label: 'Culture Tip' },
+      ];
+    case 'numbers_1_10':
+      return [
+        { value: 'lessonStart', label: 'Lesson Start' },
+        { value: 'recognitionTask', label: 'Recognition Task' },
+        { value: 'listeningTiles', label: 'Listening Tiles' },
+        { value: 'conceptCheck', label: 'Concept Check' },
+        { value: 'matchingPairs', label: 'Matching Pairs' },
+        { value: 'cultureTip', label: 'Culture Tip' },
+      ];
+    case 'alphabet_drill':
+      return [
+        { value: 'lessonStart', label: 'Lesson Start' },
+        { value: 'listeningTiles', label: 'Listening Tiles' },
+        { value: 'recognitionTask', label: 'Recognition Task' },
+        { value: 'matchingPairs', label: 'Matching Pairs' },
+      ];
+    case 'greetings_core':
+      return [
+        { value: 'lessonStart', label: 'Lesson Start' },
+        { value: 'matchingPairs', label: 'Matching Pairs' },
+        { value: 'listeningTiles', label: 'Listening Tiles' },
+        { value: 'recognitionTask', label: 'Recognition Task' },
+      ];
+    default:
+      return common;
+  }
+}
+
+function normalizeValidationPath(path: string | null | undefined): string {
+  return (path || '').trim().replace(/^\$\./, '');
+}
+
+function fieldIdForValidationPath(path: string | null | undefined): string | null {
+  const normalized = normalizeValidationPath(path);
+  if (!normalized) return null;
+
+  const directMap: Record<string, string> = {
+    id: 'payload-lesson-id',
+    title: 'payload-title',
+    subtitle: 'payload-subtitle',
+    description: 'payload-description',
+    learningObjectives: 'payload-learning-objectives',
+    thumbnailUrl: 'payload-thumbnail-url',
+    mode: 'payload-mode',
+    flowMode: 'payload-flow-mode',
+    contrast_id: 'payload-contrast-id',
+    unitLabel: 'payload-unit-label',
+    heroImageUrl: 'payload-hero-image-url',
+    coverImageUrl: 'payload-cover-image-url',
+    imageUrl: 'payload-image-url',
+    audioUrl: 'payload-audio-url',
+    range: 'payload-range-start',
+  };
+
+  return directMap[normalized] || null;
+}
+
+function slugifyIdentifierPart(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '') || 'item';
+}
+
+function buildManagedBlueprintKey(args: {
+  courseKey?: string | null;
+  unitKey?: string | null;
+  sectionKey?: string | null;
+}): string {
+  const parts = [
+    slugifyIdentifierPart(args.courseKey || 'course'),
+    slugifyIdentifierPart(args.unitKey || 'unit'),
+    slugifyIdentifierPart(args.sectionKey || 'section'),
+  ];
+  const key = `lesson_${parts.join('_')}`;
+  return key.slice(0, 120).replace(/_+$/g, '') || 'lesson_item';
+}
+
 export function LessonBlueprintEditor({
   mode,
   blueprint,
@@ -60,6 +341,7 @@ export function LessonBlueprintEditor({
   initialCourseKey,
   initialSectionId,
   initialBlueprintKey,
+  focusFieldPath,
 }: {
   mode: Mode;
   blueprint?: LessonBlueprintAdminResponse | null;
@@ -67,6 +349,7 @@ export function LessonBlueprintEditor({
   initialCourseKey?: string | null;
   initialSectionId?: string | null;
   initialBlueprintKey?: string | null;
+  focusFieldPath?: string | null;
 }) {
   const toast = useToast();
 
@@ -84,13 +367,23 @@ export function LessonBlueprintEditor({
     payload: {},
   });
   const [payloadText, setPayloadText] = useState('{}');
+  const [lastValidPayload, setLastValidPayload] = useState<Record<string, unknown>>({});
   const [previewResult, setPreviewResult] = useState<LessonBlueprintValidationResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isCloning, setIsCloning] = useState(false);
+  const [uploadingFieldPath, setUploadingFieldPath] = useState<string | null>(null);
+  const [uploadProgressByField, setUploadProgressByField] = useState<Record<string, number>>({});
+  const [assetLibraryTargetFieldPath, setAssetLibraryTargetFieldPath] = useState<string | null>(null);
+  const [isAssetDropActive, setIsAssetDropActive] = useState(false);
+  const [globalAssetSearch, setGlobalAssetSearch] = useState('');
+  const [assetLibraryScope, setAssetLibraryScope] = useState<'same_course' | 'all_courses'>('same_course');
+  const [vocabSearch, setVocabSearch] = useState('');
+  const [toneContrastSearch, setToneContrastSearch] = useState('');
   const hasAppliedInitialSectionRef = useRef(false);
   const hasAppliedInitialBlueprintKeyRef = useRef(false);
+  const activeUploadTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (mode === 'edit' && blueprint) {
@@ -104,6 +397,7 @@ export function LessonBlueprintEditor({
         payload: blueprint.payload,
       });
       setPayloadText(JSON.stringify(blueprint.payload, null, 2));
+      setLastValidPayload(blueprint.payload);
       setPreviewResult(null);
       return;
     }
@@ -120,6 +414,7 @@ export function LessonBlueprintEditor({
         ...prev,
         course_id: firstCourse.id,
       }));
+      setLastValidPayload({});
     }
   }, [blueprint, courses, initialCourseKey, mode, selectedCourseKey]);
 
@@ -157,6 +452,42 @@ export function LessonBlueprintEditor({
     curriculum,
     isLoading: isCurriculumLoading,
   } = useCourseCurriculumByKey(selectedCourseKey || null);
+  const {
+    items: globalAssetLibraryItems,
+    isLoading: isGlobalAssetLibraryLoading,
+  } = useAdminBlueprintAssetLibrary({
+    page: 1,
+    limit: 12,
+    course_id: assetLibraryScope === 'same_course' ? selectedCourse?.id ?? undefined : undefined,
+    asset_kind: assetLibraryTargetFieldPath ? inferAssetKindFromFieldPath(assetLibraryTargetFieldPath) : undefined,
+    search: globalAssetSearch.trim() || undefined,
+  });
+  const {
+    items: vocabLibraryItems,
+    isLoading: isVocabLibraryLoading,
+  } = useCurriculumVocabLibrary({
+    language_id: selectedCourse?.target_language_id ?? undefined,
+    page: 1,
+    limit: 10,
+    search: vocabSearch.trim() || undefined,
+  });
+  const selectedVocabIds = getStringArray(form.payload?.targetVocabIds);
+  const { items: selectedVocabItems } = useCurriculumVocabLibrary({
+    language_id: selectedCourse?.target_language_id ?? undefined,
+    external_ids: selectedVocabIds,
+    page: 1,
+    limit: Math.max(selectedVocabIds.length, 10),
+  });
+  const selectedVocabLabels = useMemo(() => {
+    return selectedVocabItems.reduce<Record<string, string>>((acc, item) => {
+      acc[item.external_id] = getVocabDisplayLabel(item.external_id, item.lemma);
+      return acc;
+    }, {});
+  }, [selectedVocabItems]);
+  const {
+    contrasts: toneContrastItems,
+    isLoading: isToneContrastsLoading,
+  } = usePhonicsContrasts(selectedCourse?.target_language_code ?? null);
 
   const sectionOptions = useMemo<SectionOption[]>(() => {
     if (!curriculum) return [];
@@ -165,9 +496,33 @@ export function LessonBlueprintEditor({
         value: section.id,
         label: `${unit.title} / ${section.title} (${section.section_key})`,
         section,
+        unitKey: unit.unit_key,
       }))
     );
   }, [curriculum]);
+
+  const selectedSectionOption = useMemo<SectionOption | null>(() => {
+    return sectionOptions.find((option) => option.value === form.section_id) ?? null;
+  }, [form.section_id, sectionOptions]);
+
+  const managedBlueprintKey = useMemo(() => {
+    if (mode === 'edit' && blueprint?.blueprint_key) {
+      return blueprint.blueprint_key;
+    }
+
+    return buildManagedBlueprintKey({
+      courseKey: selectedCourse?.course_key || selectedCourseKey,
+      unitKey: selectedSectionOption?.unitKey,
+      sectionKey: selectedSectionOption?.section.section_key,
+    });
+  }, [
+    blueprint?.blueprint_key,
+    mode,
+    selectedCourse?.course_key,
+    selectedCourseKey,
+    selectedSectionOption?.section.section_key,
+    selectedSectionOption?.unitKey,
+  ]);
 
   useEffect(() => {
     if (!selectedCourse) return;
@@ -207,17 +562,51 @@ export function LessonBlueprintEditor({
 
   useEffect(() => {
     if (mode !== 'create') return;
+    if (!managedBlueprintKey) return;
+
+    setForm((prev) => {
+      if (prev.blueprint_key === managedBlueprintKey) return prev;
+      return {
+        ...prev,
+        blueprint_key: managedBlueprintKey,
+      };
+    });
+  }, [managedBlueprintKey, mode]);
+
+  useEffect(() => {
+    if (mode !== 'create') return;
     if (!selectedLessonCapability) return;
 
     const trimmedPayload = payloadText.trim();
     if (trimmedPayload !== '' && trimmedPayload !== '{}') return;
 
     setPayloadText(JSON.stringify(selectedLessonCapability.default_payload ?? {}, null, 2));
+    setLastValidPayload(selectedLessonCapability.default_payload ?? {});
     setForm((prev) => ({
       ...prev,
       payload: selectedLessonCapability.default_payload ?? {},
     }));
   }, [mode, payloadText, selectedLessonCapability]);
+
+  useEffect(() => {
+    const targetId = fieldIdForValidationPath(focusFieldPath);
+    if (!targetId) return;
+
+    const element = document.getElementById(targetId) as HTMLElement | null;
+    if (!element) return;
+
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (typeof element.focus === 'function') {
+      element.focus({ preventScroll: true });
+    }
+
+    element.classList.add('ring-2', 'ring-brand-500', 'ring-offset-2', 'dark:ring-offset-gray-900');
+    const timeout = window.setTimeout(() => {
+      element.classList.remove('ring-2', 'ring-brand-500', 'ring-offset-2', 'dark:ring-offset-gray-900');
+    }, 1800);
+
+    return () => window.clearTimeout(timeout);
+  }, [focusFieldPath, form.lesson_kind]);
 
   const parsePayload = (): Record<string, unknown> | null => {
     try {
@@ -234,11 +623,180 @@ export function LessonBlueprintEditor({
     }
   };
 
+  const editablePayload = useMemo(
+    () => safeParsePayload(payloadText) ?? lastValidPayload,
+    [lastValidPayload, payloadText]
+  );
+  const rawPayloadInvalid = safeParsePayload(payloadText) === null;
+  const editableSteps = useMemo(() => getObjectArray(editablePayload.steps), [editablePayload]);
+  const mediaBindings = useMemo(() => getMediaBindings(editablePayload), [editablePayload]);
+  const mediaFieldOptions = useMemo(() => {
+    const topLevel = [
+      { value: 'heroImageUrl', label: 'Hero image' },
+      { value: 'coverImageUrl', label: 'Cover image' },
+      { value: 'imageUrl', label: 'Image' },
+      { value: 'audioUrl', label: 'Audio' },
+    ];
+    const stepLevel = editableSteps.flatMap((step, index) => [
+      { value: `steps[${index}].imageUrl`, label: `Step ${index + 1} image` },
+      { value: `steps[${index}].audioUrl`, label: `Step ${index + 1} audio` },
+    ]);
+    return [...topLevel, ...stepLevel];
+  }, [editableSteps]);
+  const compatibleLibraryAssets = useMemo(() => {
+    if (!assetLibraryTargetFieldPath) return [];
+    return Object.entries(mediaBindings).filter(([, binding]) =>
+      isMediaBindingCompatible(binding, assetLibraryTargetFieldPath)
+    );
+  }, [assetLibraryTargetFieldPath, mediaBindings]);
+  const filteredToneContrasts = useMemo(() => {
+    const query = toneContrastSearch.trim().toLowerCase();
+    const items = Array.isArray(toneContrastItems) ? toneContrastItems : [];
+    if (!query) return items.slice(0, 10);
+    return items
+      .filter((item) => {
+        const title = getString((item as Record<string, unknown>).title).toLowerCase();
+        const left = getString((item as Record<string, unknown>).letter_a_glyph).toLowerCase();
+        const right = getString((item as Record<string, unknown>).letter_b_glyph).toLowerCase();
+        const id = getString((item as Record<string, unknown>).id).toLowerCase();
+        return title.includes(query) || left.includes(query) || right.includes(query) || id.includes(query);
+      })
+      .slice(0, 10);
+  }, [toneContrastItems, toneContrastSearch]);
+  const starterSteps = useMemo(() => getStarterSteps(form.lesson_kind), [form.lesson_kind]);
+  const stepTypeOptions = useMemo(() => getStepTypeOptions(form.lesson_kind), [form.lesson_kind]);
+  const canUploadAssets = mode === 'edit' && Boolean(blueprint?.id);
+
+  useEffect(() => {
+    if (mediaFieldOptions.length === 0) return;
+    if (
+      assetLibraryTargetFieldPath &&
+      mediaFieldOptions.some((option) => option.value === assetLibraryTargetFieldPath)
+    ) {
+      return;
+    }
+    setAssetLibraryTargetFieldPath(mediaFieldOptions[0].value);
+  }, [assetLibraryTargetFieldPath, mediaFieldOptions]);
+
+  useEffect(() => {
+    if (mode !== 'create') return;
+    if (!form.blueprint_key.trim()) return;
+    if (getString(editablePayload.id) === form.blueprint_key.trim()) return;
+
+    const nextPayload = {
+      ...editablePayload,
+      id: form.blueprint_key.trim(),
+    };
+    setLastValidPayload(nextPayload);
+    setPayloadText(JSON.stringify(nextPayload, null, 2));
+    setForm((prev) => ({
+      ...prev,
+      payload: nextPayload,
+    }));
+    setErrorMessage('');
+  }, [editablePayload, form.blueprint_key, mode]);
+
+  const replacePayload = (nextPayload: Record<string, unknown>) => {
+    setLastValidPayload(nextPayload);
+    setPayloadText(JSON.stringify(nextPayload, null, 2));
+    setForm((prev) => ({
+      ...prev,
+      payload: nextPayload,
+    }));
+    setErrorMessage('');
+  };
+
+  const updatePayload = (updater: (payload: Record<string, unknown>) => Record<string, unknown>) => {
+    replacePayload(updater(editablePayload));
+  };
+
+  const handlePayloadTextChange = (nextText: string) => {
+    setPayloadText(nextText);
+    const parsed = safeParsePayload(nextText);
+    if (parsed) {
+      setLastValidPayload(parsed);
+      setForm((prev) => ({
+        ...prev,
+        payload: parsed,
+      }));
+      setErrorMessage('');
+    }
+  };
+
+  const updateTopLevelField = (field: string, value: unknown) => {
+    updatePayload((prev) => {
+      const next = { ...prev };
+      if (
+        value === null ||
+        value === undefined ||
+        (typeof value === 'string' && value.trim() === '') ||
+        (Array.isArray(value) && value.length === 0)
+      ) {
+        delete next[field];
+      } else {
+        next[field] = value;
+      }
+      return next;
+    });
+  };
+
+  const addVocabBinding = (externalId: string) => {
+    const next = uniqueTokens([
+      ...getStringArray(editablePayload.targetVocabIds),
+      externalId,
+    ]);
+    updateTopLevelField('targetVocabIds', next);
+  };
+
+  const removeVocabBinding = (externalId: string) => {
+    const next = getStringArray(editablePayload.targetVocabIds).filter((item) => item !== externalId);
+    updateTopLevelField('targetVocabIds', next);
+  };
+
+  const updateStepField = (index: number, field: string, value: unknown) => {
+    updatePayload((prev) => {
+      const steps = getObjectArray(prev.steps);
+      const nextSteps = [...steps];
+      const existing = { ...(nextSteps[index] ?? {}) };
+      if (
+        value === null ||
+        value === undefined ||
+        (typeof value === 'string' && value.trim() === '') ||
+        (Array.isArray(value) && value.length === 0)
+      ) {
+        delete existing[field];
+      } else {
+        existing[field] = value;
+      }
+      nextSteps[index] = existing;
+      return {
+        ...prev,
+        steps: nextSteps,
+      };
+    });
+  };
+
+  const addStep = () => {
+    updatePayload((prev) => ({
+      ...prev,
+      steps: [...getObjectArray(prev.steps), { type: 'lessonStart', title: 'New step' }],
+    }));
+  };
+
+  const removeStep = (index: number) => {
+    updatePayload((prev) => ({
+      ...prev,
+      steps: getObjectArray(prev.steps).filter((_, itemIndex) => itemIndex !== index),
+    }));
+  };
+
   const buildRequest = (): LessonBlueprintDraftUpsertRequest | null => {
     const payload = parsePayload();
     if (!payload) return null;
 
-    if (!form.blueprint_key.trim()) {
+    const effectiveBlueprintKey = form.blueprint_key.trim() || managedBlueprintKey.trim();
+
+    if (!effectiveBlueprintKey) {
       setErrorMessage('Blueprint key is required.');
       return null;
     }
@@ -249,8 +807,14 @@ export function LessonBlueprintEditor({
 
     return {
       ...form,
-      blueprint_key: form.blueprint_key.trim(),
-      payload,
+      blueprint_key: effectiveBlueprintKey,
+      payload: {
+        ...payload,
+        id:
+          mode === 'edit'
+            ? getString(blueprint?.payload?.id) || effectiveBlueprintKey
+            : effectiveBlueprintKey,
+      },
     };
   };
 
@@ -298,18 +862,14 @@ export function LessonBlueprintEditor({
 
   const handleClone = async () => {
     if (!blueprint) return;
-    const suggested = `${form.blueprint_key}_copy`;
-    const nextKey = window.prompt('New blueprint key for the cloned draft', suggested)?.trim();
-    if (!nextKey) return;
 
     setIsCloning(true);
     try {
       const result = await cloneAdminBlueprint(blueprint.id, {
-        blueprint_key: nextKey,
         course_id: form.course_id,
         section_id: form.section_id,
       });
-      toast.success('Blueprint cloned to a new draft.');
+      toast.success('Blueprint cloned to a new draft with a system-managed key.');
       onSaved?.(result);
     } catch (error) {
       const message = extractErrorMessage(error);
@@ -320,8 +880,136 @@ export function LessonBlueprintEditor({
     }
   };
 
+  const handleAssetFileSelected = async (fieldPath: string, file: File, acceptLabel: string) => {
+    if (!blueprint?.id) {
+      toast.error('Create the draft first, then upload assets to the saved blueprint.');
+      return;
+    }
+    if (!file.type) {
+      toast.error(`The selected ${acceptLabel} file is missing a MIME type.`);
+      return;
+    }
+    const targetKind = inferAssetKindFromFieldPath(fieldPath);
+    if (!file.type.startsWith(`${targetKind}/`)) {
+      toast.error(`This field expects a ${targetKind} file. Selected file type was ${file.type}.`);
+      return;
+    }
+
+    const uploadToken = `${fieldPath}:${file.name}:${file.size}:${file.lastModified}`;
+    if (activeUploadTokenRef.current === uploadToken || uploadingFieldPath === fieldPath) {
+      toast.info('Upload already in progress for this field.');
+      return;
+    }
+
+    activeUploadTokenRef.current = uploadToken;
+    setUploadingFieldPath(fieldPath);
+    setUploadProgressByField((prev) => ({ ...prev, [fieldPath]: 0 }));
+    try {
+      const result = await uploadBlueprintAsset(
+        blueprint.id,
+        {
+          field_path: fieldPath,
+          file,
+        },
+        (percent) => {
+        setUploadProgressByField((prev) => ({ ...prev, [fieldPath]: percent }));
+        }
+      );
+      replacePayload(result.blueprint.payload);
+      setPreviewResult(result);
+      toast.success(`${acceptLabel} uploaded and linked to the blueprint.`);
+      onSaved?.(result);
+    } catch (error) {
+      const message = extractErrorMessage(error);
+      setErrorMessage(message);
+      toast.error(message);
+    } finally {
+      activeUploadTokenRef.current = null;
+      setUploadingFieldPath(null);
+      setUploadProgressByField((prev) => {
+        const next = { ...prev };
+        delete next[fieldPath];
+        return next;
+      });
+    }
+  };
+
+  const reuseAssetFromLibrary = (sourceFieldPath: string, targetFieldPath: string) => {
+    const binding = mediaBindings[sourceFieldPath];
+    if (!binding) {
+      toast.error('Selected media binding no longer exists.');
+      return;
+    }
+    updatePayload((prev) => {
+      let next = setPayloadFieldValue(prev, targetFieldPath, binding.asset_url);
+      const nextBindings = getMediaBindings(next);
+      nextBindings[targetFieldPath] = {
+        ...binding,
+        field_path: targetFieldPath,
+      };
+      next = {
+        ...next,
+        mediaBindings: nextBindings,
+      };
+      return next;
+    });
+    toast.success(`Reused ${binding.file_name || binding.asset_kind || 'asset'} for ${targetFieldPath}.`);
+  };
+
+  const reuseGlobalLibraryAsset = (item: LessonBlueprintAssetLibraryItem, targetFieldPath: string) => {
+    updatePayload((prev) => {
+      let next = setPayloadFieldValue(prev, targetFieldPath, item.binding.asset_url);
+      const nextBindings = getMediaBindings(next);
+      nextBindings[targetFieldPath] = {
+        ...item.binding,
+        field_path: targetFieldPath,
+      };
+      next = {
+        ...next,
+        mediaBindings: nextBindings,
+      };
+      return next;
+    });
+    toast.success(`Reused ${item.binding.file_name || item.blueprint_key} from ${item.blueprint_key}.`);
+  };
+
+  const handleAssetDrop = async (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsAssetDropActive(false);
+    if (!assetLibraryTargetFieldPath) {
+      toast.error('Choose a target field before dropping an asset.');
+      return;
+    }
+    const file = event.dataTransfer.files?.[0];
+    if (!file) return;
+    const label = inferAssetKindFromFieldPath(assetLibraryTargetFieldPath) === 'audio' ? 'Audio' : 'Image';
+    await handleAssetFileSelected(assetLibraryTargetFieldPath, file, label);
+  };
+
+  const openAssetPicker = (fieldPath: string, accept: string, acceptLabel: string) => {
+    if (!canUploadAssets) {
+      toast.error('Save the blueprint draft before uploading assets.');
+      return;
+    }
+    if (uploadingFieldPath === fieldPath) {
+      toast.info('Upload already in progress for this field.');
+      return;
+    }
+    setAssetLibraryTargetFieldPath(fieldPath);
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      void handleAssetFileSelected(fieldPath, file, acceptLabel);
+    };
+    input.click();
+  };
+
   return (
-    <div className="space-y-6">
+    <div id="blueprint-editor-root" className="space-y-6">
       {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
       {capabilitiesError && (
         <Alert variant="warning">
@@ -343,8 +1031,20 @@ export function LessonBlueprintEditor({
           publish validation is expected to block until universal runtime support is finished.
         </Alert>
       )}
+      {!canUploadAssets && (
+        <Alert variant="info">
+          Asset uploads are enabled after the draft exists. Save or create the blueprint first, then upload images,
+          audio, or video directly to Cloudflare R2 from this editor.
+        </Alert>
+      )}
+      {rawPayloadInvalid && (
+        <Alert variant="warning">
+          Raw JSON is currently invalid. Structured authoring is showing the last valid payload snapshot until the JSON
+          is fixed.
+        </Alert>
+      )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr,0.85fr]">
         <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="text-base font-semibold text-gray-900 dark:text-white">Blueprint Draft</h2>
 
@@ -352,10 +1052,13 @@ export function LessonBlueprintEditor({
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Blueprint key</label>
               <input
-                value={form.blueprint_key}
-                onChange={(event) => setForm((prev) => ({ ...prev, blueprint_key: event.target.value }))}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                value={managedBlueprintKey}
+                readOnly
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
               />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Managed by the system from the selected course and section.
+              </p>
             </div>
 
             <div>
@@ -418,41 +1121,1347 @@ export function LessonBlueprintEditor({
           </div>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Payload JSON</h2>
-            <div className="flex items-center gap-2">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(460px,0.9fr)]">
+          <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Learner Content</h2>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Edit the lesson content, bindings, and generated flow inputs without hand-writing the whole payload.
+                </p>
+              </div>
               {selectedLessonCapability && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setPayloadText(JSON.stringify(selectedLessonCapability.default_payload ?? {}, null, 2));
-                    setForm((prev) => ({
-                      ...prev,
-                      payload: selectedLessonCapability.default_payload ?? {},
-                    }));
-                  }}
+                  onClick={() => replacePayload(selectedLessonCapability.default_payload ?? {})}
                   className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
                 >
                   Use Backend Template
                 </button>
               )}
+            </div>
+
+            {form.lesson_kind === 'reading_practice' && (
+              <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">Reading Authoring</h3>
+                  <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">
+                    This lesson family is contract-driven. Reading currently requires exactly two vocabulary bindings and supports an optional dialogue context block.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Vocabulary A</label>
+                    <input
+                      value={getStringArray(editablePayload.targetVocabIds)[0] ?? ''}
+                      readOnly
+                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Vocabulary B</label>
+                    <input
+                      value={getStringArray(editablePayload.targetVocabIds)[1] ?? ''}
+                      readOnly
+                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                    />
+                  </div>
+                  <div className="lg:col-span-2 rounded-lg border border-emerald-300 bg-white p-3 dark:border-emerald-900 dark:bg-gray-900">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Vocabulary picker</div>
+                      <input
+                        value={vocabSearch}
+                        onChange={(event) => setVocabSearch(event.target.value)}
+                        placeholder="Search vocab external IDs"
+                        className="w-full max-w-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      />
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {getStringArray(editablePayload.targetVocabIds).map((externalId) => (
+                        <button
+                          key={externalId}
+                          type="button"
+                          onClick={() => removeVocabBinding(externalId)}
+                          className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                          title={externalId}
+                        >
+                          {selectedVocabLabels[externalId] || getVocabDisplayLabel(externalId)} ×
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {isVocabLibraryLoading ? (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Loading vocab…</div>
+                      ) : vocabLibraryItems.length === 0 ? (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">No vocab matches the current search.</div>
+                      ) : (
+                        vocabLibraryItems.map((item) => (
+                          <button
+                            key={item.external_id}
+                            type="button"
+                            onClick={() => {
+                              const current = getStringArray(editablePayload.targetVocabIds);
+                              if (current.includes(item.external_id)) return;
+                              updateTopLevelField('targetVocabIds', [...current, item.external_id].slice(0, 2));
+                            }}
+                            disabled={getStringArray(editablePayload.targetVocabIds).includes(item.external_id)}
+                            className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-left text-xs hover:bg-gray-50 disabled:opacity-50 dark:border-gray-800 dark:hover:bg-gray-800"
+                          >
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {getVocabDisplayLabel(item.external_id, item.lemma)}
+                            </span>
+                            <span className="text-gray-500 dark:text-gray-400">{item.external_id}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Subtitle</label>
+                    <input
+                      id="payload-subtitle"
+                      value={getString(editablePayload.subtitle)}
+                      onChange={(event) => updateTopLevelField('subtitle', event.target.value)}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Unit label</label>
+                    <input
+                      id="payload-unit-label"
+                      value={getString(editablePayload.unitLabel)}
+                      onChange={(event) => updateTopLevelField('unitLabel', event.target.value)}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Estimated minutes</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={editablePayload.estimatedMinutes ?? ''}
+                      onChange={(event) => updateTopLevelField('estimatedMinutes', Number(event.target.value || 0) || null)}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Exercise order version</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={editablePayload.exerciseOrderVersion ?? ''}
+                      onChange={(event) => updateTopLevelField('exerciseOrderVersion', Number(event.target.value || 1))}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div className="lg:col-span-2">
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Learning objectives</label>
+                    <textarea
+                      id="payload-learning-objectives"
+                      rows={3}
+                      value={toTextList(getStringArray(editablePayload.learningObjectives))}
+                      onChange={(event) => updateTopLevelField('learningObjectives', parseTokenList(event.target.value))}
+                      placeholder="One objective per line"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Thumbnail URL</label>
+                    <input
+                      id="payload-thumbnail-url"
+                      value={getString(editablePayload.thumbnailUrl)}
+                      onChange={(event) => updateTopLevelField('thumbnailUrl', event.target.value)}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Character image URL</label>
+                    <input
+                      value={getString(editablePayload.characterImageUrl)}
+                      onChange={(event) => updateTopLevelField('characterImageUrl', event.target.value)}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div className="lg:col-span-2 rounded-lg border border-emerald-300 bg-white p-3 dark:border-emerald-900 dark:bg-gray-900">
+                    <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Dialogue context</div>
+                    <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Prompt</label>
+                        <input
+                          value={getString(getObject(editablePayload.dialogueContext)?.promptText)}
+                          onChange={(event) =>
+                            updateTopLevelField('dialogueContext', {
+                              runtimeType: 'dialogueContext',
+                              ...(getObject(editablePayload.dialogueContext) ?? {}),
+                              promptText: event.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Translation hint</label>
+                        <input
+                          value={getString(getObject(editablePayload.dialogueContext)?.translationHint)}
+                          onChange={(event) =>
+                            updateTopLevelField('dialogueContext', {
+                              runtimeType: 'dialogueContext',
+                              ...(getObject(editablePayload.dialogueContext) ?? {}),
+                              translationHint: event.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        />
+                      </div>
+                      <div className="lg:col-span-2">
+                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Dialogue body</label>
+                        <textarea
+                          rows={3}
+                          value={getString(getObject(editablePayload.dialogueContext)?.body)}
+                          onChange={(event) =>
+                            updateTopLevelField('dialogueContext', {
+                              runtimeType: 'dialogueContext',
+                              ...(getObject(editablePayload.dialogueContext) ?? {}),
+                              body: event.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {form.lesson_kind === 'greetings_core' && (
+              <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/50 dark:bg-blue-950/20">
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-200">Greetings Authoring</h3>
+                  <p className="mt-1 text-xs text-blue-700 dark:text-blue-400">
+                    Greetings lessons are vocab-first. Use these fields to define the greeting set, supporting text, and visual presentation the structured runtime receives.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Subtitle</label>
+                    <input
+                      id="payload-subtitle"
+                      value={getString(editablePayload.subtitle)}
+                      onChange={(event) => updateTopLevelField('subtitle', event.target.value)}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Unit label</label>
+                    <input
+                      id="payload-unit-label"
+                      value={getString(editablePayload.unitLabel)}
+                      onChange={(event) => updateTopLevelField('unitLabel', event.target.value)}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Level tag</label>
+                    <input
+                      value={getString(editablePayload.levelTag)}
+                      onChange={(event) => updateTopLevelField('levelTag', event.target.value)}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Exercise order version</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={editablePayload.exerciseOrderVersion ?? ''}
+                      onChange={(event) => updateTopLevelField('exerciseOrderVersion', Number(event.target.value || 1))}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div className="lg:col-span-2">
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Vocabulary bindings</label>
+                    <div className="rounded-lg border border-gray-300 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                      <input
+                        value={vocabSearch}
+                        onChange={(event) => setVocabSearch(event.target.value)}
+                        placeholder="Search vocab external IDs"
+                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                      />
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {getStringArray(editablePayload.targetVocabIds).map((externalId) => (
+                          <button
+                            key={externalId}
+                            type="button"
+                            onClick={() => removeVocabBinding(externalId)}
+                            className="rounded-full border border-blue-300 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-800 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300"
+                            title={externalId}
+                          >
+                            {selectedVocabLabels[externalId] || getVocabDisplayLabel(externalId)} ×
+                          </button>
+                        ))}
+                      </div>
+                      <div className="mt-3 max-h-56 space-y-2 overflow-auto">
+                        {isVocabLibraryLoading ? (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Loading vocab…</div>
+                        ) : vocabLibraryItems.length === 0 ? (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">No vocab matches the current search.</div>
+                        ) : (
+                          vocabLibraryItems.map((item) => (
+                            <button
+                              key={item.external_id}
+                              type="button"
+                              onClick={() => addVocabBinding(item.external_id)}
+                              disabled={getStringArray(editablePayload.targetVocabIds).includes(item.external_id)}
+                              className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-left text-xs hover:bg-gray-50 disabled:opacity-50 dark:border-gray-800 dark:hover:bg-gray-900"
+                            >
+                              <span className="font-medium text-gray-900 dark:text-white">
+                                {getVocabDisplayLabel(item.external_id, item.lemma)}
+                              </span>
+                              <span className="text-gray-500 dark:text-gray-400">{item.external_id}</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="lg:col-span-2">
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Learning objectives</label>
+                    <textarea
+                      id="payload-learning-objectives"
+                      rows={3}
+                      value={toTextList(getStringArray(editablePayload.learningObjectives))}
+                      onChange={(event) => updateTopLevelField('learningObjectives', parseTokenList(event.target.value))}
+                      placeholder="One objective per line"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Thumbnail URL</label>
+                    <input
+                      id="payload-thumbnail-url"
+                      value={getString(editablePayload.thumbnailUrl)}
+                      onChange={(event) => updateTopLevelField('thumbnailUrl', event.target.value)}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Character image URL</label>
+                    <input
+                      value={getString(editablePayload.characterImageUrl)}
+                      onChange={(event) => updateTopLevelField('characterImageUrl', event.target.value)}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {form.lesson_kind === 'numbers_1_10' && (
+              <div className="mt-4 rounded-lg border border-violet-200 bg-violet-50 p-4 dark:border-violet-900/50 dark:bg-violet-950/20">
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-violet-900 dark:text-violet-200">Numbers Authoring</h3>
+                  <p className="mt-1 text-xs text-violet-700 dark:text-violet-400">
+                    This family is generated from the backend number inventory. The current runtime only supports the exact range 1-10, so these fields define generation rather than freeform lesson copy.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Range start</label>
+                    <input
+                      id="payload-range-start"
+                      type="number"
+                      value={getNumberArray(editablePayload.range)[0] ?? 1}
+                      onChange={(event) => {
+                        const current = getNumberArray(editablePayload.range);
+                        updateTopLevelField('range', [Number(event.target.value || 1), current[1] ?? 10]);
+                      }}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Range end</label>
+                    <input
+                      type="number"
+                      value={getNumberArray(editablePayload.range)[1] ?? 10}
+                      onChange={(event) => {
+                        const current = getNumberArray(editablePayload.range);
+                        updateTopLevelField('range', [current[0] ?? 1, Number(event.target.value || 10)]);
+                      }}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Unit label</label>
+                    <input
+                      id="payload-unit-label"
+                      value={getString(editablePayload.unitLabel)}
+                      onChange={(event) => updateTopLevelField('unitLabel', event.target.value)}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Exercise order version</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={editablePayload.exerciseOrderVersion ?? ''}
+                      onChange={(event) => updateTopLevelField('exerciseOrderVersion', Number(event.target.value || 1))}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {form.lesson_kind === 'tone_marks_drill' && (
+              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200">Tone Marks Authoring</h3>
+                  <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                    Tone marks are primarily generated from a live phonics contrast. Use fallback copy only when you need to override the generated intro/context around that contrast.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Contrast id</label>
+                    <input
+                      id="payload-contrast-id"
+                      value={getString(editablePayload.contrast_id)}
+                      readOnly
+                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Choose the contrast from the picker below.</p>
+                  </div>
+                  <div className="lg:col-span-2 rounded-lg border border-amber-300 bg-white p-3 dark:border-amber-900 dark:bg-gray-900">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Tone contrast picker</div>
+                      <input
+                        value={toneContrastSearch}
+                        onChange={(event) => setToneContrastSearch(event.target.value)}
+                        placeholder="Search title, glyph, or UUID"
+                        className="w-full max-w-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      />
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {isToneContrastsLoading ? (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Loading contrasts…</div>
+                      ) : filteredToneContrasts.length === 0 ? (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">No phonics contrasts match the current search.</div>
+                      ) : (
+                        filteredToneContrasts.map((item: any) => (
+                          <button
+                            key={String(item.id)}
+                            type="button"
+                            onClick={() => updateTopLevelField('contrast_id', String(item.id))}
+                            className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-left text-xs hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
+                          >
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {item.title || `${item.letter_a_glyph} vs ${item.letter_b_glyph}`}
+                            </span>
+                            <span className="text-gray-500 dark:text-gray-400">
+                              {item.letter_a_glyph} / {item.letter_b_glyph}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Unit label</label>
+                    <input
+                      id="payload-unit-label"
+                      value={getString(editablePayload.unitLabel)}
+                      onChange={(event) => updateTopLevelField('unitLabel', event.target.value)}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Subtitle</label>
+                    <input
+                      id="payload-subtitle"
+                      value={getString(editablePayload.subtitle)}
+                      onChange={(event) => updateTopLevelField('subtitle', event.target.value)}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Exercise order version</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={editablePayload.exerciseOrderVersion ?? ''}
+                      onChange={(event) => updateTopLevelField('exerciseOrderVersion', Number(event.target.value || 1))}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div className="lg:col-span-2">
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Fallback learning objectives</label>
+                    <textarea
+                      id="payload-learning-objectives"
+                      rows={3}
+                      value={toTextList(getStringArray(editablePayload.learningObjectives))}
+                      onChange={(event) => updateTopLevelField('learningObjectives', parseTokenList(event.target.value))}
+                      placeholder="Used only when generated tone content needs supporting copy"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <div>
+                <label htmlFor="payload-lesson-id" className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Lesson id</label>
+                <input
+                  id="payload-lesson-id"
+                  value={mode === 'create' ? form.blueprint_key : getString(editablePayload.id) || form.blueprint_key}
+                  readOnly
+                  className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Managed by the system to match the lesson blueprint identity.
+                </p>
+              </div>
+              <div>
+                <label htmlFor="payload-title" className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>
+                <input
+                  id="payload-title"
+                  value={getString(editablePayload.title)}
+                  onChange={(event) => updateTopLevelField('title', event.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Mode</label>
+                <input
+                  id="payload-mode"
+                  value={getString(editablePayload.mode)}
+                  onChange={(event) => updateTopLevelField('mode', event.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Flow mode</label>
+                <input
+                  id="payload-flow-mode"
+                  value={getString(editablePayload.flowMode)}
+                  onChange={(event) => updateTopLevelField('flowMode', event.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Launch route</label>
+                <StyledSelect
+                  value={
+                    getString(editablePayload.launchRoute) ||
+                    getString(editablePayload.launch_route) ||
+                    'structuredLesson'
+                  }
+                  onChange={(value) => updateTopLevelField('launchRoute', value)}
+                  options={lessonLaunchRouteOptions}
+                />
+              </div>
+              <div className="lg:col-span-2">
+                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
+                <textarea
+                  id="payload-description"
+                  value={getString(editablePayload.description)}
+                  onChange={(event) => updateTopLevelField('description', event.target.value)}
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+              {form.lesson_kind !== 'reading_practice' && form.lesson_kind !== 'greetings_core' && (
+                <div className="lg:col-span-2">
+                  <label htmlFor="payload-target-vocab" className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+                    Vocabulary bindings
+                  </label>
+                  <div className="rounded-lg border border-gray-300 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                    <input
+                      value={vocabSearch}
+                      onChange={(event) => setVocabSearch(event.target.value)}
+                      placeholder="Search vocab external IDs"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    />
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {getStringArray(editablePayload.targetVocabIds).map((externalId) => (
+                        <button
+                          key={externalId}
+                          type="button"
+                          onClick={() => removeVocabBinding(externalId)}
+                          className="rounded-full border border-gray-300 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                          title={externalId}
+                        >
+                          {selectedVocabLabels[externalId] || getVocabDisplayLabel(externalId)} ×
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-3 max-h-48 space-y-2 overflow-auto">
+                      {isVocabLibraryLoading ? (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Loading vocab…</div>
+                      ) : vocabLibraryItems.length === 0 ? (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">No vocab matches the current search.</div>
+                      ) : (
+                        vocabLibraryItems.map((item) => (
+                          <button
+                            key={item.external_id}
+                            type="button"
+                            onClick={() => addVocabBinding(item.external_id)}
+                            disabled={getStringArray(editablePayload.targetVocabIds).includes(item.external_id)}
+                            className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-left text-xs hover:bg-gray-50 disabled:opacity-50 dark:border-gray-800 dark:hover:bg-gray-900"
+                          >
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {getVocabDisplayLabel(item.external_id, item.lemma)}
+                            </span>
+                            <span className="text-gray-500 dark:text-gray-400">{item.external_id}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Hero image URL</label>
+                <div className="flex gap-2">
+                  <input
+                    id="payload-hero-image-url"
+                    value={getString(editablePayload.heroImageUrl)}
+                    readOnly
+                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => openAssetPicker('heroImageUrl', 'image/*', 'Image')}
+                    disabled={uploadingFieldPath === 'heroImageUrl'}
+                    className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                  >
+                    {uploadingFieldPath === 'heroImageUrl'
+                      ? `Uploading ${uploadProgressByField.heroImageUrl ?? 0}%`
+                      : 'Upload'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssetLibraryTargetFieldPath('heroImageUrl')}
+                    className={`rounded-lg border px-3 py-2 text-xs font-medium ${
+                      assetLibraryTargetFieldPath === 'heroImageUrl'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                    }`}
+                  >
+                    Library
+                  </button>
+                </div>
+                {getString(editablePayload.heroImageUrl) ? (
+                  <div className="mt-3">
+                    <MediaLinkPreview url={getString(editablePayload.heroImageUrl)} label="Hero image" kind="image" compact />
+                  </div>
+                ) : null}
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Cover image URL</label>
+                <div className="flex gap-2">
+                  <input
+                    id="payload-cover-image-url"
+                    value={getString(editablePayload.coverImageUrl)}
+                    readOnly
+                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => openAssetPicker('coverImageUrl', 'image/*', 'Image')}
+                    disabled={uploadingFieldPath === 'coverImageUrl'}
+                    className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                  >
+                    {uploadingFieldPath === 'coverImageUrl'
+                      ? `Uploading ${uploadProgressByField.coverImageUrl ?? 0}%`
+                      : 'Upload'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssetLibraryTargetFieldPath('coverImageUrl')}
+                    className={`rounded-lg border px-3 py-2 text-xs font-medium ${
+                      assetLibraryTargetFieldPath === 'coverImageUrl'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                    }`}
+                  >
+                    Library
+                  </button>
+                </div>
+                {getString(editablePayload.coverImageUrl) ? (
+                  <div className="mt-3">
+                    <MediaLinkPreview url={getString(editablePayload.coverImageUrl)} label="Cover image" kind="image" compact />
+                  </div>
+                ) : null}
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Image URL</label>
+                <div className="flex gap-2">
+                  <input
+                    id="payload-image-url"
+                    value={getString(editablePayload.imageUrl)}
+                    readOnly
+                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => openAssetPicker('imageUrl', 'image/*', 'Image')}
+                    disabled={uploadingFieldPath === 'imageUrl'}
+                    className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                  >
+                    {uploadingFieldPath === 'imageUrl'
+                      ? `Uploading ${uploadProgressByField.imageUrl ?? 0}%`
+                      : 'Upload'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssetLibraryTargetFieldPath('imageUrl')}
+                    className={`rounded-lg border px-3 py-2 text-xs font-medium ${
+                      assetLibraryTargetFieldPath === 'imageUrl'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                    }`}
+                  >
+                    Library
+                  </button>
+                </div>
+                {getString(editablePayload.imageUrl) ? (
+                  <div className="mt-3">
+                    <MediaLinkPreview url={getString(editablePayload.imageUrl)} label="Image" kind="image" compact />
+                  </div>
+                ) : null}
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Audio URL</label>
+                <div className="flex gap-2">
+                  <input
+                    id="payload-audio-url"
+                    value={getString(editablePayload.audioUrl)}
+                    readOnly
+                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => openAssetPicker('audioUrl', 'audio/*', 'Audio')}
+                    disabled={uploadingFieldPath === 'audioUrl'}
+                    className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                  >
+                    {uploadingFieldPath === 'audioUrl'
+                      ? `Uploading ${uploadProgressByField.audioUrl ?? 0}%`
+                      : 'Upload'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssetLibraryTargetFieldPath('audioUrl')}
+                    className={`rounded-lg border px-3 py-2 text-xs font-medium ${
+                      assetLibraryTargetFieldPath === 'audioUrl'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                    }`}
+                  >
+                    Library
+                  </button>
+                </div>
+                {getString(editablePayload.audioUrl) ? (
+                  <div className="mt-3">
+                    <MediaLinkPreview url={getString(editablePayload.audioUrl)} label="Audio" kind="audio" compact />
+                  </div>
+                ) : null}
+              </div>
+              <div className="flex items-center gap-3 lg:col-span-2">
+                <input
+                  id="include-culture-tip"
+                  type="checkbox"
+                  checked={getBoolean(editablePayload.includeCultureTip)}
+                  onChange={(event) => updateTopLevelField('includeCultureTip', event.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <label htmlFor="include-culture-tip" className="text-sm text-gray-700 dark:text-gray-200">
+                  Include culture tip
+                </label>
+              </div>
+              {form.lesson_kind === 'numbers_1_10' && (
+                <div className="grid grid-cols-2 gap-3 lg:col-span-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Range start</label>
+                    <input
+                      type="number"
+                      value={getNumberArray(editablePayload.range)[0] ?? ''}
+                      onChange={(event) => {
+                        const current = getNumberArray(editablePayload.range);
+                        const end = current[1] ?? 10;
+                        updateTopLevelField('range', [Number(event.target.value || 1), end]);
+                      }}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Range end</label>
+                    <input
+                      type="number"
+                      value={getNumberArray(editablePayload.range)[1] ?? ''}
+                      onChange={(event) => {
+                        const current = getNumberArray(editablePayload.range);
+                        const start = current[0] ?? 1;
+                        updateTopLevelField('range', [start, Number(event.target.value || 10)]);
+                      }}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                </div>
+              )}
+              {form.lesson_kind === 'tone_marks_drill' && (
+                <div className="lg:col-span-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-950/20">
+                  <p className="text-xs font-medium text-amber-800 dark:text-amber-300">Tone marks authoring</p>
+                  <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                    Use <span className="font-semibold">contrast_id</span> plus optional audio/image assets to drive the phonics contrast flow.
+                  </p>
+                </div>
+              )}
+              {form.lesson_kind === 'numbers_1_10' && (
+                <div className="lg:col-span-2 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900/50 dark:bg-blue-950/20">
+                  <p className="text-xs font-medium text-blue-800 dark:text-blue-300">Numbers authoring</p>
+                  <p className="mt-1 text-xs text-blue-700 dark:text-blue-400">
+                    Range controls drive generated number batches. Add explicit steps only for custom intros, checks, or media-backed overrides.
+                  </p>
+                </div>
+              )}
+              {form.lesson_kind === 'reading_practice' && (
+                <div className="lg:col-span-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+                  <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">Reading authoring</p>
+                  <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">
+                    Vocabulary bindings and flow mode generate the learner path. Use steps for explicit prompts, dialogue text, or media-backed checkpoints.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Asset Library</h3>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Reuse already uploaded assets, or upload directly into the selected media field.
+                  </p>
+                </div>
+                <div className="min-w-[220px]">
+                  <div className="mb-1 text-right text-xs text-gray-500 dark:text-gray-400">Target field</div>
+                  <StyledSelect
+                    value={assetLibraryTargetFieldPath || ''}
+                    onChange={(event) => setAssetLibraryTargetFieldPath(event.target.value)}
+                    options={mediaFieldOptions.map((option) => ({
+                      value: option.value,
+                      label: option.label,
+                    }))}
+                    placeholder=""
+                    fullWidth
+                  />
+                </div>
+              </div>
+
+              <div
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setIsAssetDropActive(true);
+                }}
+                onDragLeave={() => setIsAssetDropActive(false)}
+                onDrop={(event) => void handleAssetDrop(event)}
+                className={`mt-4 rounded-lg border-2 border-dashed px-4 py-5 text-sm transition ${
+                  isAssetDropActive
+                    ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/20 dark:text-brand-300'
+                    : 'border-gray-300 bg-white text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400'
+                }`}
+              >
+                {assetLibraryTargetFieldPath
+                  ? `Drop an ${inferAssetKindFromFieldPath(assetLibraryTargetFieldPath)} file here to upload directly to ${assetLibraryTargetFieldPath}.`
+                  : 'Choose the target field here, then drop a file to upload.'}
+              </div>
+
+              <div className="mt-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Existing uploaded assets
+                </h4>
+                {Object.entries(mediaBindings).length === 0 ? (
+                  <div className="mt-3 rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                    No media bindings yet for this blueprint payload.
+                  </div>
+                ) : (
+                  <div className="mt-3 space-y-3">
+                    {Object.entries(mediaBindings).map(([fieldPath, binding]) => {
+                      const isCompatible = assetLibraryTargetFieldPath
+                        ? isMediaBindingCompatible(binding, assetLibraryTargetFieldPath)
+                        : false;
+                      return (
+                        <div
+                          key={fieldPath}
+                          className="rounded-lg border border-gray-200 bg-white px-3 py-3 dark:border-gray-800 dark:bg-gray-900"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">{fieldPath}</div>
+                              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {binding.file_name || 'Unnamed asset'} • {(binding.asset_kind || inferAssetKindFromFieldPath(fieldPath)).toUpperCase()}
+                              </div>
+                              <div className="mt-3">
+                                <MediaLinkPreview
+                                  url={binding.asset_url}
+                                  label={binding.file_name || fieldPath}
+                                  kind={binding.asset_kind || inferAssetKindFromFieldPath(fieldPath)}
+                                  compact
+                                />
+                              </div>
+                            </div>
+                            {assetLibraryTargetFieldPath && (
+                              <button
+                                type="button"
+                                onClick={() => reuseAssetFromLibrary(fieldPath, assetLibraryTargetFieldPath)}
+                                disabled={!isCompatible}
+                                className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300"
+                              >
+                                Reuse
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {assetLibraryTargetFieldPath && (
+                  <div className="mt-4 rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm dark:border-gray-800 dark:bg-gray-900">
+                    <div className="font-medium text-gray-900 dark:text-white">Compatible assets for target</div>
+                    <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {compatibleLibraryAssets.length} compatible asset{compatibleLibraryAssets.length === 1 ? '' : 's'} for {assetLibraryTargetFieldPath}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Global asset browser
+                    </h4>
+                    <Link
+                      href="/content/curriculum/assets"
+                      className="mt-1 inline-flex text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200"
+                    >
+                      Open full asset library
+                    </Link>
+                  </div>
+                  <div className="flex w-full max-w-md gap-2">
+                    <StyledSelect
+                      value={assetLibraryScope}
+                      onChange={(event) => setAssetLibraryScope(event.target.value as 'same_course' | 'all_courses')}
+                      options={[
+                        { value: 'same_course', label: 'Same course' },
+                        { value: 'all_courses', label: 'All courses' },
+                      ]}
+                      placeholder=""
+                      fullWidth
+                    />
+                    <input
+                      value={globalAssetSearch}
+                      onChange={(event) => setGlobalAssetSearch(event.target.value)}
+                      placeholder="Search blueprint, file, field path"
+                      className="w-full max-w-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                {isGlobalAssetLibraryLoading ? (
+                  <div className="mt-3 rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                    Loading reusable assets…
+                  </div>
+                ) : globalAssetLibraryItems.length === 0 ? (
+                  <div className="mt-3 rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                    No reusable assets found for the current course and filter.
+                  </div>
+                ) : (
+                  <div className="mt-3 space-y-3">
+                    {globalAssetLibraryItems.map((item) => {
+                      const isCompatible = assetLibraryTargetFieldPath
+                        ? isMediaBindingCompatible(item.binding, assetLibraryTargetFieldPath)
+                        : false;
+                      return (
+                        <div
+                          key={`${item.blueprint_id}:${item.field_path}:${item.binding.storage_key}`}
+                          className="rounded-lg border border-gray-200 bg-white px-3 py-3 dark:border-gray-800 dark:bg-gray-900"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                {item.binding.file_name || item.field_path}
+                              </div>
+                              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {item.blueprint_key} • {item.field_path} • {(item.binding.asset_kind || inferAssetKindFromFieldPath(item.field_path)).toUpperCase()}
+                              </div>
+                              <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                                {item.course_key || 'Unknown course'}
+                                {assetLibraryScope === 'all_courses' && selectedCourse?.course_key && item.course_key !== selectedCourse.course_key
+                                  ? ' • cross-course'
+                                  : ''}
+                              </div>
+                              <div className="mt-3">
+                                <MediaLinkPreview
+                                  url={item.binding.asset_url}
+                                  label={item.binding.file_name || item.field_path}
+                                  kind={item.binding.asset_kind || inferAssetKindFromFieldPath(item.field_path)}
+                                  compact
+                                />
+                              </div>
+                            </div>
+                            {assetLibraryTargetFieldPath && (
+                              <button
+                                type="button"
+                                onClick={() => reuseGlobalLibraryAsset(item, assetLibraryTargetFieldPath)}
+                                disabled={!isCompatible}
+                                className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300"
+                              >
+                                Reuse
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Step Authoring</h3>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Use this for lesson families that define explicit learner steps. Generated families will still show
+                    their runtime flow preview below.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addStep}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:hover:bg-white/[0.03]"
+                >
+                  Add Step
+                </button>
+                {starterSteps && (
+                  <button
+                    type="button"
+                    onClick={() => updateTopLevelField('steps', starterSteps)}
+                    className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300"
+                  >
+                    Load {form.lesson_kind.replaceAll('_', ' ')} starter steps
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-4 space-y-4">
+                {editableSteps.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                    No explicit steps are defined in this payload yet.
+                  </div>
+                ) : (
+                  editableSteps.map((step, index) => (
+                    <div
+                      key={`${getString(step.stepId) || getString(step.type) || 'step'}-${index}`}
+                      className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">Step {index + 1}</div>
+                        <button
+                          type="button"
+                          onClick={() => removeStep(index)}
+                          className="rounded-lg border border-red-300 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</label>
+                          <StyledSelect
+                            value={getString(step.type)}
+                            onChange={(event) => updateStepField(index, 'type', event.target.value)}
+                            options={stepTypeOptions}
+                            placeholder=""
+                            fullWidth
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Step id</label>
+                          <input
+                            value={getString(step.stepId)}
+                            onChange={(event) => updateStepField(index, 'stepId', event.target.value)}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                          />
+                        </div>
+                        <div className="lg:col-span-2">
+                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>
+                          <input
+                            value={getString(step.title)}
+                            onChange={(event) => updateStepField(index, 'title', event.target.value)}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                          />
+                        </div>
+                        <div className="lg:col-span-2">
+                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Prompt / body</label>
+                          <textarea
+                            rows={3}
+                            value={
+                              getString(step.prompt) ||
+                              getString(step.body) ||
+                              getString(step.text) ||
+                              getString(step.instruction)
+                            }
+                            onChange={(event) => {
+                              const nextValue = event.target.value;
+                              updatePayload((prev) => {
+                                const steps = getObjectArray(prev.steps);
+                                const nextSteps = [...steps];
+                                const existing = { ...(nextSteps[index] ?? {}) };
+                                delete existing.prompt;
+                                delete existing.body;
+                                delete existing.text;
+                                delete existing.instruction;
+                                if (nextValue.trim()) {
+                                  existing.prompt = nextValue;
+                                }
+                                nextSteps[index] = existing;
+                                return { ...prev, steps: nextSteps };
+                              });
+                            }}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                          />
+                        </div>
+                        {form.lesson_kind === 'reading_practice' && (
+                          <>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Vocab id</label>
+                              <input
+                                value={getString(step.vocabId)}
+                                onChange={(event) => updateStepField(index, 'vocabId', event.target.value)}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Expected answer</label>
+                              <input
+                                value={getString(step.expectedAnswer)}
+                                onChange={(event) => updateStepField(index, 'expectedAnswer', event.target.value)}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                              />
+                            </div>
+                            <div className="lg:col-span-2">
+                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Choices</label>
+                              <textarea
+                                rows={2}
+                                value={toTextList(getStringArray(step.choices))}
+                                onChange={(event) => updateStepField(index, 'choices', parseTokenList(event.target.value))}
+                                placeholder="One choice per line"
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                              />
+                            </div>
+                          </>
+                        )}
+                        {form.lesson_kind === 'greetings_core' && (
+                          <>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Vocab id</label>
+                              <input
+                                value={getString(step.vocabId)}
+                                onChange={(event) => updateStepField(index, 'vocabId', event.target.value)}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Context tag</label>
+                              <input
+                                value={getString(step.contextTag)}
+                                onChange={(event) => updateStepField(index, 'contextTag', event.target.value)}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                              />
+                            </div>
+                          </>
+                        )}
+                        {form.lesson_kind === 'numbers_1_10' && (
+                          <>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Number value</label>
+                              <input
+                                type="number"
+                                value={step.numberValue ?? ''}
+                                onChange={(event) => updateStepField(index, 'numberValue', Number(event.target.value || 0) || null)}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Display numeral</label>
+                              <input
+                                value={getString(step.displayNumeral)}
+                                onChange={(event) => updateStepField(index, 'displayNumeral', event.target.value)}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                              />
+                            </div>
+                          </>
+                        )}
+                        {form.lesson_kind === 'tone_marks_drill' && (
+                          <>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Contrast side</label>
+                              <StyledSelect
+                                value={getString(step.contrastSide)}
+                                onChange={(event) => updateStepField(index, 'contrastSide', event.target.value)}
+                                options={[
+                                  { value: '', label: 'Unspecified' },
+                                  { value: 'a', label: 'Side A' },
+                                  { value: 'b', label: 'Side B' },
+                                ]}
+                                placeholder=""
+                                fullWidth
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Token external id</label>
+                              <input
+                                value={getString(step.tokenExternalId)}
+                                onChange={(event) => updateStepField(index, 'tokenExternalId', event.target.value)}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                              />
+                            </div>
+                          </>
+                        )}
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Image URL</label>
+                          <div className="flex gap-2">
+                            <input
+                              value={getString(step.imageUrl)}
+                              readOnly
+                              className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => openAssetPicker(`steps[${index}].imageUrl`, 'image/*', 'Image')}
+                              disabled={uploadingFieldPath === `steps[${index}].imageUrl`}
+                              className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                            >
+                              {uploadingFieldPath === `steps[${index}].imageUrl`
+                                ? `Uploading ${uploadProgressByField[`steps[${index}].imageUrl`] ?? 0}%`
+                                : 'Upload'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setAssetLibraryTargetFieldPath(`steps[${index}].imageUrl`)}
+                              className={`rounded-lg border px-3 py-2 text-xs font-medium ${
+                                assetLibraryTargetFieldPath === `steps[${index}].imageUrl`
+                                  ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                              }`}
+                            >
+                              Library
+                            </button>
+                          </div>
+                          {getString(step.imageUrl) ? (
+                            <div className="mt-3">
+                              <MediaLinkPreview url={getString(step.imageUrl)} label={`Step ${index + 1} image`} kind="image" compact />
+                            </div>
+                          ) : null}
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Audio URL</label>
+                          <div className="flex gap-2">
+                            <input
+                              value={getString(step.audioUrl)}
+                              readOnly
+                              className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => openAssetPicker(`steps[${index}].audioUrl`, 'audio/*', 'Audio')}
+                              disabled={uploadingFieldPath === `steps[${index}].audioUrl`}
+                              className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                            >
+                              {uploadingFieldPath === `steps[${index}].audioUrl`
+                                ? `Uploading ${uploadProgressByField[`steps[${index}].audioUrl`] ?? 0}%`
+                                : 'Upload'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setAssetLibraryTargetFieldPath(`steps[${index}].audioUrl`)}
+                              className={`rounded-lg border px-3 py-2 text-xs font-medium ${
+                                assetLibraryTargetFieldPath === `steps[${index}].audioUrl`
+                                  ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                              }`}
+                            >
+                              Library
+                            </button>
+                          </div>
+                          {getString(step.audioUrl) ? (
+                            <div className="mt-3">
+                              <MediaLinkPreview url={getString(step.audioUrl)} label={`Step ${index + 1} audio`} kind="audio" compact />
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 xl:sticky xl:top-6 xl:self-start">
+            <LessonRuntimePreview
+              heading="Learner Preview"
+              blueprint={{
+                blueprint_key: form.blueprint_key || getString(editablePayload.id) || 'draft_blueprint',
+                lesson_kind: form.lesson_kind,
+                payload: editablePayload,
+                status: mode,
+              }}
+              targetLanguageId={blueprint?.target_language_id || selectedCourse?.target_language_id || null}
+            />
+          </div>
+          </div>
+
+          <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="raw-payload-json" className="text-base font-semibold text-gray-900 dark:text-white">Raw Payload JSON</label>
               <button
                 type="button"
-                onClick={() => setPayloadText((prev) => formatJson(prev))}
+                onClick={() => {
+                  const formatted = formatJson(payloadText);
+                  setPayloadText(formatted);
+                  const parsed = safeParsePayload(formatted);
+                  if (parsed) {
+                    setLastValidPayload(parsed);
+                    setForm((prev) => ({ ...prev, payload: parsed }));
+                  }
+                }}
                 className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
               >
                 Format JSON
               </button>
             </div>
-          </div>
 
-          <textarea
-            value={payloadText}
-            onChange={(event) => setPayloadText(event.target.value)}
-            spellCheck={false}
-            className="mt-4 h-[420px] w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-3 font-mono text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
-          />
+            <textarea
+              id="raw-payload-json"
+              value={payloadText}
+              onChange={(event) => handlePayloadTextChange(event.target.value)}
+              spellCheck={false}
+              className="mt-4 h-[360px] w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-3 font-mono text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+            />
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
@@ -8,12 +8,23 @@ import Alert from '@/components/ui/alert/SimpleAlert';
 import Toast from '@/components/ui/toast/Toast';
 import { ConfirmationModal } from '@/components/ui/modal/ConfirmationModal';
 import StatusBadge from '@/components/admin/StatusBadge';
+import { CourseEditorModal } from '@/components/admin/curriculum/CourseEditorModal';
 
 import ValidationResultViewer from '@/components/admin/curriculum/ValidationResultViewer';
 import { useAdminCourse, useCourseCurriculum } from '@/hooks/useApi';
 import { useCurriculumManagement } from '@/hooks/useCurriculumManagement';
-import { markSectionsComingSoon } from '@/lib/adminCurriculumApi';
-import type { CurriculumSection, CurriculumUnit } from '@/types/curriculum';
+import {
+  deleteAdminCourse,
+  markSectionsComingSoon,
+  updateAdminCourse,
+  updateCourseQaCheck,
+} from '@/lib/adminCurriculumApi';
+import type {
+  CourseDraftUpsertRequest,
+  CurriculumQaCheck,
+  CurriculumSection,
+  CurriculumUnit,
+} from '@/types/curriculum';
 
 type SectionPublishRow = {
   unit: CurriculumUnit;
@@ -42,6 +53,17 @@ function getStatusBadge(status: string) {
   if (status === 'published') return <StatusBadge status="published" />;
   if (status === 'draft') return <StatusBadge status="draft" />;
   if (status === 'archived') return <StatusBadge status="archived" />;
+  return <StatusBadge status="info" label={status || 'Unknown'} />;
+}
+
+function getQaStatusBadge(status: string) {
+  if (status === 'verified') return <StatusBadge status="success" label="Verified" />;
+  if (status === 'ready_to_test') return <StatusBadge status="active" label="Ready to test" />;
+  if (status === 'partially_testable') return <StatusBadge status="warning" label="Partially testable" />;
+  if (status === 'passed') return <StatusBadge status="success" label="Passed" />;
+  if (status === 'pending_manual') return <StatusBadge status="pending" label="Pending manual" />;
+  if (status === 'not_applicable') return <StatusBadge status="info" label="N/A" />;
+  if (status === 'blocked') return <StatusBadge status="danger" label="Blocked" />;
   return <StatusBadge status="info" label={status || 'Unknown'} />;
 }
 
@@ -78,10 +100,49 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
   const [confirmUnpublishOpen, setConfirmUnpublishOpen] = useState(false);
   const [pendingSectionIds, setPendingSectionIds] = useState<string[]>([]);
   const [isBulkMarkingComingSoon, setIsBulkMarkingComingSoon] = useState(false);
+  const [qaDrafts, setQaDrafts] = useState<Record<string, { notes: string; build_version: string }>>({});
+  const [pendingQaKey, setPendingQaKey] = useState<string | null>(null);
+  const [isCourseEditorOpen, setIsCourseEditorOpen] = useState(false);
+  const [isCourseSaving, setIsCourseSaving] = useState(false);
+  const [courseEditorError, setCourseEditorError] = useState('');
+  const [isDeletingCourse, setIsDeletingCourse] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const course = adminData?.course;
   const validation = adminData?.validation;
-  const canPublish = !!validation?.can_publish;
+  const qaChecks = useMemo(() => adminData?.qa_checks ?? [], [adminData]);
+  const manualQaChecks = qaChecks.filter((check) => check.source === 'manual');
+  const canPublish = !!adminData?.can_publish_course;
+  const qaDraftSignature = useMemo(
+    () =>
+      JSON.stringify(
+        qaChecks.map((check) => ({
+          key: check.key,
+          notes: check.notes || '',
+          build_version: check.build_version || '',
+        }))
+      ),
+    [qaChecks]
+  );
+
+  useEffect(() => {
+    const nextDrafts: Record<string, { notes: string; build_version: string }> = {};
+    qaChecks.forEach((check) => {
+      nextDrafts[check.key] = {
+        notes: check.notes || '',
+        build_version: check.build_version || '',
+      };
+    });
+
+    setQaDrafts((current) => {
+      const currentSignature = JSON.stringify(current);
+      const nextSignature = JSON.stringify(nextDrafts);
+      if (currentSignature === nextSignature) {
+        return current;
+      }
+      return nextDrafts;
+    });
+  }, [qaChecks, qaDraftSignature]);
   const sectionRows = useMemo<SectionPublishRow[]>(() => {
     if (!curriculum) return [];
 
@@ -177,6 +238,27 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
     }
   };
 
+  const handleQaUpdate = async (check: CurriculumQaCheck, status: CurriculumQaCheck['status']) => {
+    setErrorMessage('');
+    setSuccessMessage('');
+    setPendingQaKey(check.key);
+
+    try {
+      const draft = qaDrafts[check.key] || { notes: '', build_version: '' };
+      const next = await updateCourseQaCheck(courseId, check.key, {
+        status,
+        notes: draft.notes || null,
+        build_version: draft.build_version || null,
+      });
+      await mutateAdmin(next, { revalidate: false });
+      setSuccessMessage(`${check.label} updated.`);
+    } catch (err: any) {
+      setErrorMessage(formatCourseActionError(err) || 'Failed to update QA check');
+    } finally {
+      setPendingQaKey(null);
+    }
+  };
+
   const handlePublish = async () => {
     setErrorMessage('');
     setSuccessMessage('');
@@ -203,6 +285,42 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
       await refreshAdmin();
     } catch (err: any) {
       setErrorMessage(formatCourseActionError(err) || 'Failed to unpublish course');
+    }
+  };
+
+  const handleCourseSave = async (payload: CourseDraftUpsertRequest) => {
+    setIsCourseSaving(true);
+    setCourseEditorError('');
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const next = await updateAdminCourse(courseId, payload);
+      await mutateAdmin(next, { revalidate: false });
+      setIsCourseEditorOpen(false);
+      setSuccessMessage('Course metadata updated.');
+    } catch (err: any) {
+      const message = formatCourseActionError(err) || 'Failed to update course';
+      setCourseEditorError(message);
+      setErrorMessage(message);
+    } finally {
+      setIsCourseSaving(false);
+    }
+  };
+
+  const handleDeleteCourse = async () => {
+    setIsDeletingCourse(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      await deleteAdminCourse(courseId);
+      setSuccessMessage('Course deleted.');
+      if (typeof window !== 'undefined') {
+        window.location.assign('/content/curriculum/courses');
+      }
+    } catch (err: any) {
+      setErrorMessage(formatCourseActionError(err) || 'Failed to delete course');
+    } finally {
+      setIsDeletingCourse(false);
     }
   };
 
@@ -241,6 +359,13 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
 
         <div className="flex flex-wrap gap-2">
           <button
+            onClick={() => setIsCourseEditorOpen(true)}
+            disabled={isValidating || isPublishing || isUnpublishing || isCourseSaving}
+            className="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+          >
+            Edit Course
+          </button>
+          <button
             onClick={handleValidate}
             disabled={isValidating || isPublishing || isUnpublishing}
             className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-brand-500 dark:hover:bg-brand-600"
@@ -264,6 +389,13 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
           >
             {isUnpublishing ? 'Unpublishing…' : 'Unpublish'}
           </button>
+          <button
+            onClick={() => setConfirmDeleteOpen(true)}
+            disabled={isValidating || isPublishing || isUnpublishing || isDeletingCourse}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-700 rounded-lg hover:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isDeletingCourse ? 'Deleting…' : 'Delete'}
+          </button>
         </div>
       </div>
 
@@ -278,6 +410,12 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
         <Alert variant="warning">
           This course is still marked as published in the database, but it no longer passes current publish rules.
           Fix the blocked sections below, then validate again before republishing.
+        </Alert>
+      )}
+
+      {validation?.can_publish && !canPublish && (
+        <Alert variant="warning">
+          Server validation passes, but publish is still blocked until the required manual QA checks are signed off below.
         </Alert>
       )}
 
@@ -419,6 +557,116 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
             </div>
           </dl>
         </div>
+      </div>
+
+      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Manual QA Workflow</h2>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Persistent publish signoff for device verification. Publish now requires both server validation and these manual checks.
+            </p>
+          </div>
+          {adminData?.qa_status && getQaStatusBadge(adminData.qa_status)}
+        </div>
+
+        {manualQaChecks.length === 0 ? (
+          <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+            No manual QA checks are currently defined for this course.
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {manualQaChecks.map((check) => {
+              const draft = qaDrafts[check.key] || { notes: '', build_version: '' };
+              const disabled = pendingQaKey === check.key || check.status === 'blocked';
+
+              return (
+                <div
+                  key={check.key}
+                  className="rounded-lg border border-gray-200 p-3 dark:border-gray-800"
+                >
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {check.label}
+                        </div>
+                        {getQaStatusBadge(check.status)}
+                      </div>
+                      <div className="mt-1 text-xs font-mono text-gray-500 dark:text-gray-400">
+                        {check.key}
+                      </div>
+                      {check.detail && (
+                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{check.detail}</p>
+                      )}
+                      {check.verified_at && (
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                          Verified at {new Date(check.verified_at).toLocaleString()}
+                          {check.verified_by ? ` by ${check.verified_by}` : ''}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid min-w-[280px] gap-2">
+                      <input
+                        value={draft.build_version}
+                        onChange={(e) =>
+                          setQaDrafts((prev) => ({
+                            ...prev,
+                            [check.key]: {
+                              ...draft,
+                              build_version: e.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="Build / device label"
+                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200"
+                      />
+                      <textarea
+                        value={draft.notes}
+                        onChange={(e) =>
+                          setQaDrafts((prev) => ({
+                            ...prev,
+                            [check.key]: {
+                              ...draft,
+                              notes: e.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="Verification notes"
+                        rows={2}
+                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => handleQaUpdate(check, 'passed')}
+                          disabled={disabled}
+                          className="rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {pendingQaKey === check.key ? 'Saving…' : 'Mark Passed'}
+                        </button>
+                        <button
+                          onClick={() => handleQaUpdate(check, 'pending_manual')}
+                          disabled={disabled}
+                          className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                        >
+                          Reset Pending
+                        </button>
+                        <button
+                          onClick={() => handleQaUpdate(check, 'not_applicable')}
+                          disabled={disabled}
+                          className="rounded-lg border border-sky-300 px-3 py-2 text-xs font-medium text-sky-700 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-800 dark:text-sky-300 dark:hover:bg-sky-950/30"
+                        >
+                          Mark N/A
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <ValidationResultViewer validation={validation} />
@@ -595,6 +843,35 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
         cancelText="Cancel"
         variant="danger"
         isLoading={isUnpublishing}
+      />
+
+      <ConfirmationModal
+        isOpen={confirmDeleteOpen}
+        onClose={() => setConfirmDeleteOpen(false)}
+        onConfirm={async () => {
+          await handleDeleteCourse();
+          setConfirmDeleteOpen(false);
+        }}
+        title="Delete course"
+        message="Deleting requires the course to already be archived and structurally empty. Continue?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeletingCourse}
+      />
+
+      <CourseEditorModal
+        key={`edit:${course?.id ?? courseId}:${isCourseEditorOpen ? 'open' : 'closed'}`}
+        isOpen={isCourseEditorOpen}
+        mode="edit"
+        course={course}
+        isSaving={isCourseSaving}
+        errorMessage={courseEditorError}
+        onClose={() => {
+          if (isCourseSaving) return;
+          setIsCourseEditorOpen(false);
+        }}
+        onSubmit={handleCourseSave}
       />
     </div>
   );

@@ -10,8 +10,10 @@ type FilterTab = 'all' | 'errors' | 'warnings';
 
 export default function ValidationResultViewer({
   validation,
+  onJumpToPath,
 }: {
   validation: ValidationResultPayload | null | undefined;
+  onJumpToPath?: (path: string) => void;
 }) {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
 
@@ -36,13 +38,17 @@ export default function ValidationResultViewer({
   }, [activeTab, validation]);
 
   const status = validation?.status || 'unknown';
+  const unknownValidationTooltip =
+    'Validation has not been run yet, validation metadata is stale, or the blueprint was promoted outside the normal validate/publish workflow.';
   const statusBadge =
     status === 'valid' ? (
       <StatusBadge status="success" label="Valid" />
     ) : status === 'invalid' ? (
       <StatusBadge status="error" label="Invalid" />
     ) : (
-      <StatusBadge status="info" label="Unknown" />
+      <span title={unknownValidationTooltip}>
+        <StatusBadge status="error" label="Unknown" />
+      </span>
     );
 
   return (
@@ -136,6 +142,15 @@ export default function ValidationResultViewer({
                     </div>
                     <p className="mt-1 text-sm text-gray-900 dark:text-white">{issue.message}</p>
                   </div>
+                  {onJumpToPath && issue.path ? (
+                    <button
+                      type="button"
+                      onClick={() => onJumpToPath(issue.path)}
+                      className="shrink-0 rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                    >
+                      Edit field
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ))}

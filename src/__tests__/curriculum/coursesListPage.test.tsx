@@ -7,16 +7,34 @@ import { renderWithProviders as render } from '@/test-utils';
 
 const mockRefresh = jest.fn().mockResolvedValue(undefined);
 const mockUseAdminCoursesList = jest.fn();
+const mockPush = jest.fn();
 
 jest.mock('@/hooks/useApi', () => ({
   useAdminCoursesList: (filters: unknown) => mockUseAdminCoursesList(filters),
+  useLanguages: () => ({
+    languages: [{ id: 'lang-1', name: 'Yoruba', iso_639_3: 'yor' }],
+    total: 1,
+    isLoading: false,
+    isError: false,
+    refresh: jest.fn(),
+  }),
+}));
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush }),
 }));
 
 const mockValidateAdminCourse = jest.fn();
 const mockPublishAdminCourse = jest.fn();
 const mockUnpublishAdminCourse = jest.fn();
+const mockCreateAdminCourse = jest.fn();
+const mockUpdateAdminCourse = jest.fn();
+const mockDeleteAdminCourse = jest.fn();
 
 jest.mock('@/lib/adminCurriculumApi', () => ({
+  createAdminCourse: (payload: unknown) => mockCreateAdminCourse(payload),
+  updateAdminCourse: (courseId: string, payload: unknown) => mockUpdateAdminCourse(courseId, payload),
+  deleteAdminCourse: (courseId: string) => mockDeleteAdminCourse(courseId),
   validateAdminCourse: (courseId: string) => mockValidateAdminCourse(courseId),
   publishAdminCourse: (courseId: string) => mockPublishAdminCourse(courseId),
   unpublishAdminCourse: (courseId: string) => mockUnpublishAdminCourse(courseId),
@@ -67,6 +85,10 @@ describe('CurriculumCoursesListPage', () => {
 
     mockValidateAdminCourse.mockResolvedValue({});
     mockUnpublishAdminCourse.mockResolvedValue({});
+    mockDeleteAdminCourse.mockResolvedValue({ ok: true });
+    mockCreateAdminCourse.mockResolvedValue({
+      course: { id: 'created-course' },
+    });
   });
 
   it('renders courses table and rows', () => {
@@ -132,5 +154,38 @@ describe('CurriculumCoursesListPage', () => {
       expect(mockUnpublishAdminCourse).toHaveBeenCalledWith('c1');
       expect(mockRefresh).toHaveBeenCalled();
     });
+  });
+
+  it('creates a new course and routes to the detail page', async () => {
+    render(<CurriculumCoursesListPage />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'New Course' }));
+    await userEvent.type(screen.getByLabelText('Course key'), 'abidii_yoruba_v2');
+    await userEvent.type(screen.getByLabelText('Title'), 'Abidii Yoruba v2');
+    await userEvent.click(screen.getByRole('button', { name: 'Create Course' }));
+
+    await waitFor(() => {
+      expect(mockCreateAdminCourse).toHaveBeenCalledWith({
+        course_key: 'abidii_yoruba_v2',
+        title: 'Abidii Yoruba v2',
+        description: null,
+        target_language_id: 'lang-1',
+      });
+      expect(mockPush).toHaveBeenCalledWith('/content/curriculum/courses/created-course');
+    });
+  });
+
+  it('deletes a course from the list actions', async () => {
+    const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<CurriculumCoursesListPage />);
+
+    await userEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
+
+    await waitFor(() => {
+      expect(mockDeleteAdminCourse).toHaveBeenCalledWith('c1');
+      expect(mockRefresh).toHaveBeenCalled();
+    });
+
+    confirmSpy.mockRestore();
   });
 });

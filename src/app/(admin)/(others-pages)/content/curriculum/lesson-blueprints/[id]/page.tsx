@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -14,7 +14,19 @@ import ValidationResultViewer from '@/components/admin/curriculum/ValidationResu
 import { LessonBlueprintEditor } from '@/components/admin/curriculum/LessonBlueprintEditor';
 import { useAdminBlueprint, useAdminCourseValidationSummary, useCourseCurriculum, usePublicBlueprint } from '@/hooks/useApi';
 import { useCurriculumManagement } from '@/hooks/useCurriculumManagement';
-import type { CurriculumSection, CurriculumUnit, ValidationIssuePayload } from '@/types/curriculum';
+import {
+  deleteAdminBlueprint,
+  diffAdminBlueprintVersion,
+  listAdminBlueprintVersions,
+  restoreAdminBlueprintVersion,
+} from '@/lib/adminCurriculumApi';
+import type {
+  CurriculumSection,
+  CurriculumUnit,
+  LessonBlueprintVersionDiffPayload,
+  LessonBlueprintVersionPayload,
+  ValidationIssuePayload,
+} from '@/types/curriculum';
 
 function getLoadErrorMessage(error: any): string {
   if (error?.code === 'ECONNABORTED') {
@@ -47,10 +59,14 @@ function getStatusBadge(status: string | null | undefined) {
 export default function AdminLessonBlueprintDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }> | { id: string };
 }) {
   const router = useRouter();
-  const blueprintId = params.id;
+  const resolvedParams =
+    typeof (params as Promise<{ id: string }> & { then?: unknown })?.then === 'function'
+      ? React.use(params as Promise<{ id: string }>)
+      : (params as { id: string });
+  const { id: blueprintId } = resolvedParams;
 
   const {
     data: adminData,
@@ -82,6 +98,13 @@ export default function AdminLessonBlueprintDetailPage({
   const [confirmPublishOpen, setConfirmPublishOpen] = useState(false);
   const [confirmUnpublishOpen, setConfirmUnpublishOpen] = useState(false);
   const [confirmPublishLinkedCourseOpen, setConfirmPublishLinkedCourseOpen] = useState(false);
+  const [versionHistory, setVersionHistory] = useState<LessonBlueprintVersionPayload[]>([]);
+  const [versionDiff, setVersionDiff] = useState<LessonBlueprintVersionDiffPayload | null>(null);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isRestoringVersion, setIsRestoringVersion] = useState(false);
+  const [isDeletingBlueprint, setIsDeletingBlueprint] = useState(false);
+  const [focusFieldPath, setFocusFieldPath] = useState<string | null>(null);
 
   const blueprint = adminData?.blueprint;
   const validation = adminData?.validation;
@@ -141,11 +164,27 @@ export default function AdminLessonBlueprintDetailPage({
   const linkedSectionMissingBlueprint = linkedSectionIssues.some(
     (issue) => issue.code === 'section_missing_blueprint'
   );
-  const linkedCourseCanPublish = !!linkedCourseValidation?.can_publish;
+  const linkedCourseCanPublish = !!linkedCourseData?.can_publish_course;
   const linkedSectionHasPublishedBlueprint =
     !!linkedSectionContext.section?.lesson_blueprint_id &&
     (linkedSectionContext.section?.blueprint_status || '').toLowerCase() === 'published';
   const linkedCourseStatusBadge = getStatusBadge(linkedCourse?.status);
+
+  const refreshVersionHistory = useCallback(async () => {
+    setIsLoadingHistory(true);
+    try {
+      const items = await listAdminBlueprintVersions(blueprintId);
+      setVersionHistory(items);
+    } catch (err: any) {
+      setErrorMessage(getActionErrorMessage(err, 'Failed to load blueprint history'));
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [blueprintId]);
+
+  useEffect(() => {
+    void refreshVersionHistory();
+  }, [refreshVersionHistory]);
 
   const statusBadge = useMemo(() => {
     const status = blueprint?.status;
@@ -207,12 +246,13 @@ export default function AdminLessonBlueprintDetailPage({
     try {
       const outcome = await publishBlueprint(blueprintId);
       await mutateAdmin(outcome.body, { revalidate: false });
+      await refreshVersionHistory();
 
       if (outcome.ok) {
         if (blueprint?.course_id) {
           try {
             const nextCourseValidation = await refreshLinkedCourseState();
-            if (nextCourseValidation?.validation?.can_publish) {
+            if (nextCourseValidation?.can_publish_course) {
               setSuccessMessage('Blueprint published. Linked course revalidated and is now ready to publish.');
             } else {
               const remaining = nextCourseValidation?.validation?.blocking_error_count ?? 0;
@@ -242,6 +282,7 @@ export default function AdminLessonBlueprintDetailPage({
       await unpublishBlueprint(blueprintId);
       setSuccessMessage('Blueprint unpublished (archived).');
       await refreshAdmin();
+      await refreshVersionHistory();
     } catch (err: any) {
       setErrorMessage(getActionErrorMessage(err, 'Failed to unpublish blueprint'));
     }
@@ -255,7 +296,7 @@ export default function AdminLessonBlueprintDetailPage({
     try {
       const nextCourseValidation = await refreshLinkedCourseState();
       const remaining = nextCourseValidation?.validation?.blocking_error_count ?? 0;
-      if (nextCourseValidation?.validation?.can_publish) {
+      if (nextCourseValidation?.can_publish_course) {
         setSuccessMessage('Linked course validation completed. The course is now ready to publish.');
       } else {
         setSuccessMessage(
@@ -287,6 +328,55 @@ export default function AdminLessonBlueprintDetailPage({
     }
   };
 
+  const handleLoadVersionDiff = async (versionId: string) => {
+    setErrorMessage('');
+    try {
+      const diff = await diffAdminBlueprintVersion(blueprintId, versionId);
+      setSelectedVersionId(versionId);
+      setVersionDiff(diff);
+    } catch (err: any) {
+      setErrorMessage(getActionErrorMessage(err, 'Failed to load version diff'));
+    }
+  };
+
+  const handleRestoreVersion = async (versionId: string) => {
+    if (!window.confirm('Restore this snapshot into the current draft? The blueprint will return to draft and require validation again.')) {
+      return;
+    }
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    setIsRestoringVersion(true);
+    try {
+      const next = await restoreAdminBlueprintVersion(blueprintId, versionId);
+      await mutateAdmin(next, { revalidate: false });
+      await refreshVersionHistory();
+      setSuccessMessage('Blueprint restored from history.');
+    } catch (err: any) {
+      setErrorMessage(getActionErrorMessage(err, 'Failed to restore blueprint version'));
+    } finally {
+      setIsRestoringVersion(false);
+    }
+  };
+
+  const handleDeleteBlueprint = async () => {
+    if (!window.confirm('Delete this blueprint? Version history will be kept, but the live blueprint row will be removed.')) {
+      return;
+    }
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    setIsDeletingBlueprint(true);
+    try {
+      await deleteAdminBlueprint(blueprintId);
+      router.push('/content/curriculum/lesson-blueprints');
+    } catch (err: any) {
+      setErrorMessage(getActionErrorMessage(err, 'Failed to delete blueprint'));
+    } finally {
+      setIsDeletingBlueprint(false);
+    }
+  };
+
   if (adminError) {
     return (
       <div className="space-y-6">
@@ -315,9 +405,6 @@ export default function AdminLessonBlueprintDetailPage({
       <div className="flex items-start justify-between gap-4">
         <div>
           <PageBreadCrumb pageTitle="Lesson Blueprint" />
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Server-authoritative validation and publishing workflow
-          </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -345,8 +432,83 @@ export default function AdminLessonBlueprintDetailPage({
           >
             {isUnpublishing ? 'Unpublishing…' : 'Unpublish'}
           </button>
+
+          <button
+            onClick={handleDeleteBlueprint}
+            disabled={isDeletingBlueprint || blueprint?.status === 'published'}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={blueprint?.status === 'published' ? 'Unpublish before deleting' : undefined}
+          >
+            {isDeletingBlueprint ? 'Deleting…' : 'Delete'}
+          </button>
         </div>
       </div>
+
+      <details className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+          <div className="flex items-center justify-between gap-3">
+            <span>Server-authoritative validation and publishing workflow</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Show details</span>
+          </div>
+        </summary>
+        <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-800">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Validate first, then publish. The server is the source of truth for publishability, availability, and linked-course readiness. Publishing this blueprint can also trigger linked-course revalidation so remaining blockers are visible immediately on this page.
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Details</h2>
+              <dl className="mt-3 space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-gray-600 dark:text-gray-400">Blueprint Key</dt>
+                  <dd className="text-gray-900 dark:text-white font-mono break-all">{blueprint?.blueprint_key}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-gray-600 dark:text-gray-400">Lesson Kind</dt>
+                  <dd className="text-gray-900 dark:text-white">{blueprint?.lesson_kind}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-gray-600 dark:text-gray-400">Schema Version</dt>
+                  <dd className="text-gray-900 dark:text-white">{blueprint?.schema_version}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-gray-600 dark:text-gray-400">Status</dt>
+                  <dd>{statusBadge}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-gray-600 dark:text-gray-400">Enabled</dt>
+                  <dd>{enabledBadge}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-gray-600 dark:text-gray-400">Availability</dt>
+                  <dd>{availabilityBadge}</dd>
+                </div>
+              </dl>
+              {isLoadingPublic && (
+                <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Loading availability…</p>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">IDs</h2>
+              <dl className="mt-3 space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-gray-600 dark:text-gray-400">Blueprint ID</dt>
+                  <dd className="text-gray-900 dark:text-white font-mono break-all">{blueprint?.id}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-gray-600 dark:text-gray-400">Course ID</dt>
+                  <dd className="text-gray-900 dark:text-white font-mono break-all">{blueprint?.course_id}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-gray-600 dark:text-gray-400">Section ID</dt>
+                  <dd className="text-gray-900 dark:text-white font-mono break-all">{blueprint?.section_id}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </details>
 
       {successMessage && (
         <Toast type="success" message={successMessage} onClose={() => setSuccessMessage('')} />
@@ -365,67 +527,23 @@ export default function AdminLessonBlueprintDetailPage({
         </Alert>
       )}
 
-      {/* Blueprint summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">Details</h2>
-          <dl className="mt-3 space-y-2 text-sm">
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Blueprint Key</dt>
-              <dd className="text-gray-900 dark:text-white font-mono break-all">{blueprint?.blueprint_key}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Lesson Kind</dt>
-              <dd className="text-gray-900 dark:text-white">{blueprint?.lesson_kind}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Schema Version</dt>
-              <dd className="text-gray-900 dark:text-white">{blueprint?.schema_version}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Status</dt>
-              <dd>{statusBadge}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Enabled</dt>
-              <dd>{enabledBadge}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Availability</dt>
-              <dd>{availabilityBadge}</dd>
-            </div>
-          </dl>
-          {isLoadingPublic && (
-            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Loading availability…</p>
-          )}
-        </div>
-
-        <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">IDs</h2>
-          <dl className="mt-3 space-y-2 text-sm">
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Blueprint ID</dt>
-              <dd className="text-gray-900 dark:text-white font-mono break-all">{blueprint?.id}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Course ID</dt>
-              <dd className="text-gray-900 dark:text-white font-mono break-all">{blueprint?.course_id}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Section ID</dt>
-              <dd className="text-gray-900 dark:text-white font-mono break-all">{blueprint?.section_id}</dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-
       {blueprint && (
-        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <details className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3">
             <div>
               <h2 className="text-base font-semibold text-gray-900 dark:text-white">Linked Course Flow</h2>
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                 Publish this blueprint, revalidate the linked course, and finish the unblock flow without leaving this page.
+              </p>
+            </div>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Show details</span>
+          </summary>
+          <div className="border-t border-gray-200 p-4 dark:border-gray-800">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Unblock linked course publication</h3>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                Run the publish workflow here when this blueprint is the section-level blocker.
               </p>
             </div>
 
@@ -613,19 +731,130 @@ export default function AdminLessonBlueprintDetailPage({
               )}
             </div>
           </div>
-        </div>
+          </div>
+        </details>
       )}
 
-      <ValidationResultViewer validation={validation} />
+      <ValidationResultViewer
+        validation={validation}
+        onJumpToPath={(path) => {
+          setFocusFieldPath(null);
+          window.requestAnimationFrame(() => setFocusFieldPath(path));
+          document.getElementById('blueprint-editor-root')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }}
+      />
+
+      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Version History</h2>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Snapshot history used for restore, compare, and safe delete workflows.
+            </p>
+          </div>
+          {isLoadingHistory && (
+            <div className="text-sm text-gray-500 dark:text-gray-400">Loading history…</div>
+          )}
+        </div>
+
+        {versionHistory.length === 0 ? (
+          <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">No history snapshots found yet.</div>
+        ) : (
+          <div className="mt-4 grid gap-4 lg:grid-cols-[360px,1fr]">
+            <div className="space-y-2">
+              {versionHistory.map((version) => (
+                <div
+                  key={version.id}
+                  className={`rounded-lg border p-3 ${
+                    selectedVersionId === version.id
+                      ? 'border-brand-300 bg-brand-50 dark:border-brand-800 dark:bg-brand-950/20'
+                      : 'border-gray-200 dark:border-gray-800'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                        v{version.version_number} • {version.event_type}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(version.created_at).toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => handleLoadVersionDiff(version.id)}
+                        className="rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                      >
+                        Compare
+                      </button>
+                      <button
+                        onClick={() => handleRestoreVersion(version.id)}
+                        disabled={isRestoringVersion}
+                        className="rounded-lg border border-brand-300 px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                      >
+                        Restore
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+              {!versionDiff ? (
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Select a snapshot to compare it against the current blueprint.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white">Changed Fields</div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {versionDiff.changed_fields.length === 0 ? (
+                        <StatusBadge status="info" label="No changes" />
+                      ) : (
+                        versionDiff.changed_fields.map((field) => (
+                          <StatusBadge key={field} status="info" label={field} />
+                        ))
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div>
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Snapshot
+                      </div>
+                      <pre className="max-h-[320px] overflow-auto rounded-lg bg-gray-950 p-3 text-xs text-gray-100">
+                        {JSON.stringify(versionDiff.left_snapshot, null, 2)}
+                      </pre>
+                    </div>
+                    <div>
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Current
+                      </div>
+                      <pre className="max-h-[320px] overflow-auto rounded-lg bg-gray-950 p-3 text-xs text-gray-100">
+                        {JSON.stringify(versionDiff.right_snapshot, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       <LessonBlueprintEditor
         mode="edit"
         blueprint={blueprint}
+        focusFieldPath={focusFieldPath}
         onSaved={(result) => {
           void mutateAdmin(result, { revalidate: false });
+          void refreshVersionHistory();
           if (result.blueprint.id !== blueprintId) {
             router.push(`/content/curriculum/lesson-blueprints/${result.blueprint.id}`);
           }
+          setFocusFieldPath(null);
         }}
       />
 

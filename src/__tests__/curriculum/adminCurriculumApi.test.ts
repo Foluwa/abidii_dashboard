@@ -1,11 +1,22 @@
 import {
   cloneAdminBlueprint,
+  cleanupOrphanedBlueprintAssets,
+  completeBlueprintAssetUpload,
+  createAdminCourse,
   createAdminBlueprint,
+  deleteAdminCourse,
+  deleteBlueprintAsset,
   getAdminBlueprintCapabilities,
+  getCurriculumReadinessMatrix,
   markSectionsComingSoon,
   publishAdminBlueprint,
   publishAdminCourse,
   previewAdminBlueprintDraft,
+  renameBlueprintAsset,
+  requestBlueprintAssetUpload,
+  uploadBlueprintAsset,
+  uploadFileToPresignedUrl,
+  updateAdminCourse,
   updateAdminBlueprint,
 } from '@/lib/adminCurriculumApi';
 
@@ -13,6 +24,8 @@ jest.mock('@/lib/api', () => ({
   apiClient: {
     get: jest.fn(),
     post: jest.fn(),
+    patch: jest.fn(),
+    delete: jest.fn(),
     put: jest.fn(),
   },
 }));
@@ -20,6 +33,8 @@ jest.mock('@/lib/api', () => ({
 const mockApiClient = jest.requireMock('@/lib/api').apiClient as {
   get: jest.Mock;
   post: jest.Mock;
+  patch: jest.Mock;
+  delete: jest.Mock;
   put: jest.Mock;
 };
 
@@ -181,6 +196,14 @@ describe('adminCurriculumApi publish 409 handling', () => {
     expect(mockApiClient.get).toHaveBeenCalledWith('/api/v1/admin/lesson-blueprints/capabilities');
   });
 
+  it('getCurriculumReadinessMatrix loads the readiness inventory endpoint', async () => {
+    mockApiClient.get.mockResolvedValue({ data: { totals: {}, languages: [] } });
+
+    await getCurriculumReadinessMatrix();
+
+    expect(mockApiClient.get).toHaveBeenCalledWith('/api/v1/admin/curriculum/readiness-matrix');
+  });
+
   it('create/update/clone blueprint authoring helpers call the expected endpoints', async () => {
     const payload = {
       blueprint_key: 'bp.new',
@@ -204,6 +227,163 @@ describe('adminCurriculumApi publish 409 handling', () => {
       course_id: 'c1',
       section_id: 's1',
     });
+  });
+
+  it('create/update course helpers call the expected endpoints', async () => {
+    const payload = {
+      course_key: 'abidii_yoruba_v2',
+      title: 'Abidii Yoruba v2',
+      description: 'Course description',
+      target_language_id: 'lang-1',
+    };
+    mockApiClient.post.mockResolvedValue({ data: { ok: true } });
+    mockApiClient.put.mockResolvedValue({ data: { ok: true } });
+
+    await createAdminCourse(payload);
+    await updateAdminCourse('course-1', payload);
+
+    expect(mockApiClient.post).toHaveBeenCalledWith('/api/v1/admin/courses', payload);
+    expect(mockApiClient.put).toHaveBeenCalledWith('/api/v1/admin/courses/course-1', payload);
+  });
+
+  it('blueprint asset upload helpers call the expected endpoints', async () => {
+    mockApiClient.post.mockResolvedValue({ data: { ok: true } });
+    mockApiClient.patch.mockResolvedValue({ data: { ok: true } });
+    mockApiClient.delete.mockResolvedValue({ data: { ok: true } });
+
+    await requestBlueprintAssetUpload('b1', {
+      field_path: 'heroImageUrl',
+      file_name: 'cover.png',
+      content_type: 'image/png',
+      file_size_bytes: 1234,
+    });
+
+    await completeBlueprintAssetUpload('b1', {
+      field_path: 'heroImageUrl',
+      storage_key: 'curriculum/lesson-blueprints/course/b1/image/hero/cover.png',
+      file_name: 'cover.png',
+    });
+    await renameBlueprintAsset('b1', {
+      field_path: 'heroImageUrl',
+      file_name: 'new-cover.png',
+    });
+    await deleteBlueprintAsset('b1', 'heroImageUrl');
+    await cleanupOrphanedBlueprintAssets('course-1');
+
+    expect(mockApiClient.post).toHaveBeenCalledWith(
+      '/api/v1/admin/lesson-blueprints/b1/assets/upload-url',
+      {
+        field_path: 'heroImageUrl',
+        file_name: 'cover.png',
+        content_type: 'image/png',
+        file_size_bytes: 1234,
+      }
+    );
+    expect(mockApiClient.post).toHaveBeenCalledWith(
+      '/api/v1/admin/lesson-blueprints/b1/assets/complete',
+      {
+        field_path: 'heroImageUrl',
+        storage_key: 'curriculum/lesson-blueprints/course/b1/image/hero/cover.png',
+        file_name: 'cover.png',
+      }
+    );
+    expect(mockApiClient.patch).toHaveBeenCalledWith(
+      '/api/v1/admin/lesson-blueprints/b1/assets/metadata',
+      {
+        field_path: 'heroImageUrl',
+        file_name: 'new-cover.png',
+      }
+    );
+    expect(mockApiClient.delete).toHaveBeenCalledWith(
+      '/api/v1/admin/lesson-blueprints/b1/assets?field_path=heroImageUrl'
+    );
+    expect(mockApiClient.post).toHaveBeenCalledWith(
+      '/api/v1/admin/lesson-blueprints/assets/cleanup-orphans?course_id=course-1'
+    );
+  });
+
+  it('deleteAdminCourse calls the expected endpoint', async () => {
+    mockApiClient.delete.mockResolvedValue({ data: { ok: true } });
+    await deleteAdminCourse('course-1');
+    expect(mockApiClient.delete).toHaveBeenCalledWith('/api/v1/admin/courses/course-1');
+  });
+
+  it('uploadFileToPresignedUrl uploads with PUT and reports progress', async () => {
+    const originalXhr = global.XMLHttpRequest;
+    const uploadListeners: Record<string, ((event: ProgressEvent<EventTarget>) => void) | null> = {
+      progress: null,
+    };
+    let lastInstance: MockXMLHttpRequest | null = null;
+
+    class MockXMLHttpRequest {
+      status = 200;
+      onload: null | (() => void) = null;
+      onerror: null | (() => void) = null;
+      constructor() {
+        lastInstance = this;
+      }
+      upload = {
+        set onprogress(handler: ((event: ProgressEvent<EventTarget>) => void) | null) {
+          uploadListeners.progress = handler;
+        },
+      };
+      open = jest.fn();
+      setRequestHeader = jest.fn();
+      send = jest.fn((file: File) => {
+        uploadListeners.progress?.({
+          lengthComputable: true,
+          loaded: file.size,
+          total: file.size,
+        } as ProgressEvent<EventTarget>);
+        this.onload?.();
+      });
+    }
+
+    // @ts-expect-error test shim
+    global.XMLHttpRequest = MockXMLHttpRequest;
+    const onProgress = jest.fn();
+
+    await uploadFileToPresignedUrl(
+      'https://example.r2.dev/upload',
+      new File(['abc'], 'cover.png', { type: 'image/png' }),
+      'image/png',
+      onProgress
+    );
+
+    expect(lastInstance?.open).toHaveBeenCalledWith('PUT', 'https://example.r2.dev/upload');
+    expect(lastInstance?.setRequestHeader).toHaveBeenCalledWith('Content-Type', 'image/png');
+    expect(lastInstance?.send).toHaveBeenCalledWith(expect.any(File));
+    expect(onProgress).toHaveBeenCalledWith(100);
+
+    global.XMLHttpRequest = originalXhr;
+  });
+
+  it('uploadBlueprintAsset posts multipart form data to the backend upload endpoint', async () => {
+    mockApiClient.post.mockResolvedValue({ data: { ok: true } });
+    const onProgress = jest.fn();
+
+    await uploadBlueprintAsset(
+      'b1',
+      {
+        field_path: 'heroImageUrl',
+        file: new File(['abc'], 'cover.png', { type: 'image/png' }),
+      },
+      onProgress
+    );
+
+    expect(mockApiClient.post).toHaveBeenCalledWith(
+      '/api/v1/admin/lesson-blueprints/b1/assets/upload',
+      expect.any(FormData),
+      expect.objectContaining({
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: expect.any(Function),
+      })
+    );
+
+    const uploadConfig = mockApiClient.post.mock.calls.at(-1)?.[2];
+    uploadConfig.onUploadProgress({ loaded: 5, total: 10 });
+    expect(onProgress).toHaveBeenCalledWith(50);
+    expect(onProgress).toHaveBeenCalledWith(100);
   });
 
   it('markSectionsComingSoon posts the targeted section ids', async () => {

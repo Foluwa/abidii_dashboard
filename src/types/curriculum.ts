@@ -60,6 +60,38 @@ export interface LessonBlueprintAdminResponse {
   updated_at: string;
 }
 
+export interface LessonBlueprintMediaBinding {
+  field_path: string;
+  asset_kind?: string | null;
+  storage_key: string;
+  asset_url: string;
+  content_type?: string | null;
+  file_size_bytes?: number | null;
+  file_name?: string | null;
+  uploaded_at?: string | null;
+  etag?: string | null;
+}
+
+export interface LessonBlueprintAssetLibraryItem {
+  blueprint_id: string;
+  blueprint_key: string;
+  course_id: string;
+  course_key?: string | null;
+  section_id: string;
+  unit_key?: string | null;
+  section_key?: string | null;
+  lesson_kind: string;
+  field_path: string;
+  binding: LessonBlueprintMediaBinding;
+}
+
+export interface LessonBlueprintAssetLibraryResponse {
+  items: LessonBlueprintAssetLibraryItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface CourseAdminResponse {
   id: string;
   course_key: string;
@@ -72,6 +104,13 @@ export interface CourseAdminResponse {
   enabled: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface CourseDraftUpsertRequest {
+  course_key: string;
+  title: string;
+  description?: string | null;
+  target_language_id: string;
 }
 
 export interface LessonBlueprintValidationResponse {
@@ -114,6 +153,81 @@ export interface LessonBlueprintAuthoringCapabilitiesResponse {
 export interface CourseValidationResponse {
   course: CourseAdminResponse;
   validation: ValidationResultPayload;
+  qa_status?: CurriculumCourseQaStatus | 'verified' | null;
+  qa_checks?: CurriculumQaCheck[];
+  can_publish_course?: boolean;
+}
+
+export type CurriculumQaCheckStatus =
+  | 'passed'
+  | 'pending_manual'
+  | 'blocked'
+  | 'not_applicable';
+
+export type CurriculumCourseQaStatus =
+  | 'verified'
+  | 'ready_to_test'
+  | 'partially_testable'
+  | 'blocked';
+
+export interface CurriculumQaCheck {
+  key: string;
+  label: string;
+  status: CurriculumQaCheckStatus;
+  detail?: string | null;
+  notes?: string | null;
+  build_version?: string | null;
+  verified_at?: string | null;
+  verified_by?: string | null;
+  source?: 'system' | 'manual';
+  required_for_publish?: boolean;
+}
+
+export interface CurriculumReadinessCourse {
+  course: CourseAdminResponse;
+  validation: ValidationResultPayload;
+  unit_count: number;
+  section_count: number;
+  blueprint_count: number;
+  published_blueprint_count: number;
+  launchable_section_count: number;
+  missing_blueprint_section_count: number;
+  lesson_kinds: string[];
+  qa_status: CurriculumCourseQaStatus;
+  qa_checks: CurriculumQaCheck[];
+}
+
+export interface CurriculumReadinessLanguage {
+  target_language_id?: string | null;
+  target_language_code?: string | null;
+  target_language_name?: string | null;
+  course_count: number;
+  unit_count: number;
+  section_count: number;
+  blueprint_count: number;
+  published_blueprint_count: number;
+  launchable_section_count: number;
+  lesson_kinds: string[];
+  courses: CurriculumReadinessCourse[];
+}
+
+export interface CurriculumReadinessTotals {
+  language_count: number;
+  course_count: number;
+  unit_count: number;
+  section_count: number;
+  blueprint_count: number;
+  published_blueprint_count: number;
+  launchable_section_count: number;
+  ready_to_test_course_count: number;
+  partially_testable_course_count: number;
+  blocked_course_count: number;
+}
+
+export interface CurriculumReadinessMatrixResponse {
+  generated_at: string;
+  totals: CurriculumReadinessTotals;
+  languages: CurriculumReadinessLanguage[];
 }
 
 export interface AdminPaginatedListResponse<T> {
@@ -159,6 +273,7 @@ export interface PublicLessonBlueprintResponse {
   id: string;
   blueprint_key: string;
   lesson_kind: string;
+  launch_route?: string;
   schema_version: number;
   target_language_id?: string | null;
   target_language_code?: string | null;
@@ -184,6 +299,7 @@ export interface CurriculumSection {
   lesson_blueprint_id: string | null;
   blueprint_key: string | null;
   lesson_kind?: string | null;
+  launch_route?: string | null;
   blueprint_status?: string | null;
   blueprint_enabled?: boolean | null;
 }
@@ -216,7 +332,7 @@ export interface CourseCurriculumResponse {
 }
 
 export interface LessonBlueprintDraftUpsertRequest {
-  blueprint_key: string;
+  blueprint_key?: string | null;
   course_id: string;
   section_id: string;
   lesson_kind: string;
@@ -224,10 +340,117 @@ export interface LessonBlueprintDraftUpsertRequest {
   payload: Record<string, unknown>;
 }
 
+export interface LessonBlueprintAssetUploadRequest {
+  field_path: string;
+  file_name: string;
+  content_type: string;
+  file_size_bytes: number;
+}
+
+export interface LessonBlueprintAssetUploadResponse {
+  field_path: string;
+  storage_key: string;
+  asset_url: string;
+  upload_url: string;
+  expires_at: string;
+  max_upload_size: number;
+}
+
+export interface LessonBlueprintAssetCompleteRequest {
+  field_path: string;
+  storage_key: string;
+  file_name?: string | null;
+}
+
+export interface LessonBlueprintAssetRenameRequest {
+  field_path: string;
+  file_name: string;
+}
+
 export interface LessonBlueprintCloneRequest {
-  blueprint_key: string;
+  blueprint_key?: string | null;
   course_id?: string;
   section_id?: string;
+}
+
+export interface LessonBlueprintAssetCleanupResponse {
+  ok: boolean;
+  scanned_blueprint_count: number;
+  updated_blueprint_count: number;
+  removed_binding_count: number;
+}
+
+export interface CurriculumVocabLibraryItem {
+  external_id: string;
+  language_id: string;
+  lemma_id?: string | null;
+  lemma?: string | null;
+  part_of_speech?: string | null;
+}
+
+export interface CurriculumVocabLibraryResponse {
+  items: CurriculumVocabLibraryItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface CurriculumQaCheckUpdateRequest {
+  status: CurriculumQaCheckStatus;
+  notes?: string | null;
+  build_version?: string | null;
+}
+
+export interface LessonBlueprintVersionPayload {
+  id: string;
+  blueprint_id: string;
+  version_number: number;
+  event_type: string;
+  snapshot: Record<string, unknown>;
+  payload_hash?: string | null;
+  created_at: string;
+  actor_user_id?: string | null;
+}
+
+export interface LessonBlueprintVersionDiffPayload {
+  blueprint_id: string;
+  left_version_id?: string | null;
+  right_version_id?: string | null;
+  changed_fields: string[];
+  left_snapshot: Record<string, unknown>;
+  right_snapshot: Record<string, unknown>;
+}
+
+export interface UnitCreateRequest {
+  unit_key: string;
+  title: string;
+  subtitle?: string | null;
+  status: string;
+  enabled: boolean;
+  order_index?: number | null;
+}
+
+export interface UnitUpdateRequest {
+  unit_key?: string;
+  title?: string;
+  subtitle?: string | null;
+  status?: string;
+  enabled?: boolean;
+}
+
+export interface SectionCreateRequest {
+  section_key: string;
+  title: string;
+  status: string;
+  enabled: boolean;
+  order_index?: number | null;
+}
+
+export interface SectionUpdateRequest {
+  section_key?: string;
+  title?: string;
+  status?: string;
+  enabled?: boolean;
 }
 
 export interface CurriculumUpdateResponse {

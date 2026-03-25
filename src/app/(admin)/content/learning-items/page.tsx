@@ -55,6 +55,16 @@ const ICON_OPTIONS = [
   { value: 'star_rounded', label: '⭐ Star' },
 ];
 
+const normalizeLaunchRoute = (
+  itemType: 'game' | 'lesson' | undefined,
+  launchRoute: string | undefined,
+): string => {
+  if (itemType === 'lesson') {
+    return 'structuredLesson';
+  }
+  return (launchRoute || 'game').trim() || 'game';
+};
+
 export default function LearningItemsPage() {
   const toast = useToast();
   
@@ -173,7 +183,7 @@ export default function LearningItemsPage() {
       duration_minutes: item.duration_minutes,
       xp_reward: item.xp_reward,
       item_type: item.item_type,
-      launch_route: item.launch_route,
+      launch_route: normalizeLaunchRoute(item.item_type, item.launch_route),
       is_active: item.is_active,
       is_premium: item.is_premium,
       display_order: item.display_order,
@@ -199,13 +209,17 @@ export default function LearningItemsPage() {
     setIsSubmitting(true);
 
     try {
+      const normalizedFormData = {
+        ...formData,
+        launch_route: normalizeLaunchRoute(formData.item_type, formData.launch_route),
+      };
       if (editingItem) {
         // Update existing item
-        await apiClient.patch(`/api/v1/learning-items/${editingItem.id}`, formData);
+        await apiClient.patch(`/api/v1/learning-items/${editingItem.id}`, normalizedFormData);
         toast.success('Learning item updated successfully');
       } else {
         // Create new item
-        await apiClient.post('/api/v1/learning-items', formData);
+        await apiClient.post('/api/v1/learning-items', normalizedFormData);
         toast.success('Learning item created successfully');
       }
       setIsModalOpen(false);
@@ -628,7 +642,14 @@ export default function LearningItemsPage() {
             <label className="mb-2 block text-sm font-medium">Type *</label>
             <select
               value={formData.item_type || 'game'}
-              onChange={(e) => setFormData({ ...formData, item_type: e.target.value as 'game' | 'lesson' })}
+              onChange={(e) => {
+                const nextType = e.target.value as 'game' | 'lesson';
+                setFormData({
+                  ...formData,
+                  item_type: nextType,
+                  launch_route: normalizeLaunchRoute(nextType, formData.launch_route),
+                });
+              }}
               className="w-full rounded-lg border px-4 py-2"
             >
               <option value="game">Game</option>
@@ -695,11 +716,17 @@ export default function LearningItemsPage() {
             <label className="mb-2 block text-sm font-medium">Launch Route *</label>
             <input
               type="text"
-              value={formData.launch_route || ''}
+              value={normalizeLaunchRoute(formData.item_type, formData.launch_route)}
               onChange={(e) => setFormData({ ...formData, launch_route: e.target.value })}
-              className="w-full rounded-lg border px-4 py-2"
-              placeholder="e.g., /games/spelling-bee"
+              className="w-full rounded-lg border px-4 py-2 disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-gray-800"
+              placeholder={formData.item_type === 'lesson' ? 'structuredLesson' : 'e.g., game'}
+              disabled={formData.item_type === 'lesson'}
             />
+            <p className="mt-2 text-xs text-gray-500">
+              {formData.item_type === 'lesson'
+                ? 'Lesson items always launch the backend-driven structured lesson runtime.'
+                : 'Game items use a game route key such as game, numbers-hub, or /games/spelling-bee.'}
+            </p>
           </div>
           
           <div>

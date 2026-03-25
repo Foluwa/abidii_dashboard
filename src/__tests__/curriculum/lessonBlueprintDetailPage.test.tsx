@@ -21,6 +21,10 @@ const mockUnpublishBlueprint = jest.fn();
 const mockValidateCourse = jest.fn();
 const mockPublishCourse = jest.fn();
 const mockUnpublishCourse = jest.fn();
+const mockListAdminBlueprintVersions = jest.fn();
+const mockDiffAdminBlueprintVersion = jest.fn();
+const mockRestoreAdminBlueprintVersion = jest.fn();
+const mockDeleteAdminBlueprint = jest.fn();
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -51,6 +55,15 @@ jest.mock('@/hooks/useCurriculumManagement', () => ({
 
 jest.mock('@/components/admin/curriculum/LessonBlueprintEditor', () => ({
   LessonBlueprintEditor: () => <div>Blueprint editor</div>,
+}));
+
+jest.mock('@/lib/adminCurriculumApi', () => ({
+  listAdminBlueprintVersions: (blueprintId: string) => mockListAdminBlueprintVersions(blueprintId),
+  diffAdminBlueprintVersion: (blueprintId: string, versionId: string) =>
+    mockDiffAdminBlueprintVersion(blueprintId, versionId),
+  restoreAdminBlueprintVersion: (blueprintId: string, versionId: string) =>
+    mockRestoreAdminBlueprintVersion(blueprintId, versionId),
+  deleteAdminBlueprint: (blueprintId: string) => mockDeleteAdminBlueprint(blueprintId),
 }));
 
 const baseBlueprint = {
@@ -197,6 +210,9 @@ describe('AdminLessonBlueprintDetailPage', () => {
           blocking_error_count: 1,
           warning_count: 0,
         },
+        qa_status: 'partially_testable',
+        qa_checks: [],
+        can_publish_course: false,
       },
       isLoading: false,
       isError: false,
@@ -239,6 +255,9 @@ describe('AdminLessonBlueprintDetailPage', () => {
         blocking_error_count: 0,
         warning_count: 0,
       },
+      qa_status: 'verified',
+      qa_checks: [],
+      can_publish_course: true,
     });
     mockPublishCourse.mockResolvedValue({
       ok: true,
@@ -257,9 +276,26 @@ describe('AdminLessonBlueprintDetailPage', () => {
           blocking_error_count: 0,
           warning_count: 0,
         },
+        qa_status: 'verified',
+        qa_checks: [],
+        can_publish_course: true,
       },
     });
     mockUnpublishCourse.mockResolvedValue({});
+    mockListAdminBlueprintVersions.mockResolvedValue([]);
+    mockDiffAdminBlueprintVersion.mockResolvedValue({
+      blueprint_id: 'bp-1',
+      left_version_id: 'ver-1',
+      right_version_id: null,
+      changed_fields: ['payload'],
+      left_snapshot: {},
+      right_snapshot: {},
+    });
+    mockRestoreAdminBlueprintVersion.mockResolvedValue({
+      blueprint: baseBlueprint,
+      validation: baseBlueprintValidation,
+    });
+    mockDeleteAdminBlueprint.mockResolvedValue({ ok: true });
   });
 
   it('publishes the blueprint and revalidates the linked course from the same page', async () => {
@@ -306,6 +342,9 @@ describe('AdminLessonBlueprintDetailPage', () => {
           blocking_error_count: 0,
           warning_count: 0,
         },
+        qa_status: 'verified',
+        qa_checks: [],
+        can_publish_course: true,
       },
       isLoading: false,
       isError: false,

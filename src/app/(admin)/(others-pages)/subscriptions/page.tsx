@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api";
 import Alert from "@/components/ui/alert/SimpleAlert";
 import {
@@ -58,12 +59,26 @@ interface SubscriptionAttempt {
   created_at: string;
 }
 
-export default function SubscriptionsPage() {
+type SubscriptionsView = "subscriptions" | "events" | "attempts";
+
+export function SubscriptionsPageContent({
+  initialView = "subscriptions",
+}: {
+  initialView?: SubscriptionsView;
+}) {
+  const router = useRouter();
+  const [activeView, setActiveView] = useState<SubscriptionsView>(initialView);
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<SubscriptionStatus>("");
   const [provider, setProvider] = useState<SubscriptionProvider>("");
   const [userSearch, setUserSearch] = useState("");
   const limit = 20;
+  const [eventsPage, setEventsPage] = useState(1);
+  const [eventsSearch, setEventsSearch] = useState("");
+  const [eventsEventType, setEventsEventType] = useState("");
+  const [eventsPlatform, setEventsPlatform] = useState("");
+  const [attemptsPage, setAttemptsPage] = useState(1);
+  const [attemptsSearch, setAttemptsSearch] = useState("");
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createSaving, setCreateSaving] = useState(false);
@@ -92,6 +107,10 @@ export default function SubscriptionsPage() {
   const [editStart, setEditStart] = useState<string>("");
   const [editEnd, setEditEnd] = useState<string>("");
 
+  useEffect(() => {
+    setActiveView(initialView);
+  }, [initialView]);
+
   const {
     subscriptions,
     total,
@@ -116,28 +135,32 @@ export default function SubscriptionsPage() {
 
   const {
     events,
+    total: eventsTotal,
     isLoading: eventsLoading,
     isError: eventsError,
     refresh: refreshEvents,
   } = useSubscriptionEvents({
-    page: 1,
+    page: eventsPage,
     limit: 20,
     days: 30,
     provider: provider || undefined,
-    user_q: userSearch || undefined,
+    platform: eventsPlatform || undefined,
+    event_type: eventsEventType || undefined,
+    user_q: eventsSearch || undefined,
   });
 
   const {
     attempts,
+    total: attemptsTotal,
     isLoading: attemptsLoading,
     isError: attemptsError,
     refresh: refreshAttempts,
   } = useSubscriptionAttempts({
-    page: 1,
+    page: attemptsPage,
     limit: 20,
     days: 30,
     provider: provider || undefined,
-    user_q: userSearch || undefined,
+    user_q: attemptsSearch || undefined,
   });
 
   const formatDate = (dateString: string | null) => {
@@ -802,7 +825,37 @@ export default function SubscriptionsPage() {
         </div>
       </div>
 
+      <div className="mb-6 flex flex-wrap gap-2">
+        {[
+          ["subscriptions", "Subscriptions"],
+          ["events", "Subscription Events"],
+          ["attempts", "Verification Attempts"],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => {
+              const nextView = value as SubscriptionsView;
+              setActiveView(nextView);
+              router.push(
+                nextView === "subscriptions"
+                  ? "/subscriptions"
+                  : `/subscriptions/${nextView}`
+              );
+            }}
+            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+              activeView === value
+                ? "bg-blue-600 text-white"
+                : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* Table */}
+      {activeView === "subscriptions" && (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
@@ -935,14 +988,64 @@ export default function SubscriptionsPage() {
           </>
         )}
       </div>
+      )}
 
       {/* Recent Subscription Events */}
-      <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      {activeView === "events" && (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Subscription Events</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Webhook + system lifecycle events (renewals, cancellations, refunds, failures)
           </p>
+        </div>
+
+        <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+          <div className="flex flex-wrap gap-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
+              <input
+                value={eventsSearch}
+                onChange={(e) => {
+                  setEventsSearch(e.target.value);
+                  setEventsPage(1);
+                }}
+                placeholder="User id, email, username"
+                className="block w-full sm:w-80 h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Event type</label>
+              <select
+                value={eventsEventType}
+                onChange={(e) => {
+                  setEventsEventType(e.target.value);
+                  setEventsPage(1);
+                }}
+                className="block w-full sm:w-56 h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">All event types</option>
+                <option value="purchase">Purchase</option>
+                <option value="renewal">Renewal</option>
+                <option value="cancellation">Cancellation</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Platform</label>
+              <select
+                value={eventsPlatform}
+                onChange={(e) => {
+                  setEventsPlatform(e.target.value);
+                  setEventsPage(1);
+                }}
+                className="block w-full sm:w-48 h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">All platforms</option>
+                <option value="ios">iOS</option>
+                <option value="android">Android</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {eventsLoading ? (
@@ -952,82 +1055,128 @@ export default function SubscriptionsPage() {
         ) : eventsError ? (
           <div className="flex items-center justify-center h-48 text-red-500">Failed to load events</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Time
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Event
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Plan
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Provider
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {events?.map((ev: SubscriptionEvent) => (
-                  <tr key={ev.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatDateTime(ev.created_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {ev.user_email || "No email"}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{ev.user_id?.slice(0, 8)}...</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {ev.event_type}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {ev.plan_id || "—"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(
-                          ev.status
-                        )}`}
-                      >
-                        {ev.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {getProviderIcon(ev.provider)} {ev.provider} ({ev.platform})
-                    </td>
-                  </tr>
-                ))}
-                {(!events || events.length === 0) && (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
-                      No events found
-                    </td>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Time
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      User
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Event
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Plan
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Provider
+                    </th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {events?.map((ev: SubscriptionEvent) => (
+                    <tr key={ev.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {formatDateTime(ev.created_at)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {ev.user_email || "No email"}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{ev.user_id?.slice(0, 8)}...</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {ev.event_type}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {ev.plan_id || "—"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(
+                            ev.status
+                          )}`}
+                        >
+                          {ev.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {getProviderIcon(ev.provider)} {ev.provider} ({ev.platform})
+                      </td>
+                    </tr>
+                  ))}
+                  {(!events || events.length === 0) && (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+                        No events found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {eventsTotal > 20 && (
+              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Showing {(eventsPage - 1) * 20 + 1} to {Math.min(eventsPage * 20, eventsTotal)} of {eventsTotal} events
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEventsPage((prev) => Math.max(1, prev - 1))}
+                      disabled={eventsPage === 1}
+                      className="px-3 py-1 text-sm rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => setEventsPage((prev) => prev + 1)}
+                      disabled={eventsPage * 20 >= eventsTotal}
+                      className="px-3 py-1 text-sm rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
+      )}
 
       {/* Recent Verification Attempts */}
-      <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      {activeView === "attempts" && (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Verification Attempts</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Client receipt verification attempts (including failures/expired/invalid)
           </p>
+        </div>
+
+        <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+          <div className="flex flex-wrap gap-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
+              <input
+                value={attemptsSearch}
+                onChange={(e) => {
+                  setAttemptsSearch(e.target.value);
+                  setAttemptsPage(1);
+                }}
+                placeholder="User id, email, username"
+                className="block w-full sm:w-80 h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+          </div>
         </div>
 
         {attemptsLoading ? (
@@ -1037,77 +1186,109 @@ export default function SubscriptionsPage() {
         ) : attemptsError ? (
           <div className="flex items-center justify-center h-48 text-red-500">Failed to load attempts</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Time
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Provider
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Result
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Plan / Product
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Message
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {attempts?.map((at: SubscriptionAttempt) => (
-                  <tr key={at.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatDateTime(at.created_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {at.user_email || "No email"}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{at.user_id?.slice(0, 8)}...</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {getProviderIcon(at.provider)} {at.provider} ({at.platform})
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          at.success
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
-                      >
-                        {at.success ? "success" : "failed"}{at.status ? ` (${at.status})` : ""}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      <div>{at.plan_id || "—"}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{at.product_id || "—"}</div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-md truncate">
-                      {at.message || "—"}
-                    </td>
-                  </tr>
-                ))}
-                {(!attempts || attempts.length === 0) && (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
-                      No attempts found
-                    </td>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Time
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      User
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Provider
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Result
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Plan / Product
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Message
+                    </th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {attempts?.map((at: SubscriptionAttempt) => (
+                    <tr key={at.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {formatDateTime(at.created_at)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {at.user_email || "No email"}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{at.user_id?.slice(0, 8)}...</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {getProviderIcon(at.provider)} {at.provider} ({at.platform})
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            at.success
+                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                              : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                          }`}
+                        >
+                          {at.success ? "success" : "failed"}{at.status ? ` (${at.status})` : ""}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        <div>{at.plan_id || "—"}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{at.product_id || "—"}</div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-md truncate">
+                        {at.message || "—"}
+                      </td>
+                    </tr>
+                  ))}
+                  {(!attempts || attempts.length === 0) && (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+                        No attempts found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {attemptsTotal > 20 && (
+              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Showing {(attemptsPage - 1) * 20 + 1} to {Math.min(attemptsPage * 20, attemptsTotal)} of {attemptsTotal} attempts
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setAttemptsPage((prev) => Math.max(1, prev - 1))}
+                      disabled={attemptsPage === 1}
+                      className="px-3 py-1 text-sm rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => setAttemptsPage((prev) => prev + 1)}
+                      disabled={attemptsPage * 20 >= attemptsTotal}
+                      className="px-3 py-1 text-sm rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
+      )}
     </div>
   );
+}
+
+export default function SubscriptionsPage() {
+  return <SubscriptionsPageContent initialView="subscriptions" />;
 }

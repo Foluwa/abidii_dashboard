@@ -2,7 +2,9 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
+import { CourseEditorModal } from '@/components/admin/curriculum/CourseEditorModal';
 import Pagination from '@/components/tables/Pagination';
 import StatusBadge from '@/components/admin/StatusBadge';
 import ValidationResultViewer from '@/components/admin/curriculum/ValidationResultViewer';
@@ -12,17 +14,26 @@ import { ConfirmationModal } from '@/components/ui/modal/ConfirmationModal';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminCoursesList } from '@/hooks/useApi';
 import {
+  createAdminCourse,
+  deleteAdminCourse,
   publishAdminCourse,
+  updateAdminCourse,
   unpublishAdminCourse,
   validateAdminCourse,
 } from '@/lib/adminCurriculumApi';
 import { logAdminCurriculumAction } from '@/lib/adminActionLog';
 import { runBulkWithConcurrency, type BulkItemOutcome } from '@/lib/bulkRunner';
-import type { CourseValidationResponse, ValidationResultPayload } from '@/types/curriculum';
+import type {
+  CourseAdminResponse,
+  CourseDraftUpsertRequest,
+  CourseValidationResponse,
+  ValidationResultPayload,
+} from '@/types/curriculum';
 
 type BulkOutcome = BulkItemOutcome<CourseValidationResponse>;
 
 export default function CurriculumCoursesListPage() {
+  const router = useRouter();
   const toast = useToast();
 
   const [search, setSearch] = useState('');
@@ -37,6 +48,12 @@ export default function CurriculumCoursesListPage() {
 
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
   const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
+  const [isCourseEditorOpen, setIsCourseEditorOpen] = useState(false);
+  const [courseEditorMode, setCourseEditorMode] = useState<'create' | 'edit'>('create');
+  const [editingCourse, setEditingCourse] = useState<CourseAdminResponse | null>(null);
+  const [isCourseSaving, setIsCourseSaving] = useState(false);
+  const [courseEditorError, setCourseEditorError] = useState('');
+  const [pendingCourseActionId, setPendingCourseActionId] = useState<string | null>(null);
 
   const LS_OUTCOMES_KEY = 'adminCourses_lastBulkOutcomes';
   const LS_ACTION_KEY = 'adminCourses_lastBulkAction';
@@ -91,7 +108,7 @@ export default function CurriculumCoursesListPage() {
     enabled: enabledFilter,
   });
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data]);
   const total = data?.total ?? 0;
   const totalPages = data?.pages ?? Math.max(1, Math.ceil(total / limit));
 
@@ -166,6 +183,42 @@ export default function CurriculumCoursesListPage() {
     const validation = outcome.blockedBody?.validation ?? null;
     setBlockedValidation(validation);
     setBlockedValidationOpen(true);
+  };
+
+  const openCreateCourseModal = () => {
+    setCourseEditorMode('create');
+    setEditingCourse(null);
+    setCourseEditorError('');
+    setIsCourseEditorOpen(true);
+  };
+
+  const openEditCourseModal = (course: CourseAdminResponse) => {
+    setCourseEditorMode('edit');
+    setEditingCourse(course);
+    setCourseEditorError('');
+    setIsCourseEditorOpen(true);
+  };
+
+  const handleCourseEditorSubmit = async (payload: CourseDraftUpsertRequest) => {
+    setIsCourseSaving(true);
+    setCourseEditorError('');
+    try {
+      const result =
+        courseEditorMode === 'create'
+          ? await createAdminCourse(payload)
+          : await updateAdminCourse(editingCourse!.id, payload);
+      await refresh();
+      setIsCourseEditorOpen(false);
+      toast.success(courseEditorMode === 'create' ? 'Course created.' : 'Course updated.');
+      router.push(`/content/curriculum/courses/${result.course.id}`);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.detail || error?.message || 'Failed to save course.';
+      setCourseEditorError(message);
+      toast.error(message);
+    } finally {
+      setIsCourseSaving(false);
+    }
   };
 
   const onBulkValidate = async () => {
@@ -275,9 +328,60 @@ export default function CurriculumCoursesListPage() {
     }
   };
 
+  const handleArchiveCourse = async (course: CourseAdminResponse) => {
+    if (!window.confirm(`Archive ${course.title}? This will unpublish and disable it.`)) {
+      return;
+    }
+
+    setPendingCourseActionId(course.id);
+    try {
+      await unpublishAdminCourse(course.id);
+      await refresh();
+      toast.success('Course archived.');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || error?.message || 'Failed to archive course.');
+    } finally {
+      setPendingCourseActionId(null);
+    }
+  };
+
+  const handleDeleteCourse = async (course: CourseAdminResponse) => {
+    if (!window.confirm(`Delete ${course.title}? The backend only allows deleting archived empty courses.`)) {
+      return;
+    }
+
+    setPendingCourseActionId(course.id);
+    try {
+      await deleteAdminCourse(course.id);
+      await refresh();
+      toast.success('Course deleted.');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || error?.message || 'Failed to delete course.');
+    } finally {
+      setPendingCourseActionId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <PageBreadCrumb pageTitle="Curriculum Courses" />
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <PageBreadCrumb pageTitle="Curriculum Courses" />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={openCreateCourseModal}
+            className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          >
+            New Course
+          </button>
+          <Link
+            href="/content/curriculum/readiness"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+          >
+            Readiness Matrix
+          </Link>
+        </div>
+      </div>
 
       {/* Filters + Actions */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -478,26 +582,27 @@ export default function CurriculumCoursesListPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Key</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Enabled</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
               {isLoading && (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={5}>
+                  <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={6}>
                     Loading…
                   </td>
                 </tr>
               )}
               {isError && (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={5}>
+                  <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={6}>
                     Failed to load courses.
                   </td>
                 </tr>
               )}
               {!isLoading && !isError && items.length === 0 && (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={5}>
+                  <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={6}>
                     No courses found.
                   </td>
                 </tr>
@@ -526,6 +631,33 @@ export default function CurriculumCoursesListPage() {
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <StatusBadge status={course.enabled ? 'active' : 'inactive'} />
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openEditCourseModal(course)}
+                        className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleArchiveCourse(course)}
+                        disabled={pendingCourseActionId === course.id}
+                        className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-medium text-amber-800 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-900 dark:bg-gray-800 dark:text-amber-300 dark:hover:bg-amber-950/30"
+                      >
+                        Archive
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleDeleteCourse(course)}
+                        disabled={pendingCourseActionId === course.id}
+                        className="rounded-lg border border-red-300 bg-white px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:bg-gray-800 dark:text-red-300 dark:hover:bg-red-950/30"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -561,6 +693,20 @@ export default function CurriculumCoursesListPage() {
         confirmText="Unpublish"
         variant="danger"
         isLoading={isBulkRunning}
+      />
+
+      <CourseEditorModal
+        key={`${courseEditorMode}:${editingCourse?.id ?? 'new'}:${isCourseEditorOpen ? 'open' : 'closed'}`}
+        isOpen={isCourseEditorOpen}
+        mode={courseEditorMode}
+        course={editingCourse}
+        isSaving={isCourseSaving}
+        errorMessage={courseEditorError}
+        onClose={() => {
+          if (isCourseSaving) return;
+          setIsCourseEditorOpen(false);
+        }}
+        onSubmit={handleCourseEditorSubmit}
       />
     </div>
   );

@@ -55,4 +55,34 @@ describe('ValidationResultViewer', () => {
     expect(screen.getByText('Missing prompt')).toBeInTheDocument();
     expect(screen.getByText('Non-blocking warning')).toBeInTheDocument();
   });
+
+  it('shows edit actions when a jump handler is provided', async () => {
+    const user = userEvent.setup();
+    const onJumpToPath = jest.fn();
+
+    render(
+      <ValidationResultViewer
+        validation={{
+          status: 'invalid',
+          errors: [],
+          warnings: [
+            {
+              code: 'empty_subtitle',
+              path: 'subtitle',
+              message: 'subtitle is empty',
+              severity: 'WARNING',
+            },
+          ],
+          validated_at: '2026-02-25T00:00:00Z',
+          can_publish: false,
+          blocking_error_count: 0,
+          warning_count: 1,
+        }}
+        onJumpToPath={onJumpToPath}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Edit field' }));
+    expect(onJumpToPath).toHaveBeenCalledWith('subtitle');
+  });
 });

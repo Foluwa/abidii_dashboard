@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState,useCallback } from "react";
+import React, { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -67,7 +67,11 @@ const navItems: NavItem[] = [
     icon: <TableIcon />,
     name: "Subscriptions",
     permission: "users:read", // Admin only
-    path: "/subscriptions",
+    subItems: [
+      { name: "All Subscriptions", path: "/subscriptions" },
+      { name: "Subscription Events", path: "/subscriptions/events" },
+      { name: "Verification Attempts", path: "/subscriptions/attempts" },
+    ],
   },
   {
     icon: <PieChartIcon />,
@@ -101,6 +105,7 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Courses", path: "/content/curriculum/courses" },
       { name: "Curriculum Editor", path: "/content/curriculum/editor" },
+      { name: "Asset Library", path: "/content/curriculum/assets" },
       { name: "Lesson Blueprints", path: "/content/curriculum/lesson-blueprints" },
     ],
   },
@@ -250,9 +255,9 @@ const AppSidebar: React.FC = () => {
               }}
               className="overflow-hidden transition-all duration-300"
               style={{
-                height:
+                maxHeight:
                   openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? `${subMenuHeight[`${menuType}-${index}`]}px`
+                    ? "1000px"
                     : "0px",
               }}
             >
@@ -375,64 +380,56 @@ const AppSidebar: React.FC = () => {
     </ul>
   );
 
-  const [openSubmenu, setOpenSubmenu] = useState<{
+  const [manualOpenSubmenu, setManualOpenSubmenu] = useState<{
     type: "main" | "others";
     index: number;
   } | null>(null);
-  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
-    {}
-  );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => path === pathname;
-   const isActive = useCallback((path: string) => path === pathname, [pathname]);
+  const isActive = (path: string) => path === pathname;
 
-  useEffect(() => {
-    // Check if the current path matches any submenu item
-    let submenuMatched = false;
-    ["main", "others"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
-      items.forEach((nav, index) => {
-        if (nav.subItems) {
-          nav.subItems.forEach((subItem) => {
-            const isPathActive = subItem.path ? isActive(subItem.path) : false;
-            const isNestedActive = subItem.subItems
-              ? subItem.subItems.some((child) => isActive(child.path))
-              : false;
+  const routeOpenSubmenuKey = (() => {
+    const menuGroups: Array<{
+      type: "main" | "others";
+      items: NavItem[];
+    }> = [
+      { type: "main", items: filteredNavItems },
+      { type: "others", items: filteredOthersItems },
+    ];
 
-            if (isPathActive || isNestedActive) {
-              setOpenSubmenu({
-                type: menuType as "main" | "others",
-                index,
-              });
-              submenuMatched = true;
-            }
-          });
+    for (const group of menuGroups) {
+      for (const [index, nav] of group.items.entries()) {
+        if (!nav.subItems) continue;
+        const hasActiveChild = nav.subItems.some((subItem) => {
+          const isPathActive = subItem.path ? isActive(subItem.path) : false;
+          const isNestedActive = subItem.subItems
+            ? subItem.subItems.some((child) => isActive(child.path))
+            : false;
+          return isPathActive || isNestedActive;
+        });
+
+        if (hasActiveChild) {
+          return `${group.type}-${index}`;
         }
-      });
-    });
-
-    // If no submenu item matches, close the open submenu
-    if (!submenuMatched) {
-      setOpenSubmenu(null);
-    }
-  }, [pathname,isActive]);
-
-  useEffect(() => {
-    // Set the height of the submenu items when the submenu is opened
-    if (openSubmenu !== null) {
-      const key = `${openSubmenu.type}-${openSubmenu.index}`;
-      if (subMenuRefs.current[key]) {
-        setSubMenuHeight((prevHeights) => ({
-          ...prevHeights,
-          [key]: subMenuRefs.current[key]?.scrollHeight || 0,
-        }));
       }
     }
-  }, [openSubmenu]);
+
+    return "";
+  })();
+
+  const manualOpenSubmenuKey = manualOpenSubmenu
+    ? `${manualOpenSubmenu.type}-${manualOpenSubmenu.index}`
+    : "";
+  const openSubmenuKey = routeOpenSubmenuKey || manualOpenSubmenuKey;
+  const openSubmenu = openSubmenuKey
+    ? {
+        type: openSubmenuKey.startsWith("main-") ? ("main" as const) : ("others" as const),
+        index: Number(openSubmenuKey.split("-")[1] || "0"),
+      }
+    : null;
 
   const handleSubmenuToggle = (index: number, menuType: "main" | "others") => {
-    setOpenSubmenu((prevOpenSubmenu) => {
+    setManualOpenSubmenu((prevOpenSubmenu) => {
       if (
         prevOpenSubmenu &&
         prevOpenSubmenu.type === menuType &&

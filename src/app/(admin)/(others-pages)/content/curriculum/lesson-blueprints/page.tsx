@@ -58,7 +58,7 @@ export default function LessonBlueprintsListPage() {
     enabled: enabledFilter,
   });
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data]);
   const total = data?.total ?? 0;
   const totalPages = data?.pages ?? Math.max(1, Math.ceil(total / limit));
 
@@ -245,19 +245,31 @@ export default function LessonBlueprintsListPage() {
   const validationBadge = (validationStatus: string) => {
     if (validationStatus === 'valid') return <StatusBadge status="success" label="Valid" />;
     if (validationStatus === 'invalid') return <StatusBadge status="error" label="Invalid" />;
-    return <StatusBadge status="info" label="Unknown" />;
+    return (
+      <span title="Validation has not been run yet, validation metadata is stale, or this blueprint was promoted outside the normal validate/publish workflow.">
+        <StatusBadge status="error" label="Unknown" />
+      </span>
+    );
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <PageBreadCrumb pageTitle="Lesson Blueprints" />
-        <Link
-          href="/content/curriculum/lesson-blueprints/new"
-          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-        >
-          New Blueprint
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/content/curriculum/assets"
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+          >
+            Asset Library
+          </Link>
+          <Link
+            href="/content/curriculum/lesson-blueprints/new"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          >
+            New Blueprint
+          </Link>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">

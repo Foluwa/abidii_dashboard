@@ -13,10 +13,13 @@ import { apiClient } from '@/lib/api';
 import type { UserRole } from '@/types/auth';
 import type {
   CourseAdminListResponse,
+  CurriculumReadinessMatrixResponse,
+  CurriculumVocabLibraryResponse,
   CourseCurriculumResponse,
   CourseValidationResponse,
   LessonBlueprintAuthoringCapabilitiesResponse,
   LessonBlueprintAdminListResponse,
+  LessonBlueprintAssetLibraryResponse,
   LessonBlueprintValidationResponse,
   PublicLessonBlueprintResponse,
 } from '@/types/curriculum';
@@ -361,6 +364,80 @@ export function useAdminBlueprintCapabilities() {
   };
 }
 
+export function useAdminBlueprintAssetLibrary(filters?: {
+  page?: number;
+  limit?: number;
+  course_id?: string;
+  asset_kind?: string;
+  search?: string;
+}) {
+  const params = new URLSearchParams();
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.limit) params.set('limit', String(filters.limit));
+  if (filters?.course_id) params.set('course_id', filters.course_id);
+  if (filters?.asset_kind) params.set('asset_kind', filters.asset_kind);
+  if (filters?.search) params.set('search', filters.search);
+
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  const { data, error, mutate } = useSWR<LessonBlueprintAssetLibraryResponse>(
+    `/api/v1/admin/lesson-blueprints/assets/library${suffix}`,
+    fetcher,
+    {
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      shouldRetryOnError: false,
+    }
+  );
+
+  return {
+    data,
+    items: data?.items ?? [],
+    total: data?.total ?? 0,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+    mutate,
+  };
+}
+
+export function useCurriculumVocabLibrary(filters?: {
+  language_id?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+  external_ids?: string[];
+}) {
+  const params = new URLSearchParams();
+  if (filters?.language_id) params.set('language_id', filters.language_id);
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.limit) params.set('limit', String(filters.limit));
+  if (filters?.search) params.set('search', filters.search);
+  for (const externalId of filters?.external_ids ?? []) {
+    if (externalId) params.append('external_ids', externalId);
+  }
+
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  const { data, error, mutate } = useSWR<CurriculumVocabLibraryResponse>(
+    filters?.language_id ? `/api/v1/admin/lesson-blueprints/vocab/library${suffix}` : null,
+    fetcher,
+    {
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      shouldRetryOnError: false,
+    }
+  );
+
+  return {
+    items: data?.items ?? [],
+    total: data?.total ?? 0,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
 export function useAdminCourse(courseId: string | null) {
   const { data, error, mutate } = useSWR<CourseValidationResponse>(
     courseId ? `/api/v1/admin/courses/${courseId}` : null,
@@ -428,6 +505,27 @@ export function useAdminCoursesList(filters?: AdminCoursesListFilters) {
     revalidateOnReconnect: false,
     shouldRetryOnError: false,
   });
+
+  return {
+    data,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+    mutate,
+  };
+}
+
+export function useCurriculumReadinessMatrix() {
+  const { data, error, mutate } = useSWR<CurriculumReadinessMatrixResponse>(
+    '/api/v1/admin/curriculum/readiness-matrix',
+    fetcher,
+    {
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      shouldRetryOnError: false,
+    }
+  );
 
   return {
     data,
@@ -597,6 +695,27 @@ export function useCourseCurriculumByKey(courseKey: string | null) {
 
   return {
     curriculum: data,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+export function usePhonicsContrasts(languageCode: string | null) {
+  const { data, error, mutate } = useSWR(
+    languageCode ? `/api/v1/languages/${encodeURIComponent(languageCode)}/phonics/contrasts` : null,
+    fetcher,
+    {
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      shouldRetryOnError: false,
+    }
+  );
+
+  return {
+    contrasts: data?.contrasts || [],
+    total: data?.total || 0,
     isLoading: !error && !data,
     isError: error,
     refresh: mutate,
@@ -916,6 +1035,7 @@ export function useSubscriptionEvents(filters?: {
   user_id?: string;
   user_q?: string;
   provider?: string;
+  platform?: string;
   days?: number;
   page?: number;
   limit?: number;
@@ -925,6 +1045,7 @@ export function useSubscriptionEvents(filters?: {
   if (filters?.user_id) params.append('user_id', filters.user_id);
   if (filters?.user_q) params.append('user_q', filters.user_q);
   if (filters?.provider) params.append('provider', filters.provider);
+  if (filters?.platform) params.append('platform', filters.platform);
   if (filters?.days) params.append('days', filters.days.toString());
   if (filters?.page) params.append('page', filters.page.toString());
   if (filters?.limit) params.append('limit', filters.limit.toString());
