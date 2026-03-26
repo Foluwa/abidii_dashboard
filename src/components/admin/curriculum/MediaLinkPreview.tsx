@@ -24,11 +24,13 @@ export default function MediaLinkPreview({
   label,
   kind,
   compact = false,
+  onRemove,
 }: {
   url: string;
   label?: string;
   kind?: string | null;
   compact?: boolean;
+  onRemove?: (() => void) | null;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -76,15 +78,28 @@ export default function MediaLinkPreview({
   const previewHeightClass = compact ? 'h-16' : 'h-28';
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
+    <div className="group rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
       <div className="flex items-start gap-3">
         {resolvedKind === 'image' ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={url}
-            alt={label || 'Media preview'}
-            className={`${previewHeightClass} w-24 flex-shrink-0 rounded-lg object-cover`}
-          />
+          <div className="relative w-24 flex-shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={url}
+              alt={label || 'Media preview'}
+              className={`${previewHeightClass} w-24 rounded-lg object-cover`}
+            />
+            {onRemove ? (
+              <button
+                type="button"
+                onClick={onRemove}
+                className="absolute right-1 top-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-sm font-semibold text-white opacity-0 shadow transition-opacity hover:bg-red-700 group-hover:opacity-100"
+                aria-label={label ? `Remove ${label}` : 'Remove image'}
+                title="Remove image"
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
         ) : resolvedKind === 'video' ? (
           <video
             controls

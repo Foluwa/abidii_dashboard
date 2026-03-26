@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FiPlay, FiPause, FiVolume2, FiVolumeX } from "react-icons/fi";
 
 interface AudioWaveformProps {
@@ -29,41 +29,43 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [waveformData, setWaveformData] = useState<number[]>([]);
-  const [hasError, setHasError] = useState(false);
+  const [errorSrc, setErrorSrc] = useState<string | null>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const hasError = errorSrc === src;
 
-  // Load and analyze audio
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !src) return;
+  const buildFallbackWaveform = useCallback((seedSource: string) => {
+    let seed = 0;
+    for (let i = 0; i < seedSource.length; i++) {
+      seed = (seed * 31 + seedSource.charCodeAt(i)) >>> 0;
+    }
 
-    // Reset error state
-    setHasError(false);
+    const values = Array.from({ length: 100 }, (_, index) => {
+      seed = (seed * 1664525 + 1013904223 + index) >>> 0;
+      const normalized = (seed % 1000) / 1000;
+      return 0.18 + normalized * 0.52;
+    });
 
-    audio.src = src;
+    setWaveformData(values);
+  }, []);
 
-    const handleLoadedMetadata = () => {
-      setDuration(audio.duration);
-      analyzeAudio(src);
-    };
+  const isCrossOriginSource = useCallback((audioSrc: string) => {
+    if (typeof window === "undefined") return false;
 
-    const handleError = () => {
-      console.error('Failed to load audio source:', src);
-      setHasError(true);
-      setWaveformData(Array(100).fill(0).map(() => Math.random() * 0.3));
-    };
-
-    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
-    audio.addEventListener("error", handleError);
-    return () => {
-      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      audio.removeEventListener("error", handleError);
-    };
-  }, [src]);
-
-  // Analyze audio for waveform
-  const analyzeAudio = async (audioSrc: string) => {
     try {
+      const resolved = new URL(audioSrc, window.location.href);
+      return resolved.origin !== window.location.origin;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const analyzeAudio = useCallback(async (audioSrc: string) => {
+    try {
+      if (isCrossOriginSource(audioSrc)) {
+        buildFallbackWaveform(audioSrc);
+        return;
+      }
+
       const response = await fetch(audioSrc);
       const arrayBuffer = await response.arrayBuffer();
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -82,16 +84,40 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         filteredData.push(sum / blockSize);
       }
 
-      // Normalize data
       const max = Math.max(...filteredData);
       const normalized = filteredData.map((val) => val / max);
       setWaveformData(normalized);
     } catch (error) {
-      console.error("Error analyzing audio:", error);
-      // Fallback to simple bars
-      setWaveformData(Array(100).fill(0).map(() => Math.random()));
+      console.warn("Audio analysis fallback:", error);
+      buildFallbackWaveform(audioSrc);
     }
-  };
+  }, [buildFallbackWaveform, isCrossOriginSource]);
+
+  // Load and analyze audio
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !src) return;
+
+    audio.src = src;
+
+    const handleLoadedMetadata = () => {
+      setDuration(audio.duration);
+      analyzeAudio(src);
+    };
+
+    const handleError = () => {
+      console.error('Failed to load audio source:', src);
+      setErrorSrc(src);
+      setWaveformData(Array(100).fill(0).map(() => Math.random() * 0.3));
+    };
+
+    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audio.addEventListener("error", handleError);
+    return () => {
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audio.removeEventListener("error", handleError);
+    };
+  }, [analyzeAudio, src]);
 
   // Draw waveform
   useEffect(() => {
@@ -175,7 +201,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       }
     } catch (error) {
       console.error('Error playing audio:', error);
-      setHasError(true);
+      setErrorSrc(src);
       setIsPlaying(false);
     }
   };

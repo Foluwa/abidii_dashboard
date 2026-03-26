@@ -58,6 +58,22 @@ export interface LessonBlueprintAdminResponse {
 
   created_at: string;
   updated_at: string;
+  review_status?: 'published' | 'needs_review' | 'draft_only' | string;
+  has_unpublished_changes?: boolean;
+  draft_id?: string | null;
+  draft_updated_at?: string | null;
+  published_blueprint_key?: string | null;
+  published_course_id?: string | null;
+  published_section_id?: string | null;
+  published_lesson_kind?: string | null;
+  published_schema_version?: number | null;
+  published_payload?: Record<string, unknown>;
+  published_status?: string | null;
+  published_enabled?: boolean | null;
+  published_validation_status?: string | null;
+  published_validation_errors?: Record<string, unknown>;
+  published_validated_at?: string | null;
+  published_updated_at?: string | null;
 }
 
 export interface LessonBlueprintMediaBinding {

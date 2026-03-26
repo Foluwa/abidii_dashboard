@@ -701,6 +701,26 @@ export function useCourseCurriculumByKey(courseKey: string | null) {
   };
 }
 
+export function useAdminCourseCurriculumByKey(courseKey: string | null) {
+  const { data, error, mutate } = useSWR<CourseCurriculumResponse>(
+    courseKey ? `/api/v1/admin/curriculum/courses/${encodeURIComponent(courseKey)}/tree` : null,
+    fetcher,
+    {
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      shouldRetryOnError: false,
+    }
+  );
+
+  return {
+    curriculum: data,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
 export function usePhonicsContrasts(languageCode: string | null) {
   const { data, error, mutate } = useSWR(
     languageCode ? `/api/v1/languages/${encodeURIComponent(languageCode)}/phonics/contrasts` : null,
@@ -727,7 +747,10 @@ export function usePhonicsContrasts(languageCode: string | null) {
  */
 export interface WordsFilters {
   language_id?: string;
+  source_language_id?: string;
+  target_language_id?: string;
   search?: string;
+  primary_translation?: string;
   page?: number;
   limit?: number;
   category?: string;
@@ -744,7 +767,7 @@ export interface WordsFilters {
   ipa_present?: boolean;
   word_length_min?: number;
   word_length_max?: number;
-  sort_by?: 'lemma' | 'created_at' | 'updated_at' | 'difficulty' | 'pos';
+  sort_by?: 'lemma' | 'primary_translation' | 'created_at' | 'updated_at' | 'difficulty' | 'pos';
   sort_dir?: 'asc' | 'desc';
 }
 
@@ -755,8 +778,14 @@ export function useWords(filters?: WordsFilters) {
   const params = new URLSearchParams();
   
   // Basic filters
-  if (filters?.language_id) params.append('language_id', filters.language_id);
+  if (filters?.source_language_id) {
+    params.append('source_language_id', filters.source_language_id);
+  } else if (filters?.language_id) {
+    params.append('language_id', filters.language_id);
+  }
+  if (filters?.target_language_id) params.append('target_language_id', filters.target_language_id);
   if (filters?.search) params.append('search', filters.search);
+  if (filters?.primary_translation) params.append('primary_translation', filters.primary_translation);
   if (filters?.page) params.append('page', filters.page.toString());
   if (filters?.limit) params.append('limit', filters.limit.toString());
   if (filters?.category) params.append('category', filters.category);

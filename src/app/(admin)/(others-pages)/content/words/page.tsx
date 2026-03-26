@@ -37,7 +37,9 @@ export default function WordsPage() {
 
   // Basic state
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
+  const [selectedTargetLanguage, setSelectedTargetLanguage] = useState<string>("");
   const [search, setSearch] = useState("");
+  const [primaryTranslationFilter, setPrimaryTranslationFilter] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(50);
   const [showModal, setShowModal] = useState(false);
@@ -71,13 +73,15 @@ export default function WordsPage() {
   const [ipaPresent, setIpaPresent] = useState<boolean | undefined>(undefined);
   const [wordLengthMin, setWordLengthMin] = useState<number | undefined>(undefined);
   const [wordLengthMax, setWordLengthMax] = useState<number | undefined>(undefined);
-  const [sortBy, setSortBy] = useState<'lemma' | 'created_at' | 'updated_at' | 'difficulty' | 'pos'>('lemma');
+  const [sortBy, setSortBy] = useState<'lemma' | 'primary_translation' | 'created_at' | 'updated_at' | 'difficulty' | 'pos'>('lemma');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   // Initialize filters from URL params
   useEffect(() => {
-    const langId = searchParams.get('language_id');
+    const langId = searchParams.get('source_language_id') || searchParams.get('language_id');
+    const targetLangId = searchParams.get('target_language_id');
     const searchQ = searchParams.get('search');
+    const primaryTranslationQ = searchParams.get('primary_translation');
     const pageP = searchParams.get('page');
     const limitP = searchParams.get('limit');
     const hasAudioP = searchParams.get('has_audio');
@@ -96,7 +100,9 @@ export default function WordsPage() {
     const sortDirP = searchParams.get('sort_dir');
 
     if (langId) setSelectedLanguage(langId);
+    if (targetLangId) setSelectedTargetLanguage(targetLangId);
     if (searchQ) setSearch(searchQ);
+    if (primaryTranslationQ) setPrimaryTranslationFilter(primaryTranslationQ);
     if (pageP) setPage(Number(pageP));
     if (limitP) setLimit(Number(limitP));
     if (hasAudioP) setHasAudio(hasAudioP === 'true');
@@ -118,13 +124,15 @@ export default function WordsPage() {
     if (hasAudioP || hasExamplesP || hasRelatedP || hasPronunP || posP || startsP || endsP || containsP || toneP || ipaP || minLenP || maxLenP) {
       setShowAdvancedFilters(true);
     }
-  }, []);
+  }, [searchParams]);
 
   // Update URL when filters change
   const updateURL = useCallback(() => {
     const params = new URLSearchParams();
-    if (selectedLanguage) params.set('language_id', selectedLanguage);
+    if (selectedLanguage) params.set('source_language_id', selectedLanguage);
+    if (selectedTargetLanguage) params.set('target_language_id', selectedTargetLanguage);
     if (search) params.set('search', search);
+    if (primaryTranslationFilter) params.set('primary_translation', primaryTranslationFilter);
     if (page > 1) params.set('page', page.toString());
     if (limit !== 50) params.set('limit', limit.toString());
     if (hasAudio !== undefined) params.set('has_audio', hasAudio.toString());
@@ -144,7 +152,7 @@ export default function WordsPage() {
 
     const queryString = params.toString();
     router.replace(`${pathname}${queryString ? '?' + queryString : ''}`, { scroll: false });
-  }, [selectedLanguage, search, page, limit, hasAudio, hasExamples, hasRelated, hasPronunciation, posFilter, startsWithFilter, endsWithFilter, containsFilter, toneMarksPresent, ipaPresent, wordLengthMin, wordLengthMax, sortBy, sortDir, router, pathname]);
+  }, [selectedLanguage, selectedTargetLanguage, search, primaryTranslationFilter, page, limit, hasAudio, hasExamples, hasRelated, hasPronunciation, posFilter, startsWithFilter, endsWithFilter, containsFilter, toneMarksPresent, ipaPresent, wordLengthMin, wordLengthMax, sortBy, sortDir, router, pathname]);
 
   // Debounced URL update
   useEffect(() => {
@@ -154,6 +162,7 @@ export default function WordsPage() {
 
   // Count active filters
   const activeFilterCount = [
+    primaryTranslationFilter,
     hasAudio !== undefined,
     hasExamples !== undefined,
     hasRelated !== undefined,
@@ -178,6 +187,7 @@ export default function WordsPage() {
     setStartsWithFilter("");
     setEndsWithFilter("");
     setContainsFilter("");
+    setPrimaryTranslationFilter("");
     setToneMarksPresent(undefined);
     setIpaPresent(undefined);
     setWordLengthMin(undefined);
@@ -198,8 +208,10 @@ export default function WordsPage() {
   };
 
   const { words, total, isLoading, isError, refresh, filtersApplied } = useWords({ 
-    language_id: selectedLanguage || undefined,
+    source_language_id: selectedLanguage || undefined,
+    target_language_id: selectedTargetLanguage || undefined,
     search, 
+    primary_translation: primaryTranslationFilter || undefined,
     page, 
     limit,
     has_audio: hasAudio,
@@ -338,7 +350,7 @@ export default function WordsPage() {
       await apiClient.post('/api/v1/admin/content/words/bulk-delete', {
         word_ids: selectedWords
       });
-      toast.success(`Successfully deleted ${selectedWords.length} word(s)`);
+      toast.success(`Successfully deleted ${selectedWords.length} lexicon entr${selectedWords.length === 1 ? 'y' : 'ies'}`);
       setSelectedWords([]);
       setShowDeleteConfirm(false);
       refresh();
@@ -395,13 +407,13 @@ export default function WordsPage() {
             );
           } catch (audioErr: any) {
             console.error('Audio upload error:', audioErr);
-            toast.error('Word updated but audio upload failed');
+            toast.error('Entry updated but audio upload failed');
           } finally {
             setUploadingAudio(false);
           }
         }
         
-        toast.success("Word updated successfully!");
+        toast.success("Entry updated successfully");
       } else {
         const response = await apiClient.post('/api/v1/admin/content/words', formData);
         
@@ -418,13 +430,13 @@ export default function WordsPage() {
             );
           } catch (audioErr: any) {
             console.error('Audio upload error:', audioErr);
-            toast.error('Word created but audio upload failed');
+            toast.error('Entry created but audio upload failed');
           } finally {
             setUploadingAudio(false);
           }
         }
         
-        toast.success("Word created successfully");
+        toast.success("Entry created successfully");
       }
       closeModal();
       refresh();
@@ -436,7 +448,7 @@ export default function WordsPage() {
   const handleDelete = async (wordId: string) => {
     try {
       await apiClient.delete(`/api/v1/admin/words/${wordId}`);
-      toast.success("Word deleted successfully");
+      toast.success("Entry deleted successfully");
       refresh();
     } catch (error: any) {
       toast.error(error.response?.data?.detail || "Failed to delete word");
@@ -447,7 +459,7 @@ export default function WordsPage() {
     // Find the word to get its details
     const word = words?.find((w: any) => w.id === wordId);
     if (!word) {
-      toast.error("Word not found");
+      toast.error("Entry not found");
       return;
     }
     
@@ -463,7 +475,7 @@ export default function WordsPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <PageBreadCrumb pageTitle="Words" />
+        <PageBreadCrumb pageTitle="Lexicon Entries" />
         <Alert variant="error">Failed to load words. Please check your API connection.</Alert>
       </div>
     );
@@ -474,9 +486,9 @@ export default function WordsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <PageBreadCrumb pageTitle="Words Management" />
+          <PageBreadCrumb pageTitle="Lexicon Entries" />
           <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
-            Manage vocabulary words, translations, and audio pronunciations
+            Search source headwords and imported translations from the same view
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -508,7 +520,7 @@ export default function WordsPage() {
             className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
           >
             <FiPlus className="h-4 w-4" />
-            Add New Word
+            Add New Entry
           </button>
         </div>
       </div>
@@ -542,12 +554,12 @@ export default function WordsPage() {
         <div className="p-5">
           {/* Basic Filters Row */}
           <div className="flex flex-wrap gap-4">
-            {/* Language Filter */}
+            {/* Source Language Filter */}
             <div className="flex-1 min-w-[200px]">
               <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
                 <div className="flex items-center gap-1.5">
                   <FiGlobe className="h-3.5 w-3.5" />
-                  Language
+                  Source Language
                 </div>
               </label>
               <StyledSelect
@@ -557,7 +569,32 @@ export default function WordsPage() {
                   setPage(1);
                 }}
                 options={[
-                  { value: "", label: "All Languages" },
+                  { value: "", label: "All Source Languages" },
+                  ...(languages?.map((lang: any) => ({
+                    value: lang.id,
+                    label: lang.name
+                  })) || [])
+                ]}
+                fullWidth
+              />
+            </div>
+
+            {/* Target Language Filter */}
+            <div className="flex-1 min-w-[200px]">
+              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                <div className="flex items-center gap-1.5">
+                  <FiGlobe className="h-3.5 w-3.5" />
+                  Target Language
+                </div>
+              </label>
+              <StyledSelect
+                value={selectedTargetLanguage}
+                onChange={(e) => {
+                  setSelectedTargetLanguage(e.target.value);
+                  setPage(1);
+                }}
+                options={[
+                  { value: "", label: "All Target Languages" },
                   ...(languages?.map((lang: any) => ({
                     value: lang.id,
                     label: lang.name
@@ -580,12 +617,29 @@ export default function WordsPage() {
                 }}
                 options={[
                   { value: "lemma", label: "Alphabetical" },
+                  { value: "primary_translation", label: "Primary Translation" },
                   { value: "created_at", label: "Created Date" },
                   { value: "updated_at", label: "Updated Date" },
                   { value: "difficulty", label: "Difficulty" },
                   { value: "pos", label: "Part of Speech" }
                 ]}
                 fullWidth
+              />
+            </div>
+
+            <div className="flex-1 min-w-[240px]">
+              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                Primary Translation
+              </label>
+              <input
+                type="text"
+                value={primaryTranslationFilter}
+                onChange={(e) => {
+                  setPrimaryTranslationFilter(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Filter by primary translation..."
+                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
               />
             </div>
 
@@ -993,7 +1047,7 @@ export default function WordsPage() {
           <div className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Total Words</p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Total Entries</p>
                 <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{total || 0}</p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/20">
@@ -1175,10 +1229,10 @@ export default function WordsPage() {
           {/* Header */}
           <div className="border-b border-gray-200 px-6 py-5 dark:border-gray-700">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {editingWord ? "Edit Word" : "Create New Word"}
+              {editingWord ? "Edit Entry" : "Create New Entry"}
             </h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {editingWord ? "Update word information below" : "Fill in the details to add a new word"}
+              {editingWord ? "Update lexicon entry details below" : "Fill in the details to add a new lexicon entry"}
             </p>
           </div>
 
@@ -1370,7 +1424,7 @@ export default function WordsPage() {
                 type="submit"
                 className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-300 dark:bg-brand-600 dark:hover:bg-brand-700 dark:focus:ring-brand-800"
               >
-                {editingWord ? "Update Word" : "Create Word"}
+                {editingWord ? "Update Entry" : "Create Entry"}
               </button>
             </div>
           </form>
@@ -1404,8 +1458,8 @@ export default function WordsPage() {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={confirmBulkDelete}
-        title="Delete Words"
-        message={`Are you sure you want to delete ${selectedWords.length} word(s)? This action cannot be undone.`}
+        title="Delete Lexicon Entries"
+        message={`Are you sure you want to delete ${selectedWords.length} entr${selectedWords.length === 1 ? 'y' : 'ies'}? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"

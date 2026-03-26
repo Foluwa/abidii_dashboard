@@ -91,7 +91,8 @@ const navItems: NavItem[] = [
       { name: "Languages", path: "/content/languages" },
       { name: "Lessons", path: "/content/lessons" },
       { name: "Letters & Phonics", path: "/content/letters" },
-      { name: "Words", path: "/content/words" },
+      { name: "Lexicon Entries", path: "/content/words" },
+      { name: "Dictionary Import", path: "/content/dictionary-import" },
       { name: "Numbers", path: "/content/numbers" },
       { name: "Sentences", path: "/content/sentences" },
       { name: "Phrases", path: "/content/phrases" },
@@ -420,7 +421,7 @@ const AppSidebar: React.FC = () => {
   const manualOpenSubmenuKey = manualOpenSubmenu
     ? `${manualOpenSubmenu.type}-${manualOpenSubmenu.index}`
     : "";
-  const openSubmenuKey = routeOpenSubmenuKey || manualOpenSubmenuKey;
+  const openSubmenuKey = manualOpenSubmenuKey || routeOpenSubmenuKey;
   const openSubmenu = openSubmenuKey
     ? {
         type: openSubmenuKey.startsWith("main-") ? ("main" as const) : ("others" as const),

@@ -12,7 +12,7 @@ import StatusBadge from '@/components/admin/StatusBadge';
 import { Modal } from '@/components/ui/modal';
 import { ConfirmationModal } from '@/components/ui/modal/ConfirmationModal';
 import { useToast } from '@/contexts/ToastContext';
-import { useAdminCoursesList, useConfig, useCourseCurriculumByKey } from '@/hooks/useApi';
+import { useAdminCoursesList, useAdminCourseCurriculumByKey, useConfig } from '@/hooks/useApi';
 import type { CurriculumSection, CurriculumUnit, PublicLessonBlueprintResponse } from '@/types/curriculum';
 import {
   createCourseSection,
@@ -52,6 +52,12 @@ type SectionDragItem = {
   title: string;
   playable: boolean;
 };
+
+function getSectionAvailabilityLabel(section: CurriculumSection): string {
+  if (section.availability === 'available') return 'Playable';
+  if (section.lesson_blueprint_id) return 'Needs publish';
+  return 'Coming soon';
+}
 
 type UnitEditorState =
   | {
@@ -406,7 +412,7 @@ function SectionRow({
       index,
       sectionKey: section.section_key,
       title: section.title,
-      playable: Boolean(section.blueprint_key),
+      playable: section.availability === 'available',
     },
     collect: (monitor) => ({ isDragging: monitor.isDragging() }),
   });
@@ -484,7 +490,7 @@ function SectionRow({
         </div>
       </div>
       <div className="text-xs text-gray-500 dark:text-gray-400">
-        {section.blueprint_key ? 'Playable' : 'Coming soon'}
+        {getSectionAvailabilityLabel(section)}
       </div>
       <div className="flex flex-wrap gap-2">
         <button
@@ -546,7 +552,7 @@ export default function CurriculumEditorPage() {
     isLoading: curriculumLoading,
     isError,
     refresh,
-  } = useCourseCurriculumByKey(selectedCourseKey || null);
+  } = useAdminCourseCurriculumByKey(selectedCourseKey || null);
 
   const [draftUnits, setDraftUnits] = useState<DraftUnit[]>([]);
   const [lastSavedUnits, setLastSavedUnits] = useState<DraftUnit[]>([]);

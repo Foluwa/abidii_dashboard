@@ -252,6 +252,12 @@ export default function LessonBlueprintsListPage() {
     );
   };
 
+  const reviewBadge = (reviewStatus?: string | null) => {
+    if (reviewStatus === 'needs_review') return <StatusBadge status="warning" label="Needs Review" />;
+    if (reviewStatus === 'published') return <StatusBadge status="success" label="Published Live" />;
+    return <StatusBadge status="draft" label="Draft Only" />;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
@@ -517,6 +523,7 @@ export default function LessonBlueprintsListPage() {
                         {[bp.target_language_code?.toUpperCase(), bp.section_key].filter(Boolean).join(' • ')}
                       </div>
                     )}
+                    <div className="mt-1">{reviewBadge(bp.review_status)}</div>
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <StatusBadge status={bp.status as any} />

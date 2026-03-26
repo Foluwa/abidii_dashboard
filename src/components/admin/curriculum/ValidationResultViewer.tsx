@@ -8,6 +8,37 @@ import type { ValidationIssuePayload, ValidationResultPayload } from '@/types/cu
 
 type FilterTab = 'all' | 'errors' | 'warnings';
 
+function formatIssuePath(path: string): string {
+  if (!path) return 'General';
+  return path
+    .replace(/^steps\[(\d+)\]/, (_, index: string) => `Step ${Number(index) + 1}`)
+    .replace(/\.learningTargets\[(\d+)\]/g, (_, index: string) => ` -> learning target ${Number(index) + 1}`)
+    .replace(/\.options\[(\d+)\]/g, (_, index: string) => ` -> option ${Number(index) + 1}`)
+    .replace(/\.pairs\[(\d+)\]/g, (_, index: string) => ` -> pair ${Number(index) + 1}`)
+    .replace(/\.messages\[(\d+)\]/g, (_, index: string) => ` -> message ${Number(index) + 1}`)
+    .replace(/\.([A-Za-z_][A-Za-z0-9_]*)/g, (_, fieldName: string) => ` -> ${fieldName}`)
+    .trim();
+}
+
+function buildIssueExplanation(issue: ValidationIssuePayload): string | null {
+  const normalizedPath = (issue.path || '').trim();
+  if (issue.code === 'content_mapping_missing') {
+    const targetMatch = issue.message.match(/No mapping for ([^.\s]+:[^.\s]+)/i);
+    const target = targetMatch?.[1] || 'referenced content item';
+    return `${formatIssuePath(normalizedPath)} refers to ${target}, but the backend cannot resolve that reference yet.`;
+  }
+
+  if (issue.code === 'missing_thumbnail') {
+    return `${formatIssuePath(normalizedPath)} is empty. Add a thumbnail image or leave this warning if the lesson intentionally has no thumbnail.`;
+  }
+
+  if (normalizedPath) {
+    return `Refers to ${formatIssuePath(normalizedPath)}.`;
+  }
+
+  return null;
+}
+
 export default function ValidationResultViewer({
   validation,
   onJumpToPath,
@@ -141,6 +172,11 @@ export default function ValidationResultViewer({
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-gray-900 dark:text-white">{issue.message}</p>
+                    {buildIssueExplanation(issue) ? (
+                      <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                        {buildIssueExplanation(issue)}
+                      </p>
+                    ) : null}
                   </div>
                   {onJumpToPath && issue.path ? (
                     <button

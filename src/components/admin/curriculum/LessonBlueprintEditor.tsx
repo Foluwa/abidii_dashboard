@@ -8,18 +8,21 @@ import MediaLinkPreview from '@/components/admin/curriculum/MediaLinkPreview';
 import { LessonRuntimePreview } from '@/components/admin/curriculum/LessonRuntimePreview';
 import ValidationResultViewer from '@/components/admin/curriculum/ValidationResultViewer';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
+import { Modal } from '@/components/ui/modal';
 import { useToast } from '@/contexts/ToastContext';
+import { apiClient } from '@/lib/api';
 import {
+  useAdminCourseCurriculumByKey,
   useAdminBlueprintAssetLibrary,
   useAdminBlueprintCapabilities,
   useAdminCoursesList,
-  useCourseCurriculumByKey,
   useCurriculumVocabLibrary,
   usePhonicsContrasts,
 } from '@/hooks/useApi';
 import {
   cloneAdminBlueprint,
   createAdminBlueprint,
+  deleteBlueprintAsset,
   previewAdminBlueprintDraft,
   uploadBlueprintAsset,
   updateAdminBlueprint,
@@ -43,6 +46,36 @@ type SectionOption = {
   section: CurriculumSection;
   unitKey: string;
 };
+
+type PhraseLibraryItem = {
+  id: string;
+  language_id: string;
+  phrase: string;
+  translation: string;
+  audio_url?: string | null;
+  category?: string | null;
+  is_published?: boolean;
+};
+
+type PhrasePickerTarget =
+  | {
+      mode: 'recognitionTask';
+      stepIndex: number;
+    }
+  | {
+      mode: 'recognitionOption';
+      stepIndex: number;
+      optionIndex: number;
+    }
+  | {
+      mode: 'matchingPairs';
+      stepIndex: number;
+    }
+  | {
+      mode: 'matchingPairItem';
+      stepIndex: number;
+      pairIndex: number;
+    };
 
 const lessonLaunchRouteOptions = [
   { value: 'structuredLesson', label: 'Structured lesson' },
@@ -139,6 +172,14 @@ function getVocabDisplayLabel(externalId: string, lemma?: string | null): string
   return externalId.replace(/^vocab_/i, '').replace(/[_-]+/g, ' ').trim() || externalId;
 }
 
+function buildSourceRef(contentType: string, contentId: string, role = 'source') {
+  return {
+    contentType,
+    contentId,
+    role,
+  };
+}
+
 function getMediaBindings(payload: Record<string, unknown>): Record<string, LessonBlueprintMediaBinding> {
   const raw = payload.mediaBindings;
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
@@ -159,6 +200,10 @@ function inferAssetKindFromFieldPath(fieldPath: string): 'image' | 'audio' | 'vi
   return 'image';
 }
 
+function getStepRuntimeType(step: Record<string, unknown>): string {
+  return getString(step.type) || getString(step.runtimeType);
+}
+
 function isMediaBindingCompatible(binding: LessonBlueprintMediaBinding, targetFieldPath: string): boolean {
   const targetKind = inferAssetKindFromFieldPath(targetFieldPath);
   return (binding.asset_kind || inferAssetKindFromFieldPath(binding.field_path || targetFieldPath)) === targetKind;
@@ -166,6 +211,26 @@ function isMediaBindingCompatible(binding: LessonBlueprintMediaBinding, targetFi
 
 function setPayloadFieldValue(payload: Record<string, unknown>, fieldPath: string, value: unknown) {
   const next = JSON.parse(JSON.stringify(payload || {})) as Record<string, unknown>;
+  const nestedMatch = fieldPath.match(
+    /^steps\[(\d+)\]\.(options|pairs)\[(\d+)\]\.([A-Za-z_][A-Za-z0-9_]*)$/
+  );
+  if (nestedMatch) {
+    const [, rawStepIndex, collectionName, rawItemIndex, fieldName] = nestedMatch;
+    const steps = getObjectArray(next.steps);
+    const stepIndex = Number(rawStepIndex);
+    const itemIndex = Number(rawItemIndex);
+    const step = { ...(steps[stepIndex] ?? {}) };
+    const items = getObjectArray(step[collectionName]);
+    items[itemIndex] = {
+      ...(items[itemIndex] ?? {}),
+      [fieldName]: value,
+    };
+    step[collectionName] = items;
+    steps[stepIndex] = step;
+    next.steps = steps;
+    return next;
+  }
+
   const stepMatch = fieldPath.match(/^steps\[(\d+)\]\.([A-Za-z_][A-Za-z0-9_]*)$/);
   if (stepMatch) {
     const [, rawIndex, fieldName] = stepMatch;
@@ -181,7 +246,50 @@ function setPayloadFieldValue(payload: Record<string, unknown>, fieldPath: strin
     next.steps = steps;
     return next;
   }
+
   next[fieldPath] = value;
+  return next;
+}
+
+function removePayloadFieldValue(payload: Record<string, unknown>, fieldPath: string) {
+  const next = JSON.parse(JSON.stringify(payload || {})) as Record<string, unknown>;
+  const nestedMatch = fieldPath.match(
+    /^steps\[(\d+)\]\.(options|pairs)\[(\d+)\]\.([A-Za-z_][A-Za-z0-9_]*)$/
+  );
+  if (nestedMatch) {
+    const [, rawStepIndex, collectionName, rawItemIndex, fieldName] = nestedMatch;
+    const steps = getObjectArray(next.steps);
+    const stepIndex = Number(rawStepIndex);
+    const itemIndex = Number(rawItemIndex);
+    const step = { ...(steps[stepIndex] ?? {}) };
+    const items = getObjectArray(step[collectionName]);
+    const item = { ...(items[itemIndex] ?? {}) };
+    delete item[fieldName];
+    items[itemIndex] = item;
+    step[collectionName] = items;
+    steps[stepIndex] = step;
+    next.steps = steps;
+  } else {
+    const stepMatch = fieldPath.match(/^steps\[(\d+)\]\.([A-Za-z_][A-Za-z0-9_]*)$/);
+    if (stepMatch) {
+      const [, rawStepIndex, fieldName] = stepMatch;
+      const steps = getObjectArray(next.steps);
+      const stepIndex = Number(rawStepIndex);
+      const step = { ...(steps[stepIndex] ?? {}) };
+      delete step[fieldName];
+      steps[stepIndex] = step;
+      next.steps = steps;
+    } else {
+      delete next[fieldPath];
+    }
+  }
+
+  const mediaBindings = getMediaBindings(next);
+  if (mediaBindings[fieldPath]) {
+    const nextBindings = { ...mediaBindings };
+    delete nextBindings[fieldPath];
+    next.mediaBindings = nextBindings;
+  }
   return next;
 }
 
@@ -338,18 +446,22 @@ export function LessonBlueprintEditor({
   mode,
   blueprint,
   onSaved,
+  onPreviewResultChange,
   initialCourseKey,
   initialSectionId,
   initialBlueprintKey,
   focusFieldPath,
+  showPreviewResult = true,
 }: {
   mode: Mode;
   blueprint?: LessonBlueprintAdminResponse | null;
   onSaved?: (result: LessonBlueprintValidationResponse) => void;
+  onPreviewResultChange?: (result: LessonBlueprintValidationResponse | null) => void;
   initialCourseKey?: string | null;
   initialSectionId?: string | null;
   initialBlueprintKey?: string | null;
   focusFieldPath?: string | null;
+  showPreviewResult?: boolean;
 }) {
   const toast = useToast();
 
@@ -381,6 +493,11 @@ export function LessonBlueprintEditor({
   const [assetLibraryScope, setAssetLibraryScope] = useState<'same_course' | 'all_courses'>('same_course');
   const [vocabSearch, setVocabSearch] = useState('');
   const [toneContrastSearch, setToneContrastSearch] = useState('');
+  const [phrasePickerTarget, setPhrasePickerTarget] = useState<PhrasePickerTarget | null>(null);
+  const [phraseSearch, setPhraseSearch] = useState('');
+  const [phraseItems, setPhraseItems] = useState<PhraseLibraryItem[]>([]);
+  const [isPhraseLoading, setIsPhraseLoading] = useState(false);
+  const [phraseError, setPhraseError] = useState('');
   const hasAppliedInitialSectionRef = useRef(false);
   const hasAppliedInitialBlueprintKeyRef = useRef(false);
   const activeUploadTokenRef = useRef<string | null>(null);
@@ -435,6 +552,46 @@ export function LessonBlueprintEditor({
     return courses.find((course) => course.course_key === selectedCourseKey) ?? null;
   }, [courses, selectedCourseKey]);
 
+  useEffect(() => {
+    if (!phrasePickerTarget || !selectedCourse?.target_language_id) {
+      setPhraseItems([]);
+      setPhraseError('');
+      setIsPhraseLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const fetchPhrases = async () => {
+      setIsPhraseLoading(true);
+      setPhraseError('');
+      try {
+        const response = await apiClient.get('/api/v1/admin/content/phrases', {
+          params: {
+            language_id: selectedCourse.target_language_id,
+            search: phraseSearch.trim() || undefined,
+            page: 1,
+            page_size: 25,
+          },
+        });
+        if (cancelled) return;
+        setPhraseItems((response.data?.items ?? []) as PhraseLibraryItem[]);
+      } catch (error: any) {
+        if (cancelled) return;
+        setPhraseError(extractErrorMessage(error));
+        setPhraseItems([]);
+      } finally {
+        if (!cancelled) {
+          setIsPhraseLoading(false);
+        }
+      }
+    };
+
+    void fetchPhrases();
+    return () => {
+      cancelled = true;
+    };
+  }, [phrasePickerTarget, phraseSearch, selectedCourse?.target_language_id]);
+
   const lessonKindOptions = useMemo(
     () =>
       (capabilitiesData?.lesson_kinds ?? []).map((lessonKind) => ({
@@ -451,7 +608,7 @@ export function LessonBlueprintEditor({
   const {
     curriculum,
     isLoading: isCurriculumLoading,
-  } = useCourseCurriculumByKey(selectedCourseKey || null);
+  } = useAdminCourseCurriculumByKey(selectedCourseKey || null);
   const {
     items: globalAssetLibraryItems,
     isLoading: isGlobalAssetLibraryLoading,
@@ -637,10 +794,35 @@ export function LessonBlueprintEditor({
       { value: 'imageUrl', label: 'Image' },
       { value: 'audioUrl', label: 'Audio' },
     ];
-    const stepLevel = editableSteps.flatMap((step, index) => [
-      { value: `steps[${index}].imageUrl`, label: `Step ${index + 1} image` },
-      { value: `steps[${index}].audioUrl`, label: `Step ${index + 1} audio` },
-    ]);
+    const stepLevel = editableSteps.flatMap((step, index) => {
+      const stepType = getStepRuntimeType(step);
+      const optionFields =
+        stepType === 'recognitionTask'
+          ? getObjectArray(step.options).map((option, optionIndex) => ({
+              value: `steps[${index}].options[${optionIndex}].imageUrl`,
+              label: `Step ${index + 1} option ${optionIndex + 1} image`,
+            }))
+          : [];
+      const pairFields =
+        stepType === 'matchingPairs'
+          ? getObjectArray(step.pairs).flatMap((pair, pairIndex) => [
+              {
+                value: `steps[${index}].pairs[${pairIndex}].imageUrl`,
+                label: `Step ${index + 1} pair ${pairIndex + 1} image`,
+              },
+              {
+                value: `steps[${index}].pairs[${pairIndex}].audioUrl`,
+                label: `Step ${index + 1} pair ${pairIndex + 1} audio`,
+              },
+            ])
+          : [];
+      return [
+        { value: `steps[${index}].imageUrl`, label: `Step ${index + 1} image` },
+        { value: `steps[${index}].audioUrl`, label: `Step ${index + 1} audio` },
+        ...optionFields,
+        ...pairFields,
+      ];
+    });
     return [...topLevel, ...stepLevel];
   }, [editableSteps]);
   const compatibleLibraryAssets = useMemo(() => {
@@ -776,6 +958,194 @@ export function LessonBlueprintEditor({
     });
   };
 
+  const updateStepCollectionItemField = (
+    stepIndex: number,
+    collectionName: 'options' | 'pairs',
+    itemIndex: number,
+    field: string,
+    value: unknown
+  ) => {
+    updatePayload((prev) => {
+      const steps = getObjectArray(prev.steps);
+      const nextSteps = [...steps];
+      const existingStep = { ...(nextSteps[stepIndex] ?? {}) };
+      const items = [...getObjectArray(existingStep[collectionName])];
+      const existingItem = { ...(items[itemIndex] ?? {}) };
+      if (
+        value === null ||
+        value === undefined ||
+        (typeof value === 'string' && value.trim() === '') ||
+        (Array.isArray(value) && value.length === 0)
+      ) {
+        delete existingItem[field];
+      } else {
+        existingItem[field] = value;
+      }
+      items[itemIndex] = existingItem;
+      existingStep[collectionName] = items;
+      nextSteps[stepIndex] = existingStep;
+      return {
+        ...prev,
+        steps: nextSteps,
+      };
+    });
+  };
+
+  const addStepCollectionItem = (
+    stepIndex: number,
+    collectionName: 'options' | 'pairs',
+    template: Record<string, unknown>
+  ) => {
+    updatePayload((prev) => {
+      const steps = getObjectArray(prev.steps);
+      const nextSteps = [...steps];
+      const existingStep = { ...(nextSteps[stepIndex] ?? {}) };
+      existingStep[collectionName] = [...getObjectArray(existingStep[collectionName]), template];
+      nextSteps[stepIndex] = existingStep;
+      return {
+        ...prev,
+        steps: nextSteps,
+      };
+    });
+  };
+
+  const removeStepCollectionItem = (
+    stepIndex: number,
+    collectionName: 'options' | 'pairs',
+    itemIndex: number
+  ) => {
+    updatePayload((prev) => {
+      const steps = getObjectArray(prev.steps);
+      const nextSteps = [...steps];
+      const existingStep = { ...(nextSteps[stepIndex] ?? {}) };
+      existingStep[collectionName] = getObjectArray(existingStep[collectionName]).filter(
+        (_, index) => index !== itemIndex
+      );
+      nextSteps[stepIndex] = existingStep;
+      return {
+        ...prev,
+        steps: nextSteps,
+      };
+    });
+  };
+
+  const openPhrasePicker = (target: PhrasePickerTarget) => {
+    setPhraseSearch('');
+    setPhraseError('');
+    setPhrasePickerTarget(target);
+  };
+
+  const applyPhraseSelection = (phrase: PhraseLibraryItem) => {
+    if (!phrasePickerTarget) return;
+
+    updatePayload((prev) => {
+      const steps = getObjectArray(prev.steps);
+      const nextSteps = [...steps];
+      const step = { ...(nextSteps[phrasePickerTarget.stepIndex] ?? {}) };
+      const lessonId = getString(prev.id) || getString(step.lessonId) || form.blueprint_key || managedBlueprintKey;
+      const phraseTarget = selectedCourse
+        ? {
+            itemType: 'phrase',
+            itemId: phrase.id,
+            languageId: selectedCourse.target_language_id || '',
+            courseId: selectedCourse.id,
+            lessonId,
+          }
+        : null;
+
+      if (phrasePickerTarget.mode === 'recognitionTask') {
+        step.yorubaText = phrase.phrase;
+        step.sourceContentType = 'phrase';
+        step.sourcePhraseId = phrase.id;
+        step.sourceRef = buildSourceRef('phrase', phrase.id);
+        if (!getString(step.audioUrl) && phrase.audio_url) {
+          step.audioUrl = phrase.audio_url;
+        }
+        const options = [...getObjectArray(step.options)];
+        const optionId = getString(step.correctOptionId) || `opt_${phrasePickerTarget.stepIndex + 1}_correct`;
+        const existingIndex = options.findIndex((item) => getString(item.id) === optionId);
+        const nextOption = {
+          ...(existingIndex >= 0 ? options[existingIndex] : {}),
+          id: optionId,
+          englishText: phrase.translation,
+        };
+        if (existingIndex >= 0) {
+          options[existingIndex] = nextOption;
+        } else {
+          options.push(nextOption);
+        }
+        step.options = options;
+        step.correctOptionId = optionId;
+        if (phraseTarget) {
+          step.learningTargets = [phraseTarget];
+        }
+      }
+
+      if (phrasePickerTarget.mode === 'recognitionOption') {
+        const options = [...getObjectArray(step.options)];
+        options[phrasePickerTarget.optionIndex] = {
+          ...(options[phrasePickerTarget.optionIndex] ?? {}),
+          englishText: phrase.translation,
+          yorubaText: phrase.phrase,
+          sourceContentType: 'phrase',
+          sourcePhraseId: phrase.id,
+          sourceRef: buildSourceRef('phrase', phrase.id),
+        };
+        if (!getString(step.audioUrl) && phrase.audio_url) {
+          step.audioUrl = phrase.audio_url;
+        }
+        step.options = options;
+      }
+
+      if (phrasePickerTarget.mode === 'matchingPairs') {
+        const pairs = [...getObjectArray(step.pairs)];
+        pairs.push({
+          id: `pair_${phrasePickerTarget.stepIndex + 1}_${pairs.length + 1}`,
+          englishText: phrase.translation,
+          yorubaText: phrase.phrase,
+          audioUrl: phrase.audio_url || '',
+          sourceContentType: 'phrase',
+          sourcePhraseId: phrase.id,
+          sourceRef: buildSourceRef('phrase', phrase.id, 'pair_source'),
+        });
+        step.pairs = pairs;
+        if (phraseTarget) {
+          const existingTargets = getObjectArray(step.learningTargets);
+          step.learningTargets = [...existingTargets, phraseTarget];
+        }
+      }
+
+      if (phrasePickerTarget.mode === 'matchingPairItem') {
+        const pairs = [...getObjectArray(step.pairs)];
+        pairs[phrasePickerTarget.pairIndex] = {
+          ...(pairs[phrasePickerTarget.pairIndex] ?? {}),
+          englishText: phrase.translation,
+          yorubaText: phrase.phrase,
+          audioUrl: phrase.audio_url || getString(pairs[phrasePickerTarget.pairIndex]?.audioUrl),
+          sourceContentType: 'phrase',
+          sourcePhraseId: phrase.id,
+          sourceRef: buildSourceRef('phrase', phrase.id, 'pair_source'),
+        };
+        step.pairs = pairs;
+        if (phraseTarget) {
+          const existingTargets = getObjectArray(step.learningTargets).filter(
+            (target) => getString(getObject(target).itemId) !== phrase.id
+          );
+          step.learningTargets = [...existingTargets, phraseTarget];
+        }
+      }
+
+      nextSteps[phrasePickerTarget.stepIndex] = step;
+      return {
+        ...prev,
+        steps: nextSteps,
+      };
+    });
+
+    setPhrasePickerTarget(null);
+    setPhraseSearch('');
+  };
+
   const addStep = () => {
     updatePayload((prev) => ({
       ...prev,
@@ -826,6 +1196,7 @@ export function LessonBlueprintEditor({
     try {
       const result = await previewAdminBlueprintDraft(request);
       setPreviewResult(result);
+      onPreviewResultChange?.(result);
       toast.success('Preview validation complete.');
     } catch (error) {
       const message = extractErrorMessage(error);
@@ -847,6 +1218,7 @@ export function LessonBlueprintEditor({
           ? await createAdminBlueprint(request)
           : await updateAdminBlueprint(blueprint!.id, request);
       setPreviewResult(result);
+      onPreviewResultChange?.(result);
       setForm(request);
       setPayloadText(JSON.stringify(request.payload, null, 2));
       toast.success(mode === 'create' ? 'Blueprint draft created.' : 'Blueprint draft saved.');
@@ -931,6 +1303,36 @@ export function LessonBlueprintEditor({
         delete next[fieldPath];
         return next;
       });
+    }
+  };
+
+  const handleRemoveAsset = async (fieldPath: string) => {
+    if (uploadingFieldPath === fieldPath) {
+      toast.info('Wait for the current upload to finish first.');
+      return;
+    }
+
+    const hasManagedBinding = Boolean(mediaBindings[fieldPath]);
+    if (!hasManagedBinding || !blueprint?.id) {
+      replacePayload(removePayloadFieldValue(editablePayload, fieldPath));
+      toast.success('Image removed from the draft.');
+      return;
+    }
+
+    setUploadingFieldPath(fieldPath);
+    try {
+      const result = await deleteBlueprintAsset(blueprint.id, fieldPath);
+      replacePayload(result.blueprint.payload);
+      setPreviewResult(result);
+      onPreviewResultChange?.(result);
+      onSaved?.(result);
+      toast.success('Image removed from the blueprint.');
+    } catch (error) {
+      const message = extractErrorMessage(error);
+      setErrorMessage(message);
+      toast.error(message);
+    } finally {
+      setUploadingFieldPath(null);
     }
   };
 
@@ -1759,7 +2161,13 @@ export function LessonBlueprintEditor({
                 </div>
                 {getString(editablePayload.heroImageUrl) ? (
                   <div className="mt-3">
-                    <MediaLinkPreview url={getString(editablePayload.heroImageUrl)} label="Hero image" kind="image" compact />
+                    <MediaLinkPreview
+                      url={getString(editablePayload.heroImageUrl)}
+                      label="Hero image"
+                      kind="image"
+                      compact
+                      onRemove={() => void handleRemoveAsset('heroImageUrl')}
+                    />
                   </div>
                 ) : null}
               </div>
@@ -1796,7 +2204,13 @@ export function LessonBlueprintEditor({
                 </div>
                 {getString(editablePayload.coverImageUrl) ? (
                   <div className="mt-3">
-                    <MediaLinkPreview url={getString(editablePayload.coverImageUrl)} label="Cover image" kind="image" compact />
+                    <MediaLinkPreview
+                      url={getString(editablePayload.coverImageUrl)}
+                      label="Cover image"
+                      kind="image"
+                      compact
+                      onRemove={() => void handleRemoveAsset('coverImageUrl')}
+                    />
                   </div>
                 ) : null}
               </div>
@@ -1833,7 +2247,13 @@ export function LessonBlueprintEditor({
                 </div>
                 {getString(editablePayload.imageUrl) ? (
                   <div className="mt-3">
-                    <MediaLinkPreview url={getString(editablePayload.imageUrl)} label="Image" kind="image" compact />
+                    <MediaLinkPreview
+                      url={getString(editablePayload.imageUrl)}
+                      label="Image"
+                      kind="image"
+                      compact
+                      onRemove={() => void handleRemoveAsset('imageUrl')}
+                    />
                   </div>
                 ) : null}
               </div>
@@ -2171,9 +2591,14 @@ export function LessonBlueprintEditor({
                     No explicit steps are defined in this payload yet.
                   </div>
                 ) : (
-                  editableSteps.map((step, index) => (
+                  editableSteps.map((step, index) => {
+                    const stepType = getStepRuntimeType(step);
+                    const recognitionOptions = getObjectArray(step.options);
+                    const matchPairs = getObjectArray(step.pairs);
+
+                    return (
                     <div
-                      key={`${getString(step.stepId) || getString(step.type) || 'step'}-${index}`}
+                      key={`${getString(step.stepId) || stepType || 'step'}-${index}`}
                       className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                     >
                       <div className="flex items-center justify-between gap-3">
@@ -2190,7 +2615,7 @@ export function LessonBlueprintEditor({
                         <div>
                           <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</label>
                           <StyledSelect
-                            value={getString(step.type)}
+                            value={stepType}
                             onChange={(event) => updateStepField(index, 'type', event.target.value)}
                             options={stepTypeOptions}
                             placeholder=""
@@ -2340,6 +2765,420 @@ export function LessonBlueprintEditor({
                             </div>
                           </>
                         )}
+                        {stepType === 'recognitionTask' && (
+                          <>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Yoruba text</label>
+                              <input
+                                value={getString(step.yorubaText)}
+                                onChange={(event) => updateStepField(index, 'yorubaText', event.target.value)}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Correct option</label>
+                              <StyledSelect
+                                value={getString(step.correctOptionId)}
+                                onChange={(event) => updateStepField(index, 'correctOptionId', event.target.value)}
+                                options={[
+                                  { value: '', label: 'Select option' },
+                                  ...recognitionOptions.map((option, optionIndex) => ({
+                                    value: getString(option.id),
+                                    label: getString(option.englishText) || getString(option.id) || `Option ${optionIndex + 1}`,
+                                  })),
+                                ]}
+                                placeholder=""
+                                fullWidth
+                              />
+                            </div>
+                            <div className="flex items-end">
+                              <button
+                                type="button"
+                                onClick={() => openPhrasePicker({ mode: 'recognitionTask', stepIndex: index })}
+                                disabled={!selectedCourse?.target_language_id}
+                                className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                              >
+                                Use phrase
+                              </button>
+                            </div>
+                            <div className="lg:col-span-2 rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+                              <div className="mb-3 flex items-center justify-between gap-3">
+                                <div>
+                                  <div className="text-sm font-semibold text-gray-900 dark:text-white">Recognition options</div>
+                                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    These cards already render `imageUrl` on mobile when present.
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    addStepCollectionItem(index, 'options', {
+                                      id: `opt_${index + 1}_${recognitionOptions.length + 1}`,
+                                      englishText: '',
+                                      yorubaText: '',
+                                    })
+                                  }
+                                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:hover:bg-white/[0.03]"
+                                >
+                                  Add Option
+                                </button>
+                              </div>
+                              <div className="space-y-4">
+                                {recognitionOptions.length === 0 ? (
+                                  <div className="rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                                    No recognition options yet.
+                                  </div>
+                                ) : (
+                                  recognitionOptions.map((option, optionIndex) => {
+                                    const imageFieldPath = `steps[${index}].options[${optionIndex}].imageUrl`;
+                                    return (
+                                      <div
+                                        key={`${getString(option.id) || 'option'}-${optionIndex}`}
+                                        className="rounded-lg border border-gray-200 p-4 dark:border-gray-800"
+                                      >
+                                        <div className="mb-3 flex items-center justify-between gap-3">
+                                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                            Option {optionIndex + 1}
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                openPhrasePicker({
+                                                  mode: 'recognitionOption',
+                                                  stepIndex: index,
+                                                  optionIndex,
+                                                })
+                                              }
+                                              disabled={!selectedCourse?.target_language_id}
+                                              className="rounded-lg border border-brand-300 px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                                            >
+                                              Use phrase
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => removeStepCollectionItem(index, 'options', optionIndex)}
+                                              className="rounded-lg border border-red-300 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
+                                            >
+                                              Remove
+                                            </button>
+                                          </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                          <div>
+                                            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Option id</label>
+                                            <input
+                                              value={getString(option.id)}
+                                              onChange={(event) =>
+                                                updateStepCollectionItemField(index, 'options', optionIndex, 'id', event.target.value)
+                                              }
+                                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">English text</label>
+                                            <input
+                                              value={getString(option.englishText)}
+                                              onChange={(event) =>
+                                                updateStepCollectionItemField(index, 'options', optionIndex, 'englishText', event.target.value)
+                                              }
+                                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                            />
+                                          </div>
+                                          <div className="lg:col-span-2">
+                                            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Yoruba text</label>
+                                            <input
+                                              value={getString(option.yorubaText)}
+                                              onChange={(event) =>
+                                                updateStepCollectionItemField(index, 'options', optionIndex, 'yorubaText', event.target.value)
+                                              }
+                                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                            />
+                                          </div>
+                                          <div className="lg:col-span-2">
+                                            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Image URL</label>
+                                            <div className="flex gap-2">
+                                              <input
+                                                value={getString(option.imageUrl)}
+                                                readOnly
+                                                className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                                              />
+                                              <button
+                                                type="button"
+                                                onClick={() => openAssetPicker(imageFieldPath, 'image/*', 'Image')}
+                                                disabled={uploadingFieldPath === imageFieldPath}
+                                                className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                                              >
+                                                {uploadingFieldPath === imageFieldPath
+                                                  ? `Uploading ${uploadProgressByField[imageFieldPath] ?? 0}%`
+                                                  : 'Upload'}
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => setAssetLibraryTargetFieldPath(imageFieldPath)}
+                                                className={`rounded-lg border px-3 py-2 text-xs font-medium ${
+                                                  assetLibraryTargetFieldPath === imageFieldPath
+                                                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                                                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                                                }`}
+                                              >
+                                                Library
+                                              </button>
+                                            </div>
+                                            {getString(option.imageUrl) ? (
+                                              <div className="mt-3">
+                                                <MediaLinkPreview
+                                                  url={getString(option.imageUrl)}
+                                                  label={`Option ${optionIndex + 1} image`}
+                                                  kind="image"
+                                                  compact
+                                                  onRemove={() => void handleRemoveAsset(imageFieldPath)}
+                                                />
+                                              </div>
+                                            ) : null}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                        {stepType === 'matchingPairs' && (
+                          <div className="lg:col-span-2 rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+                            <div className="mb-3 flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-sm font-semibold text-gray-900 dark:text-white">Matching pairs</div>
+                                <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                  Pair audio is already used by the runtime. Pair images are stored for lesson cards and future matching visuals.
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    addStepCollectionItem(index, 'pairs', {
+                                      id: `pair_${index + 1}_${matchPairs.length + 1}`,
+                                      yorubaText: '',
+                                      englishText: '',
+                                      audioUrl: '',
+                                    })
+                                  }
+                                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:hover:bg-white/[0.03]"
+                                >
+                                  Add Pair
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openPhrasePicker({ mode: 'matchingPairs', stepIndex: index })}
+                                  disabled={!selectedCourse?.target_language_id}
+                                  className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                                >
+                                  Add from phrases
+                                </button>
+                              </div>
+                            </div>
+                            <div className="space-y-4">
+                              {matchPairs.length === 0 ? (
+                                <div className="rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                                  No matching pairs yet.
+                                </div>
+                              ) : (
+                                matchPairs.map((pair, pairIndex) => {
+                                  const pairAudioFieldPath = `steps[${index}].pairs[${pairIndex}].audioUrl`;
+                                  const pairImageFieldPath = `steps[${index}].pairs[${pairIndex}].imageUrl`;
+                                  const sourceRef = getObject(pair.sourceRef);
+                                  const sourcePhraseId =
+                                    getString(pair.sourcePhraseId) ||
+                                    (getString(sourceRef?.contentType) === 'phrase'
+                                      ? getString(sourceRef?.contentId)
+                                      : '');
+                                  const sourceContentType =
+                                    getString(pair.sourceContentType) ||
+                                    getString(sourceRef?.contentType);
+                                  return (
+                                    <div
+                                      key={`${getString(pair.id) || 'pair'}-${pairIndex}`}
+                                      className="rounded-lg border border-gray-200 p-4 dark:border-gray-800"
+                                    >
+                                      <div className="mb-3 flex items-center justify-between gap-3">
+                                        <div>
+                                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                            Pair {pairIndex + 1}
+                                          </div>
+                                          <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                            {sourceContentType ? (
+                                              <span className="rounded-full bg-brand-50 px-2 py-1 text-brand-700 dark:bg-brand-950/30 dark:text-brand-300">
+                                                {sourceContentType}
+                                              </span>
+                                            ) : null}
+                                            {sourcePhraseId ? (
+                                              <span className="rounded-full bg-gray-100 px-2 py-1 dark:bg-gray-800">
+                                                phrase linked
+                                              </span>
+                                            ) : (
+                                              <span className="rounded-full bg-gray-100 px-2 py-1 dark:bg-gray-800">
+                                                manual
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              openPhrasePicker({
+                                                mode: 'matchingPairItem',
+                                                stepIndex: index,
+                                                pairIndex,
+                                              })
+                                            }
+                                            disabled={!selectedCourse?.target_language_id}
+                                            className="rounded-lg border border-brand-300 px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                                          >
+                                            {sourcePhraseId ? 'Replace phrase' : 'Use phrase'}
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => removeStepCollectionItem(index, 'pairs', pairIndex)}
+                                            className="rounded-lg border border-red-300 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
+                                          >
+                                            Remove
+                                          </button>
+                                        </div>
+                                      </div>
+                                      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900/60">
+                                        <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                                          {getString(pair.yorubaText) || 'No Yoruba text'}
+                                        </div>
+                                        <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                                          {getString(pair.englishText) || 'No English text'}
+                                        </div>
+                                      </div>
+                                      <details className="mt-4 rounded-lg border border-dashed border-gray-300 px-3 py-3 dark:border-gray-700">
+                                        <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-200">
+                                          Advanced fields
+                                        </summary>
+                                        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                          <div>
+                                            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Pair id</label>
+                                            <input
+                                              value={getString(pair.id)}
+                                              onChange={(event) =>
+                                                updateStepCollectionItemField(index, 'pairs', pairIndex, 'id', event.target.value)
+                                              }
+                                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">English text</label>
+                                            <input
+                                              value={getString(pair.englishText)}
+                                              onChange={(event) =>
+                                                updateStepCollectionItemField(index, 'pairs', pairIndex, 'englishText', event.target.value)
+                                              }
+                                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                            />
+                                          </div>
+                                          <div className="lg:col-span-2">
+                                            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Yoruba text</label>
+                                            <input
+                                              value={getString(pair.yorubaText)}
+                                              onChange={(event) =>
+                                                updateStepCollectionItemField(index, 'pairs', pairIndex, 'yorubaText', event.target.value)
+                                              }
+                                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                            />
+                                          </div>
+                                        <div className="lg:col-span-2">
+                                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Pair audio URL</label>
+                                          <div className="flex gap-2">
+                                            <input
+                                              value={getString(pair.audioUrl)}
+                                              readOnly
+                                              className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                                            />
+                                            <button
+                                              type="button"
+                                              onClick={() => openAssetPicker(pairAudioFieldPath, 'audio/*', 'Audio')}
+                                              disabled={uploadingFieldPath === pairAudioFieldPath}
+                                              className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                                            >
+                                              {uploadingFieldPath === pairAudioFieldPath
+                                                ? `Uploading ${uploadProgressByField[pairAudioFieldPath] ?? 0}%`
+                                                : 'Upload'}
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => setAssetLibraryTargetFieldPath(pairAudioFieldPath)}
+                                              className={`rounded-lg border px-3 py-2 text-xs font-medium ${
+                                                assetLibraryTargetFieldPath === pairAudioFieldPath
+                                                  ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                                                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                                              }`}
+                                            >
+                                              Library
+                                            </button>
+                                          </div>
+                                          {getString(pair.audioUrl) ? (
+                                            <div className="mt-3">
+                                              <MediaLinkPreview url={getString(pair.audioUrl)} label={`Pair ${pairIndex + 1} audio`} kind="audio" compact />
+                                            </div>
+                                          ) : null}
+                                        </div>
+                                        <div className="lg:col-span-2">
+                                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Pair image URL</label>
+                                          <div className="flex gap-2">
+                                            <input
+                                              value={getString(pair.imageUrl)}
+                                              readOnly
+                                              className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                                            />
+                                            <button
+                                              type="button"
+                                              onClick={() => openAssetPicker(pairImageFieldPath, 'image/*', 'Image')}
+                                              disabled={uploadingFieldPath === pairImageFieldPath}
+                                              className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                                            >
+                                              {uploadingFieldPath === pairImageFieldPath
+                                                ? `Uploading ${uploadProgressByField[pairImageFieldPath] ?? 0}%`
+                                                : 'Upload'}
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => setAssetLibraryTargetFieldPath(pairImageFieldPath)}
+                                              className={`rounded-lg border px-3 py-2 text-xs font-medium ${
+                                                assetLibraryTargetFieldPath === pairImageFieldPath
+                                                  ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                                                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                                              }`}
+                                            >
+                                              Library
+                                            </button>
+                                          </div>
+                                          {getString(pair.imageUrl) ? (
+                                            <div className="mt-3">
+                                              <MediaLinkPreview
+                                                url={getString(pair.imageUrl)}
+                                                label={`Pair ${pairIndex + 1} image`}
+                                                kind="image"
+                                                compact
+                                                onRemove={() => void handleRemoveAsset(pairImageFieldPath)}
+                                              />
+                                            </div>
+                                          ) : null}
+                                        </div>
+                                        </div>
+                                      </details>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        )}
                         <div>
                           <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Image URL</label>
                           <div className="flex gap-2">
@@ -2372,7 +3211,13 @@ export function LessonBlueprintEditor({
                           </div>
                           {getString(step.imageUrl) ? (
                             <div className="mt-3">
-                              <MediaLinkPreview url={getString(step.imageUrl)} label={`Step ${index + 1} image`} kind="image" compact />
+                              <MediaLinkPreview
+                                url={getString(step.imageUrl)}
+                                label={`Step ${index + 1} image`}
+                                kind="image"
+                                compact
+                                onRemove={() => void handleRemoveAsset(`steps[${index}].imageUrl`)}
+                              />
                             </div>
                           ) : null}
                         </div>
@@ -2414,7 +3259,8 @@ export function LessonBlueprintEditor({
                         </div>
                       </div>
                     </div>
-                  ))
+                  );
+                  })
                 )}
               </div>
             </div>
@@ -2494,7 +3340,69 @@ export function LessonBlueprintEditor({
         )}
       </div>
 
-      {previewResult && (
+      <Modal
+        isOpen={!!phrasePickerTarget}
+        onClose={() => setPhrasePickerTarget(null)}
+        title="Import From Phrases"
+        maxWidth="2xl"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Search phrases
+            </label>
+            <input
+              value={phraseSearch}
+              onChange={(event) => setPhraseSearch(event.target.value)}
+              placeholder="Search phrase or translation"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+            />
+          </div>
+
+          {!selectedCourse?.target_language_id ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300">
+              Select a course with a target language before importing phrases.
+            </div>
+          ) : null}
+
+          {phraseError ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/20 dark:text-red-300">
+              {phraseError}
+            </div>
+          ) : null}
+
+          <div className="max-h-[28rem] space-y-3 overflow-y-auto pr-1">
+            {isPhraseLoading ? (
+              <div className="rounded-lg border border-dashed border-gray-300 px-3 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                Loading phrases…
+              </div>
+            ) : phraseItems.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-gray-300 px-3 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                No phrases found for this language.
+              </div>
+            ) : (
+              phraseItems.map((phrase) => (
+                <button
+                  key={phrase.id}
+                  type="button"
+                  onClick={() => applyPhraseSelection(phrase)}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-left hover:border-brand-300 hover:bg-brand-50/40 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-brand-800 dark:hover:bg-brand-950/20"
+                >
+                  <div className="text-sm font-semibold text-gray-900 dark:text-white">{phrase.phrase}</div>
+                  <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">{phrase.translation}</div>
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    {phrase.category ? <span>{phrase.category}</span> : null}
+                    {phrase.audio_url ? <span>Has audio</span> : <span>No audio</span>}
+                    {phrase.is_published ? <span>Published</span> : <span>Draft</span>}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      {showPreviewResult && previewResult && (
         <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">Preview Result</h2>

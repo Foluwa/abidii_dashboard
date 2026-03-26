@@ -13,12 +13,31 @@ import { AudioWaveform } from "@/components/ui/audio/AudioWaveform";
 
 interface Word {
   id: string;
+  headword?: string;
   word: string;
   lemma_normalized: string;
   pos: string;
+  source_language_id?: string;
   language_id: string;
+  source_language_name?: string | null;
+  source_language_code?: string | null;
   language_name?: string | null;
   language_code?: string | null;
+  primary_glosses?: Array<{
+    id: string;
+    text: string;
+    gloss_index: number;
+    language_id: string;
+    language_name?: string | null;
+    language_code?: string | null;
+  }>;
+  target_languages?: Array<{
+    language_id: string;
+    language_name?: string | null;
+    language_code?: string | null;
+  }>;
+  translation_count?: number;
+  primary_translation?: string | null;
   audio_key: string | null;
   audio_url?: string | null;
   audio_duration_sec: number | null;
@@ -92,13 +111,53 @@ export default function WordsDataTable({
     );
   };
 
+  const renderGlosses = (word: Word) => {
+    const glosses = word.primary_glosses ?? [];
+    if (!glosses.length) {
+      return (
+        <span className="text-xs italic text-gray-400 dark:text-gray-500">
+          No translations yet
+        </span>
+      );
+    }
+
+    const visible = glosses.slice(0, 3);
+    const remaining = Math.max((word.translation_count ?? glosses.length) - visible.length, 0);
+
+    return (
+      <div className="flex flex-wrap items-center gap-1.5">
+        {visible.map((gloss) => (
+          <span
+            key={gloss.id}
+            className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+          >
+            {gloss.text}
+            {gloss.language_code ? (
+              <span className="ml-1 text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                {gloss.language_code}
+              </span>
+            ) : null}
+          </span>
+        ))}
+        {remaining > 0 ? (
+          <span className="text-xs text-gray-500 dark:text-gray-400">+{remaining} more</span>
+        ) : null}
+      </div>
+    );
+  };
+
+  const getPrimaryTranslation = (word: Word) => {
+    if (word.primary_translation) return word.primary_translation;
+    return word.primary_glosses?.[0]?.text ?? null;
+  };
+
   if (isLoading) {
     return (
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="flex items-center justify-center p-12">
           <div className="flex flex-col items-center gap-3">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-brand-600 dark:border-gray-700 dark:border-t-brand-500"></div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Loading words...</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Loading lexicon entries...</p>
           </div>
         </div>
       </div>
@@ -120,7 +179,7 @@ export default function WordsDataTable({
               type="text"
               value={searchQuery}
               onChange={(e) => onSearch(e.target.value)}
-              placeholder="Search words or translations..."
+              placeholder="Search headwords or translations..."
               className="block w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
             />
           </div>
@@ -155,7 +214,7 @@ export default function WordsDataTable({
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Word
+                  Headword
                 </TableCell>
                 <TableCell
                   isHeader
@@ -167,7 +226,13 @@ export default function WordsDataTable({
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Category
+                  Primary Translation
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                >
+                  Translations
                 </TableCell>
                 <TableCell
                   isHeader
@@ -219,15 +284,15 @@ export default function WordsDataTable({
                     <TableCell className="px-5 py-4 text-start">
                       <div className="flex flex-col gap-1">
                         <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {word.word}
+                          {word.headword || word.word}
                         </span>
-                        {(word.language_name || word.language_code) && (
+                        {(word.source_language_name || word.source_language_code || word.language_name || word.language_code) && (
                           <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {word.language_name || 'Language'}
-                            {word.language_code ? ` (${word.language_code})` : ''}
+                            {word.source_language_name || word.language_name || 'Source'}
+                            {(word.source_language_code || word.language_code) ? ` (${word.source_language_code || word.language_code})` : ''}
                           </span>
                         )}
-                        {word.lemma_normalized !== word.word.toLowerCase() && (
+                        {word.lemma_normalized !== (word.headword || word.word).toLowerCase() && (
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             Normalized: {word.lemma_normalized}
                           </span>
@@ -240,15 +305,28 @@ export default function WordsDataTable({
                       {getPOSBadge(word.pos)}
                     </TableCell>
 
-                    {/* Category */}
                     <TableCell className="px-4 py-3 text-start">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {word.category || (
-                          <span className="italic text-gray-400 dark:text-gray-500">
-                            No category
-                          </span>
-                        )}
-                      </span>
+                      {getPrimaryTranslation(word) ? (
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {getPrimaryTranslation(word)}
+                        </span>
+                      ) : (
+                        <span className="text-xs italic text-gray-400 dark:text-gray-500">
+                          No primary translation
+                        </span>
+                      )}
+                    </TableCell>
+
+                    {/* Translations */}
+                    <TableCell className="px-4 py-3 text-start">
+                      <div className="max-w-md space-y-2">
+                        {renderGlosses(word)}
+                        {word.target_languages?.length ? (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            Targets: {word.target_languages.map((lang) => lang.language_code || lang.language_name || 'unknown').join(', ')}
+                          </div>
+                        ) : null}
+                      </div>
                     </TableCell>
 
                     {/* Difficulty */}
@@ -336,14 +414,14 @@ export default function WordsDataTable({
               ) : (
                 <TableRow>
                   <td
-                    colSpan={6}
+                    colSpan={9}
                     className="px-5 py-12 text-center text-gray-500 dark:text-gray-400"
                   >
                     <div className="flex flex-col items-center gap-2">
                       <FiSearch className="h-12 w-12 text-gray-300 dark:text-gray-700" />
-                      <p className="text-sm font-medium">No words found</p>
+                      <p className="text-sm font-medium">No lexicon entries found</p>
                       <p className="text-xs text-gray-400 dark:text-gray-500">
-                        Try adjusting your search or filters
+                        Try searching by headword or translation
                       </p>
                     </div>
                   </td>
@@ -364,7 +442,7 @@ export default function WordsDataTable({
             setDeleteConfirm(null);
           }
         }}
-        title="Delete Word"
+        title="Delete Lexicon Entry"
         message={`Are you sure you want to delete "${deleteConfirm?.word}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
@@ -384,7 +462,7 @@ export default function WordsDataTable({
             type="text"
             value={searchQuery}
             onChange={(e) => onSearch(e.target.value)}
-            placeholder="Search words..."
+            placeholder="Search headwords or translations..."
             className="block w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
           />
         </div>
@@ -395,7 +473,7 @@ export default function WordsDataTable({
         <div className="flex items-center justify-center p-12 rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
           <div className="flex flex-col items-center gap-3">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-brand-600 dark:border-gray-700 dark:border-t-brand-500"></div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Loading words...</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Loading lexicon entries...</p>
           </div>
         </div>
       ) : words && words.length > 0 ? (
@@ -410,7 +488,7 @@ export default function WordsDataTable({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xl font-bold text-gray-900 dark:text-white">
-                      {word.word}
+                      {word.headword || word.word}
                     </span>
                     {onSelectWord && (
                       <input
@@ -421,7 +499,7 @@ export default function WordsDataTable({
                       />
                     )}
                   </div>
-                  {word.lemma_normalized !== word.word.toLowerCase() && (
+                  {word.lemma_normalized !== (word.headword || word.word).toLowerCase() && (
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       Normalized: {word.lemma_normalized}
                     </span>
@@ -433,6 +511,29 @@ export default function WordsDataTable({
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 {getPOSBadge(word.pos)}
                 {word.difficulty_level && getDifficultyBadge(word.difficulty_level)}
+              </div>
+
+              {/* Translations */}
+              <div className="mb-3">
+                <div className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Primary Translation
+                </div>
+                {getPrimaryTranslation(word) ? (
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                    {getPrimaryTranslation(word)}
+                  </div>
+                ) : (
+                  <div className="text-xs italic text-gray-400 dark:text-gray-500">
+                    No primary translation
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-3">
+                <div className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  All Translations
+                </div>
+                {renderGlosses(word)}
               </div>
 
               {/* Category */}
@@ -495,7 +596,7 @@ export default function WordsDataTable({
       ) : (
         <div className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-white p-12 dark:border-white/[0.05] dark:bg-white/[0.03]">
           <FiSearch className="h-12 w-12 text-gray-300 dark:text-gray-700" />
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No words found</p>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No lexicon entries found</p>
           <p className="text-xs text-gray-400 dark:text-gray-500">
             Try adjusting your search or filters
           </p>
