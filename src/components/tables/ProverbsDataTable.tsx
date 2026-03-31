@@ -31,6 +31,95 @@ export default function ProverbsDataTable({
   onDelete,
   onRegenerateAudio,
 }: ProverbsDataTableProps) {
+  const renderPublishBadge = (proverb: Proverb) => (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+        proverb.is_published
+          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200"
+          : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+      }`}
+    >
+      {proverb.is_published ? "Published" : "Draft"}
+    </span>
+  );
+
+  const getAudioFormat = (proverb: Proverb) => {
+    if (proverb.audio_format) {
+      return proverb.audio_format.toUpperCase();
+    }
+
+    if (!proverb.audio_url) {
+      return null;
+    }
+
+    try {
+      const pathname = new URL(proverb.audio_url).pathname.toLowerCase();
+      const extension = pathname.split(".").pop();
+      return extension ? extension.toUpperCase() : null;
+    } catch {
+      const extension = proverb.audio_url.split("?")[0].split(".").pop();
+      return extension ? extension.toUpperCase() : null;
+    }
+  };
+
+  const renderAlignmentBadge = (proverb: Proverb) => {
+    if (!proverb.alignment_status) {
+      return null;
+    }
+
+    const statusClasses = {
+      draft: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
+      reviewed: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
+      approved: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200",
+      stale: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200",
+    };
+
+    const label = proverb.alignment_status.charAt(0).toUpperCase() + proverb.alignment_status.slice(1);
+    const detail = proverb.alignment_status === "stale" && proverb.alignment_stale_reason
+      ? `Alignment stale: ${proverb.alignment_stale_reason.replaceAll("_", " ")}`
+      : `Alignment ${proverb.alignment_status}`;
+
+    return (
+      <span
+        title={detail}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClasses[proverb.alignment_status]}`}
+      >
+        {label} Alignment
+      </span>
+    );
+  };
+
+  const renderAlignmentJobBadge = (proverb: Proverb) => {
+    if (!proverb.alignment_job_status) {
+      return null;
+    }
+
+    const statusClasses = {
+      queued: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
+      processing: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
+      completed: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
+      failed: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200",
+      cancelled: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+      superseded: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    };
+
+    const providerDetail = [proverb.alignment_job_provider, proverb.alignment_job_engine].filter(Boolean).join(" / ");
+    const detail = proverb.alignment_job_status === "failed" && proverb.alignment_job_error
+      ? `Auto-alignment failed: ${proverb.alignment_job_error}`
+      : providerDetail
+        ? `Latest auto-alignment job ${proverb.alignment_job_status} via ${providerDetail}`
+        : `Latest auto-alignment job ${proverb.alignment_job_status}`;
+
+    return (
+      <span
+        title={detail}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClasses[proverb.alignment_job_status]}`}
+      >
+        Align {proverb.alignment_job_status.charAt(0).toUpperCase() + proverb.alignment_job_status.slice(1)}
+      </span>
+    );
+  };
+
   const renderRegenerationBadge = (status?: string | null, error?: string | null) => {
     if (!status) {
       return null;
@@ -39,7 +128,7 @@ export default function ProverbsDataTable({
     if (status === "queued") {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-          Audio queued
+          Audio Queued
         </span>
       );
     }
@@ -47,7 +136,7 @@ export default function ProverbsDataTable({
     if (status === "processing") {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
-          Audio processing
+          Audio Processing
         </span>
       );
     }
@@ -61,7 +150,7 @@ export default function ProverbsDataTable({
         title={error || "The latest audio regeneration attempt failed."}
         className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
       >
-        Last regeneration failed
+        Audio Failed
       </span>
     );
   };
@@ -98,12 +187,6 @@ export default function ProverbsDataTable({
                 Proverb
               </th>
               <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Translation
-              </th>
-              <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Meaning
-              </th>
-              <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Category
               </th>
               <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -130,22 +213,13 @@ export default function ProverbsDataTable({
                   )}
                   {/* Proverb */}
                   <TableCell className="px-5 py-4 max-w-xs">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      {proverb.proverb}
-                    </div>
-                  </TableCell>
-
-                  {/* Translation */}
-                  <TableCell className="px-5 py-4 max-w-xs">
-                    <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                      {proverb.translation}
-                    </div>
-                  </TableCell>
-
-                  {/* Meaning */}
-                  <TableCell className="px-5 py-4 max-w-md">
-                    <div className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                      {proverb.meaning || "-"}
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {proverb.proverb}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {proverb.translation}
+                      </div>
                     </div>
                   </TableCell>
 
@@ -159,14 +233,24 @@ export default function ProverbsDataTable({
                       ) : (
                         <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
                       )}
-                      {renderRegenerationBadge(proverb.last_regeneration_status, proverb.last_regeneration_error)}
+                      {renderPublishBadge(proverb)}
+                      {renderAlignmentBadge(proverb)}
+                      {renderAlignmentJobBadge(proverb)}
                     </div>
                   </TableCell>
 
                   {/* Audio */}
                   <TableCell className="px-5 py-4">
                     {proverb.audio_url ? (
-                      <div className="min-w-[280px] max-w-md">
+                      <div className="min-w-[280px] max-w-md space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {getAudioFormat(proverb) && (
+                            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                              {getAudioFormat(proverb)}
+                            </span>
+                          )}
+                          {renderRegenerationBadge(proverb.last_regeneration_status, proverb.last_regeneration_error)}
+                        </div>
                         <AudioWaveform
                           src={proverb.audio_url}
                           height={40}
@@ -176,7 +260,10 @@ export default function ProverbsDataTable({
                         />
                       </div>
                     ) : (
-                      <span className="text-xs text-gray-400 dark:text-gray-600">No audio</span>
+                      <div className="space-y-2">
+                        {renderRegenerationBadge(proverb.last_regeneration_status, proverb.last_regeneration_error)}
+                        <span className="text-xs text-gray-400 dark:text-gray-600">No audio</span>
+                      </div>
                     )}
                   </TableCell>
 
@@ -216,7 +303,7 @@ export default function ProverbsDataTable({
             ) : (
               <TableRow>
                 <td
-                  colSpan={onSelectAll ? 7 : 6}
+                  colSpan={onSelectAll ? 5 : 4}
                   className="px-5 py-12 text-center text-gray-500 dark:text-gray-400"
                 >
                   <div className="flex flex-col items-center gap-2">
@@ -298,18 +385,40 @@ export default function ProverbsDataTable({
               </div>
             )}
 
-            {proverb.last_regeneration_status && (
+            <div className="mb-3">
+              {renderPublishBadge(proverb)}
+            </div>
+
+            {proverb.alignment_status && (
               <div className="mb-3">
-                {renderRegenerationBadge(proverb.last_regeneration_status, proverb.last_regeneration_error)}
+                {renderAlignmentBadge(proverb)}
+              </div>
+            )}
+
+            {proverb.alignment_job_status && (
+              <div className="mb-3">
+                {renderAlignmentJobBadge(proverb)}
               </div>
             )}
 
             {/* Audio */}
-            {proverb.audio_url && (
-              <div className="mb-3">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+            <div className="mb-3">
+              <div className="mb-1 flex items-center gap-2">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Audio
                 </div>
+                {getAudioFormat(proverb) && (
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    {getAudioFormat(proverb)}
+                  </span>
+                )}
+              </div>
+              {proverb.last_regeneration_status && (
+                <div className="mb-2">
+                  {renderRegenerationBadge(proverb.last_regeneration_status, proverb.last_regeneration_error)}
+                </div>
+              )}
+              {proverb.audio_url ? (
                 <AudioWaveform
                   src={proverb.audio_url}
                   height={40}
@@ -317,8 +426,10 @@ export default function ProverbsDataTable({
                   progressColor="#3b82f6"
                   cursorColor="#1d4ed8"
                 />
-              </div>
-            )}
+              ) : (
+                <div className="text-xs text-gray-400 dark:text-gray-600">No audio</div>
+              )}
+            </div>
 
             {/* Actions */}
             <div className="flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">

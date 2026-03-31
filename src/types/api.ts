@@ -236,9 +236,24 @@ export interface Proverb {
   translation: string;
   meaning: string | null;
   category: string | null;
+  is_published?: boolean;
+  published_at?: string | null;
   audio_url?: string | null;
+  audio_format?: string | null;
+  audio_duration?: number | null;
   last_regeneration_status?: string | null;
   last_regeneration_error?: string | null;
+  alignment_status?: 'draft' | 'reviewed' | 'approved' | 'stale' | null;
+  alignment_updated_at?: string | null;
+  alignment_stale_reason?: string | null;
+  alignment_job_status?: 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'superseded' | null;
+  alignment_job_provider?: string | null;
+  alignment_job_engine?: string | null;
+  alignment_job_error?: string | null;
+  alignment_job_updated_at?: string | null;
+  yoruba_prompt?: string | null;
+  yoruba_answer?: string | null;
+  is_game_ready?: boolean;
   created_at: string;
   updated_at: string;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { apiClient } from "@/lib/api";
 import { useToast } from "@/contexts/ToastContext";
 import { Modal } from "@/components/ui/modal";
@@ -37,6 +37,11 @@ const LANGUAGE_CODE_MAP: Record<string, string> = {
   hau: "ha",
   ibo: "ig",
   swa: "sw",
+};
+
+const requiresSpitch = (languageCode: string) => {
+  const normalized = (LANGUAGE_CODE_MAP[languageCode] || languageCode || "").toLowerCase();
+  return normalized === "yo";
 };
 
 const getVoiceLabel = (voice: Voice) => (
@@ -77,14 +82,6 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingVoices, setIsLoadingVoices] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && target) {
-      setTextOverride(target.defaultText);
-      setSelectedProvider("all");
-      fetchVoices();
-    }
-  }, [isOpen, target]);
-
   const providerOptions = useMemo(() => {
     const uniqueProviders = Array.from(new Set(voices.map((voice) => voice.provider))).sort();
     return ["all", ...uniqueProviders];
@@ -109,7 +106,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
     }
   }, [filteredVoices, selectedVoiceId]);
 
-  const fetchVoices = async () => {
+  const fetchVoices = useCallback(async () => {
     if (!target) return;
     
     setIsLoadingVoices(true);
@@ -119,6 +116,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
       const response = await apiClient.get('/api/v1/admin/audio/voices', {
         params: {
           language_code: ttsLanguageCode,
+          ...(requiresSpitch(target.languageCode) ? { provider: "spitch" } : {}),
           is_active: true,
           dedupe_aliases: true,
           page_size: 100,
@@ -133,7 +131,15 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
     } finally {
       setIsLoadingVoices(false);
     }
-  };
+  }, [target, toast]);
+
+  useEffect(() => {
+    if (isOpen && target) {
+      setTextOverride(target.defaultText);
+      setSelectedProvider(requiresSpitch(target.languageCode) ? "spitch" : "all");
+      fetchVoices();
+    }
+  }, [fetchVoices, isOpen, target]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
