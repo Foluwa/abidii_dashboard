@@ -63,18 +63,18 @@ export default function Modal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-gray-950/45 backdrop-blur-sm transition-opacity"
         onClick={closeOnOutsideClick ? onClose : undefined}
       />
 
       {/* Modal Container */}
-      <div className="flex items-center justify-center min-h-screen p-4">
+      <div className="flex min-h-screen items-center justify-center p-4">
         <div
-          className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-gray-900 rounded-lg shadow-xl transform transition-all`}
+          className={`relative flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:bg-gray-900 ${sizeClasses[size]}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex shrink-0 items-center justify-between border-b border-gray-200 p-6 dark:border-gray-800">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
               {title}
             </h3>
@@ -91,7 +91,7 @@ export default function Modal({
           </div>
 
           {/* Content */}
-          <div className="p-6">
+          <div className="min-h-0 flex-1 overflow-y-auto p-6">
             {children}
           </div>
         </div>

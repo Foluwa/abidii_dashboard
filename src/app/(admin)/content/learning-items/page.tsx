@@ -5,7 +5,9 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useDropzone } from 'react-dropzone';
 import DataTable from '@/components/admin/DataTable';
 import FormModal from '@/components/admin/FormModal';
 import StatusBadge from '@/components/admin/StatusBadge';
@@ -24,6 +26,11 @@ import {
   FiArrowUp,
   FiArrowDown,
   FiAward,
+  FiEdit2,
+  FiTrash2,
+  FiImage,
+  FiUploadCloud,
+  FiX,
 } from 'react-icons/fi';
 
 const ITEM_TYPES = [
@@ -55,6 +62,11 @@ const ICON_OPTIONS = [
   { value: 'star_rounded', label: '⭐ Star' },
 ];
 
+const IMAGE_FIT_OPTIONS = [
+  { value: 'cover', label: 'Cover (crop to fill)' },
+  { value: 'contain', label: 'Contain (show full image)' },
+];
+
 const normalizeLaunchRoute = (
   itemType: 'game' | 'lesson' | undefined,
   launchRoute: string | undefined,
@@ -65,8 +77,25 @@ const normalizeLaunchRoute = (
   return (launchRoute || 'game').trim() || 'game';
 };
 
+const getIconEmoji = (iconName: string | undefined): string => {
+  const matchedOption = ICON_OPTIONS.find((option) => option.value === iconName);
+  if (!matchedOption) {
+    return '🎮';
+  }
+
+  return matchedOption.label.split(' ')[0] || '🎮';
+};
+
 export default function LearningItemsPage() {
   const toast = useToast();
+  const pathname = usePathname();
+  const isGamesRoute = pathname === '/games';
+  const pageTitle = isGamesRoute ? 'Games Management' : 'Learning Items';
+  const entityLabel = isGamesRoute ? 'Game' : 'Item';
+  const statsLabel = isGamesRoute ? 'Games' : 'Items';
+  const formControlClassName = 'w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500';
+  const formLabelClassName = 'mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300';
+  const checkboxLabelClassName = 'text-sm font-medium text-gray-700 dark:text-gray-300';
   
   // State
   const [items, setItems] = useState<LearningItem[]>([]);
@@ -75,10 +104,12 @@ export default function LearningItemsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<LearningItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageUploadProgress, setImageUploadProgress] = useState(0);
   
   // Filters
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
-  const [filterType, setFilterType] = useState<string>('');
+  const [filterType, setFilterType] = useState<string>(isGamesRoute ? 'game' : '');
   const [filterActive, setFilterActive] = useState<string>('');
 
   // Form state
@@ -88,6 +119,8 @@ export default function LearningItemsPage() {
     title: '',
     about: '',
     icon_name: 'gamepad_rounded',
+    image_url: '',
+    image_fit: 'cover',
     level: 'Beginner',
     difficulty: 'Easy',
     duration_minutes: 5,
@@ -100,18 +133,7 @@ export default function LearningItemsPage() {
   });
 
   // Fetch languages
-  useEffect(() => {
-    fetchLanguages();
-  }, []);
-
-  // Fetch items when language changes
-  useEffect(() => {
-    if (selectedLanguage) {
-      fetchItems();
-    }
-  }, [selectedLanguage, filterType, filterActive]);
-
-  const fetchLanguages = async () => {
+  const fetchLanguages = useCallback(async () => {
     try {
       const response = await apiClient.get<{ languages: Language[] }>('/api/v1/languages');
       setLanguages(response.data.languages);
@@ -122,9 +144,14 @@ export default function LearningItemsPage() {
       console.error('Failed to fetch languages:', error);
       toast.error('Failed to load languages');
     }
-  };
+  }, [toast]);
 
-  const fetchItems = async () => {
+  useEffect(() => {
+    fetchLanguages();
+  }, [fetchLanguages]);
+
+  // Fetch items when language changes
+  const fetchItems = useCallback(async () => {
     if (!selectedLanguage) return;
     
     setLoading(true);
@@ -134,14 +161,18 @@ export default function LearningItemsPage() {
 
       const params = new URLSearchParams();
       if (filterType) params.append('item_type', filterType);
-      if (filterActive) params.append('only_active', filterActive);
+      params.append('only_active', filterActive == 'true' ? 'true' : 'false');
 
       const response = await apiClient.get<LearningItem[]>(
         `/api/v1/languages/${language.iso_639_3}/learning-items?${params}`
       );
       
+      const visibleItems = response.data
+        .filter((item) => filterActive !== 'false' || !item.is_active)
+        .sort((a, b) => a.display_order - b.display_order);
+      
       // Sort by display_order
-      const sortedItems = response.data.sort((a, b) => a.display_order - b.display_order);
+      const sortedItems = visibleItems;
       setItems(sortedItems);
     } catch (error: any) {
       console.error('Failed to fetch items:', error);
@@ -149,16 +180,31 @@ export default function LearningItemsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterActive, filterType, languages, selectedLanguage, toast]);
+
+  useEffect(() => {
+    if (selectedLanguage) {
+      fetchItems();
+    }
+  }, [fetchItems, selectedLanguage]);
+
+  useEffect(() => {
+    if (isGamesRoute) {
+      setFilterType('game');
+    }
+  }, [isGamesRoute]);
 
   const handleCreate = () => {
     setEditingItem(null);
+    setImageUploadProgress(0);
     setFormData({
       language_id: selectedLanguage,
       item_key: '',
       title: '',
       about: '',
       icon_name: 'gamepad_rounded',
+      image_url: '',
+      image_fit: 'cover',
       level: 'Beginner',
       difficulty: 'Easy',
       duration_minutes: 5,
@@ -174,10 +220,15 @@ export default function LearningItemsPage() {
 
   const handleEdit = (item: LearningItem) => {
     setEditingItem(item);
+    setImageUploadProgress(0);
     setFormData({
+      language_id: item.language_id,
+      item_key: item.item_key,
       title: item.title,
       about: item.about,
       icon_name: item.icon_name,
+      image_url: item.image_url || '',
+      image_fit: item.image_fit || 'cover',
       level: item.level,
       difficulty: item.difficulty,
       duration_minutes: item.duration_minutes,
@@ -211,6 +262,8 @@ export default function LearningItemsPage() {
     try {
       const normalizedFormData = {
         ...formData,
+        image_url: formData.image_url?.trim() || undefined,
+        image_fit: formData.image_url?.trim() ? (formData.image_fit || 'cover') : undefined,
         launch_route: normalizeLaunchRoute(formData.item_type, formData.launch_route),
       };
       if (editingItem) {
@@ -223,6 +276,7 @@ export default function LearningItemsPage() {
         toast.success('Learning item created successfully');
       }
       setIsModalOpen(false);
+      setImageUploadProgress(0);
       fetchItems();
     } catch (error: any) {
       console.error('Failed to save item:', error);
@@ -231,6 +285,101 @@ export default function LearningItemsPage() {
       setIsSubmitting(false);
     }
   };
+
+  const handleImageUpload = useCallback(async (file: File) => {
+    const languageId =
+      ('language_id' in formData ? formData.language_id : '') ||
+      editingItem?.language_id ||
+      selectedLanguage;
+    const itemKey =
+      ('item_key' in formData ? formData.item_key : '') ||
+      editingItem?.item_key ||
+      '';
+
+    if (!languageId) {
+      toast.error('Select a language before uploading an image');
+      return;
+    }
+    if (!itemKey.trim()) {
+      toast.error('Enter an item key before uploading an image');
+      return;
+    }
+
+    const payload = new FormData();
+    payload.append('language_id', languageId);
+    payload.append('item_key', itemKey.trim());
+    if (formData.image_url) {
+      payload.append('current_image_url', formData.image_url);
+    }
+    payload.append('file', file);
+
+    try {
+      setIsUploadingImage(true);
+      setImageUploadProgress(0);
+      const response = await apiClient.post<{ image_url: string }>(
+        '/api/v1/learning-items/image-upload',
+        payload,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          onUploadProgress: (event) => {
+            if (!event.total) return;
+            setImageUploadProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+          },
+        }
+      );
+
+      setFormData((prev) => ({
+        ...prev,
+        image_url: response.data.image_url,
+      }));
+      setImageUploadProgress(100);
+      toast.success('Image uploaded successfully');
+    } catch (error: any) {
+      console.error('Failed to upload learning item image:', error);
+      toast.error(error.response?.data?.detail || 'Failed to upload image');
+      setImageUploadProgress(0);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  }, [editingItem, formData, selectedLanguage, toast]);
+
+  const clearUploadedImage = () => {
+    setFormData((prev) => ({
+      ...prev,
+      image_url: '',
+    }));
+    setImageUploadProgress(0);
+  };
+
+  const resetFilters = () => {
+    if (isGamesRoute) {
+      setFilterActive('');
+      return;
+    }
+
+    setFilterType('');
+    setFilterActive('');
+  };
+
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+    onDrop: (acceptedFiles) => {
+      const nextFile = acceptedFiles[0];
+      if (nextFile) {
+        void handleImageUpload(nextFile);
+      }
+    },
+    multiple: false,
+    noClick: true,
+    accept: {
+      'image/jpeg': [],
+      'image/png': [],
+      'image/webp': [],
+      'image/svg+xml': [],
+    },
+    disabled: isUploadingImage,
+  });
 
   const toggleActive = async (item: LearningItem) => {
     try {
@@ -319,10 +468,32 @@ export default function LearningItemsPage() {
       key: 'title',
       label: 'Title',
       render: (_, item: LearningItem) => (
-        <div>
-          <div className="font-medium">{item.title}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
-            {item.about}
+        <div className="flex items-center gap-3">
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+            {item.image_url ? (
+              <img
+                src={item.image_url}
+                alt={`${item.title} artwork`}
+                className={`h-full w-full ${item.image_fit === 'contain' ? 'object-contain p-1.5' : 'object-cover'}`}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-2xl">
+                {getIconEmoji(item.icon_name)}
+              </div>
+            )}
+            <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border border-white bg-gray-950 text-[10px] shadow-sm dark:border-gray-900">
+              <span aria-hidden="true">{getIconEmoji(item.icon_name)}</span>
+            </div>
+          </div>
+
+          <div className="min-w-0 max-w-[260px]">
+            <div className="font-medium text-gray-900 dark:text-white">{item.title}</div>
+            <div className="truncate text-xs text-gray-500 dark:text-gray-400">
+              {item.about}
+            </div>
+            <div className="mt-1 text-[11px] uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
+              {item.icon_name.replace(/_rounded$/, '').replace(/_/g, ' ')}
+            </div>
           </div>
         </div>
       ),
@@ -388,6 +559,28 @@ export default function LearningItemsPage() {
               Premium
             </div>
           )}
+        </div>
+      ),
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (_, item: LearningItem) => (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => handleEdit(item)}
+            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            <FiEdit2 size={14} />
+            Edit
+          </button>
+          <button
+            onClick={() => handleDelete(item.id)}
+            className="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+          >
+            <FiTrash2 size={14} />
+            Delete
+          </button>
         </div>
       ),
     },
@@ -495,61 +688,75 @@ export default function LearningItemsPage() {
   return (
     <div className="mx-auto max-w-7xl">
       <PageBreadCrumb
-        pageTitle="Learning Items"
+        pageTitle={pageTitle}
       />
 
-      {/* Language Selector and Filters */}
-      <div className="mb-6 flex flex-wrap items-center gap-4 rounded-lg bg-white p-4 shadow dark:bg-gray-800">
-        <div className="flex-1 min-w-[200px]">
-          <label className="mb-2 block text-sm font-medium">Language</label>
-          <StyledSelect
-            value={selectedLanguage}
-            onChange={(e) => setSelectedLanguage(e.target.value)}
-            disabled={loading}
-            options={[
-              { value: '', label: 'Select language...' },
-              ...languages.map(lang => ({
-                value: lang.id,
-                label: `${lang.name} (${lang.native_name})`
-              }))
-            ]}
-          />
-        </div>
+      {/* Filters */}
+      <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div>
+            <StyledSelect
+              label="Language"
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              disabled={loading}
+              options={[
+                { value: '', label: 'Select language...' },
+                ...languages.map((lang) => ({
+                  value: lang.id,
+                  label: `${lang.name} (${lang.native_name})`,
+                })),
+              ]}
+              fullWidth
+            />
+          </div>
 
-        <div className="flex-1 min-w-[150px]">
-          <label className="mb-2 block text-sm font-medium">Type</label>
-          <StyledSelect
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            options={[
-              { value: '', label: 'All Types' },
-              { value: 'game', label: 'Games' },
-              { value: 'lesson', label: 'Lessons' }
-            ]}
-          />
-        </div>
+          {!isGamesRoute && (
+            <div>
+              <StyledSelect
+                label="Type"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                options={[
+                  { value: '', label: 'All Types' },
+                  { value: 'game', label: 'Games' },
+                  { value: 'lesson', label: 'Lessons' },
+                ]}
+                fullWidth
+              />
+            </div>
+          )}
 
-        <div className="flex-1 min-w-[150px]">
-          <label className="mb-2 block text-sm font-medium">Status</label>
-          <StyledSelect
-            value={filterActive}
-            onChange={(e) => setFilterActive(e.target.value)}
-            options={[
-              { value: '', label: 'All Status' },
-              { value: 'true', label: 'Active Only' },
-              { value: 'false', label: 'Inactive Only' }
-            ]}
-          />
-        </div>
+          <div>
+            <StyledSelect
+              label="Status"
+              value={filterActive}
+              onChange={(e) => setFilterActive(e.target.value)}
+              options={[
+                { value: '', label: 'All Status' },
+                { value: 'true', label: 'Active Only' },
+                { value: 'false', label: 'Inactive Only' },
+              ]}
+              fullWidth
+            />
+          </div>
 
-        <div className="flex items-end">
-          <button
-            onClick={handleCreate}
-            disabled={!selectedLanguage}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            + Add Item
-          </button>
+          <div className="flex items-end gap-3">
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+            >
+              Reset Filters
+            </button>
+            <button
+              onClick={handleCreate}
+              disabled={!selectedLanguage}
+              className="rounded-lg bg-blue-600 px-4 py-2.5 text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              + Add {entityLabel}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -558,7 +765,7 @@ export default function LearningItemsPage() {
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-4">
           <div className="rounded-lg bg-white p-4 shadow dark:bg-gray-800">
             <div className="text-2xl font-bold">{items.length}</div>
-            <div className="text-sm text-gray-500">Total Items</div>
+            <div className="text-sm text-gray-500">Total {statsLabel}</div>
           </div>
           <div className="rounded-lg bg-white p-4 shadow dark:bg-gray-800">
             <div className="text-2xl font-bold text-green-600">
@@ -588,7 +795,7 @@ export default function LearningItemsPage() {
           data={items as unknown as Record<string, unknown>[]}
           keyExtractor={(item) => (item as unknown as LearningItem).id}
           loading={loading}
-          emptyMessage="No learning items found. Click 'Add Item' to create one."
+          emptyMessage={`No ${isGamesRoute ? 'games' : 'learning items'} found. Click 'Add ${entityLabel}' to create one.`}
         />
       ) : (
         <div className="rounded-lg bg-white p-8 text-center shadow dark:bg-gray-800">
@@ -601,45 +808,151 @@ export default function LearningItemsPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmit}
-        title={editingItem ? 'Edit Learning Item' : 'Create Learning Item'}
+        title={editingItem ? `Edit ${entityLabel}` : `Create ${entityLabel}`}
         isSubmitting={isSubmitting}
         size="lg"
       >
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="mb-2 block text-sm font-medium">Item Key *</label>
+            <label className={formLabelClassName}>Item Key *</label>
             <input
               type="text"
               value={('item_key' in formData ? formData.item_key : '') || ''}
               onChange={(e) => setFormData({ ...formData, item_key: e.target.value } as any)}
               disabled={!!editingItem}
-              className="w-full rounded-lg border px-4 py-2"
+              className={`${formControlClassName} disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-gray-900 dark:disabled:text-gray-400`}
               placeholder="e.g., spelling_bee"
             />
           </div>
           
           <div className="col-span-2">
-            <label className="mb-2 block text-sm font-medium">Title *</label>
+            <label className={formLabelClassName}>Title *</label>
             <input
               type="text"
               value={formData.title || ''}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full rounded-lg border px-4 py-2"
+              className={formControlClassName}
             />
           </div>
           
           <div className="col-span-2">
-            <label className="mb-2 block text-sm font-medium">Description</label>
+            <label className={formLabelClassName}>Description</label>
             <textarea
               value={formData.about || ''}
               onChange={(e) => setFormData({ ...formData, about: e.target.value })}
-              className="w-full rounded-lg border px-4 py-2"
+              className={formControlClassName}
               rows={3}
             />
           </div>
+
+          <div className="col-span-2">
+            <label className={formLabelClassName}>Artwork</label>
+            <div className="space-y-3">
+              <div
+                {...getRootProps()}
+                className={`rounded-xl border border-dashed p-5 transition ${
+                  isDragActive
+                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10'
+                    : 'border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900'
+                } ${isUploadingImage ? 'cursor-progress opacity-80' : 'cursor-pointer'}`}
+              >
+                <input {...getInputProps()} />
+                <div className="flex flex-col items-center justify-center gap-3 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    <FiUploadCloud size={24} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {isDragActive ? 'Drop image here' : 'Drag and drop artwork here'}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      PNG, JPG, WebP, or SVG up to 5MB.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={open}
+                    disabled={isUploadingImage}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                  >
+                    Browse file
+                  </button>
+                </div>
+              </div>
+
+              {(isUploadingImage || imageUploadProgress > 0) && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span>{isUploadingImage ? 'Uploading image...' : 'Upload complete'}</span>
+                    <span>{imageUploadProgress}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
+                    <div
+                      className="h-full rounded-full bg-brand-600 transition-all"
+                      style={{ width: `${imageUploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {formData.image_url ? (
+                <div className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-950">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start">
+                    <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded-lg bg-gray-100 md:w-40 dark:bg-gray-800">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={formData.image_url}
+                        alt={`${formData.title || entityLabel} artwork preview`}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                        <FiImage size={16} />
+                        Uploaded image
+                      </div>
+                      <p className="mt-1 break-all text-xs text-gray-500 dark:text-gray-400">
+                        {formData.image_url}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearUploadedImage}
+                      className="inline-flex items-center gap-1 self-start rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                    >
+                      <FiX size={14} />
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Uploading artwork will automatically set the game image. No manual URL paste needed.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label className={formLabelClassName}>Image Fit</label>
+            <select
+              value={formData.image_fit || 'cover'}
+              onChange={(e) => setFormData({ ...formData, image_fit: e.target.value as 'cover' | 'contain' })}
+              className={formControlClassName}
+            >
+              {IMAGE_FIT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-2 text-xs text-gray-500">
+              Choose whether the app crops the image to fill the card or shows the full image.
+            </p>
+          </div>
           
           <div>
-            <label className="mb-2 block text-sm font-medium">Type *</label>
+            <label className={formLabelClassName}>Type *</label>
             <select
               value={formData.item_type || 'game'}
               onChange={(e) => {
@@ -650,7 +963,7 @@ export default function LearningItemsPage() {
                   launch_route: normalizeLaunchRoute(nextType, formData.launch_route),
                 });
               }}
-              className="w-full rounded-lg border px-4 py-2"
+              className={formControlClassName}
             >
               <option value="game">Game</option>
               <option value="lesson">Lesson</option>
@@ -658,67 +971,67 @@ export default function LearningItemsPage() {
           </div>
           
           <div>
-            <label className="mb-2 block text-sm font-medium">Level</label>
+            <label className={formLabelClassName}>Level</label>
             <input
               type="text"
               value={formData.level || ''}
               onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-              className="w-full rounded-lg border px-4 py-2"
+              className={formControlClassName}
               placeholder="e.g., Beginner"
             />
           </div>
           
           <div>
-            <label className="mb-2 block text-sm font-medium">Difficulty</label>
+            <label className={formLabelClassName}>Difficulty</label>
             <input
               type="text"
               value={formData.difficulty || ''}
               onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-              className="w-full rounded-lg border px-4 py-2"
+              className={formControlClassName}
               placeholder="e.g., Easy"
             />
           </div>
           
           <div>
-            <label className="mb-2 block text-sm font-medium">Duration (minutes) *</label>
+            <label className={formLabelClassName}>Duration (minutes) *</label>
             <input
               type="number"
               value={formData.duration_minutes || ''}
               onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) })}
-              className="w-full rounded-lg border px-4 py-2"
+              className={formControlClassName}
               min="1"
             />
           </div>
           
           <div>
-            <label className="mb-2 block text-sm font-medium">XP Reward *</label>
+            <label className={formLabelClassName}>XP Reward *</label>
             <input
               type="number"
               value={formData.xp_reward || ''}
               onChange={(e) => setFormData({ ...formData, xp_reward: parseInt(e.target.value) })}
-              className="w-full rounded-lg border px-4 py-2"
+              className={formControlClassName}
               min="0"
             />
           </div>
           
           <div>
-            <label className="mb-2 block text-sm font-medium">Display Order</label>
+            <label className={formLabelClassName}>Display Order</label>
             <input
               type="number"
               value={formData.display_order || ''}
               onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) })}
-              className="w-full rounded-lg border px-4 py-2"
+              className={formControlClassName}
               min="0"
             />
           </div>
           
           <div className="col-span-2">
-            <label className="mb-2 block text-sm font-medium">Launch Route *</label>
+            <label className={formLabelClassName}>Launch Route *</label>
             <input
               type="text"
               value={normalizeLaunchRoute(formData.item_type, formData.launch_route)}
               onChange={(e) => setFormData({ ...formData, launch_route: e.target.value })}
-              className="w-full rounded-lg border px-4 py-2 disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-gray-800"
+              className={`${formControlClassName} disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-gray-900 dark:disabled:text-gray-400`}
               placeholder={formData.item_type === 'lesson' ? 'structuredLesson' : 'e.g., game'}
               disabled={formData.item_type === 'lesson'}
             />
@@ -737,7 +1050,7 @@ export default function LearningItemsPage() {
                 onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                 className="rounded"
               />
-              <span className="text-sm font-medium">Active</span>
+              <span className={checkboxLabelClassName}>Active</span>
             </label>
           </div>
           
@@ -749,7 +1062,7 @@ export default function LearningItemsPage() {
                 onChange={(e) => setFormData({ ...formData, is_premium: e.target.checked })}
                 className="rounded"
               />
-              <span className="text-sm font-medium">Premium</span>
+              <span className={checkboxLabelClassName}>Premium</span>
             </label>
           </div>
         </div>

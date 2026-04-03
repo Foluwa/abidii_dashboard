@@ -124,6 +124,8 @@ export interface LearningItem {
   title: string;
   about: string;
   icon_name: string;
+  image_url: string | null;
+  image_fit: 'cover' | 'contain' | null;
   level: string;
   difficulty: string;
   duration_minutes: number;
@@ -143,6 +145,8 @@ export interface LearningItemCreate {
   title: string;
   about?: string;
   icon_name?: string;
+  image_url?: string;
+  image_fit?: 'cover' | 'contain';
   level?: string;
   difficulty?: string;
   duration_minutes?: number;
@@ -158,6 +162,8 @@ export interface LearningItemUpdate {
   title?: string;
   about?: string;
   icon_name?: string;
+  image_url?: string;
+  image_fit?: 'cover' | 'contain';
   level?: string;
   difficulty?: string;
   duration_minutes?: number;

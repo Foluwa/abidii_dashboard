@@ -89,6 +89,7 @@ const navItems: NavItem[] = [
     permission: "content:read", // Admin & Manager
     subItems: [
       { name: "Languages", path: "/content/languages" },
+      { name: "Learning Items", path: "/content/learning-items" },
       { name: "Lessons", path: "/content/lessons" },
       { name: "Letters & Phonics", path: "/content/letters" },
       { name: "Lexicon Entries", path: "/content/words" },
