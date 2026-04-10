@@ -22,7 +22,7 @@ export default function NewLessonBlueprintPage() {
         initialSectionId={initialSectionId}
         initialBlueprintKey={initialBlueprintKey}
         onSaved={(result) => {
-          router.push(`/content/curriculum/lesson-blueprints/${result.blueprint.id}`);
+          router.push(`/curriculum/lesson-blueprints/${result.blueprint.id}`);
         }}
       />
     </div>

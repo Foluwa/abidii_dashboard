@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api";
 import Alert from "@/components/ui/alert/SimpleAlert";
+import Pagination from "@/components/tables/Pagination";
 import {
   useSubscriptions,
   useSubscriptionAttempts,
@@ -73,6 +74,8 @@ export function SubscriptionsPageContent({
   const [provider, setProvider] = useState<SubscriptionProvider>("");
   const [userSearch, setUserSearch] = useState("");
   const limit = 20;
+  const eventsLimit = 20;
+  const attemptsLimit = 20;
   const [eventsPage, setEventsPage] = useState(1);
   const [eventsSearch, setEventsSearch] = useState("");
   const [eventsEventType, setEventsEventType] = useState("");
@@ -141,7 +144,7 @@ export function SubscriptionsPageContent({
     refresh: refreshEvents,
   } = useSubscriptionEvents({
     page: eventsPage,
-    limit: 20,
+    limit: eventsLimit,
     days: 30,
     provider: provider || undefined,
     platform: eventsPlatform || undefined,
@@ -157,7 +160,7 @@ export function SubscriptionsPageContent({
     refresh: refreshAttempts,
   } = useSubscriptionAttempts({
     page: attemptsPage,
-    limit: 20,
+    limit: attemptsLimit,
     days: 30,
     provider: provider || undefined,
     user_q: attemptsSearch || undefined,
@@ -171,6 +174,10 @@ export function SubscriptionsPageContent({
       day: "numeric",
     });
   };
+
+  const subscriptionTotalPages = Math.max(1, Math.ceil(total / limit));
+  const eventsTotalPages = Math.max(1, Math.ceil(eventsTotal / eventsLimit));
+  const attemptsTotalPages = Math.max(1, Math.ceil(attemptsTotal / attemptsLimit));
 
   const toDatetimeLocalValue = (iso: string | null | undefined) => {
     if (!iso) return "";
@@ -683,7 +690,7 @@ export function SubscriptionsPageContent({
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Subscription Management
+            Billing Operations
           </h1>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
             View and manage user subscriptions
@@ -718,7 +725,7 @@ export function SubscriptionsPageContent({
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Active</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Active Subscriptions</p>
               <p className="text-2xl font-semibold text-green-600">
                 {statsLoading ? "..." : stats?.active ?? 0}
               </p>
@@ -839,8 +846,10 @@ export function SubscriptionsPageContent({
               setActiveView(nextView);
               router.push(
                 nextView === "subscriptions"
-                  ? "/subscriptions"
-                  : `/subscriptions/${nextView}`
+                  ? "/community/billing"
+                  : nextView === "events"
+                    ? "/community/billing/events"
+                    : "/community/billing/verification-attempts"
               );
             }}
             className={`rounded-md px-4 py-2 text-sm font-medium transition ${
@@ -853,6 +862,10 @@ export function SubscriptionsPageContent({
           </button>
         ))}
       </div>
+      <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+        Use tabs for <span className="font-medium">Recent Subscription Events</span> and{" "}
+        <span className="font-medium">Recent Verification Attempts</span>.
+      </p>
 
       {/* Table */}
       {activeView === "subscriptions" && (
@@ -939,7 +952,7 @@ export function SubscriptionsPageContent({
                             Edit
                           </button>
                           <a
-                            href={`/users/${sub.user_id}`}
+                            href={`/community/users/${sub.user_id}`}
                             className="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
                           >
                             View User
@@ -960,31 +973,20 @@ export function SubscriptionsPageContent({
             </div>
 
             {/* Pagination */}
-            {total > limit && (
-              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} subscriptions
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setPage(page - 1)}
-                      disabled={page === 1}
-                      className="px-3 py-1 text-sm rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      onClick={() => setPage(page + 1)}
-                      disabled={page * limit >= total}
-                      className="px-3 py-1 text-sm rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      Next
-                    </button>
-                  </div>
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Showing {total === 0 ? 0 : (page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} subscriptions
+                </div>
+                <div className="ml-auto">
+                  <Pagination
+                    currentPage={page}
+                    totalPages={subscriptionTotalPages}
+                    onPageChange={(nextPage) => setPage(nextPage)}
+                  />
                 </div>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>
@@ -1122,31 +1124,20 @@ export function SubscriptionsPageContent({
                 </tbody>
               </table>
             </div>
-            {eventsTotal > 20 && (
-              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Showing {(eventsPage - 1) * 20 + 1} to {Math.min(eventsPage * 20, eventsTotal)} of {eventsTotal} events
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setEventsPage((prev) => Math.max(1, prev - 1))}
-                      disabled={eventsPage === 1}
-                      className="px-3 py-1 text-sm rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      onClick={() => setEventsPage((prev) => prev + 1)}
-                      disabled={eventsPage * 20 >= eventsTotal}
-                      className="px-3 py-1 text-sm rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      Next
-                    </button>
-                  </div>
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Showing {eventsTotal === 0 ? 0 : (eventsPage - 1) * eventsLimit + 1} to {Math.min(eventsPage * eventsLimit, eventsTotal)} of {eventsTotal} events
+                </div>
+                <div className="ml-auto">
+                  <Pagination
+                    currentPage={eventsPage}
+                    totalPages={eventsTotalPages}
+                    onPageChange={(nextPage) => setEventsPage(nextPage)}
+                  />
                 </div>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>
@@ -1256,31 +1247,20 @@ export function SubscriptionsPageContent({
                 </tbody>
               </table>
             </div>
-            {attemptsTotal > 20 && (
-              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Showing {(attemptsPage - 1) * 20 + 1} to {Math.min(attemptsPage * 20, attemptsTotal)} of {attemptsTotal} attempts
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setAttemptsPage((prev) => Math.max(1, prev - 1))}
-                      disabled={attemptsPage === 1}
-                      className="px-3 py-1 text-sm rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      onClick={() => setAttemptsPage((prev) => prev + 1)}
-                      disabled={attemptsPage * 20 >= attemptsTotal}
-                      className="px-3 py-1 text-sm rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      Next
-                    </button>
-                  </div>
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Showing {attemptsTotal === 0 ? 0 : (attemptsPage - 1) * attemptsLimit + 1} to {Math.min(attemptsPage * attemptsLimit, attemptsTotal)} of {attemptsTotal} attempts
+                </div>
+                <div className="ml-auto">
+                  <Pagination
+                    currentPage={attemptsPage}
+                    totalPages={attemptsTotalPages}
+                    onPageChange={(nextPage) => setAttemptsPage(nextPage)}
+                  />
                 </div>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>

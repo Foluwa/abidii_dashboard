@@ -185,7 +185,7 @@ describe('AdminCourseDetailPage', () => {
         .every(
           (link) =>
             link.getAttribute('href') ===
-            '/content/curriculum/lesson-blueprints/new?courseKey=abidii_yoruba_v1&sectionId=section-1'
+            '/curriculum/lesson-blueprints/new?courseKey=abidii_yoruba_v1&sectionId=section-1'
         )
     ).toBe(true);
 
@@ -247,7 +247,7 @@ describe('AdminCourseDetailPage', () => {
 
     await waitFor(() => {
       expect(mockDeleteAdminCourse).toHaveBeenCalledWith('course-1');
-      expect(assignSpy).toHaveBeenCalledWith('/content/curriculum/courses');
+      expect(assignSpy).toHaveBeenCalledWith('/curriculum/courses');
     });
   });
 });

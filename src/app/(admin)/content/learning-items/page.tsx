@@ -5,13 +5,14 @@
 
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useDropzone } from 'react-dropzone';
 import DataTable from '@/components/admin/DataTable';
 import FormModal from '@/components/admin/FormModal';
 import StatusBadge from '@/components/admin/StatusBadge';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
+import Pagination from '@/components/tables/Pagination';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { LearningItem, LearningItemCreate, LearningItemUpdate } from '@/types/content';
 import { Language } from '@/types/common';
@@ -89,7 +90,7 @@ const getIconEmoji = (iconName: string | undefined): string => {
 export default function LearningItemsPage() {
   const toast = useToast();
   const pathname = usePathname();
-  const isGamesRoute = pathname === '/games';
+  const isGamesRoute = pathname === '/games' || pathname === '/content/library/games';
   const pageTitle = isGamesRoute ? 'Games Management' : 'Learning Items';
   const entityLabel = isGamesRoute ? 'Game' : 'Item';
   const statsLabel = isGamesRoute ? 'Games' : 'Items';
@@ -111,6 +112,9 @@ export default function LearningItemsPage() {
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
   const [filterType, setFilterType] = useState<string>(isGamesRoute ? 'game' : '');
   const [filterActive, setFilterActive] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   // Form state
   const [formData, setFormData] = useState<LearningItemCreate | LearningItemUpdate>({
@@ -193,6 +197,37 @@ export default function LearningItemsPage() {
       setFilterType('game');
     }
   }, [isGamesRoute]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedLanguage, filterType, filterActive, searchQuery]);
+
+  const filteredItems = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return items;
+
+    return items.filter((item) => {
+      const haystack = `${item.title} ${item.item_key} ${item.about ?? ''}`.toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [items, searchQuery]);
+
+  const totalFilteredItems = filteredItems.length;
+  const totalPages = Math.max(1, Math.ceil(totalFilteredItems / itemsPerPage));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredItems.slice(start, start + itemsPerPage);
+  }, [filteredItems, currentPage]);
+
+  const pageStart = totalFilteredItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const pageEnd = totalFilteredItems === 0 ? 0 : Math.min(currentPage * itemsPerPage, totalFilteredItems);
 
   const handleCreate = () => {
     setEditingItem(null);
@@ -354,6 +389,7 @@ export default function LearningItemsPage() {
   };
 
   const resetFilters = () => {
+    setSearchQuery('');
     if (isGamesRoute) {
       setFilterActive('');
       return;
@@ -693,7 +729,7 @@ export default function LearningItemsPage() {
 
       {/* Filters */}
       <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
           <div>
             <StyledSelect
               label="Language"
@@ -708,6 +744,19 @@ export default function LearningItemsPage() {
                 })),
               ]}
               fullWidth
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Search
+            </label>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={`Search ${isGamesRoute ? 'games' : 'learning items'}...`}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
             />
           </div>
 
@@ -790,13 +839,31 @@ export default function LearningItemsPage() {
 
       {/* Table */}
       {selectedLanguage ? (
-        <DataTable
-          columns={columns as unknown as TableColumn<Record<string, unknown>>[]}
-          data={items as unknown as Record<string, unknown>[]}
-          keyExtractor={(item) => (item as unknown as LearningItem).id}
-          loading={loading}
-          emptyMessage={`No ${isGamesRoute ? 'games' : 'learning items'} found. Click 'Add ${entityLabel}' to create one.`}
-        />
+        <>
+          <DataTable
+            columns={columns as unknown as TableColumn<Record<string, unknown>>[]}
+            data={paginatedItems as unknown as Record<string, unknown>[]}
+            keyExtractor={(item) => (item as unknown as LearningItem).id}
+            loading={loading}
+            emptyMessage={searchQuery
+              ? `No ${isGamesRoute ? 'games' : 'learning items'} match "${searchQuery}".`
+              : `No ${isGamesRoute ? 'games' : 'learning items'} found. Click 'Add ${entityLabel}' to create one.`}
+          />
+          {!loading && (
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Showing {pageStart} to {pageEnd} of {totalFilteredItems} {isGamesRoute ? 'games' : 'learning items'}
+              </p>
+              <div className="ml-auto">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            </div>
+          )}
+        </>
       ) : (
         <div className="rounded-lg bg-white p-8 text-center shadow dark:bg-gray-800">
           <p className="text-gray-500">Please select a language to view learning items</p>

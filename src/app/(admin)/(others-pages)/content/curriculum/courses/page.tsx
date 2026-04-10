@@ -111,6 +111,8 @@ export default function CurriculumCoursesListPage() {
   const items = useMemo(() => data?.items ?? [], [data]);
   const total = data?.total ?? 0;
   const totalPages = data?.pages ?? Math.max(1, Math.ceil(total / limit));
+  const pageStart = total === 0 ? 0 : (page - 1) * limit + 1;
+  const pageEnd = total === 0 ? 0 : Math.min(page * limit, total);
 
   const labelById = useMemo(() => {
     const map = new Map<string, string>();
@@ -210,7 +212,7 @@ export default function CurriculumCoursesListPage() {
       await refresh();
       setIsCourseEditorOpen(false);
       toast.success(courseEditorMode === 'create' ? 'Course created.' : 'Course updated.');
-      router.push(`/content/curriculum/courses/${result.course.id}`);
+      router.push(`/curriculum/courses/${result.course.id}`);
     } catch (error: any) {
       const message =
         error?.response?.data?.detail || error?.message || 'Failed to save course.';
@@ -375,7 +377,7 @@ export default function CurriculumCoursesListPage() {
             New Course
           </button>
           <Link
-            href="/content/curriculum/readiness"
+            href="/curriculum/publishing"
             className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
           >
             Readiness Matrix
@@ -523,7 +525,7 @@ export default function CurriculumCoursesListPage() {
                         <tr key={o.id}>
                           <td className="px-3 py-2 text-xs text-gray-900 dark:text-white">
                             <Link
-                              href={`/content/curriculum/courses/${o.id}`}
+                              href={`/curriculum/courses/${o.id}`}
                               className="hover:underline"
                             >
                               {labelById.get(o.id) || o.id}
@@ -619,7 +621,7 @@ export default function CurriculumCoursesListPage() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
                     <Link
-                      href={`/content/curriculum/courses/${course.id}`}
+                      href={`/curriculum/courses/${course.id}`}
                       className="hover:underline"
                     >
                       {course.title}
@@ -667,11 +669,14 @@ export default function CurriculumCoursesListPage() {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Showing {pageStart} to {pageEnd} of {total} courses
+        </p>
+        <div className="ml-auto">
           <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
-      )}
+      </div>
 
       <ConfirmationModal
         isOpen={showPublishConfirm}

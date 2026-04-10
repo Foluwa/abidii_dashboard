@@ -313,7 +313,11 @@ describe('adminCurriculumApi publish 409 handling', () => {
     const uploadListeners: Record<string, ((event: ProgressEvent<EventTarget>) => void) | null> = {
       progress: null,
     };
-    let lastInstance: MockXMLHttpRequest | null = null;
+    let lastInstance: {
+      open: jest.Mock;
+      setRequestHeader: jest.Mock;
+      send: jest.Mock;
+    } | null = null;
 
     class MockXMLHttpRequest {
       status = 200;
@@ -350,9 +354,15 @@ describe('adminCurriculumApi publish 409 handling', () => {
       onProgress
     );
 
-    expect(lastInstance?.open).toHaveBeenCalledWith('PUT', 'https://example.r2.dev/upload');
-    expect(lastInstance?.setRequestHeader).toHaveBeenCalledWith('Content-Type', 'image/png');
-    expect(lastInstance?.send).toHaveBeenCalledWith(expect.any(File));
+    const xhrInstance = lastInstance as {
+      open: jest.Mock;
+      setRequestHeader: jest.Mock;
+      send: jest.Mock;
+    } | null;
+    expect(xhrInstance).not.toBeNull();
+    expect(xhrInstance?.open).toHaveBeenCalledWith('PUT', 'https://example.r2.dev/upload');
+    expect(xhrInstance?.setRequestHeader).toHaveBeenCalledWith('Content-Type', 'image/png');
+    expect(xhrInstance?.send).toHaveBeenCalledWith(expect.any(File));
     expect(onProgress).toHaveBeenCalledWith(100);
 
     global.XMLHttpRequest = originalXhr;

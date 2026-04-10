@@ -1,17 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import type { Language } from "@/types/api";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Toast from "@/components/ui/toast/Toast";
 import Alert from "@/components/ui/alert/Alert";
+import { GoogleSheetsBulkImport } from "@/components/admin/GoogleSheetsBulkImport";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import NumbersDataTable from "@/components/tables/NumbersDataTable";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
-import { FiPlus, FiGlobe, FiHash } from "react-icons/fi";
+import { RegenerateAudioModal, type RegenerateAudioTarget } from "@/components/modals/RegenerateAudioModal";
+import Pagination from "@/components/tables/Pagination";
+import { FiPlus, FiGlobe } from "react-icons/fi";
 
 interface Number {
   id: string;
@@ -34,6 +37,17 @@ interface Number {
   display_order: number;
   is_active: boolean;
   audio?: any[];
+  last_regeneration_status?: string | null;
+  last_regeneration_error?: string | null;
+  last_regeneration_updated_at?: string | null;
+  alignment_status?: "draft" | "reviewed" | "approved" | "stale" | null;
+  alignment_updated_at?: string | null;
+  alignment_stale_reason?: string | null;
+  alignment_job_status?: "queued" | "processing" | "completed" | "failed" | "cancelled" | "superseded" | null;
+  alignment_job_provider?: string | null;
+  alignment_job_engine?: string | null;
+  alignment_job_error?: string | null;
+  alignment_job_updated_at?: string | null;
 }
 
 interface NumbersResponse {
@@ -41,6 +55,34 @@ interface NumbersResponse {
   page: number;
   limit: number;
   items: Number[];
+}
+
+function isRegenerationPending(status?: string | null) {
+  return status === "queued" || status === "processing";
+}
+
+function mapIso6393ToVoicePrefix(languageCode?: string | null) {
+  switch ((languageCode || "").toLowerCase()) {
+    case "yor":
+      return "yo";
+    case "eng":
+      return "en";
+    case "hau":
+      return "ha";
+    case "ibo":
+      return "ig";
+    case "swa":
+      return "sw";
+    default:
+      return (languageCode || "").toLowerCase();
+  }
+}
+
+function voiceProviderPriority(provider?: string | null) {
+  if (provider === "google") return 0;
+  if (provider === "elevenlabs") return 1;
+  if (provider === "spitch") return 2;
+  return 3;
 }
 
 export default function NumbersPage() {
@@ -57,6 +99,18 @@ export default function NumbersPage() {
   const [numbers, setNumbers] = useState<Number[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [regenerationTarget, setRegenerationTarget] = useState<RegenerateAudioTarget | null>(null);
+  const [selectedNumbers, setSelectedNumbers] = useState<string[]>([]);
+  const [isBulkRegenerating, setIsBulkRegenerating] = useState(false);
+  const [showBulkRegenerateConfirm, setShowBulkRegenerateConfirm] = useState(false);
+  const [isLoadingVoices, setIsLoadingVoices] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState<any[]>([]);
+  const [bulkRegenerateProvider, setBulkRegenerateProvider] = useState<string>("");
+  const [bulkRegenerateVoiceId, setBulkRegenerateVoiceId] = useState<string>("");
+  const [bulkRegenerateNumberIds, setBulkRegenerateNumberIds] = useState<string[]>([]);
+  const [bulkVoiceLanguagePrefix, setBulkVoiceLanguagePrefix] = useState<string>("");
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const { languages } = useLanguages();
 
@@ -81,7 +135,7 @@ export default function NumbersPage() {
   });
 
   // Fetch numbers
-  const fetchNumbers = async () => {
+  const fetchNumbers = useCallback(async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({
@@ -111,6 +165,7 @@ export default function NumbersPage() {
       });
       
       setNumbers(uniqueNumbers);
+      setSelectedNumbers((current) => current.filter((numberId) => uniqueNumbers.some((number) => number.id === numberId)));
       setTotal(response.data.total);
     } catch (error) {
       console.error("Failed to fetch numbers:", error);
@@ -118,11 +173,11 @@ export default function NumbersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [limit, page, search, selectedLanguage]);
 
   React.useEffect(() => {
     fetchNumbers();
-  }, [selectedLanguage, search, page, limit]);
+  }, [fetchNumbers]);
 
   const openCreateModal = () => {
     setEditingNumber(null);
@@ -202,6 +257,196 @@ export default function NumbersPage() {
     setDeleteConfirm({ id, word });
   };
 
+  const handleRegenerateAudio = (number: Number) => {
+    if (isRegenerationPending(number.last_regeneration_status)) {
+      setErrorMessage("Audio regeneration is already in progress for this number");
+      return;
+    }
+
+    const languageCode = (languages?.find((lang: any) => lang.id === number.language_id)?.iso_639_3 || "yor") as string;
+    setRegenerationTarget({
+      id: number.id,
+      contentType: "number",
+      displayText: number.word || `#${number.number_value}`,
+      defaultText: number.word || `${number.number_value}`,
+      languageCode,
+      submitEndpoint: `/api/v1/admin/numbers/${number.id}/regenerate-audio`,
+    });
+    setShowRegenerateModal(true);
+  };
+
+  const toggleNumberSelection = (numberId: string) => {
+    const number = numbers.find((item) => item.id === numberId);
+    if (number && isRegenerationPending(number.last_regeneration_status)) {
+      return;
+    }
+    setSelectedNumbers((current) => (
+      current.includes(numberId)
+        ? current.filter((id) => id !== numberId)
+        : [...current, numberId]
+    ));
+  };
+
+  const toggleSelectAllVisibleNumbers = () => {
+    const selectableIds = numbers
+      .filter((number) => !isRegenerationPending(number.last_regeneration_status))
+      .map((number) => number.id);
+    if (selectableIds.length === 0) {
+      return;
+    }
+    const allSelected = selectableIds.every((id) => selectedNumbers.includes(id));
+    if (allSelected) {
+      setSelectedNumbers((current) => current.filter((id) => !selectableIds.includes(id)));
+    } else {
+      setSelectedNumbers((current) => Array.from(new Set([...current, ...selectableIds])));
+    }
+  };
+
+  const handleBulkRegenerateAudio = async () => {
+    const queueableIds = selectedNumbers.filter((id) => {
+      const number = numbers.find((item) => item.id === id);
+      return number && !isRegenerationPending(number.last_regeneration_status);
+    });
+    if (queueableIds.length === 0) {
+      setErrorMessage("Select one or more numbers that are not already queued/processing");
+      setTimeout(() => setErrorMessage(""), 3000);
+      return;
+    }
+
+    const queueableNumbers = numbers.filter((number) => queueableIds.includes(number.id));
+    const languageIds = Array.from(new Set(queueableNumbers.map((number) => number.language_id)));
+    if (languageIds.length !== 1) {
+      setErrorMessage("Bulk regeneration requires selected numbers from the same language");
+      setTimeout(() => setErrorMessage(""), 5000);
+      return;
+    }
+
+    const selectedLanguageRecord = (languages || []).find((lang: Language) => lang.id === languageIds[0]);
+    const voicePrefix = mapIso6393ToVoicePrefix(selectedLanguageRecord?.iso_639_3);
+    if (!voicePrefix) {
+      setErrorMessage("Could not determine language voice mapping for selected numbers");
+      setTimeout(() => setErrorMessage(""), 5000);
+      return;
+    }
+
+    setIsLoadingVoices(true);
+    try {
+      const response = await apiClient.get("/api/v1/admin/audio/voices", {
+        params: {
+          language_code: voicePrefix,
+          is_active: true,
+          dedupe_aliases: true,
+          page_size: 200,
+        },
+      });
+      const voices = response.data.items || response.data.voices || [];
+      if (!Array.isArray(voices) || voices.length === 0) {
+        setErrorMessage(`No active voices available for language ${voicePrefix}`);
+        setTimeout(() => setErrorMessage(""), 5000);
+        return;
+      }
+
+      setAvailableVoices(voices);
+      setBulkRegenerateProvider("");
+      setBulkRegenerateVoiceId("");
+      setBulkRegenerateNumberIds(queueableIds);
+      setBulkVoiceLanguagePrefix(voicePrefix);
+      setShowBulkRegenerateConfirm(true);
+    } catch (error: any) {
+      setErrorMessage(error.response?.data?.detail || "Failed to load voices for bulk regeneration");
+      setTimeout(() => setErrorMessage(""), 5000);
+    } finally {
+      setIsLoadingVoices(false);
+    }
+  };
+
+  const confirmBulkRegenerateAudio = async () => {
+    if (!bulkRegenerateProvider || !bulkRegenerateVoiceId) {
+      setErrorMessage("Select a provider and voice before bulk regeneration");
+      setTimeout(() => setErrorMessage(""), 4000);
+      return;
+    }
+
+    if (bulkRegenerateNumberIds.length === 0) {
+      setErrorMessage("No queueable numbers selected for bulk regeneration");
+      setTimeout(() => setErrorMessage(""), 4000);
+      return;
+    }
+
+    setIsBulkRegenerating(true);
+    try {
+      const response = await apiClient.post("/api/v1/admin/numbers/bulk/regenerate-audio", {
+        number_ids: bulkRegenerateNumberIds,
+        voice_id: bulkRegenerateVoiceId,
+      });
+      const result = response.data || {};
+      const errors: Array<{ number_id?: string; detail?: string }> = Array.isArray(result.errors) ? result.errors : [];
+      const failedIds = new Set(errors.map((error) => error.number_id).filter(Boolean) as string[]);
+      const queuedIds = bulkRegenerateNumberIds.filter((id) => !failedIds.has(id));
+      const queuedCount = Number(result.queued_count || queuedIds.length);
+      const failedCount = Number(result.failed_count || failedIds.size);
+
+      setNumbers((current) => current.map((number) => (
+        queuedIds.includes(number.id)
+          ? {
+              ...number,
+              last_regeneration_status: "queued",
+              last_regeneration_error: null,
+            }
+          : number
+      )));
+
+      if (queuedCount > 0) {
+        setSuccessMessage(
+          failedCount > 0
+            ? `Queued ${queuedCount} number(s); ${failedCount} could not be queued`
+            : `Audio regeneration queued for ${queuedCount} number(s)`
+        );
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } else {
+        const firstError = errors.length > 0 ? errors[0]?.detail : null;
+        setErrorMessage(firstError || "Bulk regeneration did not queue any numbers");
+        setTimeout(() => setErrorMessage(""), 5000);
+      }
+
+      setSelectedNumbers((current) => current.filter((id) => !queuedIds.includes(id)));
+      setShowBulkRegenerateConfirm(false);
+      setBulkRegenerateProvider("");
+      setBulkRegenerateVoiceId("");
+      setBulkRegenerateNumberIds([]);
+      setBulkVoiceLanguagePrefix("");
+      fetchNumbers();
+    } catch (error: any) {
+      setErrorMessage(error.response?.data?.detail || "Failed to queue bulk audio regeneration");
+      setTimeout(() => setErrorMessage(""), 5000);
+    } finally {
+      setIsBulkRegenerating(false);
+    }
+  };
+
+  const handleRequeueAlignment = async (number: Number) => {
+    try {
+      await apiClient.post(`/api/v1/admin/numbers/${number.id}/alignment/requeue`);
+      setNumbers((current) => current.map((item) => (
+        item.id === number.id
+          ? {
+              ...item,
+              alignment_job_status: "queued",
+              alignment_job_provider: "openai",
+              alignment_job_engine: "whisper-1",
+              alignment_job_error: null,
+              alignment_job_updated_at: new Date().toISOString(),
+            }
+          : item
+      )));
+      setSuccessMessage(`Alignment queued for ${number.word}`);
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error: any) {
+      setErrorMessage(error.response?.data?.detail || "Failed to queue number alignment");
+      setTimeout(() => setErrorMessage(""), 5000);
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteConfirm) return;
 
@@ -218,6 +463,12 @@ export default function NumbersPage() {
       setTimeout(() => setErrorMessage(""), 3000);
     }
   };
+
+  const selectableVisibleIds = numbers
+    .filter((number) => !isRegenerationPending(number.last_regeneration_status))
+    .map((number) => number.id);
+  const allVisibleNumbersSelected = selectableVisibleIds.length > 0
+    && selectableVisibleIds.every((id) => selectedNumbers.includes(id));
 
   return (
     <div className="p-6">
@@ -259,6 +510,7 @@ export default function NumbersPage() {
               onChange={(e) => {
                 setSelectedLanguage(e.target.value || undefined);
                 setPage(1);
+                setSelectedNumbers([]);
               }}
               options={[
                 { value: "", label: "All Languages" },
@@ -285,11 +537,56 @@ export default function NumbersPage() {
           </div>
         </div>
 
+        {/* Bulk Import from Google Sheets */}
+        {selectedLanguage && (
+          <div className="mb-6">
+            <GoogleSheetsBulkImport
+              contentType="numbers"
+              onImportComplete={() => fetchNumbers()}
+              expectedColumns={[
+                { name: 'language_id', required: true, description: 'UUID of the language', example: '6e76e0ee-3df1-41d1-9548-ac3fed67a77b' },
+                { name: 'number_value', required: true, description: 'Numeric value', example: '1' },
+                { name: 'number_type', required: true, description: 'cardinal/ordinal', example: 'cardinal' },
+                { name: 'word', required: true, description: 'Number word in target language', example: 'Ọkan' },
+                { name: 'word_normalized', required: false, description: 'Normalized form', example: 'okan' },
+                { name: 'written_form', required: false, description: 'Alternative written form', example: '' },
+                { name: 'ordinal_word', required: false, description: 'Ordinal form', example: 'Èkíní' },
+                { name: 'formation_rule', required: false, description: 'Formation pattern', example: 'base' },
+                { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '1' },
+              ]}
+            />
+          </div>
+        )}
+
+        {numbers.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleBulkRegenerateAudio}
+              disabled={selectedNumbers.length === 0 || isBulkRegenerating || isLoadingVoices}
+              className="px-4 py-2 rounded-lg bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoadingVoices ? "Loading voices..." : isBulkRegenerating ? "Queueing..." : "Regenerate Selected Audio"}
+            </button>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {selectedNumbers.length === 0
+                ? "Select one or more numbers to regenerate in bulk."
+                : `${selectedNumbers.length} number${selectedNumbers.length === 1 ? "" : "s"} selected`}
+            </span>
+          </div>
+        )}
+
         {/* Data Table */}
         <NumbersDataTable
           numbers={numbers}
           isLoading={isLoading}
+          selectedNumbers={selectedNumbers}
+          allVisibleNumbersSelected={allVisibleNumbersSelected}
+          onToggleSelect={toggleNumberSelection}
+          onToggleSelectAll={toggleSelectAllVisibleNumbers}
           onEdit={openEditModal}
+          onRegenerateAudio={handleRegenerateAudio}
+          onRequeueAlignment={handleRequeueAlignment}
           onDelete={(id) => {
             const number = numbers.find(n => n.id === id);
             handleDeleteClick(id, number?.word || `#${number?.number_value}` || 'this number');
@@ -298,97 +595,126 @@ export default function NumbersPage() {
         />
 
         {/* Pagination */}
-        <div className="flex items-center justify-center gap-3 px-5 py-4">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Previous
-          </button>
-
-          <div className="flex items-center gap-2">
-            {(() => {
-              const totalPages = Math.ceil(total / limit);
-              const maxVisiblePages = 5;
-              let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
-              let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-              if (endPage - startPage < maxVisiblePages - 1) {
-                startPage = Math.max(1, endPage - maxVisiblePages + 1);
-              }
-
-              const pages = [];
-
-              if (startPage > 1) {
-                pages.push(
-                  <button
-                    key={1}
-                    onClick={() => setPage(1)}
-                    className="px-3 py-2 text-sm font-medium rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700"
-                  >
-                    1
-                  </button>
-                );
-                if (startPage > 2) {
-                  pages.push(
-                    <span key="ellipsis1" className="px-2 text-gray-400">...</span>
-                  );
-                }
-              }
-
-              for (let i = startPage; i <= endPage; i++) {
-                pages.push(
-                  <button
-                    key={i}
-                    onClick={() => setPage(i)}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg ${
-                      i === page
-                        ? "bg-brand-600 text-white"
-                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                    }`}
-                  >
-                    {i}
-                  </button>
-                );
-              }
-
-              if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                  pages.push(
-                    <span key="ellipsis2" className="px-2 text-gray-400">...</span>
-                  );
-                }
-                pages.push(
-                  <button
-                    key={totalPages}
-                    onClick={() => setPage(totalPages)}
-                    className="px-3 py-2 text-sm font-medium rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700"
-                  >
-                    {totalPages}
-                  </button>
-                );
-              }
-
-              return pages;
-            })()}
+        <div className="flex items-center justify-between gap-3 px-5 py-4">
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} numbers
+          </p>
+          <div className="ml-auto">
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
           </div>
-
-          <button
-            onClick={() => setPage((p) => Math.min(Math.ceil(total / limit), p + 1))}
-            disabled={page >= Math.ceil(total / limit)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Next
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
         </div>
       </div>
+
+      <Modal
+        isOpen={showBulkRegenerateConfirm}
+        onClose={() => {
+          if (!isBulkRegenerating) {
+            setShowBulkRegenerateConfirm(false);
+            setBulkRegenerateProvider("");
+            setBulkRegenerateVoiceId("");
+            setBulkRegenerateNumberIds([]);
+            setBulkVoiceLanguagePrefix("");
+          }
+        }}
+        title={`Regenerate Audio for ${bulkRegenerateNumberIds.length} Number${bulkRegenerateNumberIds.length === 1 ? "" : "s"}`}
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Provider *
+            </label>
+            <select
+              value={bulkRegenerateProvider}
+              onChange={(e) => {
+                setBulkRegenerateProvider(e.target.value);
+                setBulkRegenerateVoiceId("");
+              }}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            >
+              <option value="">Select provider</option>
+              {Array.from(
+                new Set(
+                  availableVoices
+                    .filter((voice) => (
+                      typeof voice.language_code === "string"
+                      && (
+                        voice.language_code === bulkVoiceLanguagePrefix
+                        || voice.language_code.startsWith(`${bulkVoiceLanguagePrefix}-`)
+                      )
+                    ))
+                    .map((voice) => String(voice.provider || "").trim())
+                    .filter(Boolean)
+                )
+              )
+                .sort((a, b) => voiceProviderPriority(a) - voiceProviderPriority(b) || a.localeCompare(b))
+                .map((provider) => (
+                  <option key={provider} value={provider}>
+                    {provider}
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Voice *
+            </label>
+            <select
+              value={bulkRegenerateVoiceId}
+              onChange={(e) => setBulkRegenerateVoiceId(e.target.value)}
+              disabled={!bulkRegenerateProvider}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
+            >
+              <option value="">{bulkRegenerateProvider ? "Select voice" : "Select provider first"}</option>
+              {availableVoices
+                .filter((voice) => (
+                  typeof voice.language_code === "string"
+                  && voice.provider === bulkRegenerateProvider
+                  && (
+                    voice.language_code === bulkVoiceLanguagePrefix
+                    || voice.language_code.startsWith(`${bulkVoiceLanguagePrefix}-`)
+                  )
+                ))
+                .map((voice) => (
+                  <option key={voice.id} value={voice.id}>
+                    {(voice.display_name || voice.voice_name || voice.voice_code || "Unknown Voice")} ({voice.provider})
+                  </option>
+                ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Provider and voice are required for bulk regeneration.
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={confirmBulkRegenerateAudio}
+              disabled={isBulkRegenerating || !bulkRegenerateProvider || !bulkRegenerateVoiceId}
+              className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isBulkRegenerating ? "Regenerating..." : "Regenerate"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!isBulkRegenerating) {
+                  setShowBulkRegenerateConfirm(false);
+                  setBulkRegenerateProvider("");
+                  setBulkRegenerateVoiceId("");
+                  setBulkRegenerateNumberIds([]);
+                  setBulkVoiceLanguagePrefix("");
+                }
+              }}
+              disabled={isBulkRegenerating}
+              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Create/Edit Modal */}
       {showModal && (
@@ -557,6 +883,29 @@ export default function NumbersPage() {
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"
+      />
+
+      <RegenerateAudioModal
+        isOpen={showRegenerateModal}
+        onClose={() => {
+          setShowRegenerateModal(false);
+          setRegenerationTarget(null);
+        }}
+        target={regenerationTarget}
+        onSuccess={() => {
+          if (regenerationTarget) {
+            setNumbers((current) => current.map((number) => (
+              number.id === regenerationTarget.id
+                ? {
+                    ...number,
+                    last_regeneration_status: "queued",
+                    last_regeneration_error: null,
+                  }
+                : number
+            )));
+          }
+          fetchNumbers();
+        }}
       />
     </div>
   );

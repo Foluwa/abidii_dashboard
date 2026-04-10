@@ -315,7 +315,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
       await deleteAdminCourse(courseId);
       setSuccessMessage('Course deleted.');
       if (typeof window !== 'undefined') {
-        window.location.assign('/content/curriculum/courses');
+        window.location.assign('/curriculum/courses');
       }
     } catch (err: any) {
       setErrorMessage(formatCourseActionError(err) || 'Failed to delete course');
@@ -436,7 +436,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
 
             <div className="flex flex-wrap gap-2">
               <Link
-                href={`/content/curriculum/editor?courseKey=${encodeURIComponent(course.course_key)}`}
+                href={`/curriculum/editor?courseKey=${encodeURIComponent(course.course_key)}`}
                 className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 Open Curriculum Editor
@@ -455,8 +455,8 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
             {blockingSections.map((row) => {
               const isPending = pendingSectionIds.includes(row.section.id);
               const blueprintHref = row.section.lesson_blueprint_id
-                ? `/content/curriculum/lesson-blueprints/${row.section.lesson_blueprint_id}`
-                : `/content/curriculum/lesson-blueprints/new?courseKey=${encodeURIComponent(course.course_key)}&sectionId=${encodeURIComponent(row.section.id)}`;
+                ? `/curriculum/lesson-blueprints/${row.section.lesson_blueprint_id}`
+                : `/curriculum/lesson-blueprints/new?courseKey=${encodeURIComponent(course.course_key)}&sectionId=${encodeURIComponent(row.section.id)}`;
 
               return (
                 <div
@@ -783,8 +783,8 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                                     <Link
                                       href={
                                         section.lesson_blueprint_id
-                                          ? `/content/curriculum/lesson-blueprints/${section.lesson_blueprint_id}`
-                                          : `/content/curriculum/lesson-blueprints/new?courseKey=${encodeURIComponent(curriculum.course_key)}&sectionId=${encodeURIComponent(section.id)}`
+                                          ? `/curriculum/lesson-blueprints/${section.lesson_blueprint_id}`
+                                          : `/curriculum/lesson-blueprints/new?courseKey=${encodeURIComponent(curriculum.course_key)}&sectionId=${encodeURIComponent(section.id)}`
                                       }
                                       className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                                     >

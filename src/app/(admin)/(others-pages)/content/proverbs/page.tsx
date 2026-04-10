@@ -13,6 +13,8 @@ import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { Modal } from "@/components/ui/modal";
 import { AudioWaveform } from "@/components/ui/audio/AudioWaveform";
 import ProverbsDataTable from "@/components/tables/ProverbsDataTable";
+import Pagination from "@/components/tables/Pagination";
+import { GoogleSheetsBulkImport } from "@/components/admin/GoogleSheetsBulkImport";
 import { RegenerateAudioModal } from "@/components/modals/RegenerateAudioModal";
 import { scheduleQueuedAudioRefresh } from "@/lib/audioRegeneration";
 
@@ -329,6 +331,7 @@ export default function ProverbsPage() {
     limit 
   });
   const { languages } = useLanguages();
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   // Deduplicate proverbs to prevent duplicate key errors
   const uniqueProverbs = React.useMemo(() => {
@@ -1265,21 +1268,17 @@ export default function ProverbsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {selectedProverbs.length > 0 && (
-            <>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {selectedProverbs.length} selected
-              </span>
-              <button
-                onClick={handleBulkRegenerateAudio}
-                disabled={isBulkRegenerating}
-                className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-purple-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900"
-              >
-                <FiVolume2 className="h-4 w-4" />
-                {isBulkRegenerating ? "Regenerating..." : "Regenerate Audio"}
-              </button>
-            </>
-          )}
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {selectedProverbs.length} selected
+          </span>
+          <button
+            onClick={handleBulkRegenerateAudio}
+            disabled={selectedProverbs.length === 0 || isBulkRegenerating}
+            className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-purple-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900"
+          >
+            <FiVolume2 className="h-4 w-4" />
+            {isBulkRegenerating ? "Regenerating..." : "Regenerate Selected Audio"}
+          </button>
           <button
             onClick={openCreateModal}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -1351,6 +1350,28 @@ export default function ProverbsPage() {
         />
       </div>
 
+      {/* Bulk Import from Google Sheets */}
+      {selectedLanguage && (
+        <div className="mb-6">
+          <GoogleSheetsBulkImport
+            contentType="proverbs"
+            onImportComplete={() => refresh()}
+            expectedColumns={[
+              { name: 'language_id', required: true, description: 'UUID of the language', example: '6e76e0ee-3df1-41d1-9548-ac3fed67a77b' },
+              { name: 'yoruba_text', required: true, description: 'Proverb in Yoruba', example: 'Ìwà l\'ẹ̀so ẹni' },
+              { name: 'english_translation', required: true, description: 'Direct translation', example: 'Character is one\'s beauty' },
+              { name: 'english_meaning', required: false, description: 'Interpretation/meaning', example: 'Good character is more important than physical appearance' },
+              { name: 'romanization', required: false, description: 'Romanized version', example: 'iwa l\'eso eni' },
+              { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '3' },
+              { name: 'category', required: false, description: 'Primary category', example: 'character' },
+              { name: 'tags', required: false, description: 'Comma-separated tags', example: 'wisdom,values' },
+              { name: 'cultural_context', required: false, description: 'Cultural context', example: 'Used to emphasize inner beauty' },
+              { name: 'is_published', required: false, description: 'Published status', example: 'false' },
+            ]}
+          />
+        </div>
+      )}
+
       {/* Proverbs Table - Desktop and Mobile */}
       <ProverbsDataTable
         proverbs={uniqueProverbs}
@@ -1372,78 +1393,8 @@ export default function ProverbsPage() {
           <p className="text-sm text-gray-700 dark:text-gray-300">
             Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} proverbs
           </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage(page - 1)}
-              disabled={page === 1}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
-            >
-              Previous
-            </button>
-            
-            {/* Page Numbers */}
-            <div className="flex gap-1">
-              {(() => {
-                const totalPages = Math.ceil(total / limit);
-                const pageNumbers = [];
-                const maxVisible = 7;
-                
-                if (totalPages <= maxVisible) {
-                  // Show all pages
-                  for (let i = 1; i <= totalPages; i++) {
-                    pageNumbers.push(i);
-                  }
-                } else {
-                  // Show first, last, and pages around current
-                  if (page <= 3) {
-                    // Near start
-                    for (let i = 1; i <= 5; i++) pageNumbers.push(i);
-                    pageNumbers.push('...');
-                    pageNumbers.push(totalPages);
-                  } else if (page >= totalPages - 2) {
-                    // Near end
-                    pageNumbers.push(1);
-                    pageNumbers.push('...');
-                    for (let i = totalPages - 4; i <= totalPages; i++) pageNumbers.push(i);
-                  } else {
-                    // Middle
-                    pageNumbers.push(1);
-                    pageNumbers.push('...');
-                    for (let i = page - 1; i <= page + 1; i++) pageNumbers.push(i);
-                    pageNumbers.push('...');
-                    pageNumbers.push(totalPages);
-                  }
-                }
-                
-                return pageNumbers.map((num, idx) => 
-                  num === '...' ? (
-                    <span key={`ellipsis-${idx}`} className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-                      ...
-                    </span>
-                  ) : (
-                    <button
-                      key={num}
-                      onClick={() => setPage(num as number)}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        page === num
-                          ? 'bg-blue-600 text-white hover:bg-blue-700'
-                          : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {num}
-                    </button>
-                  )
-                );
-              })()}
-            </div>
-            
-            <button
-              onClick={() => setPage(page + 1)}
-              disabled={page * limit >= total}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
-            >
-              Next
-            </button>
+          <div className="ml-auto">
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
           </div>
         </div>
       )}

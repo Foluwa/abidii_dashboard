@@ -1180,14 +1180,14 @@ export default function CurriculumEditorPage() {
                   </div>
                   {selectedPreviewContext?.section.lesson_blueprint_id ? (
                     <Link
-                      href={`/content/curriculum/lesson-blueprints/${selectedPreviewContext.section.lesson_blueprint_id}`}
+                      href={`/curriculum/lesson-blueprints/${selectedPreviewContext.section.lesson_blueprint_id}`}
                       className="rounded-lg border border-brand-300 px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                     >
                       Open Blueprint
                     </Link>
                   ) : selectedPreviewContext ? (
                     <Link
-                      href={`/content/curriculum/lesson-blueprints/new?courseKey=${encodeURIComponent(selectedCourseKey)}&sectionId=${encodeURIComponent(selectedPreviewContext.section.id)}`}
+                      href={`/curriculum/lesson-blueprints/new?courseKey=${encodeURIComponent(selectedCourseKey)}&sectionId=${encodeURIComponent(selectedPreviewContext.section.id)}`}
                       className="rounded-lg border border-brand-300 px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                     >
                       Create Blueprint

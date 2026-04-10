@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { apiClient } from "@/lib/api";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
@@ -15,49 +15,63 @@ interface IdempotencyStats {
   recent_duplicate_attempts: number;
 }
 
+function toSafeNumber(value: unknown, fallback = 0): number {
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return parsed;
+}
+
+function normalizeHitRate(rawValue: unknown): number {
+  const numeric = toSafeNumber(rawValue, 0);
+  // Backends may return ratio (0..1) or percentage (0..100).
+  const normalized = numeric > 0 && numeric <= 1 ? numeric * 100 : numeric;
+  return Math.max(0, Math.min(100, normalized));
+}
+
 export default function IdempotencyPage() {
   const [stats, setStats] = useState<IdempotencyStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [days, setDays] = useState(7);
 
-  useEffect(() => {
-    fetchStats();
-  }, [days]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
       const response = await apiClient.get(`/api/v1/admin/health/idempotency?days=${days}`);
-      const data = response.data;
-      // Ensure all numeric fields exist with defaults
-      const safeStats = {
-        total_keys: data.total_keys ?? 0,
-        expired_keys: data.expired_keys ?? 0,
-        active_keys: data.active_keys ?? 0,
-        hit_rate: data.hit_rate ?? 0,
-        avg_ttl_seconds: data.avg_ttl_seconds ?? 0,
-        recent_duplicate_attempts: data.recent_duplicate_attempts ?? 0,
+      const data = response.data ?? {};
+
+      const totalKeys = Math.max(0, Math.round(toSafeNumber(data.total_keys)));
+      const activeKeys = Math.max(0, Math.round(toSafeNumber(data.active_keys)));
+      const rawExpired = Math.round(toSafeNumber(data.expired_keys));
+      const inferredExpired = Math.max(0, totalKeys - activeKeys);
+
+      const normalized: IdempotencyStats = {
+        total_keys: totalKeys,
+        active_keys: activeKeys,
+        expired_keys: rawExpired >= 0 ? rawExpired : inferredExpired,
+        hit_rate: normalizeHitRate(data.hit_rate),
+        avg_ttl_seconds: Math.max(0, toSafeNumber(data.avg_ttl_seconds)),
+        recent_duplicate_attempts: Math.max(0, Math.round(toSafeNumber(data.recent_duplicate_attempts))),
       };
-      setStats(safeStats);
+
+      setStats(normalized);
       setError(null);
     } catch (err: any) {
-      setError(err.message || "Failed to fetch idempotency stats");
+      const detail = err?.response?.data?.detail;
+      const message = typeof detail === "string" ? detail : err?.message;
+      setError(message || "Failed to fetch idempotency stats");
+      setStats(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, [days]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   return (
-    <>
+    <div className="space-y-6">
       <PageBreadcrumb pageTitle="Idempotency Health" />
 
       {error && (
@@ -66,8 +80,7 @@ export default function IdempotencyPage() {
         </Alert>
       )}
 
-      {/* Time Range Filter */}
-      <div className="mb-6 flex items-center gap-4">
+      <div className="mb-6 flex items-end gap-4">
         <StyledSelect
           label="Time Range"
           value={days}
@@ -76,138 +89,118 @@ export default function IdempotencyPage() {
             { value: 1, label: "Last 24 hours" },
             { value: 7, label: "Last 7 days" },
             { value: 30, label: "Last 30 days" },
-            { value: 90, label: "Last 90 days" }
+            { value: 90, label: "Last 90 days" },
           ]}
         />
         <button
+          type="button"
           onClick={fetchStats}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
         >
           Refresh
         </button>
       </div>
 
-      {stats && (
+      {loading ? (
+        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {Array.from({ length: 3 }, (_, idx) => (
+              <div key={idx} className="h-28 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+            ))}
+          </div>
+        </div>
+      ) : !stats ? (
+        <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+          No idempotency metrics available for the selected range.
+        </div>
+      ) : (
         <div className="space-y-6">
-          {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Total Keys */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-2">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+              <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Keys</h3>
-                <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                </svg>
               </div>
-              <p className="text-3xl font-bold text-gray-800 dark:text-white">
-                {stats.total_keys.toLocaleString()}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Unique request keys
-              </p>
+              <p className="text-3xl font-bold text-gray-800 dark:text-white">{stats.total_keys.toLocaleString()}</p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Unique request keys</p>
             </div>
 
-            {/* Active Keys */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-2">
+            <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+              <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Keys</h3>
-                <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
               </div>
               <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                 {stats.active_keys.toLocaleString()}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Currently cached
-              </p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Currently cached</p>
             </div>
 
-            {/* Duplicate Attempts */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-2">
+            <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+              <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Duplicate Attempts</h3>
-                <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
               </div>
               <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
                 {stats.recent_duplicate_attempts.toLocaleString()}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Prevented duplicates
-              </p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Prevented duplicates</p>
             </div>
           </div>
 
-          {/* Detailed Stats */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                Idempotency Performance
-              </h3>
+          <div className="rounded-lg bg-white shadow dark:bg-gray-800">
+            <div className="border-b border-gray-200 p-6 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Idempotency Performance</h3>
             </div>
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Hit Rate</h4>
+                  <h4 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Hit Rate</h4>
                   <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-4">
+                    <div className="h-4 flex-1 rounded-full bg-gray-200 dark:bg-gray-700">
                       <div
-                        className="bg-green-600 h-4 rounded-full transition-all"
+                        className="h-4 rounded-full bg-green-600 transition-all"
                         style={{ width: `${stats.hit_rate}%` }}
-                      ></div>
+                      />
                     </div>
                     <span className="text-lg font-semibold text-gray-800 dark:text-white">
                       {stats.hit_rate.toFixed(1)}%
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    Requests served from cache
-                  </p>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Requests served from cache</p>
                 </div>
 
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Average TTL</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Seconds:</span>
-                      <span className="text-sm font-medium text-gray-800 dark:text-white">
-                        {stats.avg_ttl_seconds.toFixed(0)}s
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Minutes:</span>
-                      <span className="text-sm font-medium text-gray-800 dark:text-white">
-                        {(stats.avg_ttl_seconds / 60).toFixed(1)}m
-                      </span>
-                    </div>
+                <div className="space-y-2">
+                  <h4 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Average TTL</h4>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Seconds:</span>
+                    <span className="text-sm font-medium text-gray-800 dark:text-white">
+                      {stats.avg_ttl_seconds.toFixed(0)}s
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Minutes:</span>
+                    <span className="text-sm font-medium text-gray-800 dark:text-white">
+                      {(stats.avg_ttl_seconds / 60).toFixed(1)}m
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Expired Keys:</span>
+                    <span className="text-sm font-medium text-gray-800 dark:text-white">
+                      {stats.expired_keys.toLocaleString()}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Info Card */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-            <div className="flex items-start gap-3">
-              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">
-                  About Idempotency
-                </h4>
-                <p className="text-sm text-blue-800 dark:text-blue-300">
-                  Idempotency middleware prevents duplicate request processing by caching request signatures.
-                  This is crucial for ensuring data consistency and preventing double charges, duplicate
-                  records, or race conditions in your API.
-                </p>
-              </div>
-            </div>
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-900/20">
+            <h4 className="mb-1 text-sm font-medium text-blue-900 dark:text-blue-200">About Idempotency</h4>
+            <p className="text-sm text-blue-800 dark:text-blue-300">
+              Idempotency middleware prevents duplicate request processing by caching request signatures.
+              This helps keep billing, write operations, and retried requests consistent.
+            </p>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

@@ -17,7 +17,7 @@ interface Voice {
 
 export interface RegenerateAudioTarget {
   id: string;
-  contentType: "word" | "phrase" | "proverb";
+  contentType: "word" | "phrase" | "proverb" | "number";
   displayText: string;
   defaultText: string;
   languageCode: string;
@@ -39,14 +39,16 @@ const LANGUAGE_CODE_MAP: Record<string, string> = {
   swa: "sw",
 };
 
-const requiresSpitch = (languageCode: string) => {
-  const normalized = (LANGUAGE_CODE_MAP[languageCode] || languageCode || "").toLowerCase();
-  return normalized === "yo";
-};
-
 const getVoiceLabel = (voice: Voice) => (
   voice.display_name || voice.name || voice.voice_code || "Unknown Voice"
 );
+
+const providerPriority = (provider: string) => {
+  if (provider === "google") return 0;
+  if (provider === "elevenlabs") return 1;
+  if (provider === "spitch") return 2;
+  return 3;
+};
 
 // Helper to format error messages (handles both string and object errors)
 const formatErrorMessage = (error: any, fallbackMessage: string): string => {
@@ -116,15 +118,22 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
       const response = await apiClient.get('/api/v1/admin/audio/voices', {
         params: {
           language_code: ttsLanguageCode,
-          ...(requiresSpitch(target.languageCode) ? { provider: "spitch" } : {}),
           is_active: true,
           dedupe_aliases: true,
           page_size: 100,
         }
       });
       
-      const voicesList = response.data.items || [];
+      const voicesList: Voice[] = response.data.items || [];
       setVoices(voicesList);
+
+      if (voicesList.length > 0) {
+        const providers: string[] = Array.from(new Set(voicesList.map((voice: Voice) => voice.provider)));
+        providers.sort((a, b) => providerPriority(a) - providerPriority(b) || a.localeCompare(b));
+        setSelectedProvider(providers[0] || "all");
+      } else {
+        setSelectedProvider("all");
+      }
     } catch (error: any) {
       console.error("Error fetching voices:", error);
       toast.error(formatErrorMessage(error, "Failed to load voices"));
@@ -136,7 +145,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
   useEffect(() => {
     if (isOpen && target) {
       setTextOverride(target.defaultText);
-      setSelectedProvider(requiresSpitch(target.languageCode) ? "spitch" : "all");
+      setSelectedProvider("all");
       fetchVoices();
     }
   }, [fetchVoices, isOpen, target]);

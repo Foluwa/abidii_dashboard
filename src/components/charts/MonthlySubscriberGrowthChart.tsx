@@ -15,6 +15,11 @@ interface GrowthDataItem {
   count: number;
 }
 
+interface ChartPoint {
+  label: string;
+  value: number;
+}
+
 /**
  * Monthly Subscriber Growth Chart
  * Shows the number of new subscribers each month (first-time subscribers only)
@@ -23,12 +28,21 @@ export default function MonthlySubscriberGrowthChart() {
   const { data: growthData, isLoading, isError } = useMonthlySubscriberGrowth(12);
 
   // Transform API data to chart format
-  const categories = growthData.map((item: GrowthDataItem) => {
-    const date = new Date(item.month + "-01");
-    return date.toLocaleString("default", { month: "short" });
-  });
-
-  const seriesData = growthData.map((item: GrowthDataItem) => item.count);
+  const chartPoints: ChartPoint[] = growthData
+    .map((item: GrowthDataItem) => {
+      const [year, month] = String(item.month || "").split("-").map((value) => Number(value));
+      if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
+        return null;
+      }
+      const date = new Date(Date.UTC(year, month - 1, 1));
+      return {
+        label: date.toLocaleString("default", { month: "short", year: "2-digit", timeZone: "UTC" }),
+        value: item.count,
+      };
+    })
+    .filter((point: ChartPoint | null): point is ChartPoint => point !== null);
+  const categories = chartPoints.map((point) => point.label);
+  const seriesData = chartPoints.map((point) => point.value);
 
   const options: ApexOptions = {
     colors: ["#10B981"], // Green for subscriber growth
@@ -120,7 +134,7 @@ export default function MonthlySubscriberGrowthChart() {
     );
   }
 
-  if (growthData.length === 0) {
+  if (chartPoints.length === 0) {
     return (
       <div className="flex items-center justify-center h-[180px] text-gray-500">
         No subscriber data available

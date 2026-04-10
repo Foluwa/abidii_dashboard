@@ -383,7 +383,7 @@ export default function AdminLessonBlueprintDetailPage({
     setIsDeletingBlueprint(true);
     try {
       await deleteAdminBlueprint(blueprintId);
-      router.push('/content/curriculum/lesson-blueprints');
+      router.push('/curriculum/lesson-blueprints');
     } catch (err: any) {
       setErrorMessage(getActionErrorMessage(err, 'Failed to delete blueprint'));
     } finally {
@@ -586,7 +586,7 @@ export default function AdminLessonBlueprintDetailPage({
               )}
               {blueprint.course_id && (
                 <Link
-                  href={`/content/curriculum/courses/${blueprint.course_id}`}
+                  href={`/curriculum/courses/${blueprint.course_id}`}
                   className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-100 dark:border-brand-900 dark:bg-brand-950/20 dark:text-brand-300 dark:hover:bg-brand-950/40"
                 >
                   Open Linked Course
@@ -906,7 +906,7 @@ export default function AdminLessonBlueprintDetailPage({
           void refreshVersionHistory();
           setPreviewResult(result);
           if (result.blueprint.id !== blueprintId) {
-            router.push(`/content/curriculum/lesson-blueprints/${result.blueprint.id}`);
+            router.push(`/curriculum/lesson-blueprints/${result.blueprint.id}`);
           }
           setFocusFieldPath(null);
         }}

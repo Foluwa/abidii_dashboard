@@ -61,6 +61,8 @@ export default function LessonBlueprintsListPage() {
   const items = useMemo(() => data?.items ?? [], [data]);
   const total = data?.total ?? 0;
   const totalPages = data?.pages ?? Math.max(1, Math.ceil(total / limit));
+  const pageStart = total === 0 ? 0 : (page - 1) * limit + 1;
+  const pageEnd = total === 0 ? 0 : Math.min(page * limit, total);
 
   const labelById = useMemo(() => {
     const map = new Map<string, string>();
@@ -264,13 +266,13 @@ export default function LessonBlueprintsListPage() {
         <PageBreadCrumb pageTitle="Lesson Blueprints" />
         <div className="flex items-center gap-2">
           <Link
-            href="/content/curriculum/assets"
+            href="/media/library"
             className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
           >
             Asset Library
           </Link>
           <Link
-            href="/content/curriculum/lesson-blueprints/new"
+            href="/curriculum/lesson-blueprints/new"
             className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
             New Blueprint
@@ -417,7 +419,7 @@ export default function LessonBlueprintsListPage() {
                         <tr key={o.id}>
                           <td className="px-3 py-2 text-xs text-gray-900 dark:text-white">
                             <Link
-                              href={`/content/curriculum/lesson-blueprints/${o.id}`}
+                              href={`/curriculum/lesson-blueprints/${o.id}`}
                               className="hover:underline"
                             >
                               {labelById.get(o.id) || o.id}
@@ -512,7 +514,7 @@ export default function LessonBlueprintsListPage() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
                     <Link
-                      href={`/content/curriculum/lesson-blueprints/${bp.id}`}
+                      href={`/curriculum/lesson-blueprints/${bp.id}`}
                       className="hover:underline"
                     >
                       {bp.blueprint_key}
@@ -542,11 +544,14 @@ export default function LessonBlueprintsListPage() {
         </div>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex justify-center">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Showing {pageStart} to {pageEnd} of {total} lesson blueprints
+        </p>
+        <div className="ml-auto">
           <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
-      )}
+      </div>
 
       <ConfirmationModal
         isOpen={showPublishConfirm}

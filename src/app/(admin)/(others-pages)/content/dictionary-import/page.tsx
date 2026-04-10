@@ -239,7 +239,7 @@ export default function DictionaryImportPage() {
             </div>
             {currentBatchId ? (
               <Link
-                href={`/content/dictionary-import/${currentBatchId}`}
+                href={`/content/imports/${currentBatchId}`}
                 className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-white/5"
               >
                 View Batch
@@ -447,42 +447,49 @@ export default function DictionaryImportPage() {
             </button>
           </div>
 
-          <div className="mt-4 space-y-3">
-            {history.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-gray-300 p-6 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                No dictionary import batches yet.
-              </div>
-            ) : (
-              history.map((batch) => (
-                <Link
-                  key={batch.id}
-                  href={`/content/dictionary-import/${batch.id}`}
-                  className="block rounded-xl border border-gray-200 p-4 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/5"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {renderStatus(batch.status)}
-                        <span className="font-mono text-xs text-gray-500 dark:text-gray-400">{batch.id}</span>
-                      </div>
-                      <div className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                        {batch.source_name ?? 'Unnamed import'}
-                      </div>
-                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Pair: {batch.pair_code ?? '-'} · Started: {formatDate(batch.started_at)}
-                      </div>
-                    </div>
-                    <div className="text-right text-xs text-gray-600 dark:text-gray-300">
-                      <div>I {batch.inserted_count}</div>
-                      <div>U {batch.updated_count}</div>
-                      <div>S {batch.skipped_count}</div>
-                      <div>E {batch.error_count}</div>
-                      <div>W {batch.warning_count}</div>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            )}
+          <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table" aria-label="Dictionary import batch history">
+                <thead className="bg-gray-50 dark:bg-gray-900/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Batch</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Source</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Pair</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Started</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">I / U / S / E / W</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  {history.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-8 text-sm text-gray-600 dark:text-gray-300">
+                        No dictionary import batches found.
+                      </td>
+                    </tr>
+                  ) : (
+                    history.map((batch) => (
+                      <tr key={batch.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
+                        <td className="px-4 py-3 text-sm">{renderStatus(batch.status)}</td>
+                        <td className="px-4 py-3 text-xs font-mono text-gray-700 dark:text-gray-300">
+                          <Link href={`/content/imports/${batch.id}`} className="hover:underline">
+                            {batch.id}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                          {batch.source_name ?? 'Unnamed import'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{batch.pair_code ?? '-'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{formatDate(batch.started_at)}</td>
+                        <td className="px-4 py-3 text-right text-xs text-gray-700 dark:text-gray-300">
+                          {batch.inserted_count} / {batch.updated_count} / {batch.skipped_count} / {batch.error_count} / {batch.warning_count}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       </div>

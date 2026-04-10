@@ -82,13 +82,13 @@ function CourseCard({ course }: { course: CurriculumReadinessCourse }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
-            href={`/content/curriculum/courses/${course.course.id}`}
+            href={`/curriculum/courses/${course.course.id}`}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-white/[0.03]"
           >
             Open Course
           </Link>
           <Link
-            href={`/content/curriculum/editor?courseKey=${encodeURIComponent(course.course.course_key)}`}
+            href={`/curriculum/editor?courseKey=${encodeURIComponent(course.course.course_key)}`}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-white/[0.03]"
           >
             Open Editor
@@ -202,7 +202,7 @@ export default function CurriculumReadinessPage() {
         </div>
         <div className="flex gap-2">
           <Link
-            href="/content/curriculum/courses"
+            href="/curriculum/courses"
             className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-white/[0.03]"
           >
             Courses

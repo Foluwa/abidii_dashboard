@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useSystemStatus, useSystemStats } from "@/hooks/useApi";
 import StatCard from "@/components/admin/StatCard";
 import StatusBadge from "@/components/admin/StatusBadge";
@@ -123,34 +124,34 @@ export default function Dashboard() {
           Quick Actions
         </h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <a
-            href="/users"
+          <Link
+            href="/community/users"
             className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
           >
             <UserCircleIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />
             <p className="text-sm font-medium text-gray-900 dark:text-white">Manage Users</p>
-          </a>
-          <a
-            href="/content/lessons"
+          </Link>
+          <Link
+            href="/curriculum/lessons"
             className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
           >
             <ListIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />
             <p className="text-sm font-medium text-gray-900 dark:text-white">Manage Lessons</p>
-          </a>
-          <a
-            href="/system/config"
+          </Link>
+          <Link
+            href="/operations/configuration/platform"
             className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
           >
             <GridIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />
             <p className="text-sm font-medium text-gray-900 dark:text-white">Configuration</p>
-          </a>
-          <a
-            href="/system/alerts"
+          </Link>
+          <Link
+            href="/operations/alerts"
             className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
           >
             <GridIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />
             <p className="text-sm font-medium text-gray-900 dark:text-white">Alert History</p>
-          </a>
+          </Link>
         </div>
       </div>
 

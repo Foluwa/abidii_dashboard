@@ -11,6 +11,7 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { Modal } from "@/components/ui/modal";
 import Alert from "@/components/ui/alert/SimpleAlert";
+import Pagination from "@/components/tables/Pagination";
 import { FiGlobe, FiCheckCircle } from "react-icons/fi";
 
 export default function LessonsPage() {
@@ -31,6 +32,7 @@ export default function LessonsPage() {
     limit 
   });
   const { languages, isLoading: isLanguagesLoading } = useLanguages();
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const getLanguageName = (languageId: unknown) => {
     const match = (languages || []).find((lang: any) => String(lang.id) === String(languageId));
@@ -296,7 +298,7 @@ export default function LessonsPage() {
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end space-x-2">
                             <button
-                              onClick={() => window.location.href = `/content/lessons/${lesson.id}/builder`}
+                              onClick={() => window.location.href = `/curriculum/lessons/${lesson.id}/builder`}
                               className="px-3 py-1 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600"
                             >
                               Build
@@ -366,7 +368,7 @@ export default function LessonsPage() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => window.location.href = `/content/lessons/${lesson.id}/builder`}
+                      onClick={() => window.location.href = `/curriculum/lessons/${lesson.id}/builder`}
                       className="flex-1 px-3 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600"
                     >
                       Build
@@ -399,21 +401,8 @@ export default function LessonsPage() {
               <p className="text-sm text-gray-700 dark:text-gray-300">
                 Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} lessons
               </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage(page - 1)}
-                  disabled={page === 1}
-                  className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setPage(page + 1)}
-                  disabled={page * limit >= total}
-                  className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
-                >
-                  Next
-                </button>
+              <div className="ml-auto">
+                <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
               </div>
             </div>
           )}

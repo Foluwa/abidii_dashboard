@@ -35,8 +35,8 @@ export default function GameAnalyticsPage() {
   const { games } = useAvailableGames();
 
   const tabs = [
-    { name: 'Overview', href: '/analytics' },
-    { name: 'Players', href: '/analytics/players' },
+    { name: 'Overview', href: '/overview/analytics' },
+    { name: 'Players', href: '/overview/analytics/players' },
   ];
 
   if (isError) {

@@ -984,10 +984,20 @@ export function usePlatformDistribution() {
     fetcher,
     { revalidateOnFocus: false }
   );
+  const distribution = Array.isArray(data?.users_by_latest_platform)
+    ? data.users_by_latest_platform
+    : Array.isArray(data?.distribution)
+      ? data.distribution
+      : [];
+  const totalUsers = Number.isFinite(data?.total_users_with_devices)
+    ? data.total_users_with_devices
+    : Number.isFinite(data?.total)
+      ? data.total
+      : distribution.reduce((sum: number, item: any) => sum + (Number(item?.count) || 0), 0);
 
   return {
-    distribution: data?.users_by_latest_platform || [],
-    total: data?.total_users_with_devices || 0,
+    distribution,
+    total: totalUsers,
     isLoading: !error && !data,
     isError: error,
     refresh: mutate,
@@ -1004,10 +1014,18 @@ export function useMonthlyUserGrowth(months: number = 12) {
     fetcher,
     { revalidateOnFocus: false }
   );
+  const series = Array.isArray(data?.data)
+    ? data.data
+    : Array.isArray(data)
+      ? data
+      : [];
+  const totalCount = Number.isFinite(data?.total)
+    ? data.total
+    : series.reduce((sum: number, item: any) => sum + (Number(item?.count) || 0), 0);
 
   return {
-    data: data?.data || [],
-    total: data?.total || 0,
+    data: series,
+    total: totalCount,
     isLoading: !error && !data,
     isError: error,
     refresh: mutate,
@@ -1024,10 +1042,18 @@ export function useMonthlySubscriberGrowth(months: number = 12) {
     fetcher,
     { revalidateOnFocus: false }
   );
+  const series = Array.isArray(data?.data)
+    ? data.data
+    : Array.isArray(data)
+      ? data
+      : [];
+  const totalCount = Number.isFinite(data?.total)
+    ? data.total
+    : series.reduce((sum: number, item: any) => sum + (Number(item?.count) || 0), 0);
 
   return {
-    data: data?.data || [],
-    total: data?.total || 0,
+    data: series,
+    total: totalCount,
     isLoading: !error && !data,
     isError: error,
     refresh: mutate,

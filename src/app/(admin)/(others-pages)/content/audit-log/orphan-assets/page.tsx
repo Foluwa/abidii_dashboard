@@ -89,6 +89,8 @@ export default function OrphanAssetsPage() {
   const candidateItems = candidates.data?.items ?? [];
   const totalCandidates = candidates.data?.total ?? 0;
   const totalPages = candidates.data?.pages ?? Math.max(1, Math.ceil(totalCandidates / limit));
+  const pageStart = totalCandidates === 0 ? 0 : (page - 1) * limit + 1;
+  const pageEnd = totalCandidates === 0 ? 0 : Math.min(page * limit, totalCandidates);
   const activeScan = useMemo(
     () => scans.data?.items.find((scan) => !scan.completed_at) ?? null,
     [scans.data?.items]
@@ -512,8 +514,13 @@ export default function OrphanAssetsPage() {
           </table>
         </div>
 
-        <div className="mt-4">
-          <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {pageStart} to {pageEnd} of {totalCandidates} orphan asset candidates
+          </p>
+          <div className="ml-auto">
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
         </div>
       </div>
     </div>

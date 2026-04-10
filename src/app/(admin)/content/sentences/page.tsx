@@ -13,6 +13,8 @@ import StatusBadge from '@/components/admin/StatusBadge';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Toast from '@/components/ui/toast/Toast';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
+import { GoogleSheetsBulkImport } from '@/components/admin/GoogleSheetsBulkImport';
+import Pagination from "@/components/tables/Pagination";
 import { Sentence, SentenceCreate, SentenceUpdate, PaginatedResponse } from '@/types/content';
 import { Language } from '@/types/common';
 import { TableColumn } from '@/types/common';
@@ -29,6 +31,7 @@ export default function SentencesPage() {
   const [languages, setLanguages] = useState<Language[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSentence, setEditingSentence] = useState<Sentence | null>(null);
@@ -36,6 +39,7 @@ export default function SentencesPage() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioPreview, setAudioPreview] = useState<string | null>(null);
   const [uploadingAudio, setUploadingAudio] = useState(false);
+  const pageSize = 50;
   
   // Filters
   const [filters, setFilters] = useState({
@@ -44,6 +48,8 @@ export default function SentencesPage() {
     is_published: '',
     search: '',
   });
+  const pageStart = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const pageEnd = totalItems === 0 ? 0 : Math.min(currentPage * pageSize, totalItems);
 
   // Form state
   const [formData, setFormData] = useState<SentenceCreate | SentenceUpdate>({
@@ -101,7 +107,7 @@ export default function SentencesPage() {
       setLoading(true);
       const params = new URLSearchParams();
       params.append('page', String(currentPage));
-      params.append('page_size', '50');
+      params.append('page_size', String(pageSize));
       
       Object.entries(filters).forEach(([key, value]) => {
         if (value) params.append(key, String(value));
@@ -113,6 +119,7 @@ export default function SentencesPage() {
 
       setSentences(response.data.items);
       setTotalPages(response.data.total_pages);
+      setTotalItems(response.data.total ?? 0);
     } catch (error) {
       console.error('Failed to fetch sentences:', error);
     } finally {
@@ -307,7 +314,10 @@ export default function SentencesPage() {
             <StyledSelect
               label="Language"
               value={filters.language_id}
-              onChange={(e) => setFilters({ ...filters, language_id: e.target.value })}
+              onChange={(e) => {
+                setCurrentPage(1);
+                setFilters({ ...filters, language_id: e.target.value });
+              }}
               options={[
                 { value: "", label: "All Languages" },
                 ...languages.map((lang) => ({ value: lang.id, label: lang.name })),
@@ -320,7 +330,10 @@ export default function SentencesPage() {
             <StyledSelect
               label="Difficulty"
               value={filters.difficulty}
-              onChange={(e) => setFilters({ ...filters, difficulty: e.target.value })}
+              onChange={(e) => {
+                setCurrentPage(1);
+                setFilters({ ...filters, difficulty: e.target.value });
+              }}
               options={[
                 { value: "", label: "All Levels" },
                 ...[1, 2, 3, 4, 5].map((level) => ({ value: level.toString(), label: `Level ${level}` })),
@@ -333,7 +346,10 @@ export default function SentencesPage() {
             <StyledSelect
               label="Status"
               value={filters.is_published}
-              onChange={(e) => setFilters({ ...filters, is_published: e.target.value })}
+              onChange={(e) => {
+                setCurrentPage(1);
+                setFilters({ ...filters, is_published: e.target.value });
+              }}
               options={[
                 { value: "", label: "All" },
                 { value: "true", label: "Published" },
@@ -350,13 +366,36 @@ export default function SentencesPage() {
             <input
               type="text"
               value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+              onChange={(e) => {
+                setCurrentPage(1);
+                setFilters({ ...filters, search: e.target.value });
+              }}
               placeholder="Search text or translation..."
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:border-gray-600"
             />
           </div>
         </div>
       </div>
+
+      {/* Bulk Import from Google Sheets */}
+      {filters.language_id && (
+        <GoogleSheetsBulkImport
+          contentType="sentences"
+          onImportComplete={() => fetchSentences()}
+          expectedColumns={[
+            { name: 'language_id', required: true, description: 'UUID of the language', example: '6e76e0ee-3df1-41d1-9548-ac3fed67a77b' },
+            { name: 'text', required: true, description: 'Sentence text', example: 'Mo fẹ́ràn oúnjẹ Yorùbá' },
+            { name: 'translation', required: true, description: 'Translation', example: 'I love Yoruba food' },
+            { name: 'romanization', required: false, description: 'Romanized version', example: 'mo feran ounje Yoruba' },
+            { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '2' },
+            { name: 'category', required: false, description: 'Category/topic', example: 'food' },
+            { name: 'tags', required: false, description: 'Comma-separated tags', example: 'food,preferences' },
+            { name: 'usage_context', required: false, description: 'Usage context', example: 'Casual conversation' },
+            { name: 'cultural_notes', required: false, description: 'Cultural context', example: '' },
+            { name: 'is_published', required: false, description: 'Published status', example: 'false' },
+          ]}
+        />
+      )}
 
       {/* Table */}
       <DataTable
@@ -384,27 +423,18 @@ export default function SentencesPage() {
       />
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600"
-          >
-            Previous
-          </button>
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600"
-          >
-            Next
-          </button>
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          Showing {pageStart} to {pageEnd} of {totalItems} sentences
+        </span>
+        <div className="ml-auto">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(nextPage) => setCurrentPage(nextPage)}
+          />
         </div>
-      )}
+      </div>
 
       {/* Create/Edit Modal */}
       <FormModal

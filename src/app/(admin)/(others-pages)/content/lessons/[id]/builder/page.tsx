@@ -370,7 +370,7 @@ export default function LessonBuilderPage() {
     try {
       await apiClient.put(`/api/v1/admin/lessons/${lessonId}`, { status: "published" });
       setSuccessMessage("Lesson published successfully");
-      router.push("/content/lessons");
+      router.push("/curriculum/lessons");
     } catch (error: any) {
       setErrorMessage(error.response?.data?.detail || "Failed to publish lesson");
     }
@@ -423,7 +423,7 @@ export default function LessonBuilderPage() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => router.push("/content/lessons")}
+            onClick={() => router.push("/curriculum/lessons")}
             className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300"
           >
             Cancel

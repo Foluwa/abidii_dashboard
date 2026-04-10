@@ -54,7 +54,7 @@ describe('CurriculumAssetLibraryPage', () => {
     expect(screen.getByText('steps[0].imageUrl')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open Blueprint' })).toHaveAttribute(
       'href',
-      '/content/curriculum/lesson-blueprints/bp-1'
+      '/curriculum/lesson-blueprints/bp-1'
     );
   });
 });

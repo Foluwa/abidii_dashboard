@@ -484,7 +484,7 @@ export default function UsersPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end gap-2">
                             <Link
-                              href={`/users/${user.id}`}
+                              href={`/community/users/${user.id}`}
                               className="text-brand-600 hover:text-brand-900 dark:text-brand-400 dark:hover:text-brand-300"
                             >
                               View

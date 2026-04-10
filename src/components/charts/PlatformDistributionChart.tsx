@@ -41,6 +41,7 @@ export default function PlatformDistributionChart() {
     series.push(item.count);
     colors.push(config.color);
   });
+  const resolvedTotal = total > 0 ? total : series.reduce((sum, value) => sum + value, 0);
 
   const options: ApexOptions = {
     colors: colors.length > 0 ? colors : ["#94a3b8"],
@@ -68,7 +69,7 @@ export default function PlatformDistributionChart() {
               label: "Total Users",
               fontSize: "14px",
               color: "#64748b",
-              formatter: () => total.toString(),
+              formatter: () => resolvedTotal.toString(),
             },
             value: {
               fontSize: "22px",
@@ -98,7 +99,7 @@ export default function PlatformDistributionChart() {
     tooltip: {
       y: {
         formatter: (val: number) => {
-          const percentage = total > 0 ? ((val / total) * 100).toFixed(1) : "0";
+          const percentage = resolvedTotal > 0 ? ((val / resolvedTotal) * 100).toFixed(1) : "0";
           return `${val} users (${percentage}%)`;
         },
       },
@@ -159,11 +160,15 @@ export default function PlatformDistributionChart() {
         <div className="flex items-center justify-center h-80">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
         </div>
+      ) : distribution.length === 0 ? (
+        <div className="flex h-80 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+          No platform distribution data available
+        </div>
       ) : (
         <div className="flex flex-col items-center">
           <ReactApexChart
             options={options}
-            series={series.length > 0 ? series : [1]}
+            series={series}
             type="donut"
             height={300}
           />

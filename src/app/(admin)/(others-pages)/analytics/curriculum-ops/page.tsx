@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Alert from '@/components/ui/alert/SimpleAlert';
 import StatusBadge from '@/components/admin/StatusBadge';
+import Pagination from '@/components/tables/Pagination';
 import { useAdminAuditLogList, useAdminCurriculumOpsMetrics } from '@/hooks/useApi';
 
 function getResult(details: unknown): string {
@@ -35,6 +36,16 @@ function resultBadge(result: string) {
 
 export default function CurriculumOpsPage() {
   const [days, setDays] = useState(7);
+  const [recentResultFilter, setRecentResultFilter] = useState<'all' | 'blocked' | 'failed'>('all');
+  const [recentTargetFilter, setRecentTargetFilter] = useState<'all' | 'course' | 'lesson_blueprint'>('all');
+  const [recentActionSearch, setRecentActionSearch] = useState('');
+  const [recentPage, setRecentPage] = useState(1);
+  const recentLimit = 25;
+  const [metricsActionFilter, setMetricsActionFilter] = useState('');
+  const [metricsResultFilter, setMetricsResultFilter] = useState<'all' | 'success' | 'blocked' | 'failed' | 'unknown'>('all');
+  const [metricsPage, setMetricsPage] = useState(1);
+  const metricsLimit = 25;
+
   const { metrics, isLoading, isError, refresh } = useAdminCurriculumOpsMetrics(days);
 
   const [nowAnchorMs, setNowAnchorMs] = useState<number>(() => Date.now());
@@ -97,9 +108,71 @@ export default function CurriculumOpsPage() {
       .filter((i) => {
         const r = (getResult(i.details) || '').toLowerCase();
         return r === 'blocked' || r === 'failed';
-      })
-      .slice(0, 20);
+      });
   }, [last24hItems]);
+
+  const filteredRecentBlockedOrFailed = useMemo(() => {
+    const normalizedSearch = recentActionSearch.trim().toLowerCase();
+    return recentBlockedOrFailed.filter((row) => {
+      const result = (getResult(row.details) || '').toLowerCase();
+      if (recentResultFilter !== 'all' && result !== recentResultFilter) return false;
+      if (recentTargetFilter !== 'all' && row.target_type !== recentTargetFilter) return false;
+      if (normalizedSearch) {
+        const haystack = `${row.action} ${row.target_type} ${row.target_id ?? ''}`.toLowerCase();
+        if (!haystack.includes(normalizedSearch)) return false;
+      }
+      return true;
+    });
+  }, [recentActionSearch, recentBlockedOrFailed, recentResultFilter, recentTargetFilter]);
+
+  const recentTotal = filteredRecentBlockedOrFailed.length;
+  const recentTotalPages = Math.max(1, Math.ceil(recentTotal / recentLimit));
+  const recentPageStart = recentTotal === 0 ? 0 : (recentPage - 1) * recentLimit + 1;
+  const recentPageEnd = recentTotal === 0 ? 0 : Math.min(recentPage * recentLimit, recentTotal);
+  const recentRows = useMemo(() => {
+    const start = (recentPage - 1) * recentLimit;
+    return filteredRecentBlockedOrFailed.slice(start, start + recentLimit);
+  }, [filteredRecentBlockedOrFailed, recentPage]);
+
+  const metricsRows = metrics?.rows ?? [];
+  const filteredMetricsRows = useMemo(() => {
+    const normalizedAction = metricsActionFilter.trim().toLowerCase();
+    return metricsRows.filter((row) => {
+      const rowResult = (row.result || '').toLowerCase();
+      if (metricsResultFilter !== 'all' && rowResult !== metricsResultFilter) return false;
+      if (normalizedAction && !row.action.toLowerCase().includes(normalizedAction)) return false;
+      return true;
+    });
+  }, [metricsRows, metricsActionFilter, metricsResultFilter]);
+
+  const metricsTotal = filteredMetricsRows.length;
+  const metricsTotalPages = Math.max(1, Math.ceil(metricsTotal / metricsLimit));
+  const metricsPageStart = metricsTotal === 0 ? 0 : (metricsPage - 1) * metricsLimit + 1;
+  const metricsPageEnd = metricsTotal === 0 ? 0 : Math.min(metricsPage * metricsLimit, metricsTotal);
+  const paginatedMetricsRows = useMemo(() => {
+    const start = (metricsPage - 1) * metricsLimit;
+    return filteredMetricsRows.slice(start, start + metricsLimit);
+  }, [filteredMetricsRows, metricsPage]);
+
+  useEffect(() => {
+    setRecentPage(1);
+  }, [days, recentActionSearch, recentResultFilter, recentTargetFilter]);
+
+  useEffect(() => {
+    setMetricsPage(1);
+  }, [days, metricsActionFilter, metricsResultFilter]);
+
+  useEffect(() => {
+    if (recentPage > recentTotalPages) {
+      setRecentPage(recentTotalPages);
+    }
+  }, [recentPage, recentTotalPages]);
+
+  useEffect(() => {
+    if (metricsPage > metricsTotalPages) {
+      setMetricsPage(metricsTotalPages);
+    }
+  }, [metricsPage, metricsTotalPages]);
 
   const totals = useMemo((): Totals => {
     const rows = metrics?.rows ?? [];
@@ -173,39 +246,79 @@ export default function CurriculumOpsPage() {
       <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <div className="text-sm font-medium text-gray-900 dark:text-white">Recent blocked/failed (last 24h)</div>
-          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">Showing up to 20 most recent.</div>
+          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">Filter operational failures by action/result/target type.</div>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Action search</label>
+              <input
+                value={recentActionSearch}
+                onChange={(e) => setRecentActionSearch(e.target.value)}
+                placeholder="publish, validate..."
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-theme-xs focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Result</label>
+              <select
+                value={recentResultFilter}
+                onChange={(e) => setRecentResultFilter(e.target.value as 'all' | 'blocked' | 'failed')}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-theme-xs focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              >
+                <option value="all">Blocked + Failed</option>
+                <option value="blocked">Blocked only</option>
+                <option value="failed">Failed only</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Target type</label>
+              <select
+                value={recentTargetFilter}
+                onChange={(e) => setRecentTargetFilter(e.target.value as 'all' | 'course' | 'lesson_blueprint')}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-theme-xs focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              >
+                <option value="all">All targets</option>
+                <option value="course">Course</option>
+                <option value="lesson_blueprint">Lesson blueprint</option>
+              </select>
+            </div>
+            <div className="flex items-end">
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Matching rows: <span className="font-medium text-gray-900 dark:text-white">{recentTotal}</span>
+              </p>
+            </div>
+          </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm" role="table" aria-label="Recent blocked/failed">
-            <thead className="bg-gray-50 dark:bg-gray-800">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.05]" role="table" aria-label="Recent blocked/failed">
+            <thead className="bg-gray-50 dark:bg-white/[0.02]">
               <tr>
-                <th className="text-left p-4 font-medium text-gray-900 dark:text-white">Time</th>
-                <th className="text-left p-4 font-medium text-gray-900 dark:text-white">Action</th>
-                <th className="text-left p-4 font-medium text-gray-900 dark:text-white">Result</th>
-                <th className="text-left p-4 font-medium text-gray-900 dark:text-white">Target</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Time</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Action</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Result</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Target</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
               {(courseAudit.isLoading || blueprintAudit.isLoading) && (
                 <tr>
-                  <td className="p-6 text-gray-500 dark:text-gray-400" colSpan={4}>
+                  <td className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400" colSpan={4}>
                     Loading…
                   </td>
                 </tr>
               )}
-              {!courseAudit.isLoading && !blueprintAudit.isLoading && recentBlockedOrFailed.length === 0 && (
+              {!courseAudit.isLoading && !blueprintAudit.isLoading && recentRows.length === 0 && (
                 <tr>
-                  <td className="p-6 text-gray-500 dark:text-gray-400" colSpan={4}>
+                  <td className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400" colSpan={4}>
                     No blocked/failed actions in this window.
                   </td>
                 </tr>
               )}
-              {recentBlockedOrFailed.map((row) => (
-                <tr key={row.id} className="border-t border-gray-200 dark:border-gray-700">
-                  <td className="p-4 text-gray-900 dark:text-white font-mono">{new Date(row.created_at).toLocaleString()}</td>
-                  <td className="p-4 text-gray-700 dark:text-gray-300 font-mono">{row.action}</td>
-                  <td className="p-4">{resultBadge(getResult(row.details))}</td>
-                  <td className="p-4 text-gray-700 dark:text-gray-300 font-mono">
+              {recentRows.map((row) => (
+                <tr key={row.id}>
+                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-mono">{new Date(row.created_at).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 font-mono">{row.action}</td>
+                  <td className="px-4 py-3 text-sm">{resultBadge(getResult(row.details))}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 font-mono">
                     {row.target_type}:{' '}
                     {row.target_id || '—'}
                   </td>
@@ -214,10 +327,18 @@ export default function CurriculumOpsPage() {
             </tbody>
           </table>
         </div>
+        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-gray-800">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {recentPageStart} to {recentPageEnd} of {recentTotal} blocked/failed actions
+          </p>
+          <div className="ml-auto">
+            <Pagination currentPage={recentPage} totalPages={recentTotalPages} onPageChange={setRecentPage} />
+          </div>
+        </div>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div>
             <label
               htmlFor="curriculumOpsDays"
@@ -238,9 +359,33 @@ export default function CurriculumOpsPage() {
               <option value="90">Last 90 days</option>
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Action filter</label>
+            <input
+              value={metricsActionFilter}
+              onChange={(e) => setMetricsActionFilter(e.target.value)}
+              placeholder="course.publish..."
+              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Result filter</label>
+            <select
+              value={metricsResultFilter}
+              onChange={(e) => setMetricsResultFilter(e.target.value as 'all' | 'success' | 'blocked' | 'failed' | 'unknown')}
+              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="all">All results</option>
+              <option value="success">Success</option>
+              <option value="blocked">Blocked</option>
+              <option value="failed">Failed</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </div>
           <div className="flex items-end">
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              Window: <span className="text-gray-900 dark:text-white">{metrics?.window_days ?? days} days</span>
+              Window: <span className="text-gray-900 dark:text-white">{metrics?.window_days ?? days} days</span><br />
+              Matching rows: <span className="text-gray-900 dark:text-white">{metricsTotal}</span>
             </div>
           </div>
           <div className="flex items-end">
@@ -260,40 +405,48 @@ export default function CurriculumOpsPage() {
 
       <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm" role="table">
-            <thead className="bg-gray-50 dark:bg-gray-800">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.05]" role="table">
+            <thead className="bg-gray-50 dark:bg-white/[0.02]">
               <tr>
-                <th className="text-left p-4 font-medium text-gray-900 dark:text-white">Day</th>
-                <th className="text-left p-4 font-medium text-gray-900 dark:text-white">Action</th>
-                <th className="text-left p-4 font-medium text-gray-900 dark:text-white">Result</th>
-                <th className="text-right p-4 font-medium text-gray-900 dark:text-white">Count</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Day</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Action</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Result</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300">Count</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
               {isLoading && (
                 <tr>
-                  <td className="p-6 text-gray-500 dark:text-gray-400" colSpan={4}>
+                  <td className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400" colSpan={4}>
                     Loading…
                   </td>
                 </tr>
               )}
-              {!isLoading && (metrics?.rows?.length ?? 0) === 0 && (
+              {!isLoading && metricsTotal === 0 && (
                 <tr>
-                  <td className="p-6 text-gray-500 dark:text-gray-400" colSpan={4}>
+                  <td className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400" colSpan={4}>
                     No metrics in this window.
                   </td>
                 </tr>
               )}
-              {(metrics?.rows ?? []).map((row, idx) => (
-                <tr key={`${row.day}-${row.action}-${row.result}-${idx}`} className="border-t border-gray-200 dark:border-gray-700">
-                  <td className="p-4 text-gray-900 dark:text-white font-mono">{row.day}</td>
-                  <td className="p-4 text-gray-700 dark:text-gray-300 font-mono">{row.action}</td>
-                  <td className="p-4">{resultBadge(row.result)}</td>
-                  <td className="p-4 text-right text-gray-900 dark:text-white">{row.count.toLocaleString()}</td>
+              {paginatedMetricsRows.map((row, idx) => (
+                <tr key={`${row.day}-${row.action}-${row.result}-${idx}`}>
+                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-mono">{row.day}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 font-mono">{row.action}</td>
+                  <td className="px-4 py-3 text-sm">{resultBadge(row.result)}</td>
+                  <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{row.count.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-gray-800">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {metricsPageStart} to {metricsPageEnd} of {metricsTotal} curriculum-ops metric rows
+          </p>
+          <div className="ml-auto">
+            <Pagination currentPage={metricsPage} totalPages={metricsTotalPages} onPageChange={setMetricsPage} />
+          </div>
         </div>
       </div>
     </div>

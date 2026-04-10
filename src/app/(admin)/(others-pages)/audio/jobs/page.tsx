@@ -1,30 +1,30 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { apiClient } from "@/lib/api";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
+import Pagination from "@/components/tables/Pagination";
 import { FaSync, FaCheckCircle, FaExclamationCircle, FaClock, FaPlay } from "react-icons/fa";
 
 interface AudioJob {
   id: string;
   content_type: string;
   content_id: string;
-  text: string;
-  language_code: string;
+  text_to_speak: string;
+  language_code?: string | null;
   voice_id?: string;
-  provider: string;
+  voice_code?: string | null;
+  provider?: string | null;
   status: string;
-  priority: number;
+  audio_format?: string | null;
   audio_url?: string;
-  duration_seconds?: number;
-  file_size_bytes?: number;
+  output_duration_sec?: number | null;
   error_message?: string;
   retry_count: number;
   max_retries: number;
   queued_at: string;
-  created_at?: string;
   started_at?: string;
   completed_at?: string;
 }
@@ -36,31 +36,20 @@ export default function AudioJobsPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [filterProvider, setFilterProvider] = useState<string>("");
+  const [filterContentType, setFilterContentType] = useState<string>("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const limit = 20;
 
-  useEffect(() => {
-    fetchJobs();
-    
-    let interval: NodeJS.Timeout;
-    if (autoRefresh) {
-      interval = setInterval(fetchJobs, 10000); // Refresh every 10 seconds
-    }
-    
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [page, filterStatus, filterProvider, autoRefresh]);
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      let url = `/api/v1/admin/audio/jobs?page=${page}&limit=${limit}`;
+      let url = `/api/v1/admin/audio/jobs?page=${page}&page_size=${limit}`;
       if (filterStatus) url += `&status=${filterStatus}`;
       if (filterProvider) url += `&provider=${filterProvider}`;
+      if (filterContentType) url += `&content_type=${filterContentType}`;
 
       const response = await apiClient.get(url);
       const data = response.data;
@@ -72,7 +61,20 @@ export default function AudioJobsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterContentType, filterProvider, filterStatus, limit, page]);
+
+  useEffect(() => {
+    fetchJobs();
+
+    let interval: NodeJS.Timeout;
+    if (autoRefresh) {
+      interval = setInterval(fetchJobs, 10000); // Refresh every 10 seconds
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [autoRefresh, fetchJobs]);
 
   const retryJob = async (jobId: string) => {
     try {
@@ -90,7 +92,7 @@ export default function AudioJobsPage() {
     if (!confirm("Are you sure you want to cancel this job?")) return;
 
     try {
-      await apiClient.post(`/api/v1/admin/audio/jobs/${jobId}/cancel`);
+      await apiClient.delete(`/api/v1/admin/audio/jobs/${jobId}`);
       setSuccessMessage("Job cancelled successfully");
       fetchJobs();
       setTimeout(() => setSuccessMessage(""), 3000);
@@ -108,7 +110,7 @@ export default function AudioJobsPage() {
         return <FaExclamationCircle className="text-red-600" />;
       case "processing":
         return <FaSync className="text-blue-600 animate-spin" />;
-      case "pending":
+      case "queued":
         return <FaClock className="text-yellow-600" />;
       default:
         return <FaClock className="text-gray-600" />;
@@ -123,7 +125,7 @@ export default function AudioJobsPage() {
         return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300";
       case "processing":
         return "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
-      case "pending":
+      case "queued":
         return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
       case "cancelled":
         return "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
@@ -132,14 +134,9 @@ export default function AudioJobsPage() {
     }
   };
 
-  const formatDuration = (seconds?: number) => {
-    if (!seconds) return "-";
+  const formatDuration = (seconds?: number | null) => {
+    if (seconds == null) return "-";
     return `${seconds.toFixed(1)}s`;
-  };
-
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return "-";
-    return `${(bytes / 1024).toFixed(1)} KB`;
   };
 
   const formatDateTime = (value?: string) => {
@@ -157,7 +154,7 @@ export default function AudioJobsPage() {
 
   const totalPages = Math.ceil(total / limit);
 
-  const getQueuedAt = (job: AudioJob) => job.queued_at || job.created_at;
+  const getQueuedAt = (job: AudioJob) => job.queued_at;
 
   return (
     <div className="p-6">
@@ -194,7 +191,7 @@ export default function AudioJobsPage() {
       </div>
 
       {/* Filters */}
-      <div className="mb-6 flex gap-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="flex-1">
           <StyledSelect
             label="Status"
@@ -206,7 +203,7 @@ export default function AudioJobsPage() {
             fullWidth
             options={[
               { value: "", label: "All Statuses" },
-              { value: "pending", label: "Pending" },
+              { value: "queued", label: "Queued" },
               { value: "processing", label: "Processing" },
               { value: "completed", label: "Completed" },
               { value: "failed", label: "Failed" },
@@ -231,6 +228,27 @@ export default function AudioJobsPage() {
               { value: "elevenlabs", label: "ElevenLabs" }
             ]}
             placeholder="All Providers"
+          />
+        </div>
+        <div className="flex-1">
+          <StyledSelect
+            label="Content Type"
+            value={filterContentType}
+            onChange={(e) => {
+              setFilterContentType(e.target.value);
+              setPage(1);
+            }}
+            fullWidth
+            options={[
+              { value: "", label: "All Types" },
+              { value: "word", label: "Words" },
+              { value: "phrase", label: "Phrases" },
+              { value: "proverb", label: "Proverbs" },
+              { value: "number", label: "Numbers" },
+              { value: "letter", label: "Letters" },
+              { value: "sentence", label: "Sentences" },
+            ]}
+            placeholder="All Types"
           />
         </div>
       </div>
@@ -288,23 +306,25 @@ export default function AudioJobsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900 dark:text-white max-w-xs truncate">
-                          {job.text}
+                          {job.text_to_speak}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {job.content_type} • {job.language_code}
+                          {job.content_type}
+                          {job.language_code ? ` • ${job.language_code}` : ""}
+                          {job.voice_code ? ` • ${job.voice_code}` : ""}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                          {job.provider}
+                          {job.provider || "-"}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                         {formatDateTime(getQueuedAt(job))}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {job.duration_seconds && <div>Duration: {formatDuration(job.duration_seconds)}</div>}
-                        {job.file_size_bytes && <div>Size: {formatFileSize(job.file_size_bytes)}</div>}
+                        {job.output_duration_sec != null && <div>Duration: {formatDuration(job.output_duration_sec)}</div>}
+                        {job.audio_format && <div>Format: {job.audio_format.toUpperCase()}</div>}
                         {job.error_message && (
                           <div className="text-xs text-red-600 dark:text-red-400 max-w-xs truncate">
                             Error: {job.error_message}
@@ -313,9 +333,8 @@ export default function AudioJobsPage() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                         <div>Retries: {job.retry_count}/{job.max_retries}</div>
-                        <div className="text-xs text-gray-500">
-                          Priority: {job.priority}
-                        </div>
+                        {job.started_at && <div className="text-xs text-gray-500">Started: {formatDateTime(job.started_at)}</div>}
+                        {job.completed_at && <div className="text-xs text-gray-500">Done: {formatDateTime(job.completed_at)}</div>}
                       </td>
                       <td className="px-6 py-4 text-right space-x-2">
                         {job.audio_url && (
@@ -336,7 +355,7 @@ export default function AudioJobsPage() {
                             Retry
                           </button>
                         )}
-                        {(job.status === "pending" || job.status === "processing") && (
+                        {(job.status === "queued" || job.status === "processing") && (
                           <button
                             onClick={() => cancelJob(job.id)}
                             className="text-red-600 hover:text-red-800 dark:text-red-400 text-sm"
@@ -357,21 +376,8 @@ export default function AudioJobsPage() {
                 <div className="text-sm text-gray-700 dark:text-gray-300">
                   Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} jobs
                 </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setPage(page - 1)}
-                    disabled={page === 1}
-                    className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setPage(page + 1)}
-                    disabled={page === totalPages}
-                    className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
-                  >
-                    Next
-                  </button>
+                <div className="ml-auto">
+                  <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
                 </div>
               </div>
             )}

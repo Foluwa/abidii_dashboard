@@ -192,6 +192,9 @@ describe('UsersPage', () => {
       const statusLabel = screen.getByText('Status', { selector: 'label' });
       const statusSelect = statusLabel.parentElement?.querySelector('select');
       expect(statusSelect).toBeTruthy();
+      if (!(statusSelect instanceof HTMLSelectElement)) {
+        throw new Error('Status select not found');
+      }
       await userEvent.selectOptions(statusSelect, 'active');
 
       // Check that useUsers was called with the filter
@@ -208,6 +211,9 @@ describe('UsersPage', () => {
       const providerLabel = screen.getByText('Provider', { selector: 'label' });
       const providerSelect = providerLabel.parentElement?.querySelector('select');
       expect(providerSelect).toBeTruthy();
+      if (!(providerSelect instanceof HTMLSelectElement)) {
+        throw new Error('Provider select not found');
+      }
       await userEvent.selectOptions(providerSelect, 'google');
 
       expect(mockUseUsers).toHaveBeenCalledWith(

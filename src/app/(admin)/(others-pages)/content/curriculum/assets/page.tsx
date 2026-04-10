@@ -6,6 +6,7 @@ import Link from 'next/link';
 import MediaLinkPreview from '@/components/admin/curriculum/MediaLinkPreview';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Pagination from '@/components/tables/Pagination';
+import { Modal } from '@/components/ui/modal';
 import { useToast } from '@/contexts/ToastContext';
 import {
   cleanupOrphanedBlueprintAssets,
@@ -29,7 +30,13 @@ export default function CurriculumAssetLibraryPage() {
   const [assetKind, setAssetKind] = useState('');
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [isCleaningOrphans, setIsCleaningOrphans] = useState(false);
-  const limit = 18;
+  const [renameDraft, setRenameDraft] = useState<{
+    blueprintId: string;
+    fieldPath: string;
+    currentName: string;
+    nextName: string;
+  } | null>(null);
+  const limit = 25;
 
   const { data: courseList } = useAdminCoursesList({ limit: 200 });
   const {
@@ -47,21 +54,42 @@ export default function CurriculumAssetLibraryPage() {
   });
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
+  const pageStart = total === 0 ? 0 : (page - 1) * limit + 1;
+  const pageEnd = total === 0 ? 0 : Math.min(page * limit, total);
   const courses = courseList?.items ?? [];
 
-  const handleRename = async (blueprintId: string, fieldPath: string, currentName?: string | null) => {
-    const nextName = window.prompt('Rename asset', currentName || fieldPath)?.trim();
-    if (!nextName || nextName === currentName) return;
+  const openRenameModal = (blueprintId: string, fieldPath: string, currentName?: string | null) => {
+    const safeCurrentName = (currentName || fieldPath).trim();
+    setRenameDraft({
+      blueprintId,
+      fieldPath,
+      currentName: safeCurrentName,
+      nextName: safeCurrentName,
+    });
+  };
 
-    const key = `${blueprintId}:${fieldPath}:rename`;
+  const handleRenameSubmit = async () => {
+    if (!renameDraft) return;
+    const nextName = renameDraft.nextName.trim();
+    if (!nextName) {
+      toast.error('File name cannot be empty.');
+      return;
+    }
+    if (nextName === renameDraft.currentName) {
+      setRenameDraft(null);
+      return;
+    }
+
+    const key = `${renameDraft.blueprintId}:${renameDraft.fieldPath}:rename`;
     setPendingKey(key);
     try {
-      await renameBlueprintAsset(blueprintId, {
-        field_path: fieldPath,
+      await renameBlueprintAsset(renameDraft.blueprintId, {
+        field_path: renameDraft.fieldPath,
         file_name: nextName,
       });
       await refresh();
       toast.success('Asset metadata renamed.');
+      setRenameDraft(null);
     } catch (error: any) {
       toast.error(error?.response?.data?.detail || error?.message || 'Failed to rename asset.');
     } finally {
@@ -129,7 +157,7 @@ export default function CurriculumAssetLibraryPage() {
             {isCleaningOrphans ? 'Cleaning…' : 'Clean Stale Bindings'}
           </button>
           <Link
-            href="/content/curriculum/lesson-blueprints"
+            href="/curriculum/lesson-blueprints"
             className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
           >
             View Blueprints
@@ -210,21 +238,22 @@ export default function CurriculumAssetLibraryPage() {
           No uploaded lesson assets match the current filters.
         </div>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {items.map((item) => {
             const assetKindLabel = item.binding.asset_kind || 'image';
             return (
               <article
                 key={`${item.blueprint_id}:${item.field_path}:${item.binding.storage_key}`}
-                className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+                className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900"
               >
                 <MediaLinkPreview
                   kind={assetKindLabel}
                   url={item.binding.asset_url}
                   label={item.binding.file_name || item.field_path}
+                  compact
                 />
 
-                <div className="mt-4 space-y-2">
+                <div className="mt-3 space-y-2">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
@@ -262,18 +291,18 @@ export default function CurriculumAssetLibraryPage() {
                   </dl>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-2">
                   <Link
-                    href={`/content/curriculum/lesson-blueprints/${item.blueprint_id}`}
-                    className="rounded-lg border border-brand-300 px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/20"
+                    href={`/curriculum/lesson-blueprints/${item.blueprint_id}`}
+                    className="rounded-lg border border-brand-300 px-2.5 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/20"
                   >
                     Open Blueprint
                   </Link>
                   <button
                     type="button"
-                    onClick={() => void handleRename(item.blueprint_id, item.field_path, item.binding.file_name)}
+                    onClick={() => openRenameModal(item.blueprint_id, item.field_path, item.binding.file_name)}
                     disabled={pendingKey === `${item.blueprint_id}:${item.field_path}:rename`}
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                   >
                     Rename
                   </button>
@@ -281,7 +310,7 @@ export default function CurriculumAssetLibraryPage() {
                     type="button"
                     onClick={() => void handleDelete(item.blueprint_id, item.field_path)}
                     disabled={pendingKey === `${item.blueprint_id}:${item.field_path}:delete`}
-                    className="rounded-lg border border-red-300 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
+                    className="rounded-lg border border-red-300 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
                   >
                     Delete
                   </button>
@@ -289,7 +318,7 @@ export default function CurriculumAssetLibraryPage() {
                     href={item.binding.asset_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                   >
                     Open Asset
                   </a>
@@ -300,15 +329,69 @@ export default function CurriculumAssetLibraryPage() {
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
+      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {pageStart} to {pageEnd} of {total} media assets
+          </p>
+          <div className="ml-auto">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </div>
         </div>
-      )}
+      </div>
+
+      <Modal
+        isOpen={Boolean(renameDraft)}
+        onClose={() => setRenameDraft(null)}
+        title="Rename Asset"
+        maxWidth="md"
+      >
+        {renameDraft ? (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+              <div><span className="font-medium">Field:</span> {renameDraft.fieldPath}</div>
+              <div className="mt-1"><span className="font-medium">Current name:</span> {renameDraft.currentName}</div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">New file name</label>
+              <input
+                type="text"
+                value={renameDraft.nextName}
+                onChange={(event) => setRenameDraft({ ...renameDraft, nextName: event.target.value })}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    void handleRenameSubmit();
+                  }
+                }}
+                className="block h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setRenameDraft(null)}
+                disabled={pendingKey === `${renameDraft.blueprintId}:${renameDraft.fieldPath}:rename`}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleRenameSubmit()}
+                disabled={pendingKey === `${renameDraft.blueprintId}:${renameDraft.fieldPath}:rename`}
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+              >
+                {pendingKey === `${renameDraft.blueprintId}:${renameDraft.fieldPath}:rename` ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }

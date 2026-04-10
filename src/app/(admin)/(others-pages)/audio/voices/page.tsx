@@ -7,6 +7,7 @@ import Toast from "@/components/ui/toast/Toast";
 import Alert from "@/components/ui/alert/Alert";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
+import Pagination from "@/components/tables/Pagination";
 import { FaMicrophone, FaPlay, FaPause } from "react-icons/fa";
 import { FiServer } from "react-icons/fi";
 
@@ -173,7 +174,9 @@ export default function VoicesPage() {
     }
   };
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const pageStart = total === 0 ? 0 : (page - 1) * limit + 1;
+  const pageEnd = total === 0 ? 0 : Math.min(page * limit, total);
 
   return (
     <div className="p-6">
@@ -359,29 +362,14 @@ export default function VoicesPage() {
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <div className="text-sm text-gray-700 dark:text-gray-300">
-                  Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} voices
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setPage(page - 1)}
-                    disabled={page === 1}
-                    className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setPage(page + 1)}
-                    disabled={page === totalPages}
-                    className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <div className="text-sm text-gray-700 dark:text-gray-300">
+                Showing {pageStart} to {pageEnd} of {total} voices
               </div>
-            )}
+              <div className="ml-auto">
+                <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+              </div>
+            </div>
           </>
         )}
       </div>

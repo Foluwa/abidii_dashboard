@@ -31,6 +31,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const [waveformData, setWaveformData] = useState<number[]>([]);
   const [errorSrc, setErrorSrc] = useState<string | null>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const warnedErrorSourcesRef = useRef<Set<string>>(new Set());
   const hasError = errorSrc === src;
 
   const buildFallbackWaveform = useCallback((seedSource: string) => {
@@ -106,7 +107,10 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     };
 
     const handleError = () => {
-      console.error('Failed to load audio source:', src);
+      if (!warnedErrorSourcesRef.current.has(src)) {
+        warnedErrorSourcesRef.current.add(src);
+        console.warn("Audio source unavailable:", src);
+      }
       setErrorSrc(src);
       setWaveformData(Array(100).fill(0).map(() => Math.random() * 0.3));
     };
@@ -200,7 +204,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         setIsPlaying(true);
       }
     } catch (error) {
-      console.error('Error playing audio:', error);
+      console.warn("Error playing audio:", error);
       setErrorSrc(src);
       setIsPlaying(false);
     }

@@ -171,7 +171,7 @@ describe('CurriculumCoursesListPage', () => {
         description: null,
         target_language_id: 'lang-1',
       });
-      expect(mockPush).toHaveBeenCalledWith('/content/curriculum/courses/created-course');
+      expect(mockPush).toHaveBeenCalledWith('/curriculum/courses/created-course');
     });
   });
 

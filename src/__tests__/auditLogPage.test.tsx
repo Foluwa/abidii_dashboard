@@ -61,7 +61,7 @@ describe('AdminAuditLogPage', () => {
 
     // Link-out for course target
     const targetLink = screen.getByRole('link', { name: 'c1' });
-    expect(targetLink).toHaveAttribute('href', '/content/curriculum/courses/c1');
+    expect(targetLink).toHaveAttribute('href', '/curriculum/courses/c1');
 
     await userEvent.click(screen.getByText('View'));
     expect(screen.getByText('Audit Log Details')).toBeInTheDocument();

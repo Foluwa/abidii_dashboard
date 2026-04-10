@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import type { Language } from "@/types/api";
@@ -75,6 +75,14 @@ export default function LettersPage() {
       setLetters([]);
     }
   };
+
+  useEffect(() => {
+    if (!selectedLanguage && languages.length > 0) {
+      const defaultLanguageId = languages[0].id;
+      setSelectedLanguage(defaultLanguageId);
+      fetchLetters(defaultLanguageId);
+    }
+  }, [languages, selectedLanguage]);
 
   const openCreateModal = () => {
     setEditingLetter(null);
@@ -214,7 +222,7 @@ export default function LettersPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Letters</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Manage alphabet letters for each language
+            Manage letters for each language
           </p>
         </div>
         <button

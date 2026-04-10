@@ -12,12 +12,14 @@ jest.mock('next/navigation', () => ({
 }));
 
 const mockUseAdminCoursesList = jest.fn();
-const mockUseCourseCurriculumByKey = jest.fn();
+const mockUseAdminCourseCurriculumByKey = jest.fn();
+const mockUseCurriculumVocabLibrary = jest.fn();
 const mockUseConfig = jest.fn();
 
 jest.mock('@/hooks/useApi', () => ({
   useAdminCoursesList: (params: any) => mockUseAdminCoursesList(params),
-  useCourseCurriculumByKey: (courseKey: string | null) => mockUseCourseCurriculumByKey(courseKey),
+  useAdminCourseCurriculumByKey: (courseKey: string | null) => mockUseAdminCourseCurriculumByKey(courseKey),
+  useCurriculumVocabLibrary: (params: any) => mockUseCurriculumVocabLibrary(params),
   useConfig: () => mockUseConfig(),
 }));
 
@@ -142,11 +144,19 @@ describe('CurriculumEditorPage', () => {
       refresh: jest.fn(),
     });
 
-    mockUseCourseCurriculumByKey.mockReturnValue({
+    mockUseAdminCourseCurriculumByKey.mockReturnValue({
       curriculum: baseCurriculum,
       isLoading: false,
       isError: false,
       refresh: mockRefresh,
+    });
+
+    mockUseCurriculumVocabLibrary.mockReturnValue({
+      items: [],
+      total: 0,
+      isLoading: false,
+      isError: false,
+      refresh: jest.fn(),
     });
 
     mockGetPublicBlueprint.mockResolvedValue({

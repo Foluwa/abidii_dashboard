@@ -7,6 +7,11 @@ import { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useMonthlyUserGrowth } from "@/hooks/useApi";
 
+interface ChartPoint {
+  label: string;
+  value: number;
+}
+
 // Dynamically import the ReactApexChart component
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -17,13 +22,21 @@ export default function MonthlySalesChart() {
   const [isOpen, setIsOpen] = useState(false);
 
   // Transform API data into chart format
-  const categories = growthData.map((item: { month: string }) => {
-    // Convert "2025-01" to "Jan"
-    const date = new Date(item.month + "-01");
-    return date.toLocaleString("default", { month: "short" });
-  });
-
-  const seriesData = growthData.map((item: { count: number }) => item.count);
+  const chartPoints: ChartPoint[] = growthData
+    .map((item: { month: string; count: number }) => {
+      const [year, month] = String(item.month || "").split("-").map((value) => Number(value));
+      if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
+        return null;
+      }
+      const date = new Date(Date.UTC(year, month - 1, 1));
+      return {
+        label: date.toLocaleString("default", { month: "short", year: "2-digit", timeZone: "UTC" }),
+        value: item.count,
+      };
+    })
+    .filter((point: ChartPoint | null): point is ChartPoint => point !== null);
+  const categories = chartPoints.map((point) => point.label);
+  const seriesData = chartPoints.map((point) => point.value);
 
   const options: ApexOptions = {
     colors: ["#465fff"],
@@ -52,7 +65,7 @@ export default function MonthlySalesChart() {
       colors: ["transparent"],
     },
     xaxis: {
-      categories: categories.length > 0 ? categories : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+      categories,
       axisBorder: {
         show: false,
       },
@@ -94,7 +107,7 @@ export default function MonthlySalesChart() {
   const series = [
     {
       name: "New Users",
-      data: seriesData.length > 0 ? seriesData : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      data: seriesData,
     },
   ];
 
@@ -113,6 +126,15 @@ export default function MonthlySalesChart() {
           Monthly User Growth
         </h3>
         <p className="mt-4 text-sm text-red-500">Failed to load growth data</p>
+      </div>
+    );
+  }
+
+  if (!isLoading && chartPoints.length === 0) {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Monthly User Growth</h3>
+        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">No monthly user growth data available</p>
       </div>
     );
   }

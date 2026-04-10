@@ -56,6 +56,7 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
     );
     return entries.map(([code, count]) => `${code}:${count}`).join("|");
   }, [regionValues]);
+  const hasRegionData = Object.keys(regionValues).length > 0;
 
 
   if (isLoading) {
@@ -70,6 +71,14 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
     return (
       <div className="flex items-center justify-center h-[320px] text-red-500">
         Failed to load geographic distribution
+      </div>
+    );
+  }
+
+  if (!isLoading && !hasRegionData) {
+    return (
+      <div className="flex h-[320px] items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+        No geographic distribution data available
       </div>
     );
   }

@@ -25,8 +25,8 @@ function routeForEntity(item: AdminAuditLogItem) {
   const entityType = item.entity_type || item.target_type;
   const entityId = item.entity_id || item.target_id;
   if (!entityType || !entityId) return null;
-  if (entityType === 'course') return `/content/curriculum/courses/${entityId}`;
-  if (entityType === 'lesson_blueprint') return `/content/curriculum/lesson-blueprints/${entityId}`;
+  if (entityType === 'course') return `/curriculum/courses/${entityId}`;
+  if (entityType === 'lesson_blueprint') return `/curriculum/lesson-blueprints/${entityId}`;
   return null;
 }
 
@@ -94,6 +94,8 @@ export default function AdminAuditLogPage() {
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
   const totalPages = data?.pages ?? Math.max(1, Math.ceil(total / limit));
+  const pageStart = total === 0 ? 0 : (page - 1) * limit + 1;
+  const pageEnd = total === 0 ? 0 : Math.min(page * limit, total);
 
   const actionPrefixOptions = useMemo(
     () => [
@@ -480,11 +482,18 @@ export default function AdminAuditLogPage() {
           </div>
         </div>
 
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={(p) => setPage(p)}
-        />
+        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-white/[0.05] dark:bg-white/[0.03]">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {pageStart} to {pageEnd} of {total} audit log entries
+          </p>
+          <div className="ml-auto">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={(p) => setPage(p)}
+            />
+          </div>
+        </div>
       </div>
 
       <Modal

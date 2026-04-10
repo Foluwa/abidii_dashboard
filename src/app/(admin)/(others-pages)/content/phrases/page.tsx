@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
@@ -12,6 +12,8 @@ import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { AudioWaveform } from "@/components/ui/audio/AudioWaveform";
 import { RegenerateAudioModal } from "@/components/modals/RegenerateAudioModal";
 import { scheduleQueuedAudioRefresh } from "@/lib/audioRegeneration";
+import { GoogleSheetsBulkImport } from "@/components/admin/GoogleSheetsBulkImport";
+import Pagination from "@/components/tables/Pagination";
 
 interface Phrase {
   id: string;
@@ -275,6 +277,13 @@ function mapIso6393ToVoicePrefix(languageCode?: string | null) {
   }
 }
 
+function voiceProviderPriority(provider?: string | null) {
+  if (provider === "google") return 0;
+  if (provider === "elevenlabs") return 1;
+  if (provider === "spitch") return 2;
+  return 3;
+}
+
 function formatErrorMessage(error: any, fallbackMessage: string): string {
   const detail = error?.response?.data?.detail;
 
@@ -328,6 +337,7 @@ export default function PhrasesPage() {
   const [selectedPhrases, setSelectedPhrases] = useState<string[]>([]);
   const [showBulkRegenerateConfirm, setShowBulkRegenerateConfirm] = useState(false);
   const [isBulkRegenerating, setIsBulkRegenerating] = useState(false);
+  const [bulkRegenerateProvider, setBulkRegenerateProvider] = useState<string>("");
   const [bulkRegenerateVoiceId, setBulkRegenerateVoiceId] = useState<string>("");
   const [availableVoices, setAvailableVoices] = useState<any[]>([]);
   const [isLoadingVoices, setIsLoadingVoices] = useState(false);
@@ -347,6 +357,14 @@ export default function PhrasesPage() {
     is_published: false,
     audio_url: "",
   });
+
+  useEffect(() => {
+    if (!selectedLanguage && languages.length > 0) {
+      const defaultLanguageId = languages[0].id;
+      setSelectedLanguage(defaultLanguageId);
+      fetchPhrases(defaultLanguageId, 1, alignmentFilter);
+    }
+  }, [languages, selectedLanguage, alignmentFilter]);
 
   const fetchPhrases = async (
     languageId: string,
@@ -1051,6 +1069,11 @@ export default function PhrasesPage() {
   };
 
   const togglePhraseSelection = (phraseId: string) => {
+    const phrase = phrases.find((item) => item.id === phraseId);
+    if (phrase && isRegenerationPending(phrase.last_regeneration_status)) {
+      return;
+    }
+
     setSelectedPhrases((current) => (
       current.includes(phraseId)
         ? current.filter((id) => id !== phraseId)
@@ -1059,18 +1082,20 @@ export default function PhrasesPage() {
   };
 
   const toggleSelectAllVisiblePhrases = () => {
-    const visiblePhraseIds = phrases.map((phrase) => phrase.id);
-    if (visiblePhraseIds.length === 0) {
+    const selectablePhraseIds = phrases
+      .filter((phrase) => !isRegenerationPending(phrase.last_regeneration_status))
+      .map((phrase) => phrase.id);
+    if (selectablePhraseIds.length === 0) {
       return;
     }
 
     setSelectedPhrases((current) => {
-      const allVisibleSelected = visiblePhraseIds.every((phraseId) => current.includes(phraseId));
+      const allVisibleSelected = selectablePhraseIds.every((phraseId) => current.includes(phraseId));
       if (allVisibleSelected) {
-        return current.filter((phraseId) => !visiblePhraseIds.includes(phraseId));
+        return current.filter((phraseId) => !selectablePhraseIds.includes(phraseId));
       }
       const next = new Set(current);
-      visiblePhraseIds.forEach((phraseId) => next.add(phraseId));
+      selectablePhraseIds.forEach((phraseId) => next.add(phraseId));
       return Array.from(next);
     });
   };
@@ -1085,18 +1110,12 @@ export default function PhrasesPage() {
       });
       const voices = response.data.voices || response.data.items || [];
       setAvailableVoices(voices);
-
-      const selectedLanguageRecord = languages.find((lang: any) => lang.id === selectedLanguage);
-      const voicePrefix = mapIso6393ToVoicePrefix(selectedLanguageRecord?.iso_639_3);
-      const defaultVoice = voices.find((voice: any) =>
-        typeof voice.language_code === "string"
-        && voice.is_active
-        && (voice.language_code === voicePrefix || voice.language_code.startsWith(`${voicePrefix}-`))
-      );
-      setBulkRegenerateVoiceId(defaultVoice?.id || "");
+      setBulkRegenerateProvider("");
+      setBulkRegenerateVoiceId("");
     } catch (voiceError) {
       console.error("Failed to load voices:", voiceError);
       setAvailableVoices([]);
+      setBulkRegenerateProvider("");
       setBulkRegenerateVoiceId("");
     } finally {
       setIsLoadingVoices(false);
@@ -1106,23 +1125,40 @@ export default function PhrasesPage() {
   };
 
   const confirmBulkRegenerateAudio = async () => {
-    if (selectedPhrases.length === 0) {
+    if (!bulkRegenerateProvider || !bulkRegenerateVoiceId) {
+      setError("Select a provider and voice before bulk regeneration");
+      setTimeout(() => setError(""), 4000);
+      return;
+    }
+
+    const queueablePhraseIds = selectedPhrases.filter((phraseId) => {
+      const phrase = phrases.find((item) => item.id === phraseId);
+      return phrase && !isRegenerationPending(phrase.last_regeneration_status);
+    });
+
+    if (queueablePhraseIds.length === 0) {
+      setError("No selectable phrases to regenerate. Items already queued/processing were skipped.");
+      setTimeout(() => setError(""), 5000);
       return;
     }
 
     setIsBulkRegenerating(true);
     try {
       const payload: Record<string, any> = {
-        phrase_ids: selectedPhrases,
+        phrase_ids: queueablePhraseIds,
+        voice_id: bulkRegenerateVoiceId,
       };
-      if (bulkRegenerateVoiceId) {
-        payload.voice_id = bulkRegenerateVoiceId;
-      }
 
-      await apiClient.post("/api/v1/admin/content/phrases/bulk/regenerate-audio", payload);
+      const response = await apiClient.post("/api/v1/admin/content/phrases/bulk/regenerate-audio", payload);
+      const result = response.data || {};
+      const queuedPhraseIds: string[] = Array.isArray(result.queued_phrase_ids)
+        ? result.queued_phrase_ids
+        : queueablePhraseIds;
+      const failedCount = Number(result.failed_count || 0);
+      const queuedCount = Number(result.queued_count || queuedPhraseIds.length);
 
       setPhrases((current) => current.map((phrase) => (
-        selectedPhrases.includes(phrase.id)
+        queuedPhraseIds.includes(phrase.id)
           ? {
               ...phrase,
               last_regeneration_status: "queued",
@@ -1130,9 +1166,23 @@ export default function PhrasesPage() {
             }
           : phrase
       )));
-      setSuccessMessage(`Audio regeneration started for ${selectedPhrases.length} phrase(s)`);
+      if (queuedCount > 0) {
+        setSuccessMessage(
+          failedCount > 0
+            ? `Queued ${queuedCount} phrase(s); ${failedCount} could not be queued`
+            : `Audio regeneration started for ${queuedCount} phrase(s)`
+        );
+      } else {
+        const firstError = Array.isArray(result.errors) && result.errors.length > 0
+          ? result.errors[0]?.detail
+          : null;
+        setError(firstError || "Bulk regeneration did not queue any phrases");
+        setTimeout(() => setError(""), 5000);
+      }
       setSelectedPhrases([]);
       setShowBulkRegenerateConfirm(false);
+      setBulkRegenerateProvider("");
+      setBulkRegenerateVoiceId("");
       fetchPhrases(selectedLanguage, page, alignmentFilter);
       scheduleQueuedAudioRefresh(() => {
         fetchPhrases(selectedLanguage, page, alignmentFilter);
@@ -1146,7 +1196,11 @@ export default function PhrasesPage() {
     }
   };
 
-  const allVisiblePhrasesSelected = phrases.length > 0 && phrases.every((phrase) => selectedPhrases.includes(phrase.id));
+  const selectableVisiblePhraseIds = phrases
+    .filter((phrase) => !isRegenerationPending(phrase.last_regeneration_status))
+    .map((phrase) => phrase.id);
+  const allVisiblePhrasesSelected = selectableVisiblePhraseIds.length > 0
+    && selectableVisiblePhraseIds.every((phraseId) => selectedPhrases.includes(phraseId));
 
   const handleDelete = async () => {
     if (!deleteConfirm) return;
@@ -1164,7 +1218,7 @@ export default function PhrasesPage() {
     }
   };
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
     <div className="p-6">
@@ -1215,18 +1269,41 @@ export default function PhrasesPage() {
         />
       </div>
 
-      {selectedLanguage && phrases.length > 0 && (
+      {/* Bulk Import from Google Sheets */}
+      {selectedLanguage && (
+        <GoogleSheetsBulkImport
+          contentType="phrases"
+          onImportComplete={() => fetchPhrases(selectedLanguage, page, alignmentFilter)}
+          expectedColumns={[
+            { name: 'language_id', required: true, description: 'UUID of the language', example: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' },
+            { name: 'phrase', required: true, description: 'The phrase text', example: 'Báwo ni?' },
+            { name: 'translation', required: true, description: 'Translation', example: 'How are you?' },
+            { name: 'literal_translation', required: false, description: 'Word-by-word translation', example: 'How is it?' },
+            { name: 'romanization', required: false, description: 'Romanized version', example: 'Ba-wo ni' },
+            { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '2' },
+            { name: 'category', required: false, description: 'Category tag', example: 'greeting' },
+            { name: 'tags', required: false, description: 'Comma-separated tags', example: 'common,casual' },
+            { name: 'usage_context', required: false, description: 'When to use this phrase' },
+            { name: 'cultural_notes', required: false, description: 'Cultural context notes' },
+            { name: 'is_published', required: false, description: 'Publish state', example: 'true' },
+          ]}
+        />
+      )}
+
+      {selectedLanguage && (
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={handleBulkRegenerateAudio}
-            disabled={selectedPhrases.length === 0}
+            disabled={selectedPhrases.length === 0 || phrases.length === 0}
             className="px-4 py-2 rounded-lg bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Regenerate Selected Audio
           </button>
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            {selectedPhrases.length === 0
+            {phrases.length === 0
+              ? "No phrases found."
+              : selectedPhrases.length === 0
               ? "Select one or more phrases to regenerate audio in bulk."
               : `${selectedPhrases.length} phrase${selectedPhrases.length === 1 ? "" : "s"} selected`}
           </span>
@@ -1296,8 +1373,9 @@ export default function PhrasesPage() {
                           <input
                             type="checkbox"
                             checked={selectedPhrases.includes(phrase.id)}
+                            disabled={isRegenerationPending(phrase.last_regeneration_status)}
                             onChange={() => togglePhraseSelection(phrase.id)}
-                            className="h-4 w-4 rounded border-gray-300 text-brand-600"
+                            className="h-4 w-4 rounded border-gray-300 text-brand-600 disabled:opacity-40"
                             aria-label={`Select phrase ${phrase.phrase}`}
                           />
                         </td>
@@ -1394,30 +1472,6 @@ export default function PhrasesPage() {
                 </table>
               </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
-                    Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} phrases
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => fetchPhrases(selectedLanguage, page - 1, alignmentFilter)}
-                      disabled={page === 1}
-                      className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      onClick={() => fetchPhrases(selectedLanguage, page + 1, alignmentFilter)}
-                      disabled={page === totalPages}
-                      className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-              )}
             </>
           )}
         </div>
@@ -1446,8 +1500,9 @@ export default function PhrasesPage() {
                     <input
                       type="checkbox"
                       checked={selectedPhrases.includes(phrase.id)}
+                      disabled={isRegenerationPending(phrase.last_regeneration_status)}
                       onChange={() => togglePhraseSelection(phrase.id)}
-                      className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-600"
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-600 disabled:opacity-40"
                       aria-label={`Select phrase ${phrase.phrase}`}
                     />
                   </div>
@@ -1540,6 +1595,18 @@ export default function PhrasesPage() {
               ))}
             </div>
           )}
+        </div>
+        <div className="mt-4 px-6 py-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-between">
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            Showing {total === 0 ? 0 : (page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} phrases
+          </div>
+          <div className="ml-auto">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={(nextPage) => fetchPhrases(selectedLanguage, nextPage, alignmentFilter)}
+            />
+          </div>
         </div>
         </>
       )}
@@ -2086,6 +2153,8 @@ export default function PhrasesPage() {
         onClose={() => {
           if (!isBulkRegenerating) {
             setShowBulkRegenerateConfirm(false);
+            setBulkRegenerateProvider("");
+            setBulkRegenerateVoiceId("");
           }
         }}
         title={`Regenerate Audio for ${selectedPhrases.length} Phrase${selectedPhrases.length === 1 ? "" : "s"}`}
@@ -2094,7 +2163,46 @@ export default function PhrasesPage() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Voice (Optional)
+              Provider *
+            </label>
+            {isLoadingVoices ? (
+              <div className="text-sm text-gray-500 dark:text-gray-400">Loading providers...</div>
+            ) : (
+              <select
+                value={bulkRegenerateProvider}
+                onChange={(e) => {
+                  setBulkRegenerateProvider(e.target.value);
+                  setBulkRegenerateVoiceId("");
+                }}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              >
+                <option value="">Select provider</option>
+                {Array.from(new Set(
+                  availableVoices
+                    .filter((voice) => {
+                      const selectedLanguageRecord = languages.find((lang: any) => lang.id === selectedLanguage);
+                      const voicePrefix = mapIso6393ToVoicePrefix(selectedLanguageRecord?.iso_639_3);
+                      return (
+                        typeof voice.language_code === "string"
+                        && (voice.language_code === voicePrefix || voice.language_code.startsWith(`${voicePrefix}-`))
+                      );
+                    })
+                    .map((voice) => String(voice.provider || "").trim())
+                    .filter(Boolean)
+                ))
+                  .sort((a, b) => voiceProviderPriority(a) - voiceProviderPriority(b) || a.localeCompare(b))
+                  .map((provider) => (
+                    <option key={provider} value={provider}>
+                      {provider}
+                    </option>
+                  ))}
+              </select>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Voice *
             </label>
             {isLoadingVoices ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">Loading voices...</div>
@@ -2102,15 +2210,17 @@ export default function PhrasesPage() {
               <select
                 value={bulkRegenerateVoiceId}
                 onChange={(e) => setBulkRegenerateVoiceId(e.target.value)}
+                disabled={!bulkRegenerateProvider}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               >
-                <option value="">Use default active voice for language</option>
+                <option value="">{bulkRegenerateProvider ? "Select voice" : "Select provider first"}</option>
                 {availableVoices
                   .filter((voice) => {
                     const selectedLanguageRecord = languages.find((lang: any) => lang.id === selectedLanguage);
                     const voicePrefix = mapIso6393ToVoicePrefix(selectedLanguageRecord?.iso_639_3);
                     return (
                       typeof voice.language_code === "string"
+                      && voice.provider === bulkRegenerateProvider
                       && (voice.language_code === voicePrefix || voice.language_code.startsWith(`${voicePrefix}-`))
                     );
                   })
@@ -2123,7 +2233,7 @@ export default function PhrasesPage() {
               </select>
             )}
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Leave empty to use the default active voice for the selected language.
+              Provider and voice are required for bulk regeneration.
             </p>
           </div>
 
@@ -2135,7 +2245,7 @@ export default function PhrasesPage() {
             <button
               type="button"
               onClick={confirmBulkRegenerateAudio}
-              disabled={isBulkRegenerating || isLoadingVoices}
+              disabled={isBulkRegenerating || isLoadingVoices || !bulkRegenerateProvider || !bulkRegenerateVoiceId}
               className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isBulkRegenerating ? "Regenerating..." : "Regenerate"}

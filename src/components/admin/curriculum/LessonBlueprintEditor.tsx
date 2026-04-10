@@ -3070,7 +3070,7 @@ export function LessonBlueprintEditor({
                       <div>
                         <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Reusable library</h4>
                         <Link
-                          href="/content/curriculum/assets"
+                          href="/media/library"
                           className="mt-1 inline-flex text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200"
                         >
                           Open full asset library

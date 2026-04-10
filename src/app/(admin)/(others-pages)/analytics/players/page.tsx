@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { usePlayerLeaderboard, usePlayerDetail, useLanguages, useAvailableGames } from '@/hooks/useApi';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Alert from '@/components/ui/alert/SimpleAlert';
+import Pagination from '@/components/tables/Pagination';
 import { cleanSvgForDisplay, getInitials as getSvgInitials, getAvatarColor as getSvgAvatarColor } from '@/lib/svg-utils';
 
 type TimeRange = 'week' | 'month' | 'all';
@@ -92,6 +93,7 @@ export default function PlayerAnalyticsPage() {
   
   const { languages } = useLanguages();
   const { games } = useAvailableGames();
+  const totalPages = Math.max(1, Math.ceil((leaderboard?.total || 0) / 20));
 
   const getRankBadge = (rank: number) => {
     if (rank === 1) return '🥇';
@@ -112,8 +114,8 @@ export default function PlayerAnalyticsPage() {
   };
 
   const tabs = [
-    { name: 'Overview', href: '/analytics', active: false },
-    { name: 'Players', href: '/analytics/players', active: true },
+    { name: 'Overview', href: '/overview/analytics', active: false },
+    { name: 'Players', href: '/overview/analytics/players', active: true },
   ];
 
   if (isError) {
@@ -308,7 +310,7 @@ export default function PlayerAnalyticsPage() {
                     {leaderboard.players.map((player: any) => (
                       <tr
                         key={player.user_id}
-                        onClick={() => router.push(`/analytics/players?userId=${player.user_id}`)}
+                        onClick={() => router.push(`/overview/analytics/players?userId=${player.user_id}`)}
                         className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -370,25 +372,14 @@ export default function PlayerAnalyticsPage() {
             )}
             
             {/* Pagination */}
-            {leaderboard && leaderboard.total > 20 && (
-              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 dark:border-gray-600 text-gray-700 dark:text-gray-300"
-                >
-                  Previous
-                </button>
+            {leaderboard && (
+              <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-700">
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  Page {page} of {Math.ceil(leaderboard.total / 20)}
+                  Showing {leaderboard.total === 0 ? 0 : (page - 1) * 20 + 1} to {leaderboard.total === 0 ? 0 : Math.min(page * 20, leaderboard.total)} of {leaderboard.total} players
                 </span>
-                <button
-                  onClick={() => setPage(p => p + 1)}
-                  disabled={page >= Math.ceil(leaderboard.total / 20)}
-                  className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 dark:border-gray-600 text-gray-700 dark:text-gray-300"
-                >
-                  Next
-                </button>
+                <div className="ml-auto">
+                  <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+                </div>
               </div>
             )}
           </div>
@@ -398,7 +389,7 @@ export default function PlayerAnalyticsPage() {
         <div className="space-y-6">
           {/* Back Button */}
           <button
-            onClick={() => router.push('/analytics/players')}
+            onClick={() => router.push('/overview/analytics/players')}
             className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-2"
           >
             ← Back to Leaderboard

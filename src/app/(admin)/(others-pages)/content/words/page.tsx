@@ -13,8 +13,10 @@ import { Modal } from "@/components/ui/modal";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { RegenerateAudioModal } from "@/components/modals/RegenerateAudioModal";
 import WordDetailModal from "@/components/admin/words/WordDetailModal";
+import { GoogleSheetsBulkImport } from "@/components/admin/GoogleSheetsBulkImport";
 import { scheduleQueuedAudioRefresh } from "@/lib/audioRegeneration";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import Pagination from "@/components/tables/Pagination";
 import { FiPlus, FiGlobe, FiTrash2, FiVolume2, FiFilter, FiX, FiChevronDown, FiChevronUp } from "react-icons/fi";
 
 // POS options for multi-select
@@ -245,6 +247,7 @@ export default function WordsPage() {
       return true;
     });
   }, [words]);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const [formData, setFormData] = useState({
     language_id: "",
@@ -496,29 +499,28 @@ export default function WordsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {selectedWords.length > 0 && (
-            <>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {selectedWords.length} selected
-              </span>
-              <button
-                onClick={handleBulkDelete}
-                disabled={isDeleting}
-                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900"
-              >
-                <FiTrash2 className="h-4 w-4" />
-                {isDeleting ? 'Deleting...' : 'Delete Selected'}
-              </button>
-              <button
-                onClick={handleBulkRegenerateAudio}
-                disabled={isRegenerating}
-                className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-purple-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900"
-              >
-                <FiVolume2 className="h-4 w-4" />
-                {isRegenerating ? 'Regenerating...' : 'Regenerate Audio'}
-              </button>
-            </>
-          )}
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Bulk Actions
+          </span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {selectedWords.length} selected
+          </span>
+          <button
+            onClick={handleBulkDelete}
+            disabled={selectedWords.length === 0 || isDeleting}
+            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900"
+          >
+            <FiTrash2 className="h-4 w-4" />
+            {isDeleting ? 'Deleting...' : 'Delete Selected'}
+          </button>
+          <button
+            onClick={handleBulkRegenerateAudio}
+            disabled={selectedWords.length === 0 || isRegenerating}
+            className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-purple-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900"
+          >
+            <FiVolume2 className="h-4 w-4" />
+            {isRegenerating ? 'Regenerating...' : 'Regenerate Audio'}
+          </button>
           <button
             onClick={openCreateModal}
             className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
@@ -528,6 +530,28 @@ export default function WordsPage() {
           </button>
         </div>
       </div>
+
+      {/* Bulk Import from Google Sheets */}
+      {selectedLanguage && (
+        <GoogleSheetsBulkImport
+          contentType="dictionary"
+          onImportComplete={() => refresh()}
+          expectedColumns={[
+            { name: 'language_id', required: true, description: 'UUID of the language', example: '6e76e0ee-3df1-41d1-9548-ac3fed67a77b' },
+            { name: 'lemma', required: true, description: 'The word/headword', example: 'ọmọ' },
+            { name: 'part_of_speech', required: true, description: 'Part of speech', example: 'noun' },
+            { name: 'gloss_text', required: true, description: 'Primary meaning/translation', example: 'child' },
+            { name: 'meaning_hint', required: false, description: 'Additional meaning context', example: 'offspring' },
+            { name: 'example_sentence', required: false, description: 'Example usage', example: 'Ọmọ mi ni' },
+            { name: 'example_translation', required: false, description: 'Example translation', example: 'It is my child' },
+            { name: 'cultural_notes', required: false, description: 'Cultural context', example: '' },
+            { name: 'etymology', required: false, description: 'Word origin', example: '' },
+            { name: 'tags', required: false, description: 'Comma-separated tags', example: 'family,basic' },
+            { name: 'review_status', required: false, description: 'Review status', example: 'approved' },
+            { name: 'source_row_key', required: false, description: 'Source reference', example: '' },
+          ]}
+        />
+      )}
 
       {/* Filters Card */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -1104,125 +1128,17 @@ export default function WordsPage() {
       {/* Pagination */}
       {total > limit && (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="flex items-center justify-center gap-3 px-5 py-4">
-            {/* Previous Button */}
-            <button
-              onClick={() => setPage(page - 1)}
-              disabled={page === 1}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-800 px-5 py-2.5 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Previous
-            </button>
-
-            {/* Page Numbers */}
-            <div className="flex items-center gap-2">
-              {(() => {
-                const totalPages = Math.ceil(total / limit);
-                const pageNumbers = [];
-                const maxVisiblePages = 5;
-                
-                let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
-                let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-                
-                if (endPage - startPage < maxVisiblePages - 1) {
-                  startPage = Math.max(1, endPage - maxVisiblePages + 1);
-                }
-                
-                // First page
-                if (startPage > 1) {
-                  pageNumbers.push(
-                    <button
-                      key={1}
-                      onClick={() => setPage(1)}
-                      className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 bg-gray-800 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                    >
-                      1
-                    </button>
-                  );
-                  if (startPage > 2) {
-                    pageNumbers.push(
-                      <span key="ellipsis1" className="px-2 text-gray-500">
-                        ...
-                      </span>
-                    );
-                  }
-                }
-                
-                // Page numbers
-                for (let i = startPage; i <= endPage; i++) {
-                  pageNumbers.push(
-                    <button
-                      key={i}
-                      onClick={() => setPage(i)}
-                      className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-                        i === page
-                          ? "bg-brand-600 text-white shadow-sm"
-                          : "border border-gray-300 bg-gray-800 text-gray-300 hover:bg-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                      }`}
-                    >
-                      {i}
-                    </button>
-                  );
-                }
-                
-                // Last page
-                if (endPage < totalPages) {
-                  if (endPage < totalPages - 1) {
-                    pageNumbers.push(
-                      <span key="ellipsis2" className="px-2 text-gray-500">
-                        ...
-                      </span>
-                    );
-                  }
-                  pageNumbers.push(
-                    <button
-                      key={totalPages}
-                      onClick={() => setPage(totalPages)}
-                      className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 bg-gray-800 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                    >
-                      {totalPages}
-                    </button>
-                  );
-                }
-                
-                return pageNumbers;
-              })()}
+          <div className="flex items-center justify-between gap-3 px-5 py-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} words
+            </p>
+            <div className="ml-auto">
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={(nextPage) => setPage(nextPage)}
+              />
             </div>
-
-            {/* Next Button */}
-            <button
-              onClick={() => setPage(page + 1)}
-              disabled={page * limit >= total}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-800 px-5 py-2.5 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-            >
-              Next
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
           </div>
         </div>
       )}
