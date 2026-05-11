@@ -40,7 +40,7 @@ describe('OrphanAssetsPage', () => {
         counts_by_asset_type: { audio: 1, lesson_media: 1 },
         last_completed_scan: null,
         settings: {
-          managed_prefixes: ['media/', 'audio/', 'abidii_app/lessons/'],
+          managed_prefixes: ['media/', 'audio/', 'abidii/media/', 'abidii/audio/', 'abidii_app/lessons/'],
           grace_period_days: 14,
           scan_frequency_days: 1,
           scan_mode: 'dry_run',

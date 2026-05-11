@@ -3,10 +3,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import StatusBadge from '@/components/admin/StatusBadge';
+import { ConfirmationModal } from '@/components/ui/modal/ConfirmationModal';
 import { useToast } from '@/contexts/ToastContext';
 import {
   applyDictionaryImport,
+  discardDictionaryImportBatch,
+  getDictionaryImportBatch,
+  getDictionaryImportValidationReport,
   listDictionaryImportBatches,
+  startDictionaryImportValidateFromGoogleSheet,
   validateDictionaryImportFromGoogleSheet,
 } from '@/lib/dictionaryImportApi';
 import type {
@@ -15,13 +20,13 @@ import type {
 } from '@/types/dictionaryImport';
 
 const expectedColumns = [
-  { name: 'source_row_key', required: false, description: 'Stable row key. Auto-generated if blank.', example: 'word_yor_0001' },
+  { name: 'source_row_key', required: true, description: 'Stable ASCII row key (never changes). Use letters/numbers plus . _ : -', example: 'eng_yor_000001' },
   { name: 'lemma', required: true, description: 'Source headword', example: 'hello' },
   { name: 'gloss_text', required: true, description: 'Target translation/gloss', example: 'báwo' },
   { name: 'example_source', required: false, description: 'Example sentence in source language', example: 'Hello, friend.' },
   { name: 'example_translation', required: false, description: 'Example sentence translation', example: 'Báwo, ọ̀rẹ́.' },
   { name: 'meaning_hint', required: false, description: 'Sense disambiguation when a word has multiple meanings', example: 'greeting' },
-  { name: 'pos', required: false, description: 'Part of speech', example: 'interjection' },
+  { name: 'pos', required: true, description: 'Part of speech', example: 'interjection' },
   { name: 'review_status', required: true, description: 'Editorial status', example: 'approved' },
 ];
 
@@ -56,8 +61,12 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
   const [validation, setValidation] = useState<DictionaryImportValidateResponse | null>(null);
   const [validating, setValidating] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [activeBatchId, setActiveBatchId] = useState<string | null>(null);
   const [history, setHistory] = useState<DictionaryImportBatchListItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [confirmApplyBatchId, setConfirmApplyBatchId] = useState<string | null>(null);
+  const [confirmDiscardBatchId, setConfirmDiscardBatchId] = useState<string | null>(null);
+  const [discarding, setDiscarding] = useState(false);
 
   const refreshHistory = useCallback(async () => {
     setLoadingHistory(true);
@@ -95,7 +104,7 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
     setValidating(true);
     setValidation(null);
     try {
-      const result = await validateDictionaryImportFromGoogleSheet({
+      const { batch_id } = await startDictionaryImportValidateFromGoogleSheet({
         pair_code: trimmedPairCode,
         worksheet_title: trimmedWorksheet,
         header_row: headerRow,
@@ -103,15 +112,52 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
           ? { sheet_url: trimmedReference }
           : { spreadsheet_id: trimmedReference }),
       });
-      setValidation(result);
-      if (result.valid) {
-        toast.success(`Validation passed. ${result.counters.staged_rows} rows ready.`);
-      } else {
-        toast.error(`Validation failed. ${result.summary.errors} errors found.`);
-      }
+      setActiveBatchId(batch_id);
+      toast.success('Validation queued. Watch Batch History for progress.');
       await refreshHistory();
+      // Poll in the background so the UI stays responsive.
+      void (async () => {
+        const startedAt = Date.now();
+        const timeoutMs = 10 * 60 * 1000;
+        while (Date.now() - startedAt < timeoutMs) {
+          const batch = await getDictionaryImportBatch(batch_id);
+          if (batch.status === 'validated' || batch.status === 'validation_failed') {
+            const report = await getDictionaryImportValidationReport(batch_id);
+            setValidation(report);
+            if (report.valid) {
+              toast.success(`Validation passed. ${report.counters.staged_rows} rows ready.`);
+            } else {
+              toast.error(`Validation failed. ${report.summary.errors} errors found.`);
+            }
+            await refreshHistory();
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+        toast.error('Validation is still running. Check Batch History and refresh.');
+      })();
+      return;
     } catch (error: any) {
-      toast.error(error?.response?.data?.detail ?? error?.message ?? 'Google Sheets validation failed');
+      // Fall back to the synchronous endpoint if the worker isn't running yet.
+      try {
+        const result = await validateDictionaryImportFromGoogleSheet({
+          pair_code: trimmedPairCode,
+          worksheet_title: trimmedWorksheet,
+          header_row: headerRow,
+          ...(trimmedReference.startsWith('http')
+            ? { sheet_url: trimmedReference }
+            : { spreadsheet_id: trimmedReference }),
+        });
+        setValidation(result);
+        if (result.valid) {
+          toast.success(`Validation passed. ${result.counters.staged_rows} rows ready.`);
+        } else {
+          toast.error(`Validation failed. ${result.summary.errors} errors found.`);
+        }
+        await refreshHistory();
+      } catch (fallbackError: any) {
+        toast.error(fallbackError?.response?.data?.detail ?? fallbackError?.message ?? error?.message ?? 'Google Sheets validation failed');
+      }
     } finally {
       setValidating(false);
     }
@@ -133,6 +179,37 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
       toast.error(error?.response?.data?.detail ?? error?.message ?? 'Apply failed');
     } finally {
       setApplying(false);
+    }
+  };
+
+  const handleApplyExistingBatch = async (batchId: string) => {
+    setApplying(true);
+    try {
+      const result = await applyDictionaryImport(batchId);
+      toast.success(
+        `Import complete. ${result.counters.applied_inserted} inserted, ${result.counters.applied_updated} updated.`
+      );
+      await refreshHistory();
+      onImportComplete();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail ?? error?.message ?? 'Apply failed');
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleDiscardBatch = async (batchId: string) => {
+    setDiscarding(true);
+    try {
+      const batch = history.find((item) => item.id === batchId);
+      const force = (batch?.status || '').toLowerCase() === 'applied';
+      await discardDictionaryImportBatch(batchId, { force });
+      toast.success('Batch discarded.');
+      await refreshHistory();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail ?? error?.message ?? 'Discard failed');
+    } finally {
+      setDiscarding(false);
     }
   };
 
@@ -270,13 +347,19 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
                 <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Batch</th>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Pair</th>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Started</th>
-                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">I / U / S / E / W</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Rows that would be inserted/updated if you click Apply">Validated</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Inserted rows on apply">Inserted</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Updated rows on apply">Updated</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Skipped rows (pending/rejected/unchanged)">Skipped</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Validation/apply errors">Errors</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Validation/apply warnings">Warnings</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {history.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-4 text-gray-600 dark:text-gray-300">No dictionary import batches found.</td>
+                  <td colSpan={12} className="px-3 py-4 text-gray-600 dark:text-gray-300">No dictionary import batches found.</td>
                 </tr>
               ) : (
                 history.map((batch) => (
@@ -289,8 +372,35 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
                     </td>
                     <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.pair_code ?? '-'}</td>
                     <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{formatDate(batch.started_at)}</td>
-                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">
-                      {batch.inserted_count} / {batch.updated_count} / {batch.skipped_count} / {batch.error_count} / {batch.warning_count}
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.validated_count ?? 0}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.inserted_count}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.updated_count}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.skipped_count}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.error_count}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.warning_count}</td>
+                    <td className="px-3 py-2 text-right">
+                      <div className="flex justify-end gap-2">
+                        {batch.status === 'validated' && (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmApplyBatchId(batch.id)}
+                            disabled={applying || validating}
+                            className="rounded-md bg-green-600 px-3 py-1.5 text-xs text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            title="Apply this validated batch (imports approved rows)"
+                          >
+                            Apply
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDiscardBatchId(batch.id)}
+                          disabled={applying || validating || discarding}
+                          className="rounded-md bg-gray-200 px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                          title="Discard this batch (deletes staging/issue rows to save space)"
+                        >
+                          Discard
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -299,6 +409,55 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
           </table>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={!!confirmApplyBatchId}
+        onClose={() => setConfirmApplyBatchId(null)}
+        onConfirm={async () => {
+          const batchId = confirmApplyBatchId;
+          if (!batchId) return;
+          try {
+            await handleApplyExistingBatch(batchId);
+          } finally {
+            setConfirmApplyBatchId(null);
+          }
+        }}
+        title="Apply Import Batch"
+        message="Apply this validated batch now? This will import/update only rows marked as approved."
+        confirmText="Apply"
+        cancelText="Cancel"
+        variant="warning"
+        isLoading={applying}
+      />
+
+      <ConfirmationModal
+        isOpen={!!confirmDiscardBatchId}
+        onClose={() => setConfirmDiscardBatchId(null)}
+        onConfirm={async () => {
+          const batchId = confirmDiscardBatchId;
+          if (!batchId) return;
+          try {
+            await handleDiscardBatch(batchId);
+          } finally {
+            setConfirmDiscardBatchId(null);
+          }
+        }}
+        title="Discard Import Batch"
+        message={
+          (() => {
+            const batch = history.find((item) => item.id === confirmDiscardBatchId);
+            const isApplied = (batch?.status || '').toLowerCase() === 'applied';
+            if (isApplied) {
+              return 'Discard this applied batch from the database to save space? This is permanent and is admin-only.';
+            }
+            return 'Discard this batch from the database to save space? This deletes staging rows and issues for this batch.';
+          })()
+        }
+        confirmText="Discard"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={discarding}
+      />
     </div>
   );
 }

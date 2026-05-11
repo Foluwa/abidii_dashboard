@@ -54,6 +54,8 @@ export default function CurriculumCoursesListPage() {
   const [isCourseSaving, setIsCourseSaving] = useState(false);
   const [courseEditorError, setCourseEditorError] = useState('');
   const [pendingCourseActionId, setPendingCourseActionId] = useState<string | null>(null);
+  const [archiveConfirmCourse, setArchiveConfirmCourse] = useState<CourseAdminResponse | null>(null);
+  const [deleteConfirmCourse, setDeleteConfirmCourse] = useState<CourseAdminResponse | null>(null);
 
   const LS_OUTCOMES_KEY = 'adminCourses_lastBulkOutcomes';
   const LS_ACTION_KEY = 'adminCourses_lastBulkAction';
@@ -331,15 +333,12 @@ export default function CurriculumCoursesListPage() {
   };
 
   const handleArchiveCourse = async (course: CourseAdminResponse) => {
-    if (!window.confirm(`Archive ${course.title}? This will unpublish and disable it.`)) {
-      return;
-    }
-
     setPendingCourseActionId(course.id);
     try {
       await unpublishAdminCourse(course.id);
       await refresh();
       toast.success('Course archived.');
+      setArchiveConfirmCourse(null);
     } catch (error: any) {
       toast.error(error?.response?.data?.detail || error?.message || 'Failed to archive course.');
     } finally {
@@ -348,15 +347,12 @@ export default function CurriculumCoursesListPage() {
   };
 
   const handleDeleteCourse = async (course: CourseAdminResponse) => {
-    if (!window.confirm(`Delete ${course.title}? The backend only allows deleting archived empty courses.`)) {
-      return;
-    }
-
     setPendingCourseActionId(course.id);
     try {
       await deleteAdminCourse(course.id);
       await refresh();
       toast.success('Course deleted.');
+      setDeleteConfirmCourse(null);
     } catch (error: any) {
       toast.error(error?.response?.data?.detail || error?.message || 'Failed to delete course.');
     } finally {
@@ -645,7 +641,7 @@ export default function CurriculumCoursesListPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => void handleArchiveCourse(course)}
+                        onClick={() => setArchiveConfirmCourse(course)}
                         disabled={pendingCourseActionId === course.id}
                         className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-medium text-amber-800 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-900 dark:bg-gray-800 dark:text-amber-300 dark:hover:bg-amber-950/30"
                       >
@@ -653,7 +649,7 @@ export default function CurriculumCoursesListPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => void handleDeleteCourse(course)}
+                        onClick={() => setDeleteConfirmCourse(course)}
                         disabled={pendingCourseActionId === course.id}
                         className="rounded-lg border border-red-300 bg-white px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:bg-gray-800 dark:text-red-300 dark:hover:bg-red-950/30"
                       >
@@ -698,6 +694,36 @@ export default function CurriculumCoursesListPage() {
         confirmText="Unpublish"
         variant="danger"
         isLoading={isBulkRunning}
+      />
+
+      <ConfirmationModal
+        isOpen={Boolean(archiveConfirmCourse)}
+        onClose={() => {
+          if (!pendingCourseActionId) setArchiveConfirmCourse(null);
+        }}
+        onConfirm={() => {
+          if (archiveConfirmCourse) void handleArchiveCourse(archiveConfirmCourse);
+        }}
+        title="Archive course"
+        message={`Archive ${archiveConfirmCourse?.title ?? 'this course'}? This will unpublish and disable it.`}
+        confirmText="Archive"
+        variant="warning"
+        isLoading={Boolean(pendingCourseActionId && archiveConfirmCourse?.id === pendingCourseActionId)}
+      />
+
+      <ConfirmationModal
+        isOpen={Boolean(deleteConfirmCourse)}
+        onClose={() => {
+          if (!pendingCourseActionId) setDeleteConfirmCourse(null);
+        }}
+        onConfirm={() => {
+          if (deleteConfirmCourse) void handleDeleteCourse(deleteConfirmCourse);
+        }}
+        title="Delete course"
+        message={`Delete ${deleteConfirmCourse?.title ?? 'this course'}? The backend only allows deleting archived empty courses.`}
+        confirmText="Delete"
+        variant="danger"
+        isLoading={Boolean(pendingCourseActionId && deleteConfirmCourse?.id === pendingCourseActionId)}
       />
 
       <CourseEditorModal

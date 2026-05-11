@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
+import { ConfirmationModal } from '@/components/ui/modal/ConfirmationModal';
 
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—';
@@ -56,6 +57,7 @@ function CourseCard({
 }) {
   const [resetState, setResetState] = useState<ActionState>('idle');
   const [resetError, setResetError] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const [showPointerForm, setShowPointerForm] = useState(false);
   const [pointerUnit, setPointerUnit] = useState(course.current_unit_id ?? '');
@@ -66,13 +68,13 @@ function CourseCard({
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { adminResetCourseProgress, adminSetLearningPointer } = require('@/hooks/useApi');
 
-  const handleReset = async () => {
-    if (!window.confirm(`Reset ALL progress for "${course.course_title ?? course.course_key}"? This cannot be undone.`)) return;
+  const confirmReset = async () => {
     setResetState('loading');
     setResetError(null);
     try {
       await adminResetCourseProgress(userId, course.course_id);
       setResetState('success');
+      setShowResetConfirm(false);
       onToast('Progress reset successfully.');
       setTimeout(() => { setResetState('idle'); onActionDone(); }, 1500);
     } catch (e: unknown) {
@@ -165,7 +167,7 @@ function CourseCard({
         <p className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">Admin actions</p>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={handleReset}
+            onClick={() => setShowResetConfirm(true)}
             disabled={resetState === 'loading'}
             className="rounded-lg border border-red-300 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-40 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950"
           >
@@ -229,6 +231,19 @@ function CourseCard({
           </div>
         )}
       </div>
+
+      <ConfirmationModal
+        isOpen={showResetConfirm}
+        onClose={() => {
+          if (resetState !== 'loading') setShowResetConfirm(false);
+        }}
+        onConfirm={() => void confirmReset()}
+        title="Reset course progress"
+        message={`Reset ALL progress for "${course.course_title ?? course.course_key}"? This cannot be undone.`}
+        confirmText="Reset Progress"
+        variant="danger"
+        isLoading={resetState === 'loading'}
+      />
     </div>
   );
 }

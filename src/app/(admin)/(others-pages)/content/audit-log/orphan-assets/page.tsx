@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import StatusBadge from '@/components/admin/StatusBadge';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Pagination from '@/components/tables/Pagination';
+import { ConfirmationModal } from '@/components/ui/modal/ConfirmationModal';
 import { useToast } from '@/contexts/ToastContext';
 import {
   useAdminOrphanAssetCandidates,
@@ -72,6 +73,7 @@ export default function OrphanAssetsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSubmittingScan, setIsSubmittingScan] = useState(false);
   const [isApplyingAction, setIsApplyingAction] = useState(false);
+  const [deleteNowCandidateIds, setDeleteNowCandidateIds] = useState<string[] | null>(null);
 
   const summary = useAdminOrphanAssetSummary();
   const scans = useAdminOrphanAssetScans({ page: scanPage, limit: scanLimit });
@@ -161,18 +163,7 @@ export default function OrphanAssetsPage() {
     setSelectedIds(allSelected ? selectedIds.filter((candidateId) => !visibleIds.includes(candidateId)) : Array.from(new Set([...selectedIds, ...visibleIds])));
   };
 
-  const handleBulkAction = async (action: OrphanAssetAction, ids?: string[]) => {
-    const candidateIds = ids ?? selectedIds;
-    if (candidateIds.length === 0) {
-      toast.info('Select at least one candidate first.');
-      return;
-    }
-
-    if (action === 'delete_now') {
-      const confirmed = window.confirm(`Delete ${candidateIds.length} object${candidateIds.length === 1 ? '' : 's'} from R2 now? The system will re-check references first.`);
-      if (!confirmed) return;
-    }
-
+  const applyBulkAction = async (action: OrphanAssetAction, candidateIds: string[]) => {
     setIsApplyingAction(true);
     try {
       const result = await applyOrphanAssetBulkAction({
@@ -191,6 +182,27 @@ export default function OrphanAssetsPage() {
     } finally {
       setIsApplyingAction(false);
     }
+  };
+
+  const handleBulkAction = async (action: OrphanAssetAction, ids?: string[]) => {
+    const candidateIds = ids ?? selectedIds;
+    if (candidateIds.length === 0) {
+      toast.info('Select at least one candidate first.');
+      return;
+    }
+
+    if (action === 'delete_now') {
+      setDeleteNowCandidateIds(candidateIds);
+      return;
+    }
+
+    await applyBulkAction(action, candidateIds);
+  };
+
+  const handleConfirmDeleteNow = async () => {
+    if (!deleteNowCandidateIds || deleteNowCandidateIds.length === 0) return;
+    await applyBulkAction('delete_now', deleteNowCandidateIds);
+    setDeleteNowCandidateIds(null);
   };
 
   const activeSummaryCards = [
@@ -526,6 +538,19 @@ export default function OrphanAssetsPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={Boolean(deleteNowCandidateIds)}
+        onClose={() => {
+          if (!isApplyingAction) setDeleteNowCandidateIds(null);
+        }}
+        onConfirm={() => void handleConfirmDeleteNow()}
+        title="Delete orphan assets"
+        message={`Delete ${deleteNowCandidateIds?.length ?? 0} object${deleteNowCandidateIds?.length === 1 ? '' : 's'} from R2 now? The system will re-check references first.`}
+        confirmText="Delete Now"
+        variant="danger"
+        isLoading={isApplyingAction}
+      />
     </div>
   );
 }

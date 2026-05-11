@@ -7,6 +7,7 @@ import MediaLinkPreview from '@/components/admin/curriculum/MediaLinkPreview';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Pagination from '@/components/tables/Pagination';
 import { Modal } from '@/components/ui/modal';
+import { ConfirmationModal } from '@/components/ui/modal/ConfirmationModal';
 import { useToast } from '@/contexts/ToastContext';
 import {
   cleanupOrphanedBlueprintAssets,
@@ -35,6 +36,10 @@ export default function CurriculumAssetLibraryPage() {
     fieldPath: string;
     currentName: string;
     nextName: string;
+  } | null>(null);
+  const [deleteDraft, setDeleteDraft] = useState<{
+    blueprintId: string;
+    fieldPath: string;
   } | null>(null);
   const limit = 25;
 
@@ -97,17 +102,16 @@ export default function CurriculumAssetLibraryPage() {
     }
   };
 
-  const handleDelete = async (blueprintId: string, fieldPath: string) => {
-    if (!window.confirm(`Delete the asset binding for ${fieldPath}? This will remove the URL from the blueprint payload and move the blueprint back to draft.`)) {
-      return;
-    }
-
+  const handleDelete = async () => {
+    if (!deleteDraft) return;
+    const { blueprintId, fieldPath } = deleteDraft;
     const key = `${blueprintId}:${fieldPath}:delete`;
     setPendingKey(key);
     try {
       await deleteBlueprintAsset(blueprintId, fieldPath);
       await refresh();
       toast.success('Asset binding deleted.');
+      setDeleteDraft(null);
     } catch (error: any) {
       toast.error(error?.response?.data?.detail || error?.message || 'Failed to delete asset binding.');
     } finally {
@@ -308,7 +312,7 @@ export default function CurriculumAssetLibraryPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => void handleDelete(item.blueprint_id, item.field_path)}
+                    onClick={() => setDeleteDraft({ blueprintId: item.blueprint_id, fieldPath: item.field_path })}
                     disabled={pendingKey === `${item.blueprint_id}:${item.field_path}:delete`}
                     className="rounded-lg border border-red-300 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
                   >
@@ -392,6 +396,19 @@ export default function CurriculumAssetLibraryPage() {
           </div>
         ) : null}
       </Modal>
+
+      <ConfirmationModal
+        isOpen={Boolean(deleteDraft)}
+        onClose={() => {
+          if (!pendingKey?.endsWith(':delete')) setDeleteDraft(null);
+        }}
+        onConfirm={() => void handleDelete()}
+        title="Delete asset binding"
+        message={`Delete the asset binding for ${deleteDraft?.fieldPath ?? 'this field'}? This will remove the URL from the blueprint payload and move the blueprint back to draft.`}
+        confirmText="Delete Binding"
+        variant="danger"
+        isLoading={Boolean(pendingKey?.endsWith(':delete'))}
+      />
     </div>
   );
 }

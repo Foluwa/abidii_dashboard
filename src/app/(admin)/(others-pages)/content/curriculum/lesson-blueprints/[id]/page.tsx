@@ -100,6 +100,8 @@ export default function AdminLessonBlueprintDetailPage({
   const [confirmPublishOpen, setConfirmPublishOpen] = useState(false);
   const [confirmUnpublishOpen, setConfirmUnpublishOpen] = useState(false);
   const [confirmPublishLinkedCourseOpen, setConfirmPublishLinkedCourseOpen] = useState(false);
+  const [restoreVersionConfirmId, setRestoreVersionConfirmId] = useState<string | null>(null);
+  const [deleteBlueprintConfirmOpen, setDeleteBlueprintConfirmOpen] = useState(false);
   const [versionHistory, setVersionHistory] = useState<LessonBlueprintVersionPayload[]>([]);
   const [versionDiff, setVersionDiff] = useState<LessonBlueprintVersionDiffPayload | null>(null);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
@@ -354,10 +356,6 @@ export default function AdminLessonBlueprintDetailPage({
   };
 
   const handleRestoreVersion = async (versionId: string) => {
-    if (!window.confirm('Restore this snapshot into the current draft? The blueprint will return to draft and require validation again.')) {
-      return;
-    }
-
     setErrorMessage('');
     setSuccessMessage('');
     setIsRestoringVersion(true);
@@ -366,6 +364,7 @@ export default function AdminLessonBlueprintDetailPage({
       await mutateAdmin(next, { revalidate: false });
       await refreshVersionHistory();
       setSuccessMessage('Blueprint restored from history.');
+      setRestoreVersionConfirmId(null);
     } catch (err: any) {
       setErrorMessage(getActionErrorMessage(err, 'Failed to restore blueprint version'));
     } finally {
@@ -374,10 +373,6 @@ export default function AdminLessonBlueprintDetailPage({
   };
 
   const handleDeleteBlueprint = async () => {
-    if (!window.confirm('Delete this blueprint? Version history will be kept, but the live blueprint row will be removed.')) {
-      return;
-    }
-
     setErrorMessage('');
     setSuccessMessage('');
     setIsDeletingBlueprint(true);
@@ -448,7 +443,7 @@ export default function AdminLessonBlueprintDetailPage({
           </button>
 
           <button
-            onClick={handleDeleteBlueprint}
+            onClick={() => setDeleteBlueprintConfirmOpen(true)}
             disabled={isDeletingBlueprint || blueprint?.status === 'published'}
             className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
             title={blueprint?.status === 'published' ? 'Unpublish before deleting' : undefined}
@@ -832,7 +827,7 @@ export default function AdminLessonBlueprintDetailPage({
                                 Compare
                               </button>
                               <button
-                                onClick={() => handleRestoreVersion(version.id)}
+                                onClick={() => setRestoreVersionConfirmId(version.id)}
                                 disabled={isRestoringVersion}
                                 className="rounded-lg border border-brand-300 px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                               >
@@ -959,6 +954,40 @@ export default function AdminLessonBlueprintDetailPage({
         cancelText="Cancel"
         variant="warning"
         isLoading={isPublishing}
+      />
+
+      <ConfirmationModal
+        isOpen={Boolean(restoreVersionConfirmId)}
+        onClose={() => {
+          if (!isRestoringVersion) setRestoreVersionConfirmId(null);
+        }}
+        onConfirm={async () => {
+          if (restoreVersionConfirmId) {
+            await handleRestoreVersion(restoreVersionConfirmId);
+          }
+        }}
+        title="Restore blueprint snapshot"
+        message="Restore this snapshot into the current draft? The blueprint will return to draft and require validation again."
+        confirmText="Restore Snapshot"
+        cancelText="Cancel"
+        variant="warning"
+        isLoading={isRestoringVersion}
+      />
+
+      <ConfirmationModal
+        isOpen={deleteBlueprintConfirmOpen}
+        onClose={() => {
+          if (!isDeletingBlueprint) setDeleteBlueprintConfirmOpen(false);
+        }}
+        onConfirm={async () => {
+          await handleDeleteBlueprint();
+        }}
+        title="Delete blueprint"
+        message="Delete this blueprint? Version history will be kept, but the live blueprint row will be removed."
+        confirmText="Delete Blueprint"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeletingBlueprint}
       />
     </div>
   );

@@ -19,6 +19,7 @@
 import React, { useEffect, useState } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import { apiClient } from '@/lib/api';
+import { ConfirmationModal } from '@/components/ui/modal/ConfirmationModal';
 
 export interface ColumnDefinition {
   name: string;
@@ -85,6 +86,9 @@ export function GoogleSheetsBulkImport({
   
   const [validating, setValidating] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [confirmApplyBatchId, setConfirmApplyBatchId] = useState<string | null>(null);
+  const [confirmDiscardBatchId, setConfirmDiscardBatchId] = useState<string | null>(null);
+  const [discarding, setDiscarding] = useState(false);
   const [validation, setValidation] = useState<ValidationResponse | null>(null);
   const [showColumnInfo, setShowColumnInfo] = useState(false);
   const [history, setHistory] = useState<BulkImportBatchItem[]>([]);
@@ -198,6 +202,39 @@ export function GoogleSheetsBulkImport({
       toast.error(error?.response?.data?.detail ?? error?.message ?? 'Import failed');
     } finally {
       setApplying(false);
+    }
+  };
+
+  const handleApplyExistingBatch = async (batchId: string) => {
+    setApplying(true);
+    try {
+      const res = await apiClient.post(
+        `/api/v1/admin/bulk-import/${contentType}/batches/${batchId}/apply`,
+        {},
+        { timeout: 300000 }
+      );
+      const created = res.data?.created_count ?? 0;
+      const updated = res.data?.updated_count ?? 0;
+      toast.success(`Import complete! ${created} created, ${updated} updated.`);
+      await refreshHistory();
+      onImportComplete();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail ?? error?.message ?? 'Apply failed');
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleDiscardBatch = async (batchId: string) => {
+    setDiscarding(true);
+    try {
+      await apiClient.delete(`/api/v1/admin/bulk-import/${contentType}/batches/${batchId}`);
+      toast.success('Batch discarded.');
+      await refreshHistory();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail ?? error?.message ?? 'Discard failed');
+    } finally {
+      setDiscarding(false);
     }
   };
 
@@ -412,16 +449,28 @@ export function GoogleSheetsBulkImport({
               <tr>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Status</th>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Worksheet</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Rows</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Created / Updated</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Issues</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Total rows scanned from the sheet">Total</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Rows passing validation">Valid</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Rows failing validation">Invalid</th>
+                <th
+                  className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300"
+                  title="Rows that would be written to the database when you click Apply"
+                >
+                  Will Import
+                </th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Rows created during apply">Created</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Rows updated during apply">Updated</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Rows that failed during apply">Failed</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Errors found during validation/apply">Errors</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300" title="Warnings found during validation/apply">Warnings</th>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Finished</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {history.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-3 py-4 text-gray-600 dark:text-gray-300">
+                  <td colSpan={13} className="px-3 py-4 text-gray-600 dark:text-gray-300">
                     No import batches found for this content type.
                   </td>
                 </tr>
@@ -430,11 +479,41 @@ export function GoogleSheetsBulkImport({
                   <tr key={batch.id}>
                     <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.status}</td>
                     <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.worksheet_title || batch.source_name || '-'}</td>
-                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.valid_rows}/{batch.total_rows}</td>
-                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.created_count} / {batch.updated_count}</td>
-                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.error_count} errors, {batch.warning_count} warnings</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.total_rows}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.valid_rows}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.invalid_rows}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.valid_rows}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.created_count}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.updated_count}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.failed_count}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.error_count}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{batch.warning_count}</td>
                     <td className="px-3 py-2 text-gray-700 dark:text-gray-300">
                       {batch.finished_at ? new Date(batch.finished_at).toLocaleString() : '-'}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <div className="flex justify-end gap-2">
+                        {batch.status === 'validated' && (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmApplyBatchId(batch.id)}
+                            disabled={applying || validating || discarding}
+                            className="rounded-md bg-green-600 px-3 py-1.5 text-xs text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            title="Apply this validated batch (uses the stored validated snapshot)"
+                          >
+                            Apply
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDiscardBatchId(batch.id)}
+                          disabled={applying || validating || discarding}
+                          className="rounded-md bg-gray-200 px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                          title="Discard this batch from history to save space"
+                        >
+                          Discard
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -443,6 +522,46 @@ export function GoogleSheetsBulkImport({
           </table>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={!!confirmApplyBatchId}
+        onClose={() => setConfirmApplyBatchId(null)}
+        onConfirm={async () => {
+          const batchId = confirmApplyBatchId;
+          if (!batchId) return;
+          try {
+            await handleApplyExistingBatch(batchId);
+          } finally {
+            setConfirmApplyBatchId(null);
+          }
+        }}
+        title="Apply Import Batch"
+        message="Apply this validated batch now? This will apply the stored validated snapshot to the database."
+        confirmText="Apply"
+        cancelText="Cancel"
+        variant="warning"
+        isLoading={applying}
+      />
+
+      <ConfirmationModal
+        isOpen={!!confirmDiscardBatchId}
+        onClose={() => setConfirmDiscardBatchId(null)}
+        onConfirm={async () => {
+          const batchId = confirmDiscardBatchId;
+          if (!batchId) return;
+          try {
+            await handleDiscardBatch(batchId);
+          } finally {
+            setConfirmDiscardBatchId(null);
+          }
+        }}
+        title="Discard Import Batch"
+        message="Discard this batch from history to save space? This cannot be undone."
+        confirmText="Discard"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={discarding}
+      />
     </div>
   );
 }

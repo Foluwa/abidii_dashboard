@@ -6,10 +6,13 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Pagination from "@/components/tables/Pagination";
 import Button from "@/components/ui/button/Button";
+import { Modal } from "@/components/ui/modal";
+import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import {
   getMlReadiness,
   getMlTrainingJob,
   getMlTrainingJobLogs,
+  getHandwritingDatasetReadiness,
   applyVerifiedPromotionManifest,
   dryRunVerifiedPromotionManifest,
   generateVerifiedPromotionManifest,
@@ -24,6 +27,8 @@ import {
   promoteMlModelVersion,
   rollbackMlModelVersion,
   updateVerifiedPromotionCandidates,
+  uploadHandwritingCandidateSamples,
+  type HandwritingDatasetReadinessResponse,
   type MlModelVersion,
   type MlReadinessResponse,
   type MlTrainingJob,
@@ -82,6 +87,15 @@ function statusClass(status?: string | null) {
   }
   if (status === "queued") {
     return "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200";
+  }
+  if (status === "ready") {
+    return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200";
+  }
+  if (status === "low") {
+    return "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200";
+  }
+  if (status === "missing") {
+    return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200";
   }
   return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
 }
@@ -144,6 +158,117 @@ function JsonPreview({ value }: { value: unknown }) {
   );
 }
 
+function asRecordArray(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value) ? value.filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null) : [];
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function isDryRunApplyAllowed(report: Record<string, unknown> | null, manifest: VerifiedPromotionManifest | null) {
+  if (!report || report.mode !== "dry-run") return false;
+  const validationErrors = asRecordArray(report.validation_errors);
+  const failed = Number(report.failed ?? 0);
+  return report.valid === true && failed === 0 && validationErrors.length === 0 && countFor(manifest, "pending") === 0;
+}
+
+function PromotionReportPreview({
+  report,
+  manifest,
+}: {
+  report: Record<string, unknown>;
+  manifest: VerifiedPromotionManifest | null;
+}) {
+  const filesToCopy = asRecordArray(report.files_to_copy);
+  const perClassImpact = asRecordArray(report.per_class_impact);
+  const skippedFiles = asRecordArray(report.skipped_files);
+  const validationErrors = asRecordArray(report.validation_errors);
+  const manifestUpdates = asRecord(report.manifest_updates);
+  const beforeCounts = asRecord(report.before_verified_counts);
+  const applyAllowed = isDryRunApplyAllowed(report, manifest);
+
+  return (
+    <div className="space-y-5">
+      <div className={`rounded-lg border p-4 text-sm ${applyAllowed ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200" : "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"}`}>
+        Real apply is {applyAllowed ? "allowed by this dry-run preview" : "blocked"}.{" "}
+        {!applyAllowed ? "Resolve validation errors, failed copy checks, or pending candidates before applying." : null}
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-4">
+        <SummaryCard label="Mode" value={String(report.mode ?? "-")} />
+        <SummaryCard label="Approved Rows" value={Number(report.approved_rows ?? 0)} />
+        <SummaryCard label="Would Copy" value={filesToCopy.length} />
+        <SummaryCard label="Validation Errors" value={validationErrors.length} />
+      </div>
+
+      <Panel title="Files That Would Be Promoted">
+        {filesToCopy.length > 0 ? (
+          <div className="max-h-72 overflow-auto">
+            <table className="min-w-full divide-y divide-gray-100 text-xs dark:divide-gray-800">
+              <thead>
+                <tr className="text-left uppercase text-gray-500 dark:text-gray-400">
+                  <th className="px-3 py-2">Source Path</th>
+                  <th className="px-3 py-2">Destination Path</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {filesToCopy.map((file, index) => (
+                  <tr key={`${file.source_key}-${file.target_key}-${index}`}>
+                    <td className="break-all px-3 py-2 text-gray-700 dark:text-gray-300">{String(file.source_key ?? "-")}</td>
+                    <td className="break-all px-3 py-2 text-gray-700 dark:text-gray-300">{String(file.target_key ?? "-")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : <div className="text-sm text-gray-500 dark:text-gray-400">No files would be promoted.</div>}
+      </Panel>
+
+      <Panel title="Per-Class Count Impact">
+        {perClassImpact.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+              <thead>
+                <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+                  <th className="px-3 py-2">Class</th>
+                  <th className="px-3 py-2">Approved Pending</th>
+                  <th className="px-3 py-2">Before Verified</th>
+                  <th className="px-3 py-2">After Verified</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {perClassImpact.map((item, index) => (
+                  <tr key={`${item.language}-${item.label}-${index}`}>
+                    <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{String(item.language ?? "-")} {String(item.label ?? "-")}</td>
+                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{String(item.approved_pending ?? 0)}</td>
+                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{String(item.before_verified_count ?? 0)}</td>
+                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{String(item.after_verified_count ?? 0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : <div className="text-sm text-gray-500 dark:text-gray-400">No per-class impact reported.</div>}
+      </Panel>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Panel title="Manifest Changes"><JsonPreview value={manifestUpdates} /></Panel>
+        <Panel title="Before Verified Counts"><JsonPreview value={beforeCounts} /></Panel>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Panel title="Skipped Files">
+          {skippedFiles.length > 0 ? <JsonPreview value={skippedFiles} /> : <div className="text-sm text-gray-500 dark:text-gray-400">No skipped files.</div>}
+        </Panel>
+        <Panel title="Validation Errors">
+          {validationErrors.length > 0 ? <JsonPreview value={validationErrors} /> : <div className="text-sm text-gray-500 dark:text-gray-400">No validation errors.</div>}
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
 function getLatestSmoke(jobs: MlTrainingJob[]) {
   return jobs.find((job) => {
     const path = job.dataset_path || "";
@@ -154,6 +279,7 @@ function getLatestSmoke(jobs: MlTrainingJob[]) {
 
 function useMlOverview() {
   const [readiness, setReadiness] = useState<MlReadinessResponse | null>(null);
+  const [datasetReadiness, setDatasetReadiness] = useState<HandwritingDatasetReadinessResponse | null>(null);
   const [jobs, setJobs] = useState<MlTrainingJob[]>([]);
   const [models, setModels] = useState<MlModelVersion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -163,12 +289,14 @@ function useMlOverview() {
     setLoading(true);
     setError(null);
     try {
-      const [readinessData, jobData, modelData] = await Promise.all([
+      const [readinessData, datasetReadinessData, jobData, modelData] = await Promise.all([
         getMlReadiness(300),
+        getHandwritingDatasetReadiness({ target_min_count: 300, target_high_count: 500 }),
         listMlTrainingJobs({ limit: 50, offset: 0 }),
         listMlModelVersions({ limit: 20, offset: 0 }),
       ]);
       setReadiness(readinessData);
+      setDatasetReadiness(datasetReadinessData);
       setJobs(jobData.items);
       setModels(modelData.items);
     } catch (err: any) {
@@ -182,14 +310,31 @@ function useMlOverview() {
     void refresh();
   }, [refresh]);
 
-  return { readiness, jobs, models, loading, error, refresh };
+  return { readiness, datasetReadiness, jobs, models, loading, error, refresh };
 }
 
 export function MLTrainingOverviewPage() {
-  const { readiness, jobs, models, loading, error, refresh } = useMlOverview();
+  const { readiness, datasetReadiness, jobs, models, loading, error, refresh } = useMlOverview();
+  const [classSearch, setClassSearch] = useState("");
+  const [classLanguageFilter, setClassLanguageFilter] = useState("");
+  const [classStatusFilter, setClassStatusFilter] = useState("");
+  const [classPage, setClassPage] = useState(1);
   const latestSmoke = useMemo(() => getLatestSmoke(jobs), [jobs]);
   const runningJobs = readiness?.training_jobs.running || 0;
   const succeededJobs = readiness?.training_jobs.succeeded || 0;
+  const globalDataset = datasetReadiness?.global_readiness;
+  const readinessPageSize = 25;
+  const filteredReadinessClasses = useMemo(() => {
+    const search = classSearch.trim().toLowerCase();
+    return (datasetReadiness?.classes || []).filter((item) => {
+      if (search && !item.class_label.toLowerCase().includes(search)) return false;
+      if (classLanguageFilter && item.language !== classLanguageFilter && item.script_group !== classLanguageFilter) return false;
+      if (classStatusFilter && item.readiness_status !== classStatusFilter) return false;
+      return true;
+    });
+  }, [classLanguageFilter, classSearch, classStatusFilter, datasetReadiness?.classes]);
+  const readinessTotalPages = Math.max(1, Math.ceil(filteredReadinessClasses.length / readinessPageSize));
+  const paginatedReadinessClasses = filteredReadinessClasses.slice((classPage - 1) * readinessPageSize, classPage * readinessPageSize);
 
   return (
     <div className="space-y-6 p-6">
@@ -211,36 +356,100 @@ export function MLTrainingOverviewPage() {
 
       <div className="grid gap-4 md:grid-cols-4">
         <SummaryCard label="Readiness Threshold" value={readiness?.threshold ?? "-"} detail="verified samples per label gate" />
-        <SummaryCard label="Running Jobs" value={runningJobs} />
-        <SummaryCard label="Succeeded Jobs" value={succeededJobs} />
-        <SummaryCard label="Model Versions" value={models.length} detail={`${readiness?.model_versions.production || 0} production`} />
+        <SummaryCard label="Ready Classes" value={globalDataset?.ready_classes ?? "-"} detail={`${globalDataset?.blocking_classes ?? "-"} blocking`} />
+        <SummaryCard label="Missing Classes" value={globalDataset?.missing_classes ?? "-"} />
+        <SummaryCard label="Approved Pending" value={globalDataset?.approved_pending_samples ?? "-"} detail={globalDataset?.can_run_dry_run_promotion ? "dry-run available" : "nothing approved yet"} />
       </div>
 
       <Panel title="Dataset Readiness">
-        {loading && !readiness ? (
+        {loading && !datasetReadiness ? (
           <LoadingBlock />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
-              <thead>
-                <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
-                  <th className="px-3 py-2">Language</th>
-                  <th className="px-3 py-2">Labels</th>
-                  <th className="px-3 py-2">Gate</th>
-                  <th className="px-3 py-2">Sample Labels</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {(readiness?.languages || []).map((language) => (
-                  <tr key={language.language_code}>
-                    <td className="px-3 py-3 font-medium text-gray-900 dark:text-white">{language.language_code}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{language.label_count}</td>
-                    <td className="px-3 py-3"><StatusPill status={language.label_count > 0 ? "active" : "pending"} /></td>
-                    <td className="px-3 py-3 text-gray-500 dark:text-gray-400">{language.labels.slice(0, 12).join(", ")}{language.labels.length > 12 ? "..." : ""}</td>
+          <div className="space-y-4">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+              Full training is disabled. {globalDataset?.next_best_action || "Collect and verify handwriting samples first."}
+            </div>
+            <div className="grid gap-3 md:grid-cols-4">
+              <SummaryCard label="Total Classes" value={globalDataset?.total_classes ?? "-"} />
+              <SummaryCard label="Low Classes" value={globalDataset?.low_classes ?? "-"} />
+              <SummaryCard label="Can Dry-run" value={globalDataset?.can_run_dry_run_promotion ? "Yes" : "No"} />
+              <SummaryCard label="Full Training" value={globalDataset?.can_run_full_training ? "Allowed" : "Disabled"} />
+            </div>
+            <div className="grid gap-3 md:grid-cols-[1fr_180px_180px]">
+              <input
+                value={classSearch}
+                onChange={(event) => {
+                  setClassSearch(event.target.value);
+                  setClassPage(1);
+                }}
+                placeholder="Search class label"
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              />
+              <select
+                value={classLanguageFilter}
+                onChange={(event) => {
+                  setClassLanguageFilter(event.target.value);
+                  setClassPage(1);
+                }}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              >
+                <option value="">All languages</option>
+                <option value="eng">English</option>
+                <option value="yor">Yoruba</option>
+              </select>
+              <select
+                value={classStatusFilter}
+                onChange={(event) => {
+                  setClassStatusFilter(event.target.value);
+                  setClassPage(1);
+                }}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              >
+                <option value="">All statuses</option>
+                <option value="missing">missing</option>
+                <option value="low">low</option>
+                <option value="ready">ready</option>
+              </select>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+                <thead>
+                  <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+                    <th className="px-3 py-2">Class</th>
+                    <th className="px-3 py-2">Candidates</th>
+                    <th className="px-3 py-2">Verified</th>
+                    <th className="px-3 py-2">Approved Pending</th>
+                    <th className="px-3 py-2">Status</th>
+                    <th className="px-3 py-2">Blocking</th>
+                    <th className="px-3 py-2">Progress</th>
+                    <th className="px-3 py-2">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {paginatedReadinessClasses.map((item) => {
+                    const percent = Math.min(100, Math.round((item.verified_count / item.target_min_count) * 100));
+                    return (
+                      <tr key={`${item.language}-${item.class_label}`} className={item.is_blocking_training ? "bg-red-50/50 dark:bg-red-950/10" : undefined}>
+                        <td className="px-3 py-3 font-medium text-gray-900 dark:text-white">{item.script_group} {item.class_label}</td>
+                        <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.candidate_count}</td>
+                        <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.verified_count}</td>
+                        <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.approved_pending_count}</td>
+                        <td className="px-3 py-3"><StatusPill status={item.readiness_status} /></td>
+                        <td className="px-3 py-3">{item.is_blocking_training ? <StatusPill status="missing" /> : <StatusPill status="ready" />}</td>
+                        <td className="px-3 py-3">
+                          <div className="h-2 w-28 rounded-full bg-gray-100 dark:bg-gray-800">
+                            <div className="h-2 rounded-full bg-brand-500" style={{ width: `${percent}%` }} />
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 text-gray-500 dark:text-gray-400">{item.recommended_action}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {filteredReadinessClasses.length === 0 ? <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No classes match these filters.</div> : null}
+            </div>
+            <Pagination currentPage={Math.min(classPage, readinessTotalPages)} totalPages={readinessTotalPages} onPageChange={setClassPage} />
           </div>
         )}
       </Panel>
@@ -263,7 +472,8 @@ export function MLTrainingOverviewPage() {
 
         <Panel title="Training Trigger">
           <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-            <p>Full training launch remains intentionally disabled from the dashboard until backend execution is approved.</p>
+            <p>Full training launch remains intentionally disabled until the verified dataset gate passes, dry-run promotion is reviewed, and backend execution is explicitly approved.</p>
+            <p>Blocking classes: {globalDataset?.blocking_classes ?? "-"}. Threshold: {datasetReadiness?.target_min_count ?? 300} verified samples per focused class.</p>
             <Button disabled size="sm">Start Training Coming Soon</Button>
           </div>
         </Panel>
@@ -475,6 +685,7 @@ export function MLModelVersionsPage() {
   const [languageFilter, setLanguageFilter] = useState("");
   const [loading, setLoading] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [pendingModelAction, setPendingModelAction] = useState<{ model: MlModelVersion; action: "promote" | "rollback" } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -511,6 +722,7 @@ export function MLModelVersionsPage() {
       setError(err?.response?.data?.detail?.message ?? err?.message ?? `Unable to ${action} model version.`);
     } finally {
       setActionId(null);
+      setPendingModelAction(null);
     }
   }, [refresh]);
 
@@ -564,7 +776,7 @@ export function MLModelVersionsPage() {
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {models.map((model, index) => {
                   const busy = actionId === model.id;
-                  const canPromote = Boolean(model.id) && model.status !== "production" && !busy;
+                  const canPromote = Boolean(model.id) && model.status === "staging" && !busy;
                   const canRollback = Boolean(model.id) && model.status === "production" && !busy;
                   return (
                     <tr key={model.id || `${model.model_name}-${index}`}>
@@ -585,7 +797,7 @@ export function MLModelVersionsPage() {
                             disabled={!canPromote}
                             size="sm"
                             variant="outline"
-                            onClick={() => void runModelAction(model, "promote")}
+                            onClick={() => setPendingModelAction({ model, action: "promote" })}
                           >
                             {busy ? "Working..." : "Promote"}
                           </Button>
@@ -593,13 +805,13 @@ export function MLModelVersionsPage() {
                             disabled={!canRollback}
                             size="sm"
                             variant="outline"
-                            onClick={() => void runModelAction(model, "rollback")}
+                            onClick={() => setPendingModelAction({ model, action: "rollback" })}
                           >
                             {busy ? "Working..." : "Rollback"}
                           </Button>
                         </div>
                         <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          {model.status === "production" ? "Rollback restores latest archived version." : "Promote makes this production."}
+                          {model.status === "production" ? "Rollback restores latest archived version after confirmation." : model.status === "staging" ? "Promotion is staging-only and requires backend checks." : "Only staging rows can be promoted from here."}
                         </div>
                       </td>
                     </tr>
@@ -611,12 +823,24 @@ export function MLModelVersionsPage() {
           </div>
         )}
       </Panel>
+      <ConfirmationModal
+        isOpen={!!pendingModelAction}
+        onClose={() => setPendingModelAction(null)}
+        onConfirm={() => {
+          if (pendingModelAction) void runModelAction(pendingModelAction.model, pendingModelAction.action);
+        }}
+        title={pendingModelAction?.action === "promote" ? "Promote Model Version" : "Rollback Model Version"}
+        message={`${pendingModelAction?.action === "promote" ? "Promote" : "Rollback"} ${pendingModelAction?.model.language_code || "unknown"} ${pendingModelAction?.model.version || pendingModelAction?.model.id || ""}? Use this only for safe staging/dev model rows.`}
+        confirmText={pendingModelAction?.action === "promote" ? "Promote" : "Rollback"}
+        variant="warning"
+        isLoading={!!actionId}
+      />
     </div>
   );
 }
 
-function countFor(manifest: VerifiedPromotionManifest, status: string) {
-  return manifest.status_counts?.[status] ?? 0;
+function countFor(manifest: VerifiedPromotionManifest | null | undefined, status: string) {
+  return manifest?.status_counts?.[status] ?? 0;
 }
 
 export function MLVerifiedPromotionManifestsPage() {
@@ -625,6 +849,13 @@ export function MLVerifiedPromotionManifestsPage() {
   const [collectionGaps, setCollectionGaps] = useState<VerifiedPromotionCollectionGapResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadLanguage, setUploadLanguage] = useState<"yor" | "eng">("eng");
+  const [uploadLabel, setUploadLabel] = useState("");
+  const [uploadContributor, setUploadContributor] = useState("");
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploadValidationErrors, setUploadValidationErrors] = useState<Record<string, unknown>[]>([]);
+  const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -652,20 +883,52 @@ export function MLVerifiedPromotionManifestsPage() {
   }, [refresh]);
 
   const generate = useCallback(async () => {
-    if (!window.confirm("Generate a new pending manifest from R2 source pools? This is read-only but may take a while.")) return;
     setGenerating(true);
     setError(null);
     setSuccess(null);
     try {
-      const result = await generateVerifiedPromotionManifest("all");
-      setSuccess(`Generated ${(result.run_id as string) || "new manifest"}.`);
+      const result = await generateVerifiedPromotionManifest("all", { dry_run: true });
+      setSuccess(`Manifest refresh preview ready. ${(result.manifest_changes as any)?.would_generate_new_manifest ? "A new manifest would be generated." : ""}`);
       await refresh();
     } catch (err: any) {
       setError(err?.response?.data?.detail?.message ?? err?.message ?? "Unable to generate manifest.");
     } finally {
       setGenerating(false);
+      setShowGenerateConfirm(false);
     }
   }, [refresh]);
+
+  const uploadCandidates = useCallback(async () => {
+    if (!uploadLabel.trim() || uploadFiles.length === 0) {
+      setError("Choose a class label and at least one image.");
+      return;
+    }
+    setUploading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const result = await uploadHandwritingCandidateSamples({
+        language: uploadLanguage,
+        class_label: uploadLabel,
+        source: "dashboard_upload",
+        contributor_id: uploadContributor.trim() || undefined,
+        files: uploadFiles,
+      });
+      const validationErrors = asRecordArray(result.validation_errors);
+      setUploadValidationErrors(validationErrors);
+      setSuccess(`Uploaded ${result.uploaded_count ?? 0} candidate(s); ${result.rejected_count ?? 0} rejected by validation.`);
+      setUploadFiles([]);
+      if (Number(result.uploaded_count ?? 0) > 0 && result.manifest_id) {
+        setSuccess(`Uploaded ${result.uploaded_count ?? 0} candidate(s) into review manifest ${String(result.manifest_id)}; ${result.rejected_count ?? 0} rejected by validation.`);
+      }
+      await refresh();
+    } catch (err: any) {
+      setUploadValidationErrors(asRecordArray(err?.response?.data?.detail?.validation_errors));
+      setError(err?.response?.data?.detail?.message ?? err?.message ?? "Unable to upload handwriting candidates.");
+    } finally {
+      setUploading(false);
+    }
+  }, [refresh, uploadContributor, uploadFiles, uploadLabel, uploadLanguage]);
 
   return (
     <div className="space-y-6 p-6">
@@ -677,7 +940,7 @@ export function MLVerifiedPromotionManifestsPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
-          <Button size="sm" onClick={() => void generate()} disabled={generating}>{generating ? "Generating..." : "Generate Pending Manifest"}</Button>
+          <Button size="sm" onClick={() => setShowGenerateConfirm(true)} disabled={generating}>{generating ? "Generating..." : "Generate Pending Manifest"}</Button>
         </div>
       </div>
       {error ? <InlineError message={error} /> : null}
@@ -742,6 +1005,45 @@ export function MLVerifiedPromotionManifestsPage() {
           {collectionGaps?.items.length === 0 ? <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No focused collection gaps available.</div> : null}
         </div>
       </Panel>
+      <Panel title="Candidate Upload">
+        <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-200">
+          Upload stores files as review candidates only. It never writes directly to datasets/verified/* and does not make samples available for training until they are reviewed and promoted.
+        </div>
+        <div className="grid gap-3 md:grid-cols-[160px_1fr_1fr_2fr_auto]">
+          <select value={uploadLanguage} onChange={(event) => setUploadLanguage(event.target.value as "yor" | "eng")} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+            <option value="eng">English</option>
+            <option value="yor">Yoruba</option>
+          </select>
+          <input value={uploadLabel} onChange={(event) => setUploadLabel(event.target.value)} placeholder="Class label, e.g. F or ẹ́" className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+          <input value={uploadContributor} onChange={(event) => setUploadContributor(event.target.value)} placeholder="Contributor/session (optional)" className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+          <input
+            type="file"
+            multiple
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(event) => setUploadFiles(Array.from(event.target.files || []))}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+          />
+          <Button size="sm" onClick={() => void uploadCandidates()} disabled={uploading || uploadFiles.length === 0}>
+            {uploading ? "Uploading..." : "Upload Candidates"}
+          </Button>
+        </div>
+        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          Selected files: {uploadFiles.length}. After upload, review them in the manifest detail page before promotion.
+        </div>
+        {uploadValidationErrors.length > 0 ? (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+            <div className="font-medium">Upload validation errors</div>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {uploadValidationErrors.map((item, index) => (
+                <li key={`${item.filename}-${item.error}-${index}`}>
+                  {String(item.filename ?? "file")}: {String(item.error ?? "validation_failed")}
+                  {item.details ? ` (${JSON.stringify(item.details)})` : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </Panel>
       <Panel title="Manifests">
         {loading && manifests.length === 0 ? <LoadingBlock /> : (
           <div className="overflow-x-auto">
@@ -782,6 +1084,16 @@ export function MLVerifiedPromotionManifestsPage() {
           </div>
         )}
       </Panel>
+      <ConfirmationModal
+        isOpen={showGenerateConfirm}
+        onClose={() => setShowGenerateConfirm(false)}
+        onConfirm={() => void generate()}
+        title="Preview Manifest Refresh"
+        message="Preview manifest refresh from R2 source pools? This is read-only and will not promote samples or run training."
+        confirmText="Preview Refresh"
+        variant="info"
+        isLoading={generating}
+      />
     </div>
   );
 }
@@ -831,6 +1143,10 @@ export function MLVerifiedPromotionManifestDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [report, setReport] = useState<Record<string, unknown> | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [visibleUpdateConfirm, setVisibleUpdateConfirm] = useState<{ ids: string[]; status: "pending" | "approved" | "rejected" } | null>(null);
+  const [applyConfirmOpen, setApplyConfirmOpen] = useState(false);
+  const [applyConfirmationText, setApplyConfirmationText] = useState("");
   const limit = 25;
 
   const refresh = useCallback(async () => {
@@ -854,6 +1170,7 @@ export function MLVerifiedPromotionManifestDetailPage() {
       setManifest(detail);
       setCandidates(candidateResponse.items);
       setTotal(candidateResponse.total);
+      setSelectedIds(new Set());
     } catch (err: any) {
       setError(err?.response?.data?.detail?.message ?? err?.message ?? "Unable to load manifest.");
     } finally {
@@ -865,20 +1182,37 @@ export function MLVerifiedPromotionManifestDetailPage() {
     void refresh();
   }, [refresh]);
 
-  const updateVisible = useCallback(async (status: "pending" | "approved" | "rejected", candidateIds?: string[]) => {
+  const updateVisible = useCallback(async (status: "pending" | "approved" | "rejected", candidateIds?: string[], confirmed = false) => {
     const ids = candidateIds || candidates.map((candidate) => candidate.candidate_id);
     if (ids.length === 0) return;
-    if (candidateIds === undefined && !window.confirm(`Set ${ids.length} visible candidates to ${status}?`)) return;
+    if (candidateIds === undefined && !confirmed) {
+      setVisibleUpdateConfirm({ ids, status });
+      return;
+    }
     setError(null);
     setSuccess(null);
     try {
       const response = await updateVerifiedPromotionCandidates(manifestId, ids, status);
       setSuccess(`Updated ${response.updated} candidate(s).`);
+      setVisibleUpdateConfirm(null);
       await refresh();
     } catch (err: any) {
       setError(err?.response?.data?.detail?.message ?? err?.message ?? "Unable to update candidates.");
     }
   }, [candidates, manifestId, refresh]);
+
+  const selectedCandidateIds = useMemo(() => Array.from(selectedIds), [selectedIds]);
+  const approvedCount = manifest ? countFor(manifest, "approved") : 0;
+  const applyAllowed = isDryRunApplyAllowed(report, manifest);
+  const applyBlockedReason = approvedCount === 0
+    ? "Approve at least one candidate first."
+    : !report || report.mode !== "dry-run"
+      ? "Run and review a successful dry-run before applying."
+      : countFor(manifest, "pending") > 0
+        ? "Resolve all pending candidates before applying."
+        : !applyAllowed
+          ? "Dry-run reported validation errors or failed checks."
+          : "";
 
   const runPanelAction = useCallback(async (action: "validate" | "dry-run" | "apply") => {
     setError(null);
@@ -888,9 +1222,9 @@ export function MLVerifiedPromotionManifestDetailPage() {
       if (action === "validate") response = await validateVerifiedPromotionManifest(manifestId);
       else if (action === "dry-run") response = await dryRunVerifiedPromotionManifest(manifestId);
       else {
-        const confirmation = window.prompt(`Type APPLY ${manifestId} to write approved samples to datasets/verified/*`);
-        if (!confirmation) return;
-        response = await applyVerifiedPromotionManifest(manifestId, confirmation);
+        response = await applyVerifiedPromotionManifest(manifestId, applyConfirmationText);
+        setApplyConfirmOpen(false);
+        setApplyConfirmationText("");
       }
       setReport(response);
       setSuccess(`${action} completed.`);
@@ -898,7 +1232,7 @@ export function MLVerifiedPromotionManifestDetailPage() {
     } catch (err: any) {
       setError(err?.response?.data?.detail?.message ?? err?.message ?? `Unable to ${action} manifest.`);
     }
-  }, [manifestId, refresh]);
+  }, [applyConfirmationText, manifestId, refresh]);
 
   return (
     <div className="space-y-6 p-6">
@@ -926,10 +1260,15 @@ export function MLVerifiedPromotionManifestDetailPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => void runPanelAction("validate")}>Validate Manifest</Button>
-          <Button variant="outline" size="sm" onClick={() => void runPanelAction("dry-run")}>Dry-run Promotion</Button>
-          <Button size="sm" onClick={() => void runPanelAction("apply")}>Apply Approved Promotion</Button>
+          <Button variant="outline" size="sm" onClick={() => void runPanelAction("dry-run")} disabled={approvedCount === 0}>Dry-run Promotion</Button>
+          <Button size="sm" onClick={() => setApplyConfirmOpen(true)} disabled={!applyAllowed}>Apply Approved Promotion</Button>
         </div>
-        {report ? <div className="mt-4"><JsonPreview value={report} /></div> : null}
+        {applyBlockedReason ? <div className="mt-3 text-sm text-amber-700 dark:text-amber-300">Apply blocked: {applyBlockedReason}</div> : null}
+        {report ? (
+          <div className="mt-4">
+            {report.mode ? <PromotionReportPreview report={report} manifest={manifest} /> : <JsonPreview value={report} />}
+          </div>
+        ) : null}
       </Panel>
       <Panel title="Candidates">
         <div className="mb-4 flex flex-wrap gap-3">
@@ -945,9 +1284,10 @@ export function MLVerifiedPromotionManifestDetailPage() {
           <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={problemOnly} onChange={(event) => { setOffset(0); setProblemOnly(event.target.checked); }} /> Problems</label>
         </div>
         <div className="mb-4 flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => setVisibleUpdateConfirm({ ids: selectedCandidateIds, status: "approved" })} disabled={selectedCandidateIds.length === 0}>Approve Selected</Button>
+          <Button variant="outline" size="sm" onClick={() => setVisibleUpdateConfirm({ ids: selectedCandidateIds, status: "rejected" })} disabled={selectedCandidateIds.length === 0}>Reject Selected</Button>
+          <Button variant="outline" size="sm" onClick={() => setVisibleUpdateConfirm({ ids: selectedCandidateIds, status: "pending" })} disabled={selectedCandidateIds.length === 0}>Reset Selected</Button>
           <Button variant="outline" size="sm" onClick={() => void updateVisible("approved")}>Approve Visible</Button>
-          <Button variant="outline" size="sm" onClick={() => void updateVisible("rejected")}>Reject Visible</Button>
-          <Button variant="outline" size="sm" onClick={() => void updateVisible("pending")}>Reset Visible</Button>
         </div>
         <div className="space-y-3">
           {candidates.map((candidate) => (
@@ -956,6 +1296,18 @@ export function MLVerifiedPromotionManifestDetailPage() {
                 <CandidatePreview manifestId={manifestId} candidate={candidate} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(candidate.candidate_id)}
+                      onChange={(event) => {
+                        setSelectedIds((previous) => {
+                          const next = new Set(previous);
+                          if (event.target.checked) next.add(candidate.candidate_id);
+                          else next.delete(candidate.candidate_id);
+                          return next;
+                        });
+                      }}
+                    />
                     <StatusPill status={candidate.review_status} />
                     {candidate.label_conflict ? <StatusPill status="conflict" /> : null}
                     <span className="font-semibold text-gray-900 dark:text-white">{candidate.language} / {candidate.canonical_label}</span>
@@ -970,9 +1322,9 @@ export function MLVerifiedPromotionManifestDetailPage() {
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-row gap-2 md:flex-col">
-                  <Button size="sm" variant="outline" onClick={() => void updateVisible("approved", [candidate.candidate_id])}>Approve</Button>
-                  <Button size="sm" variant="outline" onClick={() => void updateVisible("rejected", [candidate.candidate_id])}>Reject</Button>
-                  <Button size="sm" variant="outline" onClick={() => void updateVisible("pending", [candidate.candidate_id])}>Pending</Button>
+                  <Button size="sm" variant="outline" onClick={() => void updateVisible("approved", [candidate.candidate_id], true)}>Approve</Button>
+                  <Button size="sm" variant="outline" onClick={() => void updateVisible("rejected", [candidate.candidate_id], true)}>Reject</Button>
+                  <Button size="sm" variant="outline" onClick={() => void updateVisible("pending", [candidate.candidate_id], true)}>Pending</Button>
                 </div>
               </div>
             </div>
@@ -984,6 +1336,66 @@ export function MLVerifiedPromotionManifestDetailPage() {
           <Pagination currentPage={Math.floor(offset / limit) + 1} totalPages={Math.max(1, Math.ceil(total / limit))} onPageChange={(page) => setOffset((page - 1) * limit)} />
         </div>
       </Panel>
+      <ConfirmationModal
+        isOpen={!!visibleUpdateConfirm}
+        onClose={() => setVisibleUpdateConfirm(null)}
+        onConfirm={() => {
+          if (visibleUpdateConfirm) void updateVisible(visibleUpdateConfirm.status, visibleUpdateConfirm.ids, true);
+        }}
+        title="Update Visible Candidates"
+        message={`Set ${visibleUpdateConfirm?.ids.length || 0} visible candidates to ${visibleUpdateConfirm?.status || "pending"}?`}
+        confirmText="Update Candidates"
+        variant="warning"
+        isLoading={loading}
+      />
+      <Modal
+        isOpen={applyConfirmOpen}
+        onClose={() => {
+          setApplyConfirmOpen(false);
+          setApplyConfirmationText("");
+        }}
+        title="Apply verified promotion"
+        maxWidth="md"
+        showCloseButton={!loading}
+      >
+        <div className="space-y-4">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+            This writes approved samples to datasets/verified/*. Pending and rejected candidates are not promoted.
+          </div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Type exactly <span className="font-mono">APPLY {manifestId}</span>
+          </label>
+          <input
+            value={applyConfirmationText}
+            onChange={(event) => setApplyConfirmationText(event.target.value)}
+            placeholder={`APPLY ${manifestId}`}
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+          />
+          {applyConfirmationText !== `APPLY ${manifestId}` ? (
+            <div className="mt-1 text-xs text-red-600 dark:text-red-300">Confirmation text must exactly match APPLY {manifestId}.</div>
+          ) : null}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setApplyConfirmOpen(false);
+                setApplyConfirmationText("");
+              }}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => void runPanelAction("apply")}
+              disabled={loading || applyConfirmationText !== `APPLY ${manifestId}`}
+            >
+              Apply Promotion
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

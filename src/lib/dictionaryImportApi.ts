@@ -39,7 +39,19 @@ export async function validateDictionaryImportFromGoogleSheet(
   const res = await apiClient.post<DictionaryImportValidateResponse>(
     '/api/v1/admin/dictionary-import/validate/google-sheet',
     payload,
-    { timeout: 120000 } // 2 minutes for large sheets
+    // Validation includes reconciliation preview and can take longer on large sheets.
+    { timeout: 300000 } // 5 minutes
+  );
+  return res.data;
+}
+
+export async function startDictionaryImportValidateFromGoogleSheet(
+  payload: DictionaryImportGoogleSheetValidateRequest
+) {
+  const res = await apiClient.post<{ batch_id: string; job_id: string }>(
+    '/api/v1/admin/dictionary-import/validate/google-sheet/start',
+    payload,
+    { timeout: 60000 }
   );
   return res.data;
 }
@@ -60,4 +72,16 @@ export async function getDictionaryImportBatch(batchId: string) {
     `/api/v1/admin/dictionary-import/batches/${batchId}`
   );
   return res.data;
+}
+
+export async function getDictionaryImportValidationReport(batchId: string) {
+  const res = await apiClient.get<DictionaryImportValidateResponse>(
+    `/api/v1/admin/dictionary-import/batches/${batchId}/validation-report`
+  );
+  return res.data;
+}
+
+export async function discardDictionaryImportBatch(batchId: string, opts?: { force?: boolean }) {
+  const suffix = opts?.force ? '?force=true' : '';
+  await apiClient.delete(`/api/v1/admin/dictionary-import/batches/${batchId}${suffix}`);
 }

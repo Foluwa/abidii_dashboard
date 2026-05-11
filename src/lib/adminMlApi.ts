@@ -178,6 +178,42 @@ export type VerifiedPromotionCollectionGapResponse = {
   items: VerifiedPromotionCollectionGap[];
 };
 
+export type HandwritingDatasetReadinessClass = {
+  class_label: string;
+  language: string;
+  script_group: string;
+  candidate_count: number;
+  verified_count: number;
+  approved_pending_count: number;
+  rejected_count: number;
+  target_min_count: number;
+  target_high_count: number;
+  readiness_status: "missing" | "low" | "ready";
+  is_blocking_training: boolean;
+  recommended_action: string;
+  needed_to_300: number;
+  needed_to_500: number;
+};
+
+export type HandwritingDatasetReadinessResponse = {
+  manifest_id?: string | null;
+  generated_at: string;
+  target_min_count: number;
+  target_high_count: number;
+  global_readiness: {
+    total_classes: number;
+    ready_classes: number;
+    missing_classes: number;
+    low_classes: number;
+    blocking_classes: number;
+    approved_pending_samples: number;
+    can_run_dry_run_promotion: boolean;
+    can_run_full_training: boolean;
+    next_best_action: string;
+  };
+  classes: HandwritingDatasetReadinessClass[];
+};
+
 function buildQuery(params: Record<string, string | number | boolean | undefined>) {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -263,10 +299,13 @@ export async function listVerifiedPromotionManifests() {
   return res.data;
 }
 
-export async function generateVerifiedPromotionManifest(language: "all" | "yor" | "eng" = "all") {
+export async function generateVerifiedPromotionManifest(
+  language: "all" | "yor" | "eng" = "all",
+  options?: { dry_run?: boolean; confirmation?: string }
+) {
   const res = await apiClient.post<Record<string, unknown>>(
     "/api/v1/admin/ml/verified-promotion/manifests",
-    { language }
+    { language, dry_run: options?.dry_run ?? true, confirmation: options?.confirmation ?? null }
   );
   return res.data;
 }
@@ -366,6 +405,42 @@ export async function getVerifiedPromotionCollectionGaps(params?: {
       target_low: params?.target_low ?? 300,
       target_high: params?.target_high ?? 500,
     })}`
+  );
+  return res.data;
+}
+
+export async function getHandwritingDatasetReadiness(params?: {
+  manifest_id?: string;
+  target_min_count?: number;
+  target_high_count?: number;
+}) {
+  const res = await apiClient.get<HandwritingDatasetReadinessResponse>(
+    `/api/v1/admin/ml/handwriting/dataset-readiness${buildQuery({
+      manifest_id: params?.manifest_id,
+      target_min_count: params?.target_min_count ?? 300,
+      target_high_count: params?.target_high_count ?? 500,
+    })}`
+  );
+  return res.data;
+}
+
+export async function uploadHandwritingCandidateSamples(payload: {
+  language: "yor" | "eng";
+  class_label: string;
+  source?: string;
+  contributor_id?: string;
+  files: File[];
+}) {
+  const form = new FormData();
+  form.set("language", payload.language);
+  form.set("class_label", payload.class_label);
+  form.set("source", payload.source ?? "dashboard_upload");
+  if (payload.contributor_id) form.set("contributor_id", payload.contributor_id);
+  payload.files.forEach((file) => form.append("files", file));
+  const res = await apiClient.post<Record<string, unknown>>(
+    "/api/v1/admin/ml/handwriting/candidates/upload",
+    form,
+    { headers: { "Content-Type": "multipart/form-data" } }
   );
   return res.data;
 }

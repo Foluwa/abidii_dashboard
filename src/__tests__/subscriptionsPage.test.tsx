@@ -60,19 +60,19 @@ describe('SubscriptionsPage', () => {
   it('renders tabbed subscription views with event and attempt filters', async () => {
     render(<SubscriptionsPage />);
 
-    expect(screen.getByText('Subscription Management')).toBeInTheDocument();
+    expect(screen.getByText('Billing Operations')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Subscriptions' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Subscription Events' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Verification Attempts' })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Subscription Events' }));
-    expect(screen.getByText('Recent Subscription Events')).toBeInTheDocument();
+    expect(screen.getAllByText('Recent Subscription Events').length).toBeGreaterThan(0);
     expect(screen.getByPlaceholderText('User id, email, username')).toBeInTheDocument();
     expect(screen.getByDisplayValue('All event types')).toBeInTheDocument();
     expect(screen.getByDisplayValue('All platforms')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Verification Attempts' }));
-    expect(screen.getByText('Recent Verification Attempts')).toBeInTheDocument();
+    expect(screen.getAllByText('Recent Verification Attempts').length).toBeGreaterThan(0);
     expect(screen.getByText('No attempts found')).toBeInTheDocument();
   });
 });

@@ -109,6 +109,15 @@ export const mainNavigationItems: AdminNavItem[] = [
     ],
   },
   {
+    name: "Notifications",
+    icon: <PieChartIcon />,
+    permission: "users:read",
+    subItems: [
+      { name: "Compose", path: "/notifications" },
+      { name: "History", path: "/notifications/history" },
+    ],
+  },
+  {
     name: "Community",
     icon: <UserCircleIcon />,
     subItems: [
