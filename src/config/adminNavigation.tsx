@@ -5,10 +5,12 @@ import {
   BoxCubeIcon,
   GridIcon,
   ListIcon,
-  PageIcon,
   PieChartIcon,
   TableIcon,
   UserCircleIcon,
+  AudioIcon,
+  BellIcon,
+  GroupIcon,
 } from "@/icons";
 
 export type AdminNavItem = {
@@ -29,88 +31,46 @@ export const mainNavigationItems: AdminNavItem[] = [
     path: "/dashboard",
   },
   {
-    name: "Reports",
+    name: "Analytics",
     icon: <PieChartIcon />,
     permission: "users:read",
-    subItems: [
-      { name: "Game Analytics", path: "/reports/game-analytics" },
-      {
-        name: "Player Analytics",
-        path: "/reports/player-analytics",
-      },
-      {
-        name: "Curriculum Ops",
-        path: "/reports/curriculum-ops",
-      },
-    ],
+    path: "/analytics",
+    activePaths: ["/analytics/players", "/analytics/curriculum-ops"],
   },
   {
     name: "Content",
     icon: <ListIcon />,
     permission: "content:read",
     subItems: [
-      {
-        name: "Library",
-        subItems: [
-          { name: "Words", path: "/content/library/words" },
-          { name: "Phrases", path: "/content/library/phrases" },
-          { name: "Time Phrases", path: "/content/library/time-phrases" },
-          { name: "Sentences", path: "/content/library/sentences" },
-          { name: "Proverbs", path: "/content/library/proverbs" },
-          { name: "Letters", path: "/content/library/letters" },
-          { name: "Numbers", path: "/content/library/numbers" },
-        ],
-      },
-      {
-        name: "Learning Items",
-        path: "/content/learning-items",
-      },
+      { name: "Words", path: "/content/words" },
+      { name: "Phrases", path: "/content/phrases" },
+      { name: "Time Phrases", path: "/content/time-phrases" },
+      { name: "Sentences", path: "/content/sentences" },
+      { name: "Proverbs", path: "/content/proverbs" },
+      { name: "Letters", path: "/content/letters" },
+      { name: "Numbers", path: "/content/numbers" },
+      { name: "Learning Items", path: "/content/learning-items" },
       { name: "Languages", path: "/content/languages" },
-    ],
-  },
-  {
-    name: "Curriculum",
-    icon: <PageIcon />,
-    permission: "content:read",
-    subItems: [
-      {
-        name: "Courses",
-        subItems: [
-          { name: "All Courses", path: "/curriculum/courses" },
-          { name: "Publishing Readiness", path: "/curriculum/publishing" },
-        ],
-      },
       { name: "Curriculum Editor", path: "/curriculum/editor" },
-      {
-        name: "Lesson Blueprints",
-        path: "/curriculum/lesson-blueprints",
-      },
+      { name: "Lesson Blueprints", path: "/curriculum/lesson-blueprints" },
+      { name: "Courses", path: "/curriculum/courses" },
+      { name: "Publishing Readiness", path: "/curriculum/publishing" },
     ],
   },
   {
     name: "Media",
-    icon: <PieChartIcon />,
+    icon: <AudioIcon />,
     subItems: [
       { name: "Media Library", path: "/media/library", permission: "content:read" },
-      {
-        name: "Audio",
-        permission: "audio:read",
-        subItems: [
-          { name: "Voices", path: "/media/audio/voices" },
-          { name: "Audio Jobs", path: "/media/audio/jobs" },
-          { name: "Audio Generate", path: "/media/audio/generate" },
-        ],
-      },
-      {
-        name: "Orphan Assets",
-        path: "/media/orphan-assets",
-        permission: "content:read",
-      },
+      { name: "Voices", path: "/audio/voices", permission: "audio:read" },
+      { name: "Audio Jobs", path: "/audio/jobs", permission: "audio:read" },
+      { name: "Audio Generate", path: "/audio/generate", permission: "audio:read" },
+      { name: "Orphan Assets", path: "/content/audit-log/orphan-assets", permission: "content:read" },
     ],
   },
   {
     name: "Notifications",
-    icon: <PieChartIcon />,
+    icon: <BellIcon />,
     permission: "users:read",
     subItems: [
       { name: "Compose", path: "/notifications" },
@@ -119,26 +79,16 @@ export const mainNavigationItems: AdminNavItem[] = [
   },
   {
     name: "Community",
-    icon: <UserCircleIcon />,
+    icon: <GroupIcon />,
     subItems: [
+      { name: "Users", path: "/users", permission: "users:read" },
+      { name: "Admins", path: "/users/admins", permission: "users:read" },
+      { name: "Subscriptions", path: "/community/billing", permission: "users:read" },
+      { name: "Billing Events", path: "/community/billing/events", permission: "users:read" },
       {
-        name: "Users",
-        subItems: [
-          { name: "All Users", path: "/community/users", permission: "users:read" },
-          { name: "Admins", path: "/community/users/admins", permission: "users:read" },
-        ],
-      },
-      {
-        name: "Billing",
-        subItems: [
-          { name: "Subscriptions", path: "/community/billing", permission: "users:read" },
-          { name: "Events", path: "/community/billing/events", permission: "users:read" },
-          {
-            name: "Verification Attempts",
-            path: "/community/billing/verification-attempts",
-            permission: "users:read",
-          },
-        ],
+        name: "Verification Attempts",
+        path: "/community/billing/verification-attempts",
+        permission: "users:read",
       },
     ],
   },
@@ -150,39 +100,26 @@ export const mainNavigationItems: AdminNavItem[] = [
         name: "Observability",
         permission: "system:read",
         subItems: [
-          { name: "Status", path: "/system/observability/status" },
-          { name: "Metrics", path: "/system/observability/metrics" },
-          { name: "Alerts", path: "/system/observability/alerts" },
-          { name: "Cron Jobs", path: "/system/observability/cron-jobs" },
+          { name: "Status", path: "/system/status" },
+          { name: "Metrics", path: "/system/metrics" },
+          { name: "Alerts", path: "/system/alerts" },
+          { name: "Cron Jobs", path: "/system/cron" },
         ],
       },
-      {
-        name: "Jobs",
-        permission: "system:read",
-        subItems: [
-          { name: "Admin Jobs", path: "/system/jobs/admin" },
-        ],
-      },
+      { name: "Admin Jobs", path: "/system/jobs/admin", permission: "system:read" },
       {
         name: "ML Training",
         permission: "system:read",
         subItems: [
-          { name: "Overview", path: "/system/ml-training" },
-          { name: "Training Jobs", path: "/system/ml-training/jobs" },
-          { name: "Verified Review", path: "/system/ml-training/manifests" },
-          { name: "Vision Jobs", path: "/system/ml-training/vision-jobs" },
-          { name: "Model Versions", path: "/system/ml-training/models" },
+          { name: "Overview", path: "/operations/ml-training" },
+          { name: "Training Jobs", path: "/operations/ml-training/jobs" },
+          { name: "Verified Review", path: "/operations/ml-training/manifests" },
+          { name: "Vision Jobs", path: "/operations/ml-training/vision-jobs" },
+          { name: "Model Versions", path: "/operations/ml-training/models" },
         ],
       },
-      {
-        name: "Configuration",
-        subItems: [
-          { name: "Platform", path: "/system/configuration/platform", permission: "system:read" },
-          { name: "Application", path: "/system/configuration/application" },
-          { name: "Language", path: "/system/configuration/language" },
-        ],
-      },
-      { name: "Audit Log", path: "/system/audit-log", permission: "content:read" },
+      { name: "Configuration", path: "/system/configuration" },
+      { name: "Audit Log", path: "/content/audit-log", permission: "content:read" },
       { name: "Testing", path: "/system/testing", permission: "testing:access" },
     ],
   },
