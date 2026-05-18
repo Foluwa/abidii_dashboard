@@ -2,7 +2,7 @@ import React, { act } from 'react';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import CurriculumEditorPage from '@/app/(admin)/(others-pages)/content/curriculum/editor/page';
+import CurriculumEditorPage from '@/app/(admin)/(others-pages)/curriculum/editor/page';
 import { renderWithProviders as render } from '@/test-utils';
 
 jest.mock('next/navigation', () => ({

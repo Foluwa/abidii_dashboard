@@ -2,17 +2,22 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import StatusBadge from '@/components/admin/StatusBadge';
 import { useToast } from '@/contexts/ToastContext';
 import {
   applyDictionaryImport,
+  getDictionaryImportBatch,
   listDictionaryImportBatches,
   validateDictionaryImportFromGoogleSheet,
 } from '@/lib/dictionaryImportApi';
 import type {
   DictionaryImportBatchListItem,
   DictionaryImportValidateResponse,
+  DictionaryImportRowPreviewPayload,
 } from '@/types/dictionaryImport';
+
+const PAIR_CODE_REGEX = /^[a-z]{3}_[a-z]{3}$/;
 
 const expectedColumns = [
   { name: 'source_row_key', required: false, description: 'Stable row key. Auto-generated if blank.', example: 'word_yor_0001' },
@@ -23,7 +28,24 @@ const expectedColumns = [
   { name: 'meaning_hint', required: false, description: 'Sense disambiguation when a word has multiple meanings', example: 'greeting' },
   { name: 'pos', required: false, description: 'Part of speech', example: 'interjection' },
   { name: 'review_status', required: true, description: 'Editorial status', example: 'approved' },
+  { name: 'difficulty_level', required: false, description: 'Learning difficulty (1-5)', example: '2' },
+  { name: 'ipa_pronunciation', required: false, description: 'IPA phonetic transcription', example: '/bəˈwoː/' },
+  { name: 'word_category', required: false, description: 'Semantic category or topic', example: 'greetings' },
+  { name: 'audio_key', required: false, description: 'S3 audio file key (auto-generated if omitted)', example: 'audio/words/hello.mp3' },
 ];
+
+function isValidSpreadsheetUrl(value: string): boolean {
+  return value.trim().toLowerCase().startsWith('https://docs.google.com/spreadsheets');
+}
+
+function parseSheetInput(value: string): { sheet_url?: string; spreadsheet_id?: string } {
+  const trimmed = value.trim();
+  if (isValidSpreadsheetUrl(trimmed)) {
+    return { sheet_url: trimmed };
+  }
+  // Treat anything else as a raw spreadsheet ID
+  return { spreadsheet_id: trimmed };
+}
 
 function renderStatus(status: string) {
   if (status === 'applied') return <StatusBadge status="success" label="Applied" />;
@@ -46,8 +68,99 @@ function formatDate(value?: string | null) {
   }
 }
 
+function RowActionBadge({ action }: { action?: string | null }) {
+  const text = action || 'unknown';
+  const style =
+    text === 'insert'
+      ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
+      : text === 'update'
+        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+        : text === 'skip'
+          ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+          : 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200';
+  return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${style}`}>{text}</span>;
+}
+
+function RowPreviewTable({ rows }: { rows: DictionaryImportRowPreviewPayload[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const display = expanded ? rows : rows.slice(0, 10);
+  const hasMore = rows.length > 10;
+
+  return (
+    <div className="mt-4">
+      <div className="mb-2 flex items-center justify-between">
+        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Row Preview</h4>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{rows.length} row(s)</span>
+      </div>
+      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 dark:bg-gray-900/40">
+            <tr>
+              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Action</th>
+              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Row</th>
+              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Key</th>
+              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Lemma</th>
+              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">POS</th>
+              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Gloss</th>
+              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {display.map((row, idx) => (
+              <tr key={`${row.source_row_key}-${idx}`} className={row.row_action === 'skip' ? 'opacity-60' : undefined}>
+                <td className="px-3 py-2"><RowActionBadge action={row.row_action} /></td>
+                <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{row.row_number}</td>
+                <td className="px-3 py-2 font-mono text-xs text-gray-600 dark:text-gray-400">{row.source_row_key}</td>
+                <td className="px-3 py-2 text-gray-900 dark:text-white">{row.lemma}</td>
+                <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{row.pos}</td>
+                <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{row.gloss_text}</td>
+                <td className="px-3 py-2">
+                  {row.applyable ? (
+                    <span className="text-xs text-green-700 dark:text-green-300">Ready</span>
+                  ) : (
+                    <span className="text-xs text-red-700 dark:text-red-300">Blocked</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {hasMore && (
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="mt-2 text-sm text-blue-600 hover:underline dark:text-blue-400"
+        >
+          {expanded ? 'Show first 10 rows' : `Show all ${rows.length} rows`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImportComplete: () => void }) {
   const toast = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [isExpanded, setIsExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.localStorage.getItem('dictionary-import-expanded') !== 'false';
+    }
+    return true;
+  });
+
+  const toggleExpanded = useCallback(() => {
+    setIsExpanded((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('dictionary-import-expanded', String(next));
+      }
+      return next;
+    });
+  }, []);
+
   const [sheetReference, setSheetReference] = useState('');
   const [worksheetTitle, setWorksheetTitle] = useState('eng_yor');
   const [pairCode, setPairCode] = useState('eng_yor');
@@ -58,6 +171,37 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
   const [applying, setApplying] = useState(false);
   const [history, setHistory] = useState<DictionaryImportBatchListItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [activeBatchId, setActiveBatchId] = useState<string | null>(null);
+  const [confirmApplyBatchId, setConfirmApplyBatchId] = useState<string | null>(null);
+  const [confirmDiscardBatchId, setConfirmDiscardBatchId] = useState<string | null>(null);
+  const [discarding, setDiscarding] = useState(false);
+  const [showAllIssues, setShowAllIssues] = useState(false);
+  const [showRowPreview, setShowRowPreview] = useState(true);
+
+  // Restore active batch from URL on mount
+  useEffect(() => {
+    const batchFromUrl = searchParams.get('batch');
+    if (batchFromUrl) {
+      setActiveBatchId(batchFromUrl);
+      // Auto-poll if batch is still running
+      void (async () => {
+        try {
+          const batch = await getDictionaryImportBatch(batchFromUrl);
+          if (batch.status === 'validated' || batch.status === 'validation_failed') {
+            const report = await getDictionaryImportBatch(batchFromUrl);
+            setValidation(report);
+          } else if (batch.status === 'validating' || batch.status === 'applying') {
+            startPolling(batchFromUrl);
+          }
+        } catch {
+          // Batch may have been discarded; clear it from URL
+          const next = new URLSearchParams(searchParams.toString());
+          next.delete('batch');
+          router.replace(`${window.location.pathname}?${next.toString()}`, { scroll: false });
+        }
+      })();
+    }
+  }, []);
 
   const refreshHistory = useCallback(async () => {
     setLoadingHistory(true);
@@ -73,6 +217,34 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
   useEffect(() => {
     void refreshHistory();
   }, [refreshHistory]);
+
+  const startPolling = useCallback((batchId: string) => {
+    void (async () => {
+      const startedAt = Date.now();
+      const timeoutMs = 10 * 60 * 1000;
+      while (Date.now() - startedAt < timeoutMs) {
+        const batch = await getDictionaryImportBatch(batchId);
+        if (batch.status === 'validated' || batch.status === 'validation_failed') {
+          const report = await getDictionaryImportValidationReport(batchId);
+          setValidation(report);
+          setActiveBatchId(null);
+          // Remove batch from URL
+          const next = new URLSearchParams(searchParams.toString());
+          next.delete('batch');
+          router.replace(`${window.location.pathname}?${next.toString()}`, { scroll: false });
+          if (report.valid) {
+            toast.success(`Validation passed. ${report.counters.staged_rows} rows ready.`);
+          } else {
+            toast.error(`Validation failed. ${report.summary.errors} errors found.`);
+          }
+          await refreshHistory();
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+      toast.error('Validation is still running. Check Batch History and refresh.');
+    })();
+  }, [router, searchParams, toast, refreshHistory]);
 
   const handleValidate = async () => {
     const trimmedReference = sheetReference.trim();
@@ -91,27 +263,49 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
       toast.error('Enter a pair code like eng_yor.');
       return;
     }
+    if (!PAIR_CODE_REGEX.test(trimmedPairCode)) {
+      toast.error('Pair code must match format: three lowercase letters, underscore, three lowercase letters (e.g., eng_yor).');
+      return;
+    }
 
     setValidating(true);
     setValidation(null);
+    setShowAllIssues(false);
     try {
       const result = await validateDictionaryImportFromGoogleSheet({
         pair_code: trimmedPairCode,
         worksheet_title: trimmedWorksheet,
         header_row: headerRow,
-        ...(trimmedReference.startsWith('http')
-          ? { sheet_url: trimmedReference }
-          : { spreadsheet_id: trimmedReference }),
+        ...parseSheetInput(trimmedReference),
       });
-      setValidation(result);
-      if (result.valid) {
-        toast.success(`Validation passed. ${result.counters.staged_rows} rows ready.`);
-      } else {
-        toast.error(`Validation failed. ${result.summary.errors} errors found.`);
-      }
+      setActiveBatchId(result.batch_id);
+      // Persist batch ID in URL
+      const next = new URLSearchParams(searchParams.toString());
+      next.set('batch', result.batch_id ?? '');
+      router.replace(`${window.location.pathname}?${next.toString()}`, { scroll: false });
+      toast.success('Validation queued. Watch Batch History for progress.');
       await refreshHistory();
+      startPolling(result.batch_id);
+      return;
     } catch (error: any) {
-      toast.error(error?.response?.data?.detail ?? error?.message ?? 'Google Sheets validation failed');
+      // Fall back to the synchronous endpoint if the worker isn't running yet.
+      try {
+        const result = await validateDictionaryImportFromGoogleSheet({
+          pair_code: trimmedPairCode,
+          worksheet_title: trimmedWorksheet,
+          header_row: headerRow,
+          ...parseSheetInput(trimmedReference),
+        });
+        setValidation(result);
+        if (result.valid) {
+          toast.success(`Validation passed. ${result.counters.staged_rows} rows ready.`);
+        } else {
+          toast.error(`Validation failed. ${result.summary.errors} errors found.`);
+        }
+        await refreshHistory();
+      } catch (fallbackError: any) {
+        toast.error(fallbackError?.response?.data?.detail ?? fallbackError?.message ?? error?.message ?? 'Google Sheets validation failed');
+      }
     } finally {
       setValidating(false);
     }
@@ -136,10 +330,61 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
     }
   };
 
+  const handleApplyExistingBatch = async (batchId: string) => {
+    setApplying(true);
+    try {
+      const result = await applyDictionaryImport(batchId);
+      toast.success(
+        `Import complete. ${result.counters.applied_inserted} inserted, ${result.counters.applied_updated} updated.`
+      );
+      await refreshHistory();
+      onImportComplete();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail ?? error?.message ?? 'Apply failed');
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleDiscardBatch = async (batchId: string) => {
+    setDiscarding(true);
+    try {
+      const batch = history.find((item) => item.id === batchId);
+      const force = (batch?.status || '').toLowerCase() === 'applied';
+      await discardDictionaryImportBatch(batchId, { force });
+      toast.success('Batch discarded.');
+      await refreshHistory();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail ?? error?.message ?? 'Discard failed');
+    } finally {
+      setDiscarding(false);
+    }
+  };
+
+  const totalChanges = (validation?.counters.would_insert ?? 0) + (validation?.counters.would_update ?? 0);
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+      {/* Accordion Header */}
+      <button
+        type="button"
+        onClick={toggleExpanded}
+        className="flex w-full items-center justify-between p-6 text-left hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors"
+      >
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Bulk Import from Google Sheets</h2>
+        <svg
+          className={`h-5 w-5 text-gray-500 transition-transform dark:text-gray-400 ${isExpanded ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Body */}
+      <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="px-6 pb-6">
+      <div className="mb-4 flex items-center justify-between">
         <button
           type="button"
           onClick={() => setShowColumnInfo(!showColumnInfo)}
@@ -186,13 +431,24 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Pair Code</label>
+          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Pair Code <span className="text-xs text-gray-500">(e.g. eng_yor)</span>
+          </label>
           <input
             type="text"
             value={pairCode}
             onChange={(event) => setPairCode(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
+              pairCode && !PAIR_CODE_REGEX.test(pairCode.trim().toLowerCase())
+                ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                : 'border-gray-300 focus:border-blue-500'
+            }`}
           />
+          {pairCode && !PAIR_CODE_REGEX.test(pairCode.trim().toLowerCase()) && (
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+              Must be 3 lowercase letters, underscore, 3 lowercase letters (e.g. eng_yor)
+            </p>
+          )}
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Header Row</label>
@@ -238,15 +494,55 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
               <span className="font-mono text-xs text-gray-500">{validation.batch_id}</span>
             )}
           </div>
-          {validation.issues.length > 0 && (
-            <ul className="mt-3 max-h-44 space-y-1 overflow-y-auto text-sm text-red-700 dark:text-red-300">
-              {validation.issues.slice(0, 20).map((issue, index) => (
-                <li key={`${issue.code}-${index}`}>
-                  Row {issue.row_number ?? '-'}{issue.column_name ? ` (${issue.column_name})` : ''}: {issue.message}
-                </li>
-              ))}
-            </ul>
+
+          {/* Row Preview */}
+          {validation.rows && validation.rows.length > 0 && (
+            <>
+              <div className="mt-3 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setShowRowPreview((prev) => !prev)}
+                  className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+                >
+                  {showRowPreview ? 'Hide row preview' : 'Show row preview'}
+                </button>
+              </div>
+              {showRowPreview && <RowPreviewTable rows={validation.rows} />}
+            </>
           )}
+
+          {/* Issues */}
+          {validation.issues.length > 0 && (
+            <div className="mt-3">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-sm font-medium text-red-700 dark:text-red-300">
+                  Issues ({validation.issues.length})
+                </span>
+                {validation.issues.length > 20 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllIssues((prev) => !prev)}
+                    className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    {showAllIssues ? 'Show first 20' : `Show all ${validation.issues.length}`}
+                  </button>
+                )}
+              </div>
+              <ul className="max-h-60 space-y-1 overflow-y-auto text-sm text-red-700 dark:text-red-300">
+                {(showAllIssues ? validation.issues : validation.issues.slice(0, 20)).map((issue, index) => (
+                  <li key={`${issue.code}-${index}`}>
+                    Row {issue.row_number ?? '-'}{issue.column_name ? ` (${issue.column_name})` : ''}: {issue.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {totalChanges > 100 && validation?.valid && (
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <strong>Large import:</strong> This will {validation.counters.would_insert} insert and {validation.counters.would_update} update rows. Please review the preview above before applying.
         </div>
       )}
 
@@ -297,6 +593,55 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <ConfirmationModal
+        isOpen={!!confirmApplyBatchId}
+        onClose={() => setConfirmApplyBatchId(null)}
+        onConfirm={async () => {
+          const batchId = confirmApplyBatchId;
+          if (!batchId) return;
+          try {
+            await handleApplyExistingBatch(batchId);
+          } finally {
+            setConfirmApplyBatchId(null);
+          }
+        }}
+        title="Apply Import Batch"
+        message="Apply this validated batch now? This will import/update only rows marked as approved."
+        confirmText="Apply"
+        cancelText="Cancel"
+        variant="warning"
+        isLoading={applying}
+      />
+
+      <ConfirmationModal
+        isOpen={!!confirmDiscardBatchId}
+        onClose={() => setConfirmDiscardBatchId(null)}
+        onConfirm={async () => {
+          const batchId = confirmDiscardBatchId;
+          if (!batchId) return;
+          try {
+            await handleDiscardBatch(batchId);
+          } finally {
+            setConfirmDiscardBatchId(null);
+          }
+        }}
+        title="Discard Import Batch"
+        message={(() => {
+          const batch = history.find((item) => item.id === confirmDiscardBatchId);
+          const isApplied = (batch?.status || '').toLowerCase() === 'applied';
+          if (isApplied) {
+            return 'Discard this applied batch from the database to save space? This is permanent and is admin-only.';
+          }
+          return 'Discard this batch from the database to save space? This deletes staging rows and issues for this batch.';
+        })()}
+        confirmText="Discard"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={discarding}
+      />
         </div>
       </div>
     </div>

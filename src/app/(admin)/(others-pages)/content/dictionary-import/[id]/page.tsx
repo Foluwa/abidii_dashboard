@@ -55,7 +55,7 @@ export default function DictionaryImportBatchDetailPage() {
       <div className="flex items-center justify-between gap-4">
         <PageBreadCrumb pageTitle="Dictionary Import Batch" />
         <Link
-          href="/content/library/words"
+          href="/content/words"
           className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-white/5"
         >
           Back to Importer

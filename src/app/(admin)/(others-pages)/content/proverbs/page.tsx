@@ -4,7 +4,15 @@ import React, { useState } from "react";
 import { useProverbs, useLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import type { Proverb } from "@/types/api";
-import { FiVolume2 } from "react-icons/fi";
+import {
+  ContentPageHeader,
+  ContentStatsCard,
+  ContentStatsGrid,
+  ContentFiltersCard,
+  ActiveFilterChips,
+  StickyBulkActionBar,
+} from '@/components/admin/layout';
+import { FiVolume2, FiGlobe, FiBarChart2, FiCheckCircle, FiAlertTriangle } from "react-icons/fi";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Toast from "@/components/ui/toast/Toast";
 import Alert from "@/components/ui/alert/Alert";
@@ -303,6 +311,9 @@ export default function ProverbsPage() {
   const [alignmentError, setAlignmentError] = useState("");
   const [previewingWordIndex, setPreviewingWordIndex] = useState<number | null>(null);
   const wordPreviewAudioRef = React.useRef<HTMLAudioElement | null>(null);
+  const [search, setSearch] = useState("");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showCleanupAccordion, setShowCleanupAccordion] = useState(false);
 
   // Helper to format error messages (handles both string and object errors)
   const formatErrorMessage = (error: any, fallbackMessage: string): string => {
@@ -356,6 +367,30 @@ export default function ProverbsPage() {
       ? buildDerivedGameSplit(alignmentPrimarySegment, alignmentWords, gameSplitAnswerStartIndex)
       : null
   ), [alignmentPrimarySegment, alignmentWords, gameSplitAnswerStartIndex, gameSplitEnabled]);
+
+  // Stats
+  const stats = React.useMemo(() => {
+    const withAudio = uniqueProverbs.filter((p: Proverb) => p.audio_url).length;
+    const aligned = uniqueProverbs.filter((p: Proverb) => p.alignment_status === 'approved' || p.alignment_status === 'reviewed').length;
+    const needsCleanup = uniqueProverbs.filter((p: Proverb) => p.alignment_job_status === 'failed').length;
+    return { total, withAudio, aligned, needsCleanup };
+  }, [uniqueProverbs, total]);
+
+  // Active filters
+  const activeFilters = [] as { label: string; onClear: () => void }[];
+  if (selectedLanguage) {
+    const lang = languages?.find((l: any) => l.id === selectedLanguage);
+    activeFilters.push({ label: `Language: ${lang?.name || selectedLanguage}`, onClear: () => { setSelectedLanguage(undefined); setPage(1); } });
+  }
+  if (search) activeFilters.push({ label: `Search: "${search}"`, onClear: () => { setSearch(""); setPage(1); } });
+  if (category) activeFilters.push({ label: `Category: ${category}`, onClear: () => { setCategory(""); setPage(1); } });
+
+  const clearAllFilters = () => {
+    setSelectedLanguage(undefined);
+    setSearch("");
+    setCategory("");
+    setPage(1);
+  };
 
   const resetAlignmentState = (transcriptText = "") => {
     setAlignmentRecord(null);
@@ -1274,164 +1309,192 @@ export default function ProverbsPage() {
   }
 
   return (
-    <div className="p-6">
-      <PageBreadCrumb pageTitle="Proverbs" />
+    <div className="space-y-6">
+      <ContentPageHeader
+        title="Proverbs"
+        subtitle="Manage proverbs and cultural sayings"
+        onAdd={openCreateModal}
+        addLabel="Add Proverb"
+      />
 
       {/* Messages */}
       {successMessage && <Toast type="success" message={successMessage} onClose={() => setSuccessMessage("")} />}
       {errorMessage && <Toast type="error" message={errorMessage} onClose={() => setErrorMessage("")} />}
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Proverbs Management</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Manage proverbs and cultural sayings
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            {selectedProverbs.length} selected
-          </span>
-          <button
-            onClick={handleBulkRegenerateAudio}
-            disabled={selectedProverbs.length === 0 || isBulkRegenerating}
-            className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-purple-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900"
-          >
-            <FiVolume2 className="h-4 w-4" />
-            {isBulkRegenerating ? "Regenerating..." : "Regenerate Selected Audio"}
-          </button>
-          <button
-            onClick={openCreateModal}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            + Add Proverb
-          </button>
-        </div>
-      </div>
+      <ContentStatsGrid cols={4}>
+        <ContentStatsCard label="Total" value={total} icon={FiBarChart2} />
+        <ContentStatsCard label="With Audio" value={stats.withAudio} icon={FiVolume2} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+        <ContentStatsCard label="Aligned" value={stats.aligned} icon={FiCheckCircle} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
+        <ContentStatsCard label="Needs Cleanup" value={stats.needsCleanup} icon={FiAlertTriangle} iconBgClass="bg-red-100 dark:bg-red-900/20" iconTextClass="text-red-600 dark:text-red-400" />
+      </ContentStatsGrid>
 
-      <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900 dark:text-amber-100">
-              Old Audio Format Cleanup
-            </h2>
-            <p className="mt-1 text-sm text-amber-900/80 dark:text-amber-100/80">
-              Preview or remove old proverb audio database rows. Apply creates a backup table and does not delete R2 objects.
-            </p>
+      <ContentFiltersCard
+        activeFilterCount={activeFilters.length}
+        onClearAll={clearAllFilters}
+        showAdvanced={showAdvancedFilters}
+        onToggleAdvanced={() => setShowAdvancedFilters(!showAdvancedFilters)}
+      >
+        {/* Primary Filters Row */}
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <div className="flex items-center gap-1.5">
+                <FiGlobe className="h-3.5 w-3.5" />
+                Language
+              </div>
+            </label>
+            <StyledSelect
+              value={selectedLanguage || ""}
+              onChange={(e) => {
+                setSelectedLanguage(e.target.value ? Number(e.target.value) : undefined);
+                setPage(1);
+              }}
+              options={[
+                { value: "", label: "All Languages" },
+                ...(languages?.map((lang: any) => ({
+                  value: lang.id,
+                  label: lang.name
+                })) || [])
+              ]}
+              fullWidth
+            />
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => void queueProverbCleanupJob(true)}
-              disabled={proverbCleanupLoading}
-              className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-900 disabled:opacity-60 dark:border-amber-500/30 dark:bg-gray-900 dark:text-amber-100"
-            >
-              Preview
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowProverbCleanupApplyConfirm(true)}
-              disabled={proverbCleanupLoading}
-              className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
-            >
-              Apply
-            </button>
+
+          <div className="flex-1 min-w-[240px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Search
+            </label>
+            <input
+              type="text"
+              placeholder="Search proverbs..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+            />
+          </div>
+
+          <div className="min-w-[140px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Per Page
+            </label>
+            <StyledSelect
+              value={limit}
+              onChange={(e) => {
+                setLimit(Number(e.target.value));
+                setPage(1);
+              }}
+              options={[
+                { value: 20, label: "20" },
+                { value: 50, label: "50" },
+                { value: 100, label: "100" }
+              ]}
+              fullWidth
+            />
           </div>
         </div>
-        {currentProverbCleanupJob ? (
-          <div className="mt-4 rounded-lg bg-white p-3 text-sm text-gray-700 dark:bg-gray-900 dark:text-gray-300">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="font-mono text-xs">{currentProverbCleanupJob.id.slice(0, 8)}</span>
-              <span className="font-medium">{currentProverbCleanupJob.status}</span>
-              <span>{Math.round(currentProverbCleanupJob.progress.percent)}%</span>
-              {currentProverbCleanupJob.error ? <span className="text-red-600 dark:text-red-300">{currentProverbCleanupJob.error}</span> : null}
+
+        {/* Advanced Filters Panel */}
+        {showAdvancedFilters && (
+          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div>
+                <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                  Category
+                </label>
+                <input
+                  type="text"
+                  value={category}
+                  onChange={(e) => {
+                    setCategory(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Filter by category..."
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+                />
+              </div>
             </div>
-            {currentProverbCleanupJob.result ? (
-              <div className="mt-2 grid gap-2 sm:grid-cols-4">
-                {([
-                  ["Affected", currentProverbCleanupJob.result.candidate_count ?? 0],
-                  ["Backed up", currentProverbCleanupJob.result.backup_count ?? "-"],
-                  ["Deleted", currentProverbCleanupJob.result.deleted_count ?? "-"],
-                  ["R2", currentProverbCleanupJob.result.r2_cleanup ?? "not_run"],
-                ] as Array<[string, unknown]>).map(([label, value]) => (
-                  <div key={label} className="rounded-lg border border-gray-200 p-2 dark:border-gray-800">
-                    <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</div>
-                    <div className="mt-1 font-semibold text-gray-900 dark:text-white">{String(value)}</div>
+          </div>
+        )}
+
+        <ActiveFilterChips filters={activeFilters} />
+      </ContentFiltersCard>
+
+      {/* Cleanup Accordion */}
+      <div className="overflow-hidden rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10">
+        <button
+          onClick={() => setShowCleanupAccordion(!showCleanupAccordion)}
+          className="flex w-full items-center justify-between px-5 py-3 text-left"
+        >
+          <span className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+            ▶ Old Audio Format Cleanup
+          </span>
+          <span className="text-xs text-amber-800 dark:text-amber-200">
+            {showCleanupAccordion ? "Collapse" : "Expand"}
+          </span>
+        </button>
+        {showCleanupAccordion && (
+          <div className="border-t border-amber-200 px-5 py-4 dark:border-amber-500/20">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-sm text-amber-900/80 dark:text-amber-100/80">
+                  Preview or remove old proverb audio database rows. Apply creates a backup table and does not delete R2 objects.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => void queueProverbCleanupJob(true)}
+                  disabled={proverbCleanupLoading}
+                  className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-900 disabled:opacity-60 dark:border-amber-500/30 dark:bg-gray-900 dark:text-amber-100"
+                >
+                  Preview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowProverbCleanupApplyConfirm(true)}
+                  disabled={proverbCleanupLoading}
+                  className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+            {currentProverbCleanupJob ? (
+              <div className="mt-4 rounded-lg bg-white p-3 text-sm text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="font-mono text-xs">{currentProverbCleanupJob.id.slice(0, 8)}</span>
+                  <span className="font-medium">{currentProverbCleanupJob.status}</span>
+                  <span>{Math.round(currentProverbCleanupJob.progress.percent)}%</span>
+                  {currentProverbCleanupJob.error ? <span className="text-red-600 dark:text-red-300">{currentProverbCleanupJob.error}</span> : null}
+                </div>
+                {currentProverbCleanupJob.result ? (
+                  <div className="mt-2 grid gap-2 sm:grid-cols-4">
+                    {([
+                      ["Affected", currentProverbCleanupJob.result.candidate_count ?? 0],
+                      ["Backed up", currentProverbCleanupJob.result.backup_count ?? "-"],
+                      ["Deleted", currentProverbCleanupJob.result.deleted_count ?? "-"],
+                      ["R2", currentProverbCleanupJob.result.r2_cleanup ?? "not_run"],
+                    ] as Array<[string, unknown]>).map(([label, value]) => (
+                      <div key={label} className="rounded-lg border border-gray-200 p-2 dark:border-gray-800">
+                        <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</div>
+                        <div className="mt-1 font-semibold text-gray-900 dark:text-white">{String(value)}</div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : null}
+                <div className="mt-2 text-xs text-amber-700 dark:text-amber-200">
+                  R2 object deletion is not handled by this dashboard action.
+                </div>
               </div>
             ) : null}
-            <div className="mt-2 text-xs text-amber-700 dark:text-amber-200">
-              R2 object deletion is not handled by this dashboard action.
-            </div>
           </div>
-        ) : null}
+        )}
       </div>
 
-      {/* Filters */}
-      <div className="mb-6 grid gap-4 max-w-full md:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Search
-          </label>
-          <input
-            type="text"
-            placeholder="Search proverbs..."
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        <StyledSelect
-          label="Language"
-          value={selectedLanguage || ""}
-          onChange={(e) => {
-            setSelectedLanguage(e.target.value ? Number(e.target.value) : undefined);
-            setPage(1);
-          }}
-          options={[
-            { value: "", label: "All Languages" },
-            ...(languages?.map((lang: any) => ({
-              value: lang.id,
-              label: lang.name
-            })) || [])
-          ]}
-          fullWidth
-        />
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Category
-          </label>
-          <input
-            type="text"
-            value={category}
-            onChange={(e) => {
-              setCategory(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Filter by category..."
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        <StyledSelect
-          label="Per Page"
-          value={limit}
-          onChange={(e) => {
-            setLimit(Number(e.target.value));
-            setPage(1);
-          }}
-          options={[
-            { value: 20, label: "20" },
-            { value: 50, label: "50" },
-            { value: 100, label: "100" }
-          ]}
-          fullWidth
-        />
-      </div>
-
-      {/* Bulk Import from Google Sheets */}
+      {/* Bulk Import from Google Sheets (has built-in accordion) */}
       {selectedLanguage && (
         <div className="mb-6">
           <GoogleSheetsBulkImport
@@ -1440,10 +1503,10 @@ export default function ProverbsPage() {
             defaultWorksheetTitle="yo_proverbs"
             expectedColumns={[
               { name: 'source_row_key', required: true, description: 'Stable spreadsheet row key', example: 'proverb_yor_0001' },
-              { name: 'yoruba_text', required: true, description: 'Proverb in Yoruba', example: 'Ìwà l\'ẹ̀so ẹni' },
-              { name: 'english_translation', required: true, description: 'Direct translation', example: 'Character is one\'s beauty' },
+              { name: 'yoruba_text', required: true, description: 'Proverb in Yoruba', example: "Ìwà l'ẹ̀so ẹni" },
+              { name: 'english_translation', required: true, description: 'Direct translation', example: "Character is one's beauty" },
               { name: 'english_meaning', required: false, description: 'Interpretation/meaning', example: 'Good character is more important than physical appearance' },
-              { name: 'romanization', required: false, description: 'Romanized version', example: 'iwa l\'eso eni' },
+              { name: 'romanization', required: false, description: 'Romanized version', example: "iwa l'eso eni" },
               { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '3' },
               { name: 'category', required: false, description: 'Primary category', example: 'character' },
               { name: 'tags', required: false, description: 'Comma-separated tags', example: 'wisdom,values' },
@@ -1454,6 +1517,21 @@ export default function ProverbsPage() {
           />
         </div>
       )}
+
+      <StickyBulkActionBar
+        selectedCount={selectedProverbs.length}
+        onClear={() => setSelectedProverbs([])}
+        itemName="proverb"
+        actions={[
+          {
+            label: isLoadingVoices ? 'Loading voices...' : isBulkRegenerating ? 'Queueing...' : 'Regenerate Audio',
+            onClick: handleBulkRegenerateAudio,
+            disabled: isBulkRegenerating || isLoadingVoices,
+            loading: isBulkRegenerating || isLoadingVoices,
+            icon: <FiVolume2 className="h-4 w-4" />,
+          },
+        ]}
+      />
 
       {/* Proverbs Table - Desktop and Mobile */}
       <ProverbsDataTable

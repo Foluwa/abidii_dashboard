@@ -2,7 +2,7 @@ import React from 'react';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import AdminLessonBlueprintDetailPage from '@/app/(admin)/(others-pages)/content/curriculum/lesson-blueprints/[id]/page';
+import AdminLessonBlueprintDetailPage from '@/app/(admin)/(others-pages)/curriculum/lesson-blueprints/[id]/page';
 import { renderWithProviders as render } from '@/test-utils';
 
 const mockMutateAdmin = jest.fn().mockResolvedValue(undefined);

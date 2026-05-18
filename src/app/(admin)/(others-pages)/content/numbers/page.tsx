@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { useLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import type { Language } from "@/types/api";
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Toast from "@/components/ui/toast/Toast";
 import Alert from "@/components/ui/alert/Alert";
 import { GoogleSheetsBulkImport } from "@/components/admin/GoogleSheetsBulkImport";
@@ -14,7 +13,15 @@ import { Modal } from "@/components/ui/modal";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { RegenerateAudioModal, type RegenerateAudioTarget } from "@/components/modals/RegenerateAudioModal";
 import Pagination from "@/components/tables/Pagination";
-import { FiPlus, FiGlobe } from "react-icons/fi";
+import {
+  ContentPageHeader,
+  ContentStatsCard,
+  ContentStatsGrid,
+  ContentFiltersCard,
+  ActiveFilterChips,
+  StickyBulkActionBar,
+} from '@/components/admin/layout';
+import { FiBarChart2, FiVolume2, FiCheckCircle, FiGitMerge } from "react-icons/fi";
 
 interface Number {
   id: string;
@@ -110,9 +117,38 @@ export default function NumbersPage() {
   const [bulkRegenerateVoiceId, setBulkRegenerateVoiceId] = useState<string>("");
   const [bulkRegenerateNumberIds, setBulkRegenerateNumberIds] = useState<string[]>([]);
   const [bulkVoiceLanguagePrefix, setBulkVoiceLanguagePrefix] = useState<string>("");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [filterCompound, setFilterCompound] = useState<string>('');
+  const [filterDifficulty, setFilterDifficulty] = useState<string>('');
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const { languages } = useLanguages();
+
+  // Stats
+  const stats = useMemo(() => {
+    const withAudio = numbers.filter((n) => n.audio && n.audio.length > 0).length;
+    const aligned = numbers.filter((n) => n.alignment_status === 'approved' || n.alignment_status === 'reviewed').length;
+    const compound = numbers.filter((n) => n.is_compound).length;
+    return { total, withAudio, aligned, compound };
+  }, [numbers, total]);
+
+  // Active filters
+  const activeFilters = [] as { label: string; onClear: () => void }[];
+  if (selectedLanguage) {
+    const lang = languages?.find((l: Language) => l.id === selectedLanguage);
+    activeFilters.push({ label: `Language: ${lang?.name || selectedLanguage}`, onClear: () => { setSelectedLanguage(undefined); setPage(1); } });
+  }
+  if (search) activeFilters.push({ label: `Search: "${search}"`, onClear: () => { setSearch(""); setPage(1); } });
+  if (filterCompound) activeFilters.push({ label: `Compound: ${filterCompound === 'true' ? 'Yes' : 'No'}`, onClear: () => { setFilterCompound(''); setPage(1); } });
+  if (filterDifficulty) activeFilters.push({ label: `Difficulty: ${filterDifficulty}`, onClear: () => { setFilterDifficulty(''); setPage(1); } });
+
+  const clearAllFilters = () => {
+    setSelectedLanguage(undefined);
+    setSearch("");
+    setFilterCompound('');
+    setFilterDifficulty('');
+    setPage(1);
+  };
 
   const [formData, setFormData] = useState({
     language_id: "",
@@ -149,6 +185,12 @@ export default function NumbersPage() {
       if (search) {
         params.append("search", search);
       }
+      if (filterCompound) {
+        params.append("is_compound", filterCompound);
+      }
+      if (filterDifficulty) {
+        params.append("difficulty_level", filterDifficulty);
+      }
 
       const response = await apiClient.get<NumbersResponse>(
         `/api/v1/admin/numbers?${params.toString()}`
@@ -173,7 +215,7 @@ export default function NumbersPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [limit, page, search, selectedLanguage]);
+  }, [limit, page, search, selectedLanguage, filterCompound, filterDifficulty]);
 
   React.useEffect(() => {
     fetchNumbers();
@@ -471,40 +513,50 @@ export default function NumbersPage() {
     && selectableVisibleIds.every((id) => selectedNumbers.includes(id));
 
   return (
-    <div className="p-6">
-      <PageBreadCrumb pageTitle="Numbers" />
+    <div className="space-y-6">
+      <ContentPageHeader
+        title="Numbers Management"
+        subtitle="Manage numbers (1-1000+) across all languages"
+        onAdd={openCreateModal}
+        addLabel="Add Number"
+      >
+        <button
+          onClick={() => { setPage(1); fetchNumbers(); }}
+          className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          title="Refresh data"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+          Refresh
+        </button>
+      </ContentPageHeader>
 
-      <div className="mt-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Numbers Management
-            </h1>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Manage numbers (1-1000+) across all languages
-            </p>
-          </div>
-          <button
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-300 dark:focus:ring-brand-800"
-          >
-            <FiPlus className="w-5 h-5" />
-            Add Number
-          </button>
-        </div>
+      {/* Alerts */}
+      {successMessage && (
+        <Toast type="success" message={successMessage} onClose={() => setSuccessMessage("")} />
+      )}
+      {errorMessage && (
+        <Toast type="error" message={errorMessage} onClose={() => setErrorMessage("")} />
+      )}
 
-        {/* Alerts */}
-        {successMessage && (
-          <Toast type="success" message={successMessage} onClose={() => setSuccessMessage("")} />
-        )}
-        {errorMessage && (
-          <Toast type="error" message={errorMessage} onClose={() => setErrorMessage("")} />
-        )}
+      <ContentStatsGrid cols={4}>
+        <ContentStatsCard label="Total" value={stats.total} icon={FiBarChart2} />
+        <ContentStatsCard label="With Audio" value={stats.withAudio} icon={FiVolume2} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+        <ContentStatsCard label="Aligned" value={stats.aligned} icon={FiCheckCircle} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
+        <ContentStatsCard label="Compound" value={stats.compound} icon={FiGitMerge} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
+      </ContentStatsGrid>
 
-        {/* Filters */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex items-center gap-2 flex-1 max-w-xs">
-            <FiGlobe className="w-5 h-5 text-gray-400" />
+      <ContentFiltersCard
+        activeFilterCount={activeFilters.length}
+        onClearAll={clearAllFilters}
+        showAdvanced={showAdvancedFilters}
+        onToggleAdvanced={() => setShowAdvancedFilters(!showAdvancedFilters)}
+      >
+        {/* Primary Filters Row */}
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Language
+            </label>
             <StyledSelect
               value={selectedLanguage || ""}
               onChange={(e) => {
@@ -523,7 +575,10 @@ export default function NumbersPage() {
             />
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 min-w-[240px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Search
+            </label>
             <input
               type="text"
               placeholder="Search numbers..."
@@ -532,90 +587,142 @@ export default function NumbersPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500"
+              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+            />
+          </div>
+
+          <div className="min-w-[140px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Per Page
+            </label>
+            <StyledSelect
+              value={limit}
+              onChange={(e) => {
+                setLimit(Number(e.target.value));
+                setPage(1);
+              }}
+              options={[
+                { value: 20, label: "20" },
+                { value: 50, label: "50" },
+                { value: 100, label: "100" },
+              ]}
+              fullWidth
             />
           </div>
         </div>
 
-        {/* Bulk Import from Google Sheets */}
-        {selectedLanguage && (
-          <div className="mb-6">
-            <GoogleSheetsBulkImport
-              contentType="numbers"
-              onImportComplete={() => fetchNumbers()}
-              defaultLanguageId={selectedLanguage}
-              defaultWorksheetTitle="yo_numbers"
-              expectedColumns={[
-                { name: 'source_row_key', required: true, description: 'Stable spreadsheet row key', example: 'number_yor_0001' },
-                { name: 'number_value', required: true, description: 'Numeric value', example: '1' },
-                { name: 'number_type', required: true, description: 'cardinal/ordinal', example: 'cardinal' },
-                { name: 'word', required: true, description: 'Number word in target language', example: 'Ọkan' },
-                { name: 'word_normalized', required: false, description: 'Normalized form', example: 'okan' },
-                { name: 'written_form', required: false, description: 'Alternative written form', example: '' },
-                { name: 'ordinal_word', required: false, description: 'Ordinal form', example: 'Èkíní' },
-                { name: 'is_compound', required: false, description: 'TRUE for compound numbers', example: 'false' },
-                { name: 'base_numbers', required: false, description: 'JSON array or comma-separated bases', example: '[20,5]' },
-                { name: 'formation_rule', required: false, description: 'Formation pattern', example: 'base' },
-                { name: 'arithmetic_expression', required: false, description: 'Arithmetic expression for compound numbers', example: '20 + 5' },
-                { name: 'ipa_pronunciation', required: false, description: 'IPA pronunciation', example: '' },
-                { name: 'romanization', required: false, description: 'Romanized form', example: 'okan' },
-                { name: 'etymology', required: false, description: 'Origin/history notes', example: '' },
-                { name: 'number_system', required: false, description: 'Number system', example: 'decimal' },
-                { name: 'cultural_context', required: false, description: 'Cultural context', example: '' },
-                { name: 'usage_notes', required: false, description: 'Usage notes', example: '' },
-                { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '1' },
-                { name: 'display_order', required: false, description: 'Sort order', example: '1' },
-                { name: 'is_active', required: false, description: 'Whether this number is active', example: 'true' },
-                { name: 'review_status', required: false, description: 'Editorial review status', example: 'approved' },
-              ]}
-            />
+        {/* Advanced Filters */}
+        {showAdvancedFilters && (
+          <div className="mt-4 flex flex-wrap gap-4 border-t border-gray-100 pt-4 dark:border-white/[0.05]">
+            <div className="min-w-[160px]">
+              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">Compound</label>
+              <StyledSelect
+                value={filterCompound}
+                onChange={(e) => { setFilterCompound(e.target.value); setPage(1); }}
+                options={[
+                  { value: "", label: "All" },
+                  { value: "true", label: "Yes (compound)" },
+                  { value: "false", label: "No (simple)" },
+                ]}
+                fullWidth
+              />
+            </div>
+            <div className="min-w-[160px]">
+              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">Difficulty</label>
+              <StyledSelect
+                value={filterDifficulty}
+                onChange={(e) => { setFilterDifficulty(e.target.value); setPage(1); }}
+                options={[
+                  { value: "", label: "All Levels" },
+                  { value: "1", label: "Level 1" },
+                  { value: "2", label: "Level 2" },
+                  { value: "3", label: "Level 3" },
+                  { value: "4", label: "Level 4" },
+                  { value: "5", label: "Level 5" },
+                ]}
+                fullWidth
+              />
+            </div>
           </div>
         )}
 
-        {numbers.length > 0 && (
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={handleBulkRegenerateAudio}
-              disabled={selectedNumbers.length === 0 || isBulkRegenerating || isLoadingVoices}
-              className="px-4 py-2 rounded-lg bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoadingVoices ? "Loading voices..." : isBulkRegenerating ? "Queueing..." : "Regenerate Selected Audio"}
-            </button>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {selectedNumbers.length === 0
-                ? "Select one or more numbers to regenerate in bulk."
-                : `${selectedNumbers.length} number${selectedNumbers.length === 1 ? "" : "s"} selected`}
-            </span>
-          </div>
-        )}
+        <ActiveFilterChips filters={activeFilters} />
+      </ContentFiltersCard>
 
-        {/* Data Table */}
-        <NumbersDataTable
-          numbers={numbers}
-          isLoading={isLoading}
-          selectedNumbers={selectedNumbers}
-          allVisibleNumbersSelected={allVisibleNumbersSelected}
-          onToggleSelect={toggleNumberSelection}
-          onToggleSelectAll={toggleSelectAllVisibleNumbers}
-          onEdit={openEditModal}
-          onRegenerateAudio={handleRegenerateAudio}
-          onRequeueAlignment={handleRequeueAlignment}
-          onDelete={(id) => {
-            const number = numbers.find(n => n.id === id);
-            handleDeleteClick(id, number?.word || `#${number?.number_value}` || 'this number');
-          }}
-          languages={languages || []}
+      {/* Bulk Import from Google Sheets (has built-in accordion) */}
+      {selectedLanguage && (
+        <GoogleSheetsBulkImport
+          contentType="numbers"
+          onImportComplete={() => fetchNumbers()}
+          defaultLanguageId={selectedLanguage}
+          defaultWorksheetTitle="yo_numbers"
+          expectedColumns={[
+            { name: 'source_row_key', required: true, description: 'Stable spreadsheet row key', example: 'number_yor_0001' },
+            { name: 'number_value', required: true, description: 'Numeric value', example: '1' },
+            { name: 'number_type', required: true, description: 'cardinal/ordinal', example: 'cardinal' },
+            { name: 'word', required: true, description: 'Number word in target language', example: 'Ọkan' },
+            { name: 'word_normalized', required: false, description: 'Normalized form', example: 'okan' },
+            { name: 'written_form', required: false, description: 'Alternative written form', example: '' },
+            { name: 'ordinal_word', required: false, description: 'Ordinal form', example: 'Èkíní' },
+            { name: 'is_compound', required: false, description: 'TRUE for compound numbers', example: 'false' },
+            { name: 'base_numbers', required: false, description: 'JSON array or comma-separated bases', example: '[20,5]' },
+            { name: 'formation_rule', required: false, description: 'Formation pattern', example: 'base' },
+            { name: 'arithmetic_expression', required: false, description: 'Arithmetic expression for compound numbers', example: '20 + 5' },
+            { name: 'ipa_pronunciation', required: false, description: 'IPA pronunciation', example: '' },
+            { name: 'romanization', required: false, description: 'Romanized form', example: 'okan' },
+            { name: 'etymology', required: false, description: 'Origin/history notes', example: '' },
+            { name: 'number_system', required: false, description: 'Number system', example: 'decimal' },
+            { name: 'cultural_context', required: false, description: 'Cultural context', example: '' },
+            { name: 'usage_notes', required: false, description: 'Usage notes', example: '' },
+            { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '1' },
+            { name: 'display_order', required: false, description: 'Sort order', example: '1' },
+            { name: 'is_active', required: false, description: 'Whether this number is active', example: 'true' },
+            { name: 'review_status', required: false, description: 'Editorial review status', example: 'approved' },
+          ]}
         />
+      )}
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between gap-3 px-5 py-4">
-          <p className="text-sm text-gray-700 dark:text-gray-300">
-            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} numbers
-          </p>
-          <div className="ml-auto">
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-          </div>
+      <StickyBulkActionBar
+        selectedCount={selectedNumbers.length}
+        onClear={() => setSelectedNumbers([])}
+        itemName="number"
+        actions={[
+          {
+            label: "Regenerate Audio",
+            onClick: handleBulkRegenerateAudio,
+            disabled: isBulkRegenerating || isLoadingVoices,
+            loading: isBulkRegenerating || isLoadingVoices,
+            variant: 'primary',
+            icon: <FiVolume2 className="h-4 w-4" />,
+          },
+        ]}
+      />
+
+      {/* Data Table */}
+      <NumbersDataTable
+        numbers={numbers}
+        isLoading={isLoading}
+        selectedNumbers={selectedNumbers}
+        allVisibleNumbersSelected={allVisibleNumbersSelected}
+        onToggleSelect={toggleNumberSelection}
+        onToggleSelectAll={toggleSelectAllVisibleNumbers}
+        onEdit={openEditModal}
+        onRegenerateAudio={handleRegenerateAudio}
+        onRequeueAlignment={handleRequeueAlignment}
+        onDelete={(id) => {
+          const number = numbers.find(n => n.id === id);
+          handleDeleteClick(id, number?.word || `#${number?.number_value}` || 'this number');
+        }}
+        languages={languages || []}
+      />
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} numbers
+        </p>
+        <div className="ml-auto">
+          <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
 

@@ -1,14 +1,14 @@
 import SectionHub from "@/components/admin/navigation/SectionHub";
 
 const libraryLinks = [
-  { label: "Words", href: "/content/library/words" },
-  { label: "Phrases", href: "/content/library/phrases" },
-  { label: "Time Phrases", href: "/content/library/time-phrases" },
-  { label: "Sentences", href: "/content/library/sentences" },
-  { label: "Proverbs", href: "/content/library/proverbs" },
-  { label: "Letters", href: "/content/library/letters" },
-  { label: "Numbers", href: "/content/library/numbers" },
-  { label: "Games View", href: "/content/library/games" },
+  { label: "Words", href: "/content/words" },
+  { label: "Phrases", href: "/content/phrases" },
+  { label: "Time Phrases", href: "/content/time-phrases" },
+  { label: "Sentences", href: "/content/sentences" },
+  { label: "Proverbs", href: "/content/proverbs" },
+  { label: "Letters", href: "/content/letters" },
+  { label: "Numbers", href: "/content/numbers" },
+  { label: "Games View", href: "/content/learning-items" },
 ];
 
 export default function ContentLibraryPage() {

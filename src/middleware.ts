@@ -16,13 +16,6 @@ export function middleware(request: NextRequest) {
   const userCookie = request.cookies.get('user')?.value;
   const isAuthenticated = !!userCookie;
 
-  console.log('🛡️ MIDDLEWARE:', {
-    pathname,
-    isPublicRoute,
-    isAuthenticated,
-    hasCookie: !!userCookie
-  });
-
   // If authenticated and trying to access login/signin page, redirect to dashboard
   // BUT: Add check to prevent redirect if we just came from dashboard (prevent loop)
   if (isAuthenticated && (pathname === '/' || pathname === '/signin')) {
@@ -31,11 +24,28 @@ export function middleware(request: NextRequest) {
     
     // Only redirect if NOT coming from dashboard (prevents loop)
     if (!isDashboardReferer) {
-      console.log('✅ Authenticated user on login page, redirecting to dashboard');
       return NextResponse.redirect(new URL('/dashboard', request.url));
     } else {
-      console.log('⚠️ Skipping redirect - came from dashboard (prevent loop)');
     }
+  }
+
+  // Protect admin routes from unauthenticated access server-side
+  const isAdminRoute = pathname === '/dashboard' ||
+    pathname.startsWith('/content/') ||
+    pathname.startsWith('/curriculum/') ||
+    pathname.startsWith('/media/') ||
+    pathname.startsWith('/reports/') ||
+    pathname.startsWith('/community/') ||
+    pathname.startsWith('/subscriptions/') ||
+    pathname.startsWith('/notifications/') ||
+    pathname.startsWith('/settings/') ||
+    pathname.startsWith('/operations/') ||
+    pathname.startsWith('/system/') ||
+    pathname.startsWith('/analytics/') ||
+    pathname.startsWith('/enforcement');
+
+  if (isAdminRoute && !isAuthenticated) {
+    return NextResponse.redirect(new URL('/signin', request.url));
   }
 
   // Allow all other requests to proceed

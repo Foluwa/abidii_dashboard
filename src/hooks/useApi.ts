@@ -59,6 +59,21 @@ import {
  */
 const fetcher = (url: string) => apiClient.get(url).then((res) => res.data);
 
+function useAdminApiEnabled() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const hasToken = typeof window !== 'undefined' && !!window.sessionStorage.getItem('access_token');
+  return !isLoading && (isAuthenticated || hasToken);
+}
+
+function useAdminApiReady() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const hasToken = typeof window !== 'undefined' && !!window.sessionStorage.getItem('access_token');
+  return {
+    enabled: !isLoading && (isAuthenticated || hasToken),
+    isAuthLoading: isLoading,
+  };
+}
+
 /**
  * Billing Plans Hook
  */
@@ -1243,7 +1258,8 @@ export function useGameAnalytics(days: number = 30, gameKey?: string, languageId
   if (gameKey) params.append('game_key', gameKey);
   if (languageId) params.append('language_id', languageId);
 
-  const url = `/api/v1/admin/analytics/game-stats?${params.toString()}`;
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const url = enabled ? `/api/v1/admin/analytics/game-stats?${params.toString()}` : null;
   const { data, error, mutate } = useSWR(url, fetcher, {
     revalidateOnFocus: false,
     refreshInterval: 0,
@@ -1251,7 +1267,7 @@ export function useGameAnalytics(days: number = 30, gameKey?: string, languageId
 
   return {
     analytics: data,
-    isLoading: !error && !data,
+    isLoading: isAuthLoading || (enabled && !error && !data),
     isError: error,
     refresh: mutate,
   };
@@ -1284,7 +1300,8 @@ export function usePlayerLeaderboard(filters?: PlayerLeaderboardFilters) {
   if (filters?.page) params.append('page', filters.page.toString());
   if (filters?.perPage) params.append('per_page', filters.perPage.toString());
 
-  const url = `/api/v1/admin/analytics/player-leaderboard?${params.toString()}`;
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const url = enabled ? `/api/v1/admin/analytics/player-leaderboard?${params.toString()}` : null;
   const { data, error, mutate } = useSWR(url, fetcher, {
     revalidateOnFocus: false,
     refreshInterval: 0,
@@ -1292,7 +1309,7 @@ export function usePlayerLeaderboard(filters?: PlayerLeaderboardFilters) {
 
   return {
     leaderboard: data,
-    isLoading: !error && !data,
+    isLoading: isAuthLoading || (enabled && !error && !data),
     isError: error,
     refresh: mutate,
   };
@@ -1313,7 +1330,8 @@ export function usePlayerDetail(userId: string | null, filters?: PlayerDetailFil
   if (filters?.languageId) params.append('language_id', filters.languageId);
   if (filters?.gameKey) params.append('game_key', filters.gameKey);
 
-  const url = userId ? `/api/v1/admin/analytics/player-detail/${userId}?${params.toString()}` : null;
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const url = userId && enabled ? `/api/v1/admin/analytics/player-detail/${userId}?${params.toString()}` : null;
   const { data, error, mutate } = useSWR(url, fetcher, {
     revalidateOnFocus: false,
     refreshInterval: 0,
@@ -1321,7 +1339,7 @@ export function usePlayerDetail(userId: string | null, filters?: PlayerDetailFil
 
   return {
     player: data,
-    isLoading: userId ? (!error && !data) : false,
+    isLoading: userId ? (isAuthLoading || (enabled && !error && !data)) : false,
     isError: error,
     refresh: mutate,
   };
@@ -1331,8 +1349,9 @@ export function usePlayerDetail(userId: string | null, filters?: PlayerDetailFil
  * Available Games Hook (for filter dropdowns)
  */
 export function useAvailableGames() {
+  const { enabled, isAuthLoading } = useAdminApiReady();
   const { data, error, mutate } = useSWR(
-    '/api/v1/admin/analytics/available-games',
+    enabled ? '/api/v1/admin/analytics/available-games' : null,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -1342,7 +1361,7 @@ export function useAvailableGames() {
 
   return {
     games: data?.games || [],
-    isLoading: !error && !data,
+    isLoading: isAuthLoading || (enabled && !error && !data),
     isError: error,
     refresh: mutate,
   };
@@ -1355,7 +1374,8 @@ export function useAdminCurriculumOpsMetrics(days: number = 7) {
   const params = new URLSearchParams();
   params.append('days', days.toString());
 
-  const url = `/api/v1/admin/analytics/curriculum-ops?${params.toString()}`;
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const url = enabled ? `/api/v1/admin/analytics/curriculum-ops?${params.toString()}` : null;
   const { data, error, mutate } = useSWR<CurriculumOpsMetricsResponse>(url, fetcher, {
     revalidateOnFocus: false,
     refreshInterval: 0,
@@ -1364,7 +1384,7 @@ export function useAdminCurriculumOpsMetrics(days: number = 7) {
 
   return {
     metrics: data,
-    isLoading: !error && !data,
+    isLoading: isAuthLoading || (enabled && !error && !data),
     isError: error,
     refresh: mutate,
   };

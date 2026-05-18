@@ -3,7 +3,7 @@ import { act } from 'react';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import AdminCourseDetailPage from '@/app/(admin)/(others-pages)/content/curriculum/courses/[id]/page';
+import AdminCourseDetailPage from '@/app/(admin)/(others-pages)/curriculum/courses/[id]/page';
 import { renderWithProviders as render } from '@/test-utils';
 
 const mockMutateAdmin = jest.fn().mockResolvedValue(undefined);

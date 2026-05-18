@@ -9,7 +9,7 @@ const mockPush = jest.fn();
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: jest.fn() }),
-  usePathname: () => '/community/billing',
+  usePathname: () => '/subscriptions',
   useSearchParams: () => new URLSearchParams(),
 }));
 

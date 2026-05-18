@@ -4,7 +4,6 @@ const curriculumLinks = [
   { label: "Courses", href: "/curriculum/courses" },
   { label: "Curriculum Editor", href: "/curriculum/editor" },
   { label: "Lesson Blueprints", href: "/curriculum/lesson-blueprints" },
-  { label: "Lesson Blueprints", href: "/curriculum/lesson-blueprints" },
   { label: "Publishing & Readiness", href: "/curriculum/publishing" },
 ];
 

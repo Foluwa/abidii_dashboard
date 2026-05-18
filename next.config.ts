@@ -29,75 +29,99 @@ const nextConfig: NextConfig = {
 
   async redirects() {
     return [
+      // Legacy overview routes → Dashboard
       { source: '/overview', destination: '/dashboard', permanent: true },
-      { source: '/overview/analytics', destination: '/reports/game-analytics', permanent: true },
-      { source: '/overview/analytics/players', destination: '/reports/player-analytics', permanent: true },
-      { source: '/overview/analytics/curriculum-ops', destination: '/reports/curriculum-ops', permanent: true },
-      { source: '/analytics', destination: '/reports/game-analytics', permanent: true },
-      { source: '/analytics/players', destination: '/reports/player-analytics', permanent: true },
-      { source: '/analytics/curriculum-ops', destination: '/reports/curriculum-ops', permanent: true },
 
-      { source: '/content', destination: '/content/library/words', permanent: true },
-      { source: '/content/library', destination: '/content/library/words', permanent: true },
-      { source: '/content/words', destination: '/content/library/words', permanent: true },
-      { source: '/content/phrases', destination: '/content/library/phrases', permanent: true },
-      { source: '/content/time-phrases', destination: '/content/library/time-phrases', permanent: true },
-      { source: '/content/sentences', destination: '/content/library/sentences', permanent: true },
-      { source: '/content/proverbs', destination: '/content/library/proverbs', permanent: true },
-      { source: '/content/letters', destination: '/content/library/letters', permanent: true },
-      { source: '/content/numbers', destination: '/content/library/numbers', permanent: true },
+      // Legacy reports routes → Analytics
+      { source: '/reports/game-analytics', destination: '/analytics', permanent: true },
+      { source: '/reports/player-analytics', destination: '/analytics/players', permanent: true },
+      { source: '/reports/curriculum-ops', destination: '/analytics/curriculum-ops', permanent: true },
+
+      // Legacy content/library routes → canonical /content/*
+      { source: '/content/library/words', destination: '/content/words', permanent: true },
+      { source: '/content/library/phrases', destination: '/content/phrases', permanent: true },
+      { source: '/content/library/time-phrases', destination: '/content/time-phrases', permanent: true },
+      { source: '/content/library/sentences', destination: '/content/sentences', permanent: true },
+      { source: '/content/library/proverbs', destination: '/content/proverbs', permanent: true },
+      { source: '/content/library/letters', destination: '/content/letters', permanent: true },
+      { source: '/content/library/numbers', destination: '/content/numbers', permanent: true },
       { source: '/content/library/games', destination: '/content/learning-items', permanent: true },
+      { source: '/content/library', destination: '/content/words', permanent: true },
+
+      // Legacy games → Learning Items
       { source: '/games', destination: '/content/learning-items', permanent: true },
-      { source: '/content/curriculum/assets', destination: '/media/library', permanent: true },
+
+      // Legacy curriculum aliases → canonical
       { source: '/content/curriculum/courses', destination: '/curriculum/courses', permanent: true },
       { source: '/content/curriculum/courses/:path*', destination: '/curriculum/courses/:path*', permanent: true },
       { source: '/content/curriculum/editor', destination: '/curriculum/editor', permanent: true },
       { source: '/content/curriculum/lesson-blueprints', destination: '/curriculum/lesson-blueprints', permanent: true },
-      {
-        source: '/content/curriculum/lesson-blueprints/:path*',
-        destination: '/curriculum/lesson-blueprints/:path*',
-        permanent: true,
-      },
+      { source: '/content/curriculum/lesson-blueprints/:path*', destination: '/curriculum/lesson-blueprints/:path*', permanent: true },
       { source: '/content/curriculum/readiness', destination: '/curriculum/publishing', permanent: true },
+      { source: '/content/curriculum/assets', destination: '/curriculum/assets', permanent: true },
 
-      { source: '/curriculum', destination: '/curriculum/courses', permanent: true },
-      { source: '/media', destination: '/media/library', permanent: true },
-      { source: '/media/voices', destination: '/media/audio/voices', permanent: true },
-      { source: '/media/audio-jobs', destination: '/media/audio/jobs', permanent: true },
-      { source: '/media/audio-generate', destination: '/media/audio/generate', permanent: true },
-      { source: '/audio/voices', destination: '/media/audio/voices', permanent: true },
-      { source: '/audio/jobs', destination: '/media/audio/jobs', permanent: true },
-      { source: '/audio/generate', destination: '/media/audio/generate', permanent: true },
+      // Legacy media routes → canonical
+      { source: '/media/library', destination: '/media', permanent: true },
+      { source: '/media/audio/voices', destination: '/audio/voices', permanent: true },
+      { source: '/media/audio/jobs', destination: '/audio/jobs', permanent: true },
+      { source: '/media/audio/generate', destination: '/audio/generate', permanent: true },
+      { source: '/media/voices', destination: '/audio/voices', permanent: true },
+      { source: '/media/audio-jobs', destination: '/audio/jobs', permanent: true },
+      { source: '/media/audio-generate', destination: '/audio/generate', permanent: true },
 
-      { source: '/community', destination: '/community/users', permanent: true },
-      { source: '/users', destination: '/community/users', permanent: true },
-      { source: '/users/:path*', destination: '/community/users/:path*', permanent: true },
-      { source: '/subscriptions', destination: '/community/billing', permanent: true },
-      { source: '/subscriptions/events', destination: '/community/billing/events', permanent: true },
-      { source: '/subscriptions/attempts', destination: '/community/billing/verification-attempts', permanent: true },
+      // Legacy community/users routes → canonical /users/*
+      { source: '/community/users', destination: '/users', permanent: true },
+      { source: '/community/users/admins', destination: '/users/admins', permanent: true },
+      { source: '/community/users/:path*', destination: '/users/:path*', permanent: true },
 
-      { source: '/operations', destination: '/system/observability/status', permanent: true },
-      { source: '/operations/status', destination: '/system/observability/status', permanent: true },
-      { source: '/operations/metrics', destination: '/system/observability/metrics', permanent: true },
-      { source: '/operations/alerts', destination: '/system/observability/alerts', permanent: true },
-      { source: '/operations/cron-jobs', destination: '/system/observability/cron-jobs', permanent: true },
-      { source: '/operations/idempotency', destination: '/system/observability/status', permanent: true },
-      { source: '/operations/audit-log', destination: '/system/audit-log', permanent: true },
-      { source: '/operations/testing', destination: '/system/testing', permanent: true },
-      { source: '/operations/configuration', destination: '/system/configuration/platform', permanent: true },
-      { source: '/operations/configuration/platform', destination: '/system/configuration/platform', permanent: true },
-      { source: '/operations/configuration/application', destination: '/system/configuration/application', permanent: true },
-      { source: '/operations/configuration/language', destination: '/system/configuration/language', permanent: true },
-      { source: '/operations/ml-training', destination: '/system/ml-training', permanent: true },
-      { source: '/operations/ml-training/:path*', destination: '/system/ml-training/:path*', permanent: true },
-      { source: '/admin/jobs', destination: '/system/jobs/admin', permanent: true },
-      { source: '/system/status', destination: '/system/observability/status', permanent: true },
-      { source: '/system/metrics', destination: '/system/observability/metrics', permanent: true },
-      { source: '/system/alerts', destination: '/system/observability/alerts', permanent: true },
-      { source: '/system/cron', destination: '/system/observability/cron-jobs', permanent: true },
-      { source: '/system/config', destination: '/system/configuration/platform', permanent: true },
-      { source: '/system/idempotency', destination: '/system/observability/status', permanent: true },
+      // Legacy community billing routes → canonical /subscriptions/*
+      { source: '/community/billing', destination: '/subscriptions', permanent: true },
+      { source: '/community/billing/events', destination: '/subscriptions/events', permanent: true },
+      { source: '/community/billing/verification-attempts', destination: '/subscriptions/attempts', permanent: true },
+
+      // Legacy system/ml-training routes → canonical /operations/ml-training/*
+      { source: '/system/ml-training', destination: '/operations/ml-training', permanent: true },
+      { source: '/system/ml-training/jobs', destination: '/operations/ml-training/jobs', permanent: true },
+      { source: '/system/ml-training/jobs/:path*', destination: '/operations/ml-training/jobs/:path*', permanent: true },
+      { source: '/system/ml-training/manifests', destination: '/operations/ml-training/manifests', permanent: true },
+      { source: '/system/ml-training/manifests/:path*', destination: '/operations/ml-training/manifests/:path*', permanent: true },
+      { source: '/system/ml-training/models', destination: '/operations/ml-training/models', permanent: true },
+      { source: '/system/ml-training/vision-jobs', destination: '/operations/ml-training/vision-jobs', permanent: true },
+      { source: '/system/ml-training/vision-jobs/:path*', destination: '/operations/ml-training/vision-jobs/:path*', permanent: true },
+
+      // Legacy system/jobs/admin → canonical /admin/jobs
+      { source: '/system/jobs/admin', destination: '/admin/jobs', permanent: true },
+
+      // Legacy system/audit-log → canonical /content/audit-log
+      { source: '/system/audit-log', destination: '/content/audit-log', permanent: true },
+      { source: '/operations/audit-log', destination: '/content/audit-log', permanent: true },
+
+      // Legacy system/observability/* → canonical /system/*
+      { source: '/system/observability/status', destination: '/system/status', permanent: true },
+      { source: '/system/observability/metrics', destination: '/system/metrics', permanent: true },
+      { source: '/system/observability/alerts', destination: '/system/alerts', permanent: true },
+      { source: '/system/observability/cron-jobs', destination: '/system/cron', permanent: true },
+
+      // Legacy system/configuration/* → unified /system/configuration
+      { source: '/system/configuration/platform', destination: '/system/configuration', permanent: true },
+      { source: '/system/configuration/application', destination: '/system/configuration', permanent: true },
+      { source: '/system/configuration/language', destination: '/system/configuration', permanent: true },
+      { source: '/system/config', destination: '/system/configuration', permanent: true },
+      { source: '/operations/configuration', destination: '/system/configuration', permanent: true },
+      { source: '/operations/configuration/platform', destination: '/system/configuration', permanent: true },
+      { source: '/operations/configuration/application', destination: '/system/configuration', permanent: true },
+      { source: '/operations/configuration/language', destination: '/system/configuration', permanent: true },
+
+      // Legacy testing routes
       { source: '/testing', destination: '/system/testing', permanent: true },
+      { source: '/operations/testing', destination: '/system/testing', permanent: true },
+
+      // Legacy operations catch-alls → system
+      { source: '/operations/status', destination: '/system/status', permanent: true },
+      { source: '/operations/metrics', destination: '/system/metrics', permanent: true },
+      { source: '/operations/alerts', destination: '/system/alerts', permanent: true },
+      { source: '/operations/cron-jobs', destination: '/system/cron', permanent: true },
+      { source: '/operations/idempotency', destination: '/system/status', permanent: true },
     ];
   },
   

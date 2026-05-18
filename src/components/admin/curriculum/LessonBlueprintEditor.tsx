@@ -3070,10 +3070,10 @@ export function LessonBlueprintEditor({
                       <div>
                         <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Reusable library</h4>
                         <Link
-                          href="/media/library"
+                          href="/audio/voices"
                           className="mt-1 inline-flex text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200"
                         >
-                          Open full asset library
+                          Browse audio assets
                         </Link>
                       </div>
                       <span className="text-xs text-gray-500 dark:text-gray-400">{sortedGlobalAssetLibraryItems.length} items</span>

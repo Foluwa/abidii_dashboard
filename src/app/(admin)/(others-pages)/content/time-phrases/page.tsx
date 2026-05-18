@@ -1,10 +1,17 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import { useToast } from "@/contexts/ToastContext";
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
+import {
+  ContentPageHeader,
+  ContentStatsCard,
+  ContentStatsGrid,
+  ContentFiltersCard,
+  ActiveFilterChips,
+  StickyBulkActionBar,
+} from '@/components/admin/layout';
 import Alert from "@/components/ui/alert/Alert";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { Modal } from "@/components/ui/modal";
@@ -17,7 +24,7 @@ import { createTimePhraseJob, type AdminJob } from "@/lib/adminJobsApi";
 import { useAdminJob } from "@/hooks/useAdminJob";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Pagination from "@/components/tables/Pagination";
-import { FiClock, FiTrash2, FiEdit2, FiVolume2, FiFilter, FiX, FiChevronDown, FiChevronUp, FiCheckSquare, FiSquare } from "react-icons/fi";
+import { FiClock, FiTrash2, FiEdit2, FiVolume2, FiChevronDown, FiChevronUp, FiCheckSquare, FiSquare, FiBarChart2, FiCheckCircle, FiGitMerge, FiGlobe } from "react-icons/fi";
 
 interface TimePhrase {
   id: string;
@@ -289,6 +296,7 @@ export default function TimePhrasesPage() {
   const [timePhraseAdminJob, setTimePhraseAdminJob] = useState<AdminJob | null>(null);
   const [timePhraseJobLoading, setTimePhraseJobLoading] = useState(false);
   const [timePhraseApplyConfirm, setTimePhraseApplyConfirm] = useState<"audio" | "alignment" | null>(null);
+  const [showJobsAccordion, setShowJobsAccordion] = useState(false);
   const [showRegenerateModal, setShowRegenerateModal] = useState(false);
   const [regeneratingPhrase, setRegeneratingPhrase] = useState<TimePhrase | null>(null);
   const [alignmentRecord, setAlignmentRecord] = useState<PhraseAlignment | null>(null);
@@ -390,17 +398,20 @@ export default function TimePhrasesPage() {
     return () => clearTimeout(timer);
   }, [updateURL]);
 
-  // Count active filters
-  const activeFilterCount = [
-    search,
-    difficultyFilter !== undefined,
-    publishedFilter !== undefined,
-    alignmentFilter,
-    hasAudio !== undefined,
-    startsWithFilter,
-    endsWithFilter,
-    containsFilter,
-  ].filter(Boolean).length;
+  // Active filters
+  const activeFilters = [] as { label: string; onClear: () => void }[];
+  if (selectedLanguage) {
+    const lang = languages?.find((l: any) => l.id === selectedLanguage);
+    activeFilters.push({ label: `Language: ${lang?.name || selectedLanguage}`, onClear: () => { setSelectedLanguage(""); setPage(1); } });
+  }
+  if (search) activeFilters.push({ label: `Search: "${search}"`, onClear: () => { setSearch(""); setPage(1); } });
+  if (difficultyFilter !== undefined) activeFilters.push({ label: `Difficulty: ${difficultyFilter}`, onClear: () => { setDifficultyFilter(undefined); setPage(1); } });
+  if (publishedFilter !== undefined) activeFilters.push({ label: publishedFilter ? 'Status: Published' : 'Status: Draft', onClear: () => { setPublishedFilter(undefined); setPage(1); } });
+  if (alignmentFilter) activeFilters.push({ label: `Alignment: ${alignmentFilter}`, onClear: () => { setAlignmentFilter(undefined); setPage(1); } });
+  if (hasAudio !== undefined) activeFilters.push({ label: `Has Audio: ${hasAudio ? 'Yes' : 'No'}`, onClear: () => { setHasAudio(undefined); setPage(1); } });
+  if (startsWithFilter) activeFilters.push({ label: `Starts With: "${startsWithFilter}"`, onClear: () => { setStartsWithFilter(""); setPage(1); } });
+  if (endsWithFilter) activeFilters.push({ label: `Ends With: "${endsWithFilter}"`, onClear: () => { setEndsWithFilter(""); setPage(1); } });
+  if (containsFilter) activeFilters.push({ label: `Contains: "${containsFilter}"`, onClear: () => { setContainsFilter(""); setPage(1); } });
 
   // Clear all filters
   const clearAllFilters = () => {
@@ -416,6 +427,14 @@ export default function TimePhrasesPage() {
     setSortDir('asc');
     setPage(1);
   };
+
+  // Stats
+  const stats = useMemo(() => {
+    const ready = timePhrases.filter((p) => p.is_published).length;
+    const withAudio = timePhrases.filter((p) => !!p.audio_url).length;
+    const aligned = timePhrases.filter((p) => p.alignment_status === 'approved' || p.alignment_status === 'reviewed').length;
+    return { total, ready, withAudio, aligned };
+  }, [timePhrases, total]);
 
   useEffect(() => {
     if (selectedLanguage) {
@@ -1195,48 +1214,230 @@ export default function TimePhrasesPage() {
   };
 
   return (
-    <div className="p-6">
-      <PageBreadCrumb pageTitle="Time Phrases" />
+    <div className="space-y-6">
+      <ContentPageHeader
+        title="Time Phrases"
+        subtitle="Manage time-telling phrases from yo_time spreadsheet"
+        onAdd={openCreateModal}
+        addLabel="Add Time Phrase"
+      />
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Time Phrases Management</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Manage time-telling phrases from yo_time spreadsheet
-          </p>
-        </div>
-        {selectedLanguage && (
-          <button
-            onClick={openCreateModal}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            + Add Time Phrase
-          </button>
-        )}
-      </div>
+      <ContentStatsGrid cols={4}>
+        <ContentStatsCard label="Total" value={stats.total} icon={FiBarChart2} />
+        <ContentStatsCard label="Ready" value={stats.ready} icon={FiCheckCircle} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+        <ContentStatsCard label="Audio Generated" value={stats.withAudio} icon={FiVolume2} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
+        <ContentStatsCard label="Aligned" value={stats.aligned} icon={FiGitMerge} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
+      </ContentStatsGrid>
 
-      {/* Language Selector */}
-      <div className="mb-6 max-w-md">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Select Language
-        </label>
-        <StyledSelect
-          value={selectedLanguage}
-          onChange={(e) => {
-            setSelectedLanguage(e.target.value);
-            setPage(1);
-          }}
-          options={[
-            { value: "", label: "Choose a language..." },
-            ...(languages?.map((lang: any) => ({
-              value: lang.id,
-              label: lang.name,
-            })) || []),
-          ]}
-          placeholder="Select language"
-        />
-      </div>
+      {selectedLanguage && (
+        <ContentFiltersCard
+          activeFilterCount={activeFilters.length}
+          onClearAll={clearAllFilters}
+          showAdvanced={showAdvancedFilters}
+          onToggleAdvanced={() => setShowAdvancedFilters(!showAdvancedFilters)}
+        >
+          {/* Primary Filters Row */}
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[200px]">
+              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                <div className="flex items-center gap-1.5">
+                  <FiGlobe className="h-3.5 w-3.5" />
+                  Language
+                </div>
+              </label>
+              <StyledSelect
+                value={selectedLanguage}
+                onChange={(e) => {
+                  setSelectedLanguage(e.target.value);
+                  setPage(1);
+                }}
+                options={[
+                  { value: "", label: "Choose a language..." },
+                  ...(languages?.map((lang: any) => ({
+                    value: lang.id,
+                    label: lang.name,
+                  })) || []),
+                ]}
+                placeholder="Select language"
+              />
+            </div>
+
+            <div className="flex-1 min-w-[240px]">
+              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                Search
+              </label>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                placeholder="Search phrase or translation..."
+                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+              />
+            </div>
+
+            <div className="min-w-[140px]">
+              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                Per Page
+              </label>
+              <StyledSelect
+                value={limit}
+                onChange={(e) => {
+                  setLimit(Number(e.target.value));
+                  setPage(1);
+                }}
+                options={[
+                  { value: 20, label: "20" },
+                  { value: 50, label: "50" },
+                  { value: 100, label: "100" },
+                ]}
+                fullWidth
+              />
+            </div>
+          </div>
+
+          {/* Advanced Filters Panel */}
+          {showAdvancedFilters && (
+            <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    Difficulty
+                  </label>
+                  <select
+                    value={difficultyFilter ?? ""}
+                    onChange={(e) => { setDifficultyFilter(e.target.value ? Number(e.target.value) : undefined); setPage(1); }}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  >
+                    <option value="">All Levels</option>
+                    {[1, 2, 3, 4, 5].map(level => (
+                      <option key={level} value={level}>Level {level}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    Published Status
+                  </label>
+                  <select
+                    value={publishedFilter === undefined ? "" : publishedFilter.toString()}
+                    onChange={(e) => { setPublishedFilter(e.target.value === "" ? undefined : e.target.value === "true"); setPage(1); }}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  >
+                    <option value="">All</option>
+                    <option value="true">Published</option>
+                    <option value="false">Draft</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    Alignment Status
+                  </label>
+                  <select
+                    value={alignmentFilter ?? ""}
+                    onChange={(e) => { setAlignmentFilter(e.target.value || undefined); setPage(1); }}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  >
+                    <option value="">All</option>
+                    <option value="draft">Draft</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="approved">Approved</option>
+                    <option value="stale">Stale</option>
+                    <option value="none">No Alignment</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    Has Audio
+                  </label>
+                  <select
+                    value={hasAudio === undefined ? "" : hasAudio.toString()}
+                    onChange={(e) => { setHasAudio(e.target.value === "" ? undefined : e.target.value === "true"); setPage(1); }}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  >
+                    <option value="">All</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    Starts With
+                  </label>
+                  <input
+                    type="text"
+                    value={startsWithFilter}
+                    onChange={(e) => { setStartsWithFilter(e.target.value); setPage(1); }}
+                    placeholder="e.g., Àárọ̀"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    Ends With
+                  </label>
+                  <input
+                    type="text"
+                    value={endsWithFilter}
+                    onChange={(e) => { setEndsWithFilter(e.target.value); setPage(1); }}
+                    placeholder="e.g., ọ̀sán"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    Contains
+                  </label>
+                  <input
+                    type="text"
+                    value={containsFilter}
+                    onChange={(e) => { setContainsFilter(e.target.value); setPage(1); }}
+                    placeholder="Search within phrase..."
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    Sort By
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  >
+                    <option value="phrase">Phrase</option>
+                    <option value="translation">Translation</option>
+                    <option value="created_at">Created Date</option>
+                    <option value="updated_at">Updated Date</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    Direction
+                  </label>
+                  <select
+                    value={sortDir}
+                    onChange={(e) => setSortDir(e.target.value as 'asc' | 'desc')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  >
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <ActiveFilterChips filters={activeFilters} />
+        </ContentFiltersCard>
+      )}
 
       {/* Bulk Import from Google Sheets */}
       {selectedLanguage && (
@@ -1259,279 +1460,104 @@ export default function TimePhrasesPage() {
         />
       )}
 
+      {/* Time Phrase Jobs Accordion */}
       {selectedLanguage && (
-        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-200">
-                Time Phrase Jobs
-              </h2>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                Preview readiness, queue missing audio, or queue alignment jobs through the admin job system.
-              </p>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {([
-                ["readiness", "Readiness"],
-                ["audio", "Audio"],
-                ["alignment", "Alignment"],
-              ] as Array<["readiness" | "audio" | "alignment", string]>).map(([jobType, label]) => (
-                <div key={jobType} className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void queueTimePhraseAdminJob(jobType, true)}
-                    disabled={timePhraseJobLoading}
-                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200"
-                  >
-                    {label} Preview
-                  </button>
-                  {jobType !== "readiness" ? (
-                    <button
-                      type="button"
-                      onClick={() => setTimePhraseApplyConfirm(jobType)}
-                      disabled={timePhraseJobLoading}
-                      className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
-                    >
-                      Apply
-                    </button>
-                  ) : null}
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+          <button
+            type="button"
+            onClick={() => setShowJobsAccordion(!showJobsAccordion)}
+            className="flex w-full items-center justify-between px-5 py-3 text-left"
+          >
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">▶ Time Phrase Jobs</span>
+            {showJobsAccordion ? <FiChevronUp className="h-4 w-4 text-gray-500" /> : <FiChevronDown className="h-4 w-4 text-gray-500" />}
+          </button>
+          {showJobsAccordion && (
+            <div className="border-t border-gray-100 px-5 py-4 dark:border-white/[0.05]">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-200">
+                    Time Phrase Jobs
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                    Preview readiness, queue missing audio, or queue alignment jobs through the admin job system.
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {currentTimePhraseAdminJob ? (
-            <div className="mt-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-700 dark:bg-gray-900 dark:text-gray-300">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="font-mono text-xs">{currentTimePhraseAdminJob.id.slice(0, 8)}</span>
-                <span className="font-medium">{currentTimePhraseAdminJob.status}</span>
-                <span>{currentTimePhraseAdminJob.payload.job_type as string}</span>
-                <span>{Math.round(currentTimePhraseAdminJob.progress.percent)}%</span>
-                {currentTimePhraseAdminJob.error ? <span className="text-red-600 dark:text-red-300">{currentTimePhraseAdminJob.error}</span> : null}
-              </div>
-              {currentTimePhraseAdminJob.result ? (
-                <div className="mt-2 grid gap-2 sm:grid-cols-4">
+                <div className="grid gap-2 sm:grid-cols-3">
                   {([
-                    ["Candidates", currentTimePhraseAdminJob.result.candidate_count ?? 0],
-                    ["Queued", currentTimePhraseAdminJob.result.queued_count ?? 0],
-                    ["Skipped", currentTimePhraseAdminJob.result.skipped ?? 0],
-                    ["Failed", currentTimePhraseAdminJob.result.failed ?? 0],
-                  ] as Array<[string, unknown]>).map(([label, value]) => (
-                    <div key={label} className="rounded-lg border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-950">
-                      <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</div>
-                      <div className="mt-1 font-semibold text-gray-900 dark:text-white">{String(value)}</div>
+                    ["readiness", "Readiness"],
+                    ["audio", "Audio"],
+                    ["alignment", "Alignment"],
+                  ] as Array<["readiness" | "audio" | "alignment", string]>).map(([jobType, label]) => (
+                    <div key={jobType} className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void queueTimePhraseAdminJob(jobType, true)}
+                        disabled={timePhraseJobLoading}
+                        className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200"
+                      >
+                        {label} Preview
+                      </button>
+                      {jobType !== "readiness" ? (
+                        <button
+                          type="button"
+                          onClick={() => setTimePhraseApplyConfirm(jobType)}
+                          disabled={timePhraseJobLoading}
+                          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+                        >
+                          Apply
+                        </button>
+                      ) : null}
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {currentTimePhraseAdminJob ? (
+                <div className="mt-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="font-mono text-xs">{currentTimePhraseAdminJob.id.slice(0, 8)}</span>
+                    <span className="font-medium">{currentTimePhraseAdminJob.status}</span>
+                    <span>{currentTimePhraseAdminJob.payload.job_type as string}</span>
+                    <span>{Math.round(currentTimePhraseAdminJob.progress.percent)}%</span>
+                    {currentTimePhraseAdminJob.error ? <span className="text-red-600 dark:text-red-300">{currentTimePhraseAdminJob.error}</span> : null}
+                  </div>
+                  {currentTimePhraseAdminJob.result ? (
+                    <div className="mt-2 grid gap-2 sm:grid-cols-4">
+                      {([
+                        ["Candidates", currentTimePhraseAdminJob.result.candidate_count ?? 0],
+                        ["Queued", currentTimePhraseAdminJob.result.queued_count ?? 0],
+                        ["Skipped", currentTimePhraseAdminJob.result.skipped ?? 0],
+                        ["Failed", currentTimePhraseAdminJob.result.failed ?? 0],
+                      ] as Array<[string, unknown]>).map(([label, value]) => (
+                        <div key={label} className="rounded-lg border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-950">
+                          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</div>
+                          <div className="mt-1 font-semibold text-gray-900 dark:text-white">{String(value)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               ) : null}
-            </div>
-          ) : null}
-        </div>
-      )}
-
-      {selectedLanguage && (
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={handleBulkRegenerateAudio}
-            disabled={selectedPhrases.length === 0 || isBulkRegenerating}
-            className="px-4 py-2 rounded-lg bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isBulkRegenerating ? "Queueing..." : "Regenerate Selected Audio"}
-          </button>
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            {selectedPhrases.length === 0
-              ? "Select one or more time phrases to regenerate audio in bulk."
-              : `${selectedPhrases.length} time phrase${selectedPhrases.length === 1 ? "" : "s"} selected`}
-          </span>
-        </div>
-      )}
-
-      {/* Filters */}
-      {selectedLanguage && (
-        <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <FiFilter className="text-gray-500" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
-              </span>
-            </div>
-            <div className="flex gap-2">
-              {activeFilterCount > 0 && (
-                <button
-                  onClick={clearAllFilters}
-                  className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                >
-                  <FiX className="w-4 h-4" />
-                  Clear All
-                </button>
-              )}
-              <button
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
-              >
-                {showAdvancedFilters ? <FiChevronUp /> : <FiChevronDown />}
-                {showAdvancedFilters ? 'Hide' : 'Show'} Advanced
-              </button>
-            </div>
-          </div>
-
-          {/* Basic Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                Search
-              </label>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                placeholder="Search phrase or translation..."
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                Difficulty
-              </label>
-              <select
-                value={difficultyFilter ?? ""}
-                onChange={(e) => { setDifficultyFilter(e.target.value ? Number(e.target.value) : undefined); setPage(1); }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-              >
-                <option value="">All Levels</option>
-                {[1, 2, 3, 4, 5].map(level => (
-                  <option key={level} value={level}>Level {level}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                Published Status
-              </label>
-              <select
-                value={publishedFilter === undefined ? "" : publishedFilter.toString()}
-                onChange={(e) => { setPublishedFilter(e.target.value === "" ? undefined : e.target.value === "true"); setPage(1); }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-              >
-                <option value="">All</option>
-                <option value="true">Published</option>
-                <option value="false">Draft</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                Alignment Status
-              </label>
-              <select
-                value={alignmentFilter ?? ""}
-                onChange={(e) => { setAlignmentFilter(e.target.value || undefined); setPage(1); }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-              >
-                <option value="">All</option>
-                <option value="draft">Draft</option>
-                <option value="reviewed">Reviewed</option>
-                <option value="approved">Approved</option>
-                <option value="stale">Stale</option>
-                <option value="none">No Alignment</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Advanced Filters */}
-          {showAdvancedFilters && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Has Audio
-                </label>
-                <select
-                  value={hasAudio === undefined ? "" : hasAudio.toString()}
-                  onChange={(e) => { setHasAudio(e.target.value === "" ? undefined : e.target.value === "true"); setPage(1); }}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                >
-                  <option value="">All</option>
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Starts With
-                </label>
-                <input
-                  type="text"
-                  value={startsWithFilter}
-                  onChange={(e) => { setStartsWithFilter(e.target.value); setPage(1); }}
-                  placeholder="e.g., Àárọ̀"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Ends With
-                </label>
-                <input
-                  type="text"
-                  value={endsWithFilter}
-                  onChange={(e) => { setEndsWithFilter(e.target.value); setPage(1); }}
-                  placeholder="e.g., ọ̀sán"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Contains
-                </label>
-                <input
-                  type="text"
-                  value={containsFilter}
-                  onChange={(e) => { setContainsFilter(e.target.value); setPage(1); }}
-                  placeholder="Search within phrase..."
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Sort By
-                </label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                >
-                  <option value="phrase">Phrase</option>
-                  <option value="translation">Translation</option>
-                  <option value="created_at">Created Date</option>
-                  <option value="updated_at">Updated Date</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Direction
-                </label>
-                <select
-                  value={sortDir}
-                  onChange={(e) => setSortDir(e.target.value as 'asc' | 'desc')}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                >
-                  <option value="asc">Ascending</option>
-                  <option value="desc">Descending</option>
-                </select>
-              </div>
             </div>
           )}
         </div>
       )}
+
+      <StickyBulkActionBar
+        selectedCount={selectedPhrases.length}
+        onClear={() => setSelectedPhrases([])}
+        itemName="time phrase"
+        actions={[
+          {
+            label: isBulkRegenerating ? "Queueing..." : "Regenerate Audio",
+            onClick: handleBulkRegenerateAudio,
+            disabled: isBulkRegenerating,
+            loading: isBulkRegenerating,
+            variant: 'primary',
+            icon: <FiVolume2 className="h-4 w-4" />,
+          },
+        ]}
+      />
 
       {/* Content */}
       {selectedLanguage && (

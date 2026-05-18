@@ -846,10 +846,10 @@ export function SubscriptionsPageContent({
               setActiveView(nextView);
               router.push(
                 nextView === "subscriptions"
-                  ? "/community/billing"
+                  ? "/subscriptions"
                   : nextView === "events"
-                    ? "/community/billing/events"
-                    : "/community/billing/verification-attempts"
+                    ? "/subscriptions/events"
+                    : "/subscriptions/attempts"
               );
             }}
             className={`rounded-md px-4 py-2 text-sm font-medium transition ${

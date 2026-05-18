@@ -125,7 +125,15 @@ export default function MonthlySalesChart() {
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Monthly User Growth
         </h3>
-        <p className="mt-4 text-sm text-red-500">Failed to load growth data</p>
+        <p className="mt-4 text-sm text-red-500">
+          Failed to load growth data
+          {isError?.response?.status ? ` (HTTP ${isError.response.status})` : ""}
+        </p>
+        {isError?.message && (
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {isError.message}
+          </p>
+        )}
       </div>
     );
   }

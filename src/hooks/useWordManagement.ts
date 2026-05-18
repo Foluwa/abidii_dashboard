@@ -229,9 +229,9 @@ export function useExampleGeneration() {
         // eslint-disable-next-line no-console
         console.groupCollapsed('[AI] generate-examples prompt');
         // eslint-disable-next-line no-console
-        if (data.prompt) console.log(data.prompt);
+        if (data.prompt) 
         // eslint-disable-next-line no-console
-        if (data.messages) console.log('messages:', data.messages);
+        if (data.messages) 
         // eslint-disable-next-line no-console
         console.groupEnd();
       }

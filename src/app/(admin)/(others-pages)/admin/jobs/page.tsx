@@ -391,9 +391,9 @@ export default function AdminJobsPage() {
       />
 
       <div className="text-sm text-gray-600 dark:text-gray-300">
-        Need to create jobs? Use <Link href="/content/library/words" className="text-brand-600 hover:underline">Words Import</Link>,{" "}
-        <Link href="/content/library/proverbs" className="text-brand-600 hover:underline">Proverbs</Link>, or{" "}
-        <Link href="/content/library/time-phrases" className="text-brand-600 hover:underline">Time Phrases</Link>.
+        Need to create jobs? Use <Link href="/content/words" className="text-brand-600 hover:underline">Words Import</Link>,{" "}
+        <Link href="/content/proverbs" className="text-brand-600 hover:underline">Proverbs</Link>, or{" "}
+        <Link href="/content/time-phrases" className="text-brand-600 hover:underline">Time Phrases</Link>.
       </div>
     </div>
   );

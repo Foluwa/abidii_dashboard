@@ -2,7 +2,7 @@ import React from 'react';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import CurriculumCoursesListPage from '@/app/(admin)/(others-pages)/content/curriculum/courses/page';
+import CurriculumCoursesListPage from '@/app/(admin)/(others-pages)/curriculum/courses/page';
 import { renderWithProviders as render } from '@/test-utils';
 
 const mockRefresh = jest.fn().mockResolvedValue(undefined);

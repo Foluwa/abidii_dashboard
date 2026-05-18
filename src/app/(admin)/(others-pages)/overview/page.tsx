@@ -2,9 +2,9 @@ import SectionHub from "@/components/admin/navigation/SectionHub";
 
 const overviewLinks = [
   { label: "Dashboard", href: "/dashboard", description: "System health, KPIs, and quick actions." },
-  { label: "Analytics", href: "/reports/game-analytics", description: "Game and product analytics dashboards." },
-  { label: "Player Analytics", href: "/reports/player-analytics", description: "Detailed user and player-level insights." },
-  { label: "Curriculum Ops", href: "/reports/curriculum-ops", description: "Operational curriculum roll-out metrics." },
+  { label: "Analytics", href: "/analytics", description: "Game and product analytics dashboards." },
+  { label: "Player Analytics", href: "/analytics/players", description: "Detailed user and player-level insights." },
+  { label: "Curriculum Ops", href: "/analytics/curriculum-ops", description: "Operational curriculum roll-out metrics." },
 ];
 
 export default function OverviewPage() {

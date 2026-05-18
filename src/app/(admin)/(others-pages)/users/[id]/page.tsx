@@ -83,7 +83,7 @@ export default function UserDetailPage() {
       
       // For delete/purge, redirect to users list
       if (action === "delete" || action === "purge") {
-        router.push("/community/users");
+        router.push("/users");
       } else {
         // For activate/deactivate, refresh the data
         refresh();

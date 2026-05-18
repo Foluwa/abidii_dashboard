@@ -1,11 +1,9 @@
 import SectionHub from "@/components/admin/navigation/SectionHub";
 
 const communityLinks = [
-  { label: "All Users", href: "/community/users" },
-  { label: "Admins", href: "/community/users/admins" },
-  { label: "Subscriptions", href: "/community/billing" },
-  { label: "Billing Events", href: "/community/billing/events" },
-  { label: "Verification Attempts", href: "/community/billing/verification-attempts" },
+  { label: "All Users", href: "/users" },
+  { label: "Admins", href: "/users/admins" },
+  { label: "Subscriptions", href: "/subscriptions" },
 ];
 
 export default function CommunityHubPage() {

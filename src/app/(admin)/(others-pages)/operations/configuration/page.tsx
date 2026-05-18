@@ -1,9 +1,7 @@
 import SectionHub from "@/components/admin/navigation/SectionHub";
 
 const configLinks = [
-  { label: "Platform", href: "/system/configuration/platform" },
-  { label: "Application", href: "/system/configuration/application" },
-  { label: "Language", href: "/system/configuration/language" },
+  { label: "Configuration", href: "/system/configuration" },
 ];
 
 export default function OperationsConfigurationPage() {

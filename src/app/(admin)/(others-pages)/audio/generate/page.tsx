@@ -200,7 +200,6 @@ export default function TTSGenerationPage() {
       });
 
       toast.success('Audio saved successfully!');
-      console.log('Saved audio URL:', saveResponse.data.audio_url);
       
       // Clear preview
       setPreviewUrl(null);

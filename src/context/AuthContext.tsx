@@ -64,12 +64,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    console.log('🔐 AUTH STATE CHANGED:', {
-      isAuthenticated: !!user,
-      userEmail: user?.email,
-      userRole: user?.role,
-      isLoading
-    });
+    // Auth state tracking
   }, [user, isLoading]);
 
   /**
@@ -85,7 +80,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         // Check if token has expired
         if (tokenExpiry && Date.now() > parseInt(tokenExpiry)) {
-          console.log('⏰ Token expired, attempting silent refresh');
           // Refresh is async; we defer completion below.
         }
         
@@ -93,10 +87,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (storedUser && accessToken) {
           const parsedUser = JSON.parse(storedUser);
           setUser(parsedUser);
-          console.log('User loaded from sessionStorage:', parsedUser.email);
         } else {
           // Clear invalid session
-          console.log('No valid session found, clearing storage');
           sessionStorage.clear();
         }
       } catch (error) {
@@ -114,7 +106,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (tokenExpiry && Date.now() > parseInt(tokenExpiry)) {
           const refreshed = await refreshSession();
           if (!refreshed) {
-            console.log('⏰ Token expired and refresh failed, clearing session');
             sessionStorage.clear();
             document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
           }
@@ -138,7 +129,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         (async () => {
           const refreshed = await refreshSession();
           if (!refreshed) {
-            console.log('⏰ Token refresh failed during session, logging out');
             logout();
           }
         })();
@@ -160,9 +150,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const { user: userData, access_token, refresh_token } = response.data;
 
-      console.log('Login successful, storing tokens...');
-      console.log('Access token length:', access_token?.length);
-      console.log('User role:', userData.role);
 
       // Calculate token expiry time (expires_in is in seconds)
       const expiryTime = Date.now() + (response.data.expires_in * 1000);
@@ -179,12 +166,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Update state
       setUser(userData);
 
-      console.log('Tokens stored, user state updated');
 
       // Wait longer to ensure everything is set
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      console.log('Redirecting to dashboard...');
       // Redirect to dashboard
       router.push('/dashboard');
     } catch (error) {
@@ -200,7 +185,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    */
   const logout = async () => {
     try {
-      console.log('🚪 Logging out...');
       
       // Clear state first to prevent any race conditions
       setUser(null);
@@ -211,7 +195,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Clear client-side cookie
       document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
-      console.log('✅ Logout complete, redirecting to login');
       
       // Force a hard redirect to login page (clears all state)
       window.location.href = '/';
@@ -274,20 +257,8 @@ export const useRequireAuth = (requiredPermission?: string) => {
       return;
     }
 
-    console.log('🔒 ROUTE PROTECTION CHECK:', {
-      isLoading,
-      isAuthenticated,
-      hasToken: !!sessionStorage.getItem('access_token'),
-      currentPath: typeof window !== 'undefined' ? window.location.pathname : 'SSR',
-      requiredPermission,
-      userRole: user?.role,
-      hasChecked: hasCheckedRef.current,
-      shouldRender
-    });
-
     // Don't do anything while still loading
     if (isLoading) {
-      console.log('⏳ Still loading auth state, waiting...');
       setShouldRender(false);
       return;
     }
@@ -297,14 +268,12 @@ export const useRequireAuth = (requiredPermission?: string) => {
     
     // Only redirect if truly not authenticated (no user AND no token)
     if (!isAuthenticated && !hasToken) {
-      console.log('❌ Not authenticated, redirecting to login');
       setShouldRender(false);
       // Prevent redirect loops - only redirect once
       if (typeof window !== 'undefined' && 
           !hasCheckedRef.current && 
           window.location.pathname !== '/' && 
           window.location.pathname !== '/signin') {
-        console.log('🔄 Performing hard redirect to login page');
         hasCheckedRef.current = true;
         window.location.href = '/';
       }
@@ -313,7 +282,6 @@ export const useRequireAuth = (requiredPermission?: string) => {
 
     // Check permission if required
     if (requiredPermission && user && !checkPermission(requiredPermission)) {
-      console.log('⛔ Permission denied, redirecting to dashboard');
       setShouldRender(false);
       if (typeof window !== 'undefined' && 
           !hasCheckedRef.current && 
@@ -325,7 +293,6 @@ export const useRequireAuth = (requiredPermission?: string) => {
     }
 
     // If we get here, user is authenticated
-    console.log('✅ Authentication check passed, rendering content');
     hasCheckedRef.current = true;
     setShouldRender(true);
   }, [isAuthenticated, isLoading]); // Minimal dependencies - only primitives

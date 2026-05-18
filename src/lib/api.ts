@@ -16,13 +16,47 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8
 /**
  * Main API client instance
  */
-export const apiClient = axios.create({
+const _apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 20000,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Important: enables httpOnly cookies
+  withCredentials: false, // Tokens are sent via Authorization header, not cookies
+});
+
+/**
+ * In-flight request deduplication cache.
+ * Prevents identical GET requests from being fired in parallel
+ * (e.g. React StrictMode double-mount, multiple hooks).
+ */
+const inFlightCache = new Map<string, Promise<unknown>>();
+
+function buildCacheKey(url: string, params?: unknown): string {
+  return `GET:${url}:${params ? JSON.stringify(params) : ''}`;
+}
+
+// Bind the ORIGINAL axios get before we override it, to avoid infinite recursion
+const _originalGet = _apiClient.get.bind(_apiClient);
+
+function dedupedGet<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<{ data: T }> {
+  const key = buildCacheKey(url, config?.params);
+  const cached = inFlightCache.get(key);
+  if (cached) {
+    return cached as Promise<{ data: T }>;
+  }
+  const promise = _originalGet<T>(url, config).finally(() => {
+    inFlightCache.delete(key);
+  });
+  inFlightCache.set(key, promise);
+  return promise;
+}
+
+/**
+ * Public API client with deduplicated GET
+ */
+export const apiClient = Object.assign(_apiClient, {
+  get: dedupedGet,
 });
 
 function buildIdempotencyKey() {
@@ -35,7 +69,7 @@ function buildIdempotencyKey() {
 
 /**
  * Request interceptor
- * Adds auth token to requests
+ * Adds auth token to requests and deduplicates identical in-flight GETs
  */
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -47,6 +81,16 @@ apiClient.interceptors.request.use(
         fullURL: `${config.baseURL}${config.url}`,
         hasToken: !!sessionStorage.getItem('access_token'),
       });
+    }
+
+    if (shouldUseAdminProxy(config.url)) {
+      if (config.url?.startsWith('/api/v1/admin/')) {
+        config.url = config.url.replace('/api/v1/admin/', '/api/admin/');
+      }
+
+      // Rewritten admin requests must target the Next.js same-origin proxy,
+      // not the backend base URL where /api/admin/* does not exist.
+      config.baseURL = undefined;
     }
 
     // Get access token from sessionStorage and attach to Authorization header
@@ -98,23 +142,9 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 
 apiClient.interceptors.response.use(
   (response) => {
-    console.log('🟢 API RESPONSE:', {
-      status: response.status,
-      url: response.config.url,
-      method: response.config.method?.toUpperCase(),
-      dataKeys: response.data ? Object.keys(response.data) : []
-    });
     return response;
   },
   async (error: AxiosError) => {
-    console.log('🔴 API ERROR:', {
-      status: error.response?.status,
-      url: error.config?.url,
-      method: error.config?.method?.toUpperCase(),
-      message: error.message,
-      responseData: error.response?.data
-    });
-    
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
     // If the backend is explicitly telling us the admin monitoring token is invalid,
@@ -136,13 +166,11 @@ apiClient.interceptors.response.use(
       console.warn('⚠️ Got 401 error, attempting token refresh...');
       
       if (isRefreshing) {
-        console.log('⏳ Token refresh already in progress, queuing request...');
         // Wait for the refresh to complete
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then(() => {
-            console.log('✅ Retrying queued request after refresh');
             return apiClient(originalRequest);
           })
           .catch((err) => {
@@ -152,12 +180,10 @@ apiClient.interceptors.response.use(
 
       originalRequest._retry = true;
       isRefreshing = true;
-      console.log('🔄 Starting token refresh process...');
 
       try {
         // Get the refresh token from sessionStorage
         const refreshToken = sessionStorage.getItem('refresh_token');
-        console.log('Refresh token exists:', !!refreshToken);
         
         if (!refreshToken) {
           console.error('❌ No refresh token available, cannot refresh');
@@ -165,7 +191,6 @@ apiClient.interceptors.response.use(
         }
 
         // Call refresh endpoint (same for admin and regular users)
-        console.log('📡 Calling refresh endpoint...');
         const refreshResponse = await apiClient.post<{ 
           access_token: string; 
           refresh_token: string;
@@ -175,7 +200,6 @@ apiClient.interceptors.response.use(
           { refresh_token: refreshToken }
         );
 
-        console.log('✅ Token refresh successful');
         
         // Calculate new expiry time
         const expiryTime = Date.now() + ((refreshResponse.data.expires_in || 3600) * 1000);
@@ -190,7 +214,6 @@ apiClient.interceptors.response.use(
         processQueue(null, null);
         isRefreshing = false;
 
-        console.log('🔁 Retrying original request with new token...');
         // Retry the original request
         return apiClient(originalRequest);
       } catch (refreshError) {
@@ -216,7 +239,16 @@ apiClient.interceptors.response.use(
     }}
     
 
-    // For non-401 errors or already retried, just reject
+    // Handle 429 Too Many Requests with a user-friendly message
+    if (error.response?.status === 429) {
+      const retryAfter = (error.response.data as any)?.retry_after ?? 60;
+      const err = new Error(`Rate limit exceeded. Please wait ${retryAfter} seconds before retrying.`);
+      (err as any).status = 429;
+      (err as any).retryAfter = retryAfter;
+      return Promise.reject(err);
+    }
+
+    // For non-401/non-429 errors or already retried, just reject
     return Promise.reject(error);
   }
 );

@@ -1,9 +1,16 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
+import {
+  ContentPageHeader,
+  ContentStatsCard,
+  ContentStatsGrid,
+  ContentFiltersCard,
+  ActiveFilterChips,
+  StickyBulkActionBar,
+} from '@/components/admin/layout';
 import Toast from "@/components/ui/toast/Toast";
 import Alert from "@/components/ui/alert/Alert";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
@@ -14,6 +21,7 @@ import { RegenerateAudioModal } from "@/components/modals/RegenerateAudioModal";
 import { scheduleQueuedAudioRefresh } from "@/lib/audioRegeneration";
 import { GoogleSheetsBulkImport } from "@/components/admin/GoogleSheetsBulkImport";
 import Pagination from "@/components/tables/Pagination";
+import { FiGlobe, FiBarChart2, FiVolume2, FiCheckCircle, FiGitMerge } from "react-icons/fi";
 
 interface Phrase {
   id: string;
@@ -330,7 +338,9 @@ export default function PhrasesPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [alignmentFilter, setAlignmentFilter] = useState<AlignmentFilter>("all");
-  const limit = 20;
+  const [limit, setLimit] = useState(20);
+  const [search, setSearch] = useState("");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; phrase: string } | null>(null);
   const [showRegenerateModal, setShowRegenerateModal] = useState(false);
   const [regeneratingTarget, setRegeneratingTarget] = useState<any | null>(null);
@@ -1218,58 +1228,137 @@ export default function PhrasesPage() {
     }
   };
 
+  const stats = useMemo(() => {
+    const aligned = phrases.filter((p) => p.alignment_status === "approved" || p.alignment_status === "reviewed").length;
+    const needsAlignment = phrases.filter((p) => !p.alignment_status || p.alignment_status === "draft").length;
+    const withAudio = phrases.filter((p) => !!p.audio_url).length;
+    return { total, aligned, needsAlignment, withAudio };
+  }, [phrases, total]);
+
+  const activeFilters = [] as { label: string; onClear: () => void }[];
+  if (selectedLanguage) {
+    const lang = languages.find((l: any) => l.id === selectedLanguage);
+    activeFilters.push({ label: `Language: ${lang?.name || selectedLanguage}`, onClear: () => { setSelectedLanguage(""); setPage(1); setSelectedPhrases([]); } });
+  }
+  if (search) activeFilters.push({ label: `Search: "${search}"`, onClear: () => { setSearch(""); setPage(1); } });
+  if (alignmentFilter !== "all") {
+    const option = ALIGNMENT_FILTER_OPTIONS.find((o) => o.value === alignmentFilter);
+    activeFilters.push({ label: `Alignment: ${option?.label || alignmentFilter}`, onClear: () => handleAlignmentFilterChange("all") });
+  }
+
+  const clearAllFilters = () => {
+    setSearch("");
+    handleAlignmentFilterChange("all");
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
-    <div className="p-6">
-      <PageBreadCrumb pageTitle="Phrases" />
+    <div className="space-y-6">
+      <ContentPageHeader
+        title="Phrases Management"
+        subtitle="Manage common phrases and expressions"
+        onAdd={openCreateModal}
+        addLabel="Add Phrase"
+      />
 
       {successMessage && <Toast type="success" message={successMessage} onClose={() => setSuccessMessage("")} />}
       {error && <Toast type="error" message={error} onClose={() => setError("")} />}
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Phrases Management</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Manage common phrases and expressions
-          </p>
+      <ContentStatsGrid cols={4}>
+        <ContentStatsCard label="Total" value={stats.total} icon={FiBarChart2} />
+        <ContentStatsCard label="Aligned" value={stats.aligned} icon={FiCheckCircle} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
+        <ContentStatsCard label="Needs Alignment" value={stats.needsAlignment} icon={FiGitMerge} iconBgClass="bg-amber-100 dark:bg-amber-900/20" iconTextClass="text-amber-600 dark:text-amber-400" />
+        <ContentStatsCard label="With Audio" value={stats.withAudio} icon={FiVolume2} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+      </ContentStatsGrid>
+
+      <ContentFiltersCard
+        activeFilterCount={activeFilters.length}
+        onClearAll={clearAllFilters}
+        showAdvanced={showAdvancedFilters}
+        onToggleAdvanced={() => setShowAdvancedFilters(!showAdvancedFilters)}
+      >
+        {/* Primary Filters Row */}
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <div className="flex items-center gap-1.5">
+                <FiGlobe className="h-3.5 w-3.5" />
+                Language
+              </div>
+            </label>
+            <StyledSelect
+              value={selectedLanguage}
+              onChange={(e) => handleLanguageChange(e.target.value)}
+              options={[
+                { value: "", label: "-- Select a Language --" },
+                ...languages.map((lang: any) => ({
+                  value: lang.id,
+                  label: `${lang.name} (${lang.native_name})`
+                }))
+              ]}
+              fullWidth
+            />
+          </div>
+
+          <div className="flex-1 min-w-[240px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Search
+            </label>
+            <input
+              type="text"
+              placeholder="Search phrases..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+            />
+          </div>
+
+          <div className="min-w-[140px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Per Page
+            </label>
+            <StyledSelect
+              value={limit}
+              onChange={(e) => {
+                setLimit(Number(e.target.value));
+                setPage(1);
+                if (selectedLanguage) {
+                  fetchPhrases(selectedLanguage, 1, alignmentFilter);
+                }
+              }}
+              options={[
+                { value: 20, label: "20" },
+                { value: 50, label: "50" },
+                { value: 100, label: "100" },
+              ]}
+              fullWidth
+            />
+          </div>
         </div>
-        {selectedLanguage && (
-          <button
-            onClick={openCreateModal}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            + Add Phrase
-          </button>
+
+        {/* Advanced Filters Panel */}
+        {showAdvancedFilters && (
+          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <StyledSelect
+                label="Alignment Filter"
+                value={alignmentFilter}
+                onChange={(e) => handleAlignmentFilterChange(e.target.value as AlignmentFilter)}
+                options={ALIGNMENT_FILTER_OPTIONS}
+                fullWidth
+              />
+            </div>
+          </div>
         )}
-      </div>
 
-      {/* Language Selector */}
-      <div className="mb-6 grid gap-4 max-w-3xl md:grid-cols-2">
-        <StyledSelect
-          label="Select Language"
-          value={selectedLanguage}
-          onChange={(e) => handleLanguageChange(e.target.value)}
-          options={[
-            { value: "", label: "-- Select a Language --" },
-            ...languages.map((lang: any) => ({
-              value: lang.id,
-              label: `${lang.name} (${lang.native_name})`
-            }))
-          ]}
-          fullWidth
-        />
-        <StyledSelect
-          label="Alignment Filter"
-          value={alignmentFilter}
-          onChange={(e) => handleAlignmentFilterChange(e.target.value as AlignmentFilter)}
-          options={ALIGNMENT_FILTER_OPTIONS}
-          fullWidth
-        />
-      </div>
+        <ActiveFilterChips filters={activeFilters} />
+      </ContentFiltersCard>
 
-      {/* Bulk Import from Google Sheets */}
+      {/* Bulk Import from Google Sheets (has built-in accordion) */}
       {selectedLanguage && (
         <GoogleSheetsBulkImport
           contentType="phrases"
@@ -1293,25 +1382,21 @@ export default function PhrasesPage() {
         />
       )}
 
-      {selectedLanguage && (
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={handleBulkRegenerateAudio}
-            disabled={selectedPhrases.length === 0 || phrases.length === 0}
-            className="px-4 py-2 rounded-lg bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Regenerate Selected Audio
-          </button>
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            {phrases.length === 0
-              ? "No phrases found."
-              : selectedPhrases.length === 0
-              ? "Select one or more phrases to regenerate audio in bulk."
-              : `${selectedPhrases.length} phrase${selectedPhrases.length === 1 ? "" : "s"} selected`}
-          </span>
-        </div>
-      )}
+      <StickyBulkActionBar
+        selectedCount={selectedPhrases.length}
+        onClear={() => setSelectedPhrases([])}
+        itemName="phrase"
+        actions={[
+          {
+            label: isLoadingVoices ? "Loading voices..." : isBulkRegenerating ? "Queueing..." : "Regenerate Audio",
+            onClick: handleBulkRegenerateAudio,
+            disabled: isBulkRegenerating || isLoadingVoices,
+            loading: isBulkRegenerating || isLoadingVoices,
+            variant: 'primary',
+            icon: <FiVolume2 className="h-4 w-4" />,
+          },
+        ]}
+      />
 
       {/* Phrases Table - Desktop Only */}
       {selectedLanguage && (

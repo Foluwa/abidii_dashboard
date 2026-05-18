@@ -17,7 +17,15 @@ import { DictionaryGoogleSheetsBulkImport } from "@/components/admin/DictionaryG
 import { scheduleQueuedAudioRefresh } from "@/lib/audioRegeneration";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Pagination from "@/components/tables/Pagination";
-import { FiPlus, FiGlobe, FiTrash2, FiVolume2, FiFilter, FiX, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import {
+  ContentPageHeader,
+  ContentStatsCard,
+  ContentStatsGrid,
+  ContentFiltersCard,
+  ActiveFilterChips,
+  StickyBulkActionBar,
+} from '@/components/admin/layout';
+import { FiGlobe, FiBarChart2, FiCheckCircle, FiTrash2, FiVolume2, FiX } from "react-icons/fi";
 
 // POS options for multi-select
 const POS_OPTIONS = [
@@ -179,6 +187,21 @@ export default function WordsPage() {
     wordLengthMin !== undefined,
     wordLengthMax !== undefined,
   ].filter(Boolean).length;
+
+  // Active filter chips for shared component
+  const activeFilterChips = [
+    hasAudio !== undefined && { label: 'Has Audio', onClear: () => setHasAudio(undefined) },
+    hasExamples !== undefined && { label: 'Has Examples', onClear: () => setHasExamples(undefined) },
+    hasRelated !== undefined && { label: 'Has Related', onClear: () => setHasRelated(undefined) },
+    hasPronunciation !== undefined && { label: 'Has IPA', onClear: () => setHasPronunciation(undefined) },
+    toneMarksPresent !== undefined && { label: 'Tone Marks', onClear: () => setToneMarksPresent(undefined) },
+    ipaPresent !== undefined && { label: 'IPA Transcription', onClear: () => setIpaPresent(undefined) },
+    posFilter.length > 0 && { label: `POS: ${posFilter.join(', ')}`, onClear: () => setPosFilter([]) },
+    startsWithFilter && { label: `Starts: "${startsWithFilter}"`, onClear: () => setStartsWithFilter('') },
+    containsFilter && { label: `Contains: "${containsFilter}"`, onClear: () => setContainsFilter('') },
+    endsWithFilter && { label: `Ends: "${endsWithFilter}"`, onClear: () => setEndsWithFilter('') },
+    (wordLengthMin !== undefined || wordLengthMax !== undefined) && { label: `Length: ${wordLengthMin ?? '∞'}-${wordLengthMax ?? '∞'}`, onClear: () => { setWordLengthMin(undefined); setWordLengthMax(undefined); } },
+  ].filter(Boolean) as { label: string; onClear: () => void }[];
 
   // Clear all filters
   const clearAllFilters = () => {
@@ -490,603 +513,444 @@ export default function WordsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <PageBreadCrumb pageTitle="Lexicon Entries" />
-          <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
-            Search source headwords and imported translations from the same view
-          </p>
+      <ContentPageHeader
+        title="Lexicon Entries"
+        subtitle="Search source headwords and imported translations from the same view"
+        onAdd={openCreateModal}
+        addLabel="Add New Entry"
+      />
+
+      <ContentStatsGrid cols={3}>
+        <ContentStatsCard label="Total Entries" value={total || 0} icon={FiGlobe} />
+        <ContentStatsCard label="Current Page" value={page} icon={FiBarChart2} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
+        <ContentStatsCard label="Showing" value={`${Math.min((page - 1) * limit + 1, total)}-${Math.min(page * limit, total)}`} icon={FiCheckCircle} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+      </ContentStatsGrid>
+
+      <ContentFiltersCard
+        activeFilterCount={activeFilterCount}
+        onClearAll={clearAllFilters}
+        showAdvanced={showAdvancedFilters}
+        onToggleAdvanced={() => setShowAdvancedFilters(!showAdvancedFilters)}
+      >
+        {/* Basic Filters Row */}
+        <div className="flex flex-wrap gap-4">
+          {/* Source Language Filter */}
+          <div className="flex-1 min-w-[200px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <div className="flex items-center gap-1.5">
+                <FiGlobe className="h-3.5 w-3.5" />
+                Source Language
+              </div>
+            </label>
+            <StyledSelect
+              value={selectedLanguage}
+              onChange={(e) => {
+                setSelectedLanguage(e.target.value);
+                setPage(1);
+              }}
+              options={[
+                { value: "", label: "All Source Languages" },
+                ...(languages?.map((lang: any) => ({
+                  value: lang.id,
+                  label: lang.name
+                })) || [])
+              ]}
+              fullWidth
+            />
+          </div>
+
+          {/* Target Language Filter */}
+          <div className="flex-1 min-w-[200px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <div className="flex items-center gap-1.5">
+                <FiGlobe className="h-3.5 w-3.5" />
+                Target Language
+              </div>
+            </label>
+            <StyledSelect
+              value={selectedTargetLanguage}
+              onChange={(e) => {
+                setSelectedTargetLanguage(e.target.value);
+                setPage(1);
+              }}
+              options={[
+                { value: "", label: "All Target Languages" },
+                ...(languages?.map((lang: any) => ({
+                  value: lang.id,
+                  label: lang.name
+                })) || [])
+              ]}
+              fullWidth
+            />
+          </div>
+
+          {/* Sort By */}
+          <div className="min-w-[150px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Sort by
+            </label>
+            <StyledSelect
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value as any);
+                setPage(1);
+              }}
+              options={[
+                { value: "lemma", label: "Alphabetical" },
+                { value: "primary_translation", label: "Primary Translation" },
+                { value: "created_at", label: "Created Date" },
+                { value: "updated_at", label: "Updated Date" },
+                { value: "difficulty", label: "Difficulty" },
+                { value: "pos", label: "Part of Speech" }
+              ]}
+              fullWidth
+            />
+          </div>
+
+          <div className="flex-1 min-w-[240px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Primary Translation
+            </label>
+            <input
+              type="text"
+              value={primaryTranslationFilter}
+              onChange={(e) => {
+                setPrimaryTranslationFilter(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Filter by primary translation..."
+              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+            />
+          </div>
+
+          {/* Sort Direction */}
+          <div className="min-w-[120px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Order
+            </label>
+            <StyledSelect
+              value={sortDir}
+              onChange={(e) => {
+                setSortDir(e.target.value as any);
+                setPage(1);
+              }}
+              options={[
+                { value: "asc", label: "Ascending" },
+                { value: "desc", label: "Descending" }
+              ]}
+              fullWidth
+            />
+          </div>
+
+          {/* Items Per Page */}
+          <div>
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Items per page
+            </label>
+            <StyledSelect
+              value={limit}
+              onChange={(e) => {
+                setLimit(Number(e.target.value));
+                setPage(1);
+              }}
+              options={[
+                { value: 20, label: "20" },
+                { value: 50, label: "50" },
+                { value: 100, label: "100" }
+              ]}
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Bulk Actions
-          </span>
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            {selectedWords.length} selected
-          </span>
-          <button
-            onClick={handleBulkDelete}
-            disabled={selectedWords.length === 0 || isDeleting}
-            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900"
-          >
-            <FiTrash2 className="h-4 w-4" />
-            {isDeleting ? 'Deleting...' : 'Delete Selected'}
-          </button>
-          <button
-            onClick={handleBulkRegenerateAudio}
-            disabled={selectedWords.length === 0 || isRegenerating}
-            className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-purple-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900"
-          >
-            <FiVolume2 className="h-4 w-4" />
-            {isRegenerating ? 'Regenerating...' : 'Regenerate Audio'}
-          </button>
-          <button
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-          >
-            <FiPlus className="h-4 w-4" />
-            Add New Entry
-          </button>
-        </div>
-      </div>
+
+        {/* Advanced Filters Panel */}
+        {showAdvancedFilters && (
+          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {/* Boolean Filters Column */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Content Flags</h4>
+                
+                {/* Has Audio */}
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={hasAudio === true}
+                      onChange={(e) => setHasAudio(e.target.checked ? true : undefined)}
+                      className="peer sr-only"
+                    />
+                    <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
+                    <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
+                  </div>
+                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                    Has Audio
+                  </span>
+                  {hasAudio !== undefined && (
+                    <button onClick={() => setHasAudio(undefined)} className="text-gray-400 hover:text-gray-600">
+                      <FiX className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </label>
+
+                {/* Has Examples */}
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={hasExamples === true}
+                      onChange={(e) => setHasExamples(e.target.checked ? true : undefined)}
+                      className="peer sr-only"
+                    />
+                    <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
+                    <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
+                  </div>
+                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                    Has Examples
+                  </span>
+                  {hasExamples !== undefined && (
+                    <button onClick={() => setHasExamples(undefined)} className="text-gray-400 hover:text-gray-600">
+                      <FiX className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </label>
+
+                {/* Has Related Terms */}
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={hasRelated === true}
+                      onChange={(e) => setHasRelated(e.target.checked ? true : undefined)}
+                      className="peer sr-only"
+                    />
+                    <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
+                    <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
+                  </div>
+                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                    Has Related Terms
+                  </span>
+                  {hasRelated !== undefined && (
+                    <button onClick={() => setHasRelated(undefined)} className="text-gray-400 hover:text-gray-600">
+                      <FiX className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </label>
+
+                {/* Has Pronunciation */}
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={hasPronunciation === true}
+                      onChange={(e) => setHasPronunciation(e.target.checked ? true : undefined)}
+                      className="peer sr-only"
+                    />
+                    <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
+                    <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
+                  </div>
+                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                    Has IPA Pronunciation
+                  </span>
+                  {hasPronunciation !== undefined && (
+                    <button onClick={() => setHasPronunciation(undefined)} className="text-gray-400 hover:text-gray-600">
+                      <FiX className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </label>
+
+                {/* Tone Marks Present */}
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={toneMarksPresent === true}
+                      onChange={(e) => setToneMarksPresent(e.target.checked ? true : undefined)}
+                      className="peer sr-only"
+                    />
+                    <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
+                    <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
+                  </div>
+                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                    Has Tone Marks (ẹ́, ọ̀, etc.)
+                  </span>
+                  {toneMarksPresent !== undefined && (
+                    <button onClick={() => setToneMarksPresent(undefined)} className="text-gray-400 hover:text-gray-600">
+                      <FiX className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </label>
+
+                {/* IPA Present */}
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={ipaPresent === true}
+                      onChange={(e) => setIpaPresent(e.target.checked ? true : undefined)}
+                      className="peer sr-only"
+                    />
+                    <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
+                    <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
+                  </div>
+                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                    Has IPA Transcription
+                  </span>
+                  {ipaPresent !== undefined && (
+                    <button onClick={() => setIpaPresent(undefined)} className="text-gray-400 hover:text-gray-600">
+                      <FiX className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </label>
+              </div>
+
+              {/* Text Pattern Filters Column */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Text Patterns</h4>
+                
+                {/* Starts With */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Starts with
+                  </label>
+                  <input
+                    type="text"
+                    value={startsWithFilter}
+                    onChange={(e) => {
+                      setStartsWithFilter(e.target.value);
+                      setPage(1);
+                    }}
+                    placeholder="e.g., a, ba"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                  />
+                </div>
+
+                {/* Contains */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Contains
+                  </label>
+                  <input
+                    type="text"
+                    value={containsFilter}
+                    onChange={(e) => {
+                      setContainsFilter(e.target.value);
+                      setPage(1);
+                    }}
+                    placeholder="e.g., ọ, sun"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                  />
+                </div>
+
+                {/* Ends With */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Ends with
+                  </label>
+                  <input
+                    type="text"
+                    value={endsWithFilter}
+                    onChange={(e) => {
+                      setEndsWithFilter(e.target.value);
+                      setPage(1);
+                    }}
+                    placeholder="e.g., mi, ọ"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                  />
+                </div>
+
+                {/* Word Length Range */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Word Length
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={wordLengthMin ?? ""}
+                      onChange={(e) => {
+                        setWordLengthMin(e.target.value ? Number(e.target.value) : undefined);
+                        setPage(1);
+                      }}
+                      placeholder="Min"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                    />
+                    <span className="text-gray-400">-</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={wordLengthMax ?? ""}
+                      onChange={(e) => {
+                        setWordLengthMax(e.target.value ? Number(e.target.value) : undefined);
+                        setPage(1);
+                      }}
+                      placeholder="Max"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Part of Speech Multi-Select Column */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Part of Speech</h4>
+                <div className="flex flex-wrap gap-2">
+                  {POS_OPTIONS.map((pos) => (
+                    <button
+                      key={pos.value}
+                      onClick={() => togglePosFilter(pos.value)}
+                      className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                        posFilter.includes(pos.value)
+                          ? 'bg-brand-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {pos.label}
+                      {posFilter.includes(pos.value) && (
+                        <FiX className="ml-1.5 h-3 w-3" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+                {posFilter.length > 0 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Selected: {posFilter.join(', ')}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <ActiveFilterChips filters={activeFilterChips} />
+      </ContentFiltersCard>
 
       <DictionaryGoogleSheetsBulkImport onImportComplete={() => refresh()} />
 
-      {/* Filters Card */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-        <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Filters</h3>
-            <div className="flex items-center gap-2">
-              {activeFilterCount > 0 && (
-                <button
-                  onClick={clearAllFilters}
-                  className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                >
-                  <FiX className="h-3 w-3" />
-                  Clear all ({activeFilterCount})
-                </button>
-              )}
-              <button
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                <FiFilter className="h-3 w-3" />
-                Advanced
-                {showAdvancedFilters ? <FiChevronUp className="h-3 w-3" /> : <FiChevronDown className="h-3 w-3" />}
-              </button>
-            </div>
-          </div>
-        </div>
-        <div className="p-5">
-          {/* Basic Filters Row */}
-          <div className="flex flex-wrap gap-4">
-            {/* Source Language Filter */}
-            <div className="flex-1 min-w-[200px]">
-              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                <div className="flex items-center gap-1.5">
-                  <FiGlobe className="h-3.5 w-3.5" />
-                  Source Language
-                </div>
-              </label>
-              <StyledSelect
-                value={selectedLanguage}
-                onChange={(e) => {
-                  setSelectedLanguage(e.target.value);
-                  setPage(1);
-                }}
-                options={[
-                  { value: "", label: "All Source Languages" },
-                  ...(languages?.map((lang: any) => ({
-                    value: lang.id,
-                    label: lang.name
-                  })) || [])
-                ]}
-                fullWidth
-              />
-            </div>
-
-            {/* Target Language Filter */}
-            <div className="flex-1 min-w-[200px]">
-              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                <div className="flex items-center gap-1.5">
-                  <FiGlobe className="h-3.5 w-3.5" />
-                  Target Language
-                </div>
-              </label>
-              <StyledSelect
-                value={selectedTargetLanguage}
-                onChange={(e) => {
-                  setSelectedTargetLanguage(e.target.value);
-                  setPage(1);
-                }}
-                options={[
-                  { value: "", label: "All Target Languages" },
-                  ...(languages?.map((lang: any) => ({
-                    value: lang.id,
-                    label: lang.name
-                  })) || [])
-                ]}
-                fullWidth
-              />
-            </div>
-
-            {/* Sort By */}
-            <div className="min-w-[150px]">
-              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                Sort by
-              </label>
-              <StyledSelect
-                value={sortBy}
-                onChange={(e) => {
-                  setSortBy(e.target.value as any);
-                  setPage(1);
-                }}
-                options={[
-                  { value: "lemma", label: "Alphabetical" },
-                  { value: "primary_translation", label: "Primary Translation" },
-                  { value: "created_at", label: "Created Date" },
-                  { value: "updated_at", label: "Updated Date" },
-                  { value: "difficulty", label: "Difficulty" },
-                  { value: "pos", label: "Part of Speech" }
-                ]}
-                fullWidth
-              />
-            </div>
-
-            <div className="flex-1 min-w-[240px]">
-              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                Primary Translation
-              </label>
-              <input
-                type="text"
-                value={primaryTranslationFilter}
-                onChange={(e) => {
-                  setPrimaryTranslationFilter(e.target.value);
-                  setPage(1);
-                }}
-                placeholder="Filter by primary translation..."
-                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
-              />
-            </div>
-
-            {/* Sort Direction */}
-            <div className="min-w-[120px]">
-              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                Order
-              </label>
-              <StyledSelect
-                value={sortDir}
-                onChange={(e) => {
-                  setSortDir(e.target.value as any);
-                  setPage(1);
-                }}
-                options={[
-                  { value: "asc", label: "Ascending" },
-                  { value: "desc", label: "Descending" }
-                ]}
-                fullWidth
-              />
-            </div>
-
-            {/* Items Per Page */}
-            <div>
-              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                Items per page
-              </label>
-              <StyledSelect
-                value={limit}
-                onChange={(e) => {
-                  setLimit(Number(e.target.value));
-                  setPage(1);
-                }}
-                options={[
-                  { value: 20, label: "20" },
-                  { value: 50, label: "50" },
-                  { value: 100, label: "100" }
-                ]}
-              />
-            </div>
-          </div>
-
-          {/* Advanced Filters Panel */}
-          {showAdvancedFilters && (
-            <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {/* Boolean Filters Column */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Content Flags</h4>
-                  
-                  {/* Has Audio */}
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <div className="relative">
-                      <input
-                        type="checkbox"
-                        checked={hasAudio === true}
-                        onChange={(e) => setHasAudio(e.target.checked ? true : undefined)}
-                        className="peer sr-only"
-                      />
-                      <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
-                      <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
-                    </div>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
-                      Has Audio
-                    </span>
-                    {hasAudio !== undefined && (
-                      <button onClick={() => setHasAudio(undefined)} className="text-gray-400 hover:text-gray-600">
-                        <FiX className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </label>
-
-                  {/* Has Examples */}
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <div className="relative">
-                      <input
-                        type="checkbox"
-                        checked={hasExamples === true}
-                        onChange={(e) => setHasExamples(e.target.checked ? true : undefined)}
-                        className="peer sr-only"
-                      />
-                      <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
-                      <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
-                    </div>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
-                      Has Examples
-                    </span>
-                    {hasExamples !== undefined && (
-                      <button onClick={() => setHasExamples(undefined)} className="text-gray-400 hover:text-gray-600">
-                        <FiX className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </label>
-
-                  {/* Has Related Terms */}
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <div className="relative">
-                      <input
-                        type="checkbox"
-                        checked={hasRelated === true}
-                        onChange={(e) => setHasRelated(e.target.checked ? true : undefined)}
-                        className="peer sr-only"
-                      />
-                      <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
-                      <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
-                    </div>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
-                      Has Related Terms
-                    </span>
-                    {hasRelated !== undefined && (
-                      <button onClick={() => setHasRelated(undefined)} className="text-gray-400 hover:text-gray-600">
-                        <FiX className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </label>
-
-                  {/* Has Pronunciation */}
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <div className="relative">
-                      <input
-                        type="checkbox"
-                        checked={hasPronunciation === true}
-                        onChange={(e) => setHasPronunciation(e.target.checked ? true : undefined)}
-                        className="peer sr-only"
-                      />
-                      <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
-                      <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
-                    </div>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
-                      Has IPA Pronunciation
-                    </span>
-                    {hasPronunciation !== undefined && (
-                      <button onClick={() => setHasPronunciation(undefined)} className="text-gray-400 hover:text-gray-600">
-                        <FiX className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </label>
-
-                  {/* Tone Marks Present */}
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <div className="relative">
-                      <input
-                        type="checkbox"
-                        checked={toneMarksPresent === true}
-                        onChange={(e) => setToneMarksPresent(e.target.checked ? true : undefined)}
-                        className="peer sr-only"
-                      />
-                      <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
-                      <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
-                    </div>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
-                      Has Tone Marks (ẹ́, ọ̀, etc.)
-                    </span>
-                    {toneMarksPresent !== undefined && (
-                      <button onClick={() => setToneMarksPresent(undefined)} className="text-gray-400 hover:text-gray-600">
-                        <FiX className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </label>
-
-                  {/* IPA Present */}
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <div className="relative">
-                      <input
-                        type="checkbox"
-                        checked={ipaPresent === true}
-                        onChange={(e) => setIpaPresent(e.target.checked ? true : undefined)}
-                        className="peer sr-only"
-                      />
-                      <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
-                      <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
-                    </div>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
-                      Has IPA Transcription
-                    </span>
-                    {ipaPresent !== undefined && (
-                      <button onClick={() => setIpaPresent(undefined)} className="text-gray-400 hover:text-gray-600">
-                        <FiX className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </label>
-                </div>
-
-                {/* Text Pattern Filters Column */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Text Patterns</h4>
-                  
-                  {/* Starts With */}
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Starts with
-                    </label>
-                    <input
-                      type="text"
-                      value={startsWithFilter}
-                      onChange={(e) => {
-                        setStartsWithFilter(e.target.value);
-                        setPage(1);
-                      }}
-                      placeholder="e.g., a, ba"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
-                    />
-                  </div>
-
-                  {/* Contains */}
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Contains
-                    </label>
-                    <input
-                      type="text"
-                      value={containsFilter}
-                      onChange={(e) => {
-                        setContainsFilter(e.target.value);
-                        setPage(1);
-                      }}
-                      placeholder="e.g., ọ, sun"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
-                    />
-                  </div>
-
-                  {/* Ends With */}
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Ends with
-                    </label>
-                    <input
-                      type="text"
-                      value={endsWithFilter}
-                      onChange={(e) => {
-                        setEndsWithFilter(e.target.value);
-                        setPage(1);
-                      }}
-                      placeholder="e.g., mi, ọ"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
-                    />
-                  </div>
-
-                  {/* Word Length Range */}
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Word Length
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min={1}
-                        max={50}
-                        value={wordLengthMin ?? ""}
-                        onChange={(e) => {
-                          setWordLengthMin(e.target.value ? Number(e.target.value) : undefined);
-                          setPage(1);
-                        }}
-                        placeholder="Min"
-                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
-                      />
-                      <span className="text-gray-400">-</span>
-                      <input
-                        type="number"
-                        min={1}
-                        max={50}
-                        value={wordLengthMax ?? ""}
-                        onChange={(e) => {
-                          setWordLengthMax(e.target.value ? Number(e.target.value) : undefined);
-                          setPage(1);
-                        }}
-                        placeholder="Max"
-                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Part of Speech Multi-Select Column */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Part of Speech</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {POS_OPTIONS.map((pos) => (
-                      <button
-                        key={pos.value}
-                        onClick={() => togglePosFilter(pos.value)}
-                        className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                          posFilter.includes(pos.value)
-                            ? 'bg-brand-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        {pos.label}
-                        {posFilter.includes(pos.value) && (
-                          <FiX className="ml-1.5 h-3 w-3" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                  {posFilter.length > 0 && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Selected: {posFilter.join(', ')}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Active Filter Chips */}
-          {activeFilterCount > 0 && (
-            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4 dark:border-white/[0.05]">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Active:</span>
-              {hasAudio !== undefined && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
-                  Has Audio
-                  <button onClick={() => setHasAudio(undefined)} className="hover:text-brand-900">
-                    <FiX className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              {hasExamples !== undefined && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                  Has Examples
-                  <button onClick={() => setHasExamples(undefined)} className="hover:text-green-900">
-                    <FiX className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              {hasRelated !== undefined && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-1 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                  Has Related
-                  <button onClick={() => setHasRelated(undefined)} className="hover:text-purple-900">
-                    <FiX className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              {hasPronunciation !== undefined && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-medium text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400">
-                  Has IPA
-                  <button onClick={() => setHasPronunciation(undefined)} className="hover:text-cyan-900">
-                    <FiX className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              {toneMarksPresent !== undefined && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2.5 py-1 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                  Tone Marks
-                  <button onClick={() => setToneMarksPresent(undefined)} className="hover:text-orange-900">
-                    <FiX className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              {ipaPresent !== undefined && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
-                  IPA Transcription
-                  <button onClick={() => setIpaPresent(undefined)} className="hover:text-indigo-900">
-                    <FiX className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              {posFilter.length > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-pink-100 px-2.5 py-1 text-xs font-medium text-pink-700 dark:bg-pink-900/30 dark:text-pink-400">
-                  POS: {posFilter.join(', ')}
-                  <button onClick={() => setPosFilter([])} className="hover:text-pink-900">
-                    <FiX className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              {startsWithFilter && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                  Starts: &quot;{startsWithFilter}&quot;
-                  <button onClick={() => setStartsWithFilter("")} className="hover:text-amber-900">
-                    <FiX className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              {containsFilter && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2.5 py-1 text-xs font-medium text-teal-700 dark:bg-teal-900/30 dark:text-teal-400">
-                  Contains: &quot;{containsFilter}&quot;
-                  <button onClick={() => setContainsFilter("")} className="hover:text-teal-900">
-                    <FiX className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              {endsWithFilter && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-lime-100 px-2.5 py-1 text-xs font-medium text-lime-700 dark:bg-lime-900/30 dark:text-lime-400">
-                  Ends: &quot;{endsWithFilter}&quot;
-                  <button onClick={() => setEndsWithFilter("")} className="hover:text-lime-900">
-                    <FiX className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              {(wordLengthMin !== undefined || wordLengthMax !== undefined) && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
-                  Length: {wordLengthMin ?? '∞'}-{wordLengthMax ?? '∞'}
-                  <button onClick={() => { setWordLengthMin(undefined); setWordLengthMax(undefined); }} className="hover:text-rose-900">
-                    <FiX className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Stats Card */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Total Entries</p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{total || 0}</p>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/20">
-                <FiGlobe className="h-6 w-6 text-brand-600 dark:text-brand-400" />
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Current Page</p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{page}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Showing</p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                  {Math.min((page - 1) * limit + 1, total)}-{Math.min(page * limit, total)}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <StickyBulkActionBar
+        selectedCount={selectedWords.length}
+        onClear={() => setSelectedWords([])}
+        itemName="word"
+        actions={[
+          {
+            label: isDeleting ? 'Deleting...' : 'Delete Selected',
+            onClick: handleBulkDelete,
+            disabled: isDeleting,
+            loading: isDeleting,
+            variant: 'danger',
+            icon: <FiTrash2 className="h-4 w-4" />,
+          },
+          {
+            label: isRegenerating ? 'Regenerating...' : 'Regenerate Audio',
+            onClick: handleBulkRegenerateAudio,
+            disabled: isRegenerating,
+            loading: isRegenerating,
+            icon: <FiVolume2 className="h-4 w-4" />,
+          },
+        ]}
+      />
 
       {/* Data Table */}
       <WordsDataTable

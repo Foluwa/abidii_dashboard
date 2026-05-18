@@ -78,6 +78,23 @@ export function GoogleSheetsBulkImport({
   defaultWorksheetTitle,
 }: Props) {
   const toast = useToast();
+  const [isExpanded, setIsExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.localStorage.getItem('google-sheets-import-expanded') !== 'false';
+    }
+    return true;
+  });
+
+  const toggleExpanded = () => {
+    setIsExpanded((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('google-sheets-import-expanded', String(next));
+      }
+      return next;
+    });
+  };
+
   const [sheetReference, setSheetReference] = useState('');
   const [worksheetTitle, setWorksheetTitle] = useState(defaultWorksheetTitle || '');
   const [headerRow, setHeaderRow] = useState(1);
@@ -202,11 +219,30 @@ export function GoogleSheetsBulkImport({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6">
-      <div className="flex justify-between items-center mb-4">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg mb-6">
+      {/* Accordion Header */}
+      <button
+        type="button"
+        onClick={toggleExpanded}
+        className="flex w-full items-center justify-between p-6 text-left hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors"
+      >
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           Bulk Import from Google Sheets
         </h2>
+        <svg
+          className={`h-5 w-5 text-gray-500 transition-transform dark:text-gray-400 ${isExpanded ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Body */}
+      <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="px-6 pb-6">
+      <div className="flex justify-between items-center mb-4">
         <button
           type="button"
           onClick={() => setShowColumnInfo(!showColumnInfo)}
@@ -441,6 +477,48 @@ export function GoogleSheetsBulkImport({
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <ConfirmationModal
+        isOpen={!!confirmApplyBatchId}
+        onClose={() => setConfirmApplyBatchId(null)}
+        onConfirm={async () => {
+          const batchId = confirmApplyBatchId;
+          if (!batchId) return;
+          try {
+            await handleApplyExistingBatch(batchId);
+          } finally {
+            setConfirmApplyBatchId(null);
+          }
+        }}
+        title="Apply Import Batch"
+        message="Apply this validated batch now? This will apply the stored validated snapshot to the database."
+        confirmText="Apply"
+        cancelText="Cancel"
+        variant="warning"
+        isLoading={applying}
+      />
+
+      <ConfirmationModal
+        isOpen={!!confirmDiscardBatchId}
+        onClose={() => setConfirmDiscardBatchId(null)}
+        onConfirm={async () => {
+          const batchId = confirmDiscardBatchId;
+          if (!batchId) return;
+          try {
+            await handleDiscardBatch(batchId);
+          } finally {
+            setConfirmDiscardBatchId(null);
+          }
+        }}
+        title="Discard Import Batch"
+        message="Discard this batch from history to save space? This cannot be undone."
+        confirmText="Discard"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={discarding}
+      />
         </div>
       </div>
     </div>

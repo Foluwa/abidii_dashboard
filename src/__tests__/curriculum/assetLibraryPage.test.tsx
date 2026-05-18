@@ -1,7 +1,7 @@
 import React from 'react';
 import { screen } from '@testing-library/react';
 
-import CurriculumAssetLibraryPage from '@/app/(admin)/(others-pages)/content/curriculum/assets/page';
+import CurriculumAssetLibraryPage from '@/app/(admin)/(others-pages)/curriculum/assets/page';
 import { renderWithProviders as render } from '@/test-utils';
 
 jest.mock('@/hooks/useApi', () => ({

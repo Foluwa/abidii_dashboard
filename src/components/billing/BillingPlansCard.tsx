@@ -119,8 +119,22 @@ export default function BillingPlansCard() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
           </div>
         ) : isError ? (
-          <div className="flex items-center justify-center h-[160px] text-red-500">
-            Failed to load billing plans
+          <div className="flex flex-col items-center justify-center h-[160px] gap-2">
+            <p className="text-sm text-red-500">
+              Failed to load billing plans
+              {isError?.response?.status ? ` (HTTP ${isError.response.status})` : ""}
+            </p>
+            {isError?.message && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md text-center">
+                {isError.message}
+              </p>
+            )}
+            <button
+              onClick={() => refresh()}
+              className="mt-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Retry
+            </button>
           </div>
         ) : plans.length === 0 ? (
           <div className="flex items-center justify-center h-[160px]">

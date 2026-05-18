@@ -124,7 +124,7 @@ export default function Dashboard() {
         </h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Link
-            href="/content/library/words"
+            href="/content/words"
             className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
           >
             <GridIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />
@@ -138,7 +138,7 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-gray-900 dark:text-white">Lesson Blueprints</p>
           </Link>
           <Link
-            href="/media/audio/jobs"
+            href="/audio/jobs"
             className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
           >
             <GridIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />

@@ -1,7 +1,7 @@
 import React from 'react';
 import { screen } from '@testing-library/react';
 
-import CurriculumReadinessPage from '@/app/(admin)/(others-pages)/content/curriculum/readiness/page';
+import CurriculumReadinessPage from '@/app/(admin)/(others-pages)/curriculum/publishing/page';
 import { renderWithProviders as render } from '@/test-utils';
 
 const mockUseCurriculumReadinessMatrix = jest.fn();

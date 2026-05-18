@@ -40,11 +40,20 @@ export default function GameAnalyticsPage() {
   ];
 
   if (isError) {
+    const errMsg = isError?.response?.data?.detail || isError?.message || 'Failed to load game analytics.';
+    const status = isError?.response?.status;
     return (
-      <div className="p-6">
+      <div className="p-6 space-y-4">
         <Alert variant="error">
-          Failed to load game analytics. Please check your permissions and try again.
+          <div className="font-medium">Failed to load game analytics</div>
+          <div className="text-sm mt-1">{errMsg}{status ? ` (HTTP ${status})` : ''}</div>
         </Alert>
+        <button
+          onClick={() => refresh()}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }

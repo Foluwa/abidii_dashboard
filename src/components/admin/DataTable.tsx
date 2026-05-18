@@ -16,6 +16,9 @@ interface DataTableProps<T> {
   loading?: boolean;
   emptyMessage?: string;
   hoverable?: boolean;
+  selectedIds?: string[];
+  onSelect?: (id: string) => void;
+  onSelectAll?: () => void;
 }
 
 export default function DataTable<T extends Record<string, unknown>>({
@@ -28,7 +31,11 @@ export default function DataTable<T extends Record<string, unknown>>({
   loading = false,
   emptyMessage = 'No data available',
   hoverable = true,
+  selectedIds,
+  onSelect,
+  onSelectAll,
 }: DataTableProps<T>) {
+  const allSelected = data.length > 0 && data.every((item) => selectedIds?.includes(keyExtractor(item)));
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
 
   const handleSort = (key: string) => {
@@ -95,6 +102,16 @@ export default function DataTable<T extends Record<string, unknown>>({
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
           <thead className="bg-gray-50 dark:bg-gray-800/50">
             <tr>
+              {selectedIds !== undefined && (
+                <th scope="col" className="px-4 py-3 text-left w-10">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={onSelectAll}
+                    className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700"
+                  />
+                </th>
+              )}
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
@@ -123,9 +140,12 @@ export default function DataTable<T extends Record<string, unknown>>({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-800">
-            {data.map((item) => (
+            {data.map((item) => {
+              const itemId = keyExtractor(item);
+              const isSelected = selectedIds?.includes(itemId) ?? false;
+              return (
               <tr
-                key={keyExtractor(item)}
+                key={itemId}
                 onClick={() => onRowClick?.(item)}
                 className={`
                   ${hoverable ? 'hover:bg-gray-50 dark:hover:bg-gray-800/50' : ''}
@@ -133,6 +153,16 @@ export default function DataTable<T extends Record<string, unknown>>({
                   transition-colors
                 `}
               >
+                {selectedIds !== undefined && (
+                  <td className="px-4 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => onSelect?.(itemId)}
+                      className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700"
+                    />
+                  </td>
+                )}
                 {columns.map((column) => {
                   const value = item[column.key as keyof T];
                   return (
@@ -159,8 +189,9 @@ export default function DataTable<T extends Record<string, unknown>>({
                     </div>
                   </td>
                 )}
-              </tr>
-            ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -180,14 +211,31 @@ export default function DataTable<T extends Record<string, unknown>>({
           <p className="text-lg font-medium">{emptyMessage}</p>
         </div>
       ) : (
-        data.map((item) => (
+        data.map((item) => {
+          const itemId = keyExtractor(item);
+          const isSelected = selectedIds?.includes(itemId) ?? false;
+          return (
           <div
-            key={keyExtractor(item)}
+            key={itemId}
             onClick={() => onRowClick?.(item)}
             className={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 ${
               onRowClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50' : ''
             }`}
           >
+            {selectedIds !== undefined && (
+              <div className="flex items-center mb-3 pb-3 border-b border-gray-200 dark:border-gray-800">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    onSelect?.(itemId);
+                  }}
+                  className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700"
+                />
+                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">Select</span>
+              </div>
+            )}
             {columns.map((column) => {
               const value = item[column.key as keyof T];
               return (
@@ -211,7 +259,8 @@ export default function DataTable<T extends Record<string, unknown>>({
               </div>
             )}
           </div>
-        ))
+          );
+        })
       )}
     </div>
     </>

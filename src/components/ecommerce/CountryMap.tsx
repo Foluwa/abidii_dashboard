@@ -69,8 +69,16 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
 
   if (isError) {
     return (
-      <div className="flex items-center justify-center h-[320px] text-red-500">
-        Failed to load geographic distribution
+      <div className="flex flex-col items-center justify-center h-[320px] gap-2">
+        <p className="text-sm text-red-500">
+          Failed to load geographic distribution
+          {isError?.response?.status ? ` (HTTP ${isError.response.status})` : ""}
+        </p>
+        {isError?.message && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 text-center max-w-md">
+            {isError.message}
+          </p>
+        )}
       </div>
     );
   }
