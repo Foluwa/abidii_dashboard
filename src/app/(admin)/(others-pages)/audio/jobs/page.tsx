@@ -1,12 +1,17 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useCallback } from "react";
-import { apiClient } from "@/lib/api";
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
-import Alert from "@/components/ui/alert/SimpleAlert";
-import { StyledSelect } from "@/components/ui/form/StyledSelect";
-import Pagination from "@/components/tables/Pagination";
-import { FaSync, FaCheckCircle, FaExclamationCircle, FaClock, FaPlay } from "react-icons/fa";
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { apiClient } from '@/lib/api';
+import PageBreadCrumb from '@/components/common/PageBreadCrumb';
+import Pagination from '@/components/tables/Pagination';
+import StatusBadge from '@/components/admin/StatusBadge';
+import { useToast } from '@/contexts/ToastContext';
+import {
+  FaSync,
+  FaPlay,
+  FaPause,
+  FaExclamationTriangle,
+} from 'react-icons/fa';
 
 interface AudioJob {
   id: string;
@@ -29,46 +34,131 @@ interface AudioJob {
   completed_at?: string;
 }
 
+interface AudioJobsResponse {
+  items: AudioJob[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+function formatDuration(seconds?: number | null) {
+  if (seconds == null) return '—';
+  return `${seconds.toFixed(1)}s`;
+}
+
+function formatDateTime(value?: string) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function StatusCell({ status }: { status: string }) {
+  switch (status) {
+    case 'completed':
+      return <StatusBadge status="success" label="Completed" />;
+    case 'failed':
+      return <StatusBadge status="error" label="Failed" />;
+    case 'processing':
+      return <StatusBadge status="warning" label="Processing" />;
+    case 'queued':
+      return <StatusBadge status="info" label="Queued" />;
+    case 'cancelled':
+      return <StatusBadge status="inactive" label="Cancelled" />;
+    default:
+      return <StatusBadge status="pending" label={status} />;
+  }
+}
+
+function AudioPlayer({ src }: { src: string }) {
+  const [playing, setPlaying] = useState(false);
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  const toggle = () => {
+    if (!audioRef.current) return;
+    if (playing) {
+      audioRef.current.pause();
+    } else {
+      void audioRef.current.play();
+    }
+    setPlaying(!playing);
+  };
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const onEnded = () => setPlaying(false);
+    el.addEventListener('ended', onEnded);
+    return () => el.removeEventListener('ended', onEnded);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={toggle}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-white hover:bg-brand-700"
+        title={playing ? 'Pause' : 'Play'}
+      >
+        {playing ? <FaPause className="text-xs" /> : <FaPlay className="text-xs" />}
+      </button>
+      <audio ref={audioRef} src={src} preload="none" className="hidden" />
+    </div>
+  );
+}
+
 export default function AudioJobsPage() {
+  const toast = useToast();
   const [jobs, setJobs] = useState<AudioJob[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("");
-  const [filterProvider, setFilterProvider] = useState<string>("");
-  const [filterContentType, setFilterContentType] = useState<string>("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const limit = 20;
+  const limit = 25;
+
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterProvider, setFilterProvider] = useState('');
+  const [filterContentType, setFilterContentType] = useState('');
+  const [filterSearch, setFilterSearch] = useState('');
 
   const fetchJobs = useCallback(async () => {
     setLoading(true);
-    setError("");
     try {
       let url = `/api/v1/admin/audio/jobs?page=${page}&page_size=${limit}`;
-      if (filterStatus) url += `&status=${filterStatus}`;
-      if (filterProvider) url += `&provider=${filterProvider}`;
-      if (filterContentType) url += `&content_type=${filterContentType}`;
+      if (filterStatus) url += `&status=${encodeURIComponent(filterStatus)}`;
+      if (filterProvider) url += `&provider=${encodeURIComponent(filterProvider)}`;
+      if (filterContentType) url += `&content_type=${encodeURIComponent(filterContentType)}`;
+      if (filterSearch) url += `&q=${encodeURIComponent(filterSearch)}`;
 
-      const response = await apiClient.get(url);
+      const response = await apiClient.get<AudioJobsResponse>(url);
       const data = response.data;
       setJobs(data.items || []);
       setTotal(data.total || 0);
+      setTotalPages(data.pages || Math.max(1, Math.ceil((data.total || 0) / limit)));
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to load jobs");
+      toast.error(err?.response?.data?.detail || 'Failed to load audio jobs');
       setJobs([]);
+      setTotal(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
-  }, [filterContentType, filterProvider, filterStatus, limit, page]);
+  }, [filterContentType, filterProvider, filterStatus, filterSearch, limit, page, toast]);
 
   useEffect(() => {
     fetchJobs();
 
     let interval: NodeJS.Timeout;
     if (autoRefresh) {
-      interval = setInterval(fetchJobs, 10000); // Refresh every 10 seconds
+      interval = setInterval(fetchJobs, 10000);
     }
 
     return () => {
@@ -79,310 +169,279 @@ export default function AudioJobsPage() {
   const retryJob = async (jobId: string) => {
     try {
       await apiClient.post(`/api/v1/admin/audio/jobs/${jobId}/retry`);
-      setSuccessMessage("Job queued for retry");
+      toast.success('Job queued for retry');
       fetchJobs();
-      setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error: any) {
-      setError(error.response?.data?.detail || "Failed to retry job");
-      setTimeout(() => setError(""), 5000);
+      toast.error(error?.response?.data?.detail || 'Failed to retry job');
     }
   };
 
   const cancelJob = async (jobId: string) => {
-    if (!confirm("Are you sure you want to cancel this job?")) return;
-
+    if (!window.confirm('Are you sure you want to cancel this job?')) return;
     try {
       await apiClient.delete(`/api/v1/admin/audio/jobs/${jobId}`);
-      setSuccessMessage("Job cancelled successfully");
+      toast.success('Job cancelled successfully');
       fetchJobs();
-      setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error: any) {
-      setError(error.response?.data?.detail || "Failed to cancel job");
-      setTimeout(() => setError(""), 5000);
+      toast.error(error?.response?.data?.detail || 'Failed to cancel job');
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <FaCheckCircle className="text-green-600" />;
-      case "failed":
-        return <FaExclamationCircle className="text-red-600" />;
-      case "processing":
-        return <FaSync className="text-blue-600 animate-spin" />;
-      case "queued":
-        return <FaClock className="text-yellow-600" />;
-      default:
-        return <FaClock className="text-gray-600" />;
-    }
-  };
+  const stats = useMemo(() => {
+    const completed = jobs.filter((j) => j.status === 'completed').length;
+    const failed = jobs.filter((j) => j.status === 'failed').length;
+    const processing = jobs.filter((j) => j.status === 'processing').length;
+    const queued = jobs.filter((j) => j.status === 'queued').length;
+    const totalDuration = jobs.reduce((sum, j) => sum + (j.output_duration_sec || 0), 0);
+    return { completed, failed, processing, queued, totalDuration };
+  }, [jobs]);
 
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
-      case "failed":
-        return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300";
-      case "processing":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
-      case "queued":
-        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
-      case "cancelled":
-        return "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
-      default:
-        return "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
-    }
-  };
-
-  const formatDuration = (seconds?: number | null) => {
-    if (seconds == null) return "-";
-    return `${seconds.toFixed(1)}s`;
-  };
-
-  const formatDateTime = (value?: string) => {
-    if (!value) return "-";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "-";
-    return date.toLocaleString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const totalPages = Math.ceil(total / limit);
-
-  const getQueuedAt = (job: AudioJob) => job.queued_at;
+  const pageStart = total === 0 ? 0 : (page - 1) * limit + 1;
+  const pageEnd = total === 0 ? 0 : Math.min(page * limit, total);
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       <PageBreadCrumb pageTitle="Audio Jobs" />
 
-      {successMessage && <Alert variant="success">{successMessage}</Alert>}
-      {error && <Alert variant="error">{error}</Alert>}
-
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Audio Generation Jobs</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Monitor TTS generation jobs and their status
-          </p>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total</div>
+          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{total}</div>
         </div>
-        <div className="flex items-center gap-4">
-          <label className="flex items-center text-sm text-gray-700 dark:text-gray-300">
-            <input
-              type="checkbox"
-              checked={autoRefresh}
-              onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="mr-2 h-4 w-4 text-blue-600 rounded border-gray-300"
-            />
-            Auto-refresh (10s)
-          </label>
-          <button
-            onClick={fetchJobs}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-          >
-            <FaSync /> Refresh
-          </button>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Completed</div>
+          <div className="mt-2 text-2xl font-semibold text-green-600 dark:text-green-400">{stats.completed}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Processing</div>
+          <div className="mt-2 text-2xl font-semibold text-blue-600 dark:text-blue-400">{stats.processing}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Failed</div>
+          <div className="mt-2 text-2xl font-semibold text-red-600 dark:text-red-400">{stats.failed}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Duration</div>
+          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{formatDuration(stats.totalDuration)}</div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="flex-1">
-          <StyledSelect
-            label="Status"
-            value={filterStatus}
-            onChange={(e) => {
-              setFilterStatus(e.target.value);
-              setPage(1);
-            }}
-            fullWidth
-            options={[
-              { value: "", label: "All Statuses" },
-              { value: "queued", label: "Queued" },
-              { value: "processing", label: "Processing" },
-              { value: "completed", label: "Completed" },
-              { value: "failed", label: "Failed" },
-              { value: "cancelled", label: "Cancelled" }
-            ]}
-            placeholder="All Statuses"
-          />
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Audio Generation Jobs</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Monitor TTS generation jobs and their status</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+                className="mr-2 h-4 w-4 rounded border-gray-300 text-brand-600"
+              />
+              Auto-refresh (10s)
+            </label>
+            <button
+              type="button"
+              onClick={() => void fetchJobs()}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+            >
+              <FaSync className={loading ? 'animate-spin' : ''} /> Refresh
+            </button>
+          </div>
         </div>
-        <div className="flex-1">
-          <StyledSelect
-            label="Provider"
-            value={filterProvider}
-            onChange={(e) => {
-              setFilterProvider(e.target.value);
-              setPage(1);
-            }}
-            fullWidth
-            options={[
-              { value: "", label: "All Providers" },
-              { value: "google", label: "Google TTS" },
-              { value: "spitch", label: "Spitch" },
-              { value: "elevenlabs", label: "ElevenLabs" }
-            ]}
-            placeholder="All Providers"
-          />
-        </div>
-        <div className="flex-1">
-          <StyledSelect
-            label="Content Type"
-            value={filterContentType}
-            onChange={(e) => {
-              setFilterContentType(e.target.value);
-              setPage(1);
-            }}
-            fullWidth
-            options={[
-              { value: "", label: "All Types" },
-              { value: "word", label: "Words" },
-              { value: "phrase", label: "Phrases" },
-              { value: "proverb", label: "Proverbs" },
-              { value: "number", label: "Numbers" },
-              { value: "letter", label: "Letters" },
-              { value: "sentence", label: "Sentences" },
-            ]}
-            placeholder="All Types"
-          />
-        </div>
-      </div>
 
-      {/* Jobs Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="grid gap-4 md:grid-cols-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
+            <input
+              aria-label="Search"
+              value={filterSearch}
+              onChange={(e) => {
+                setFilterSearch(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Text to speak, ID, voice..."
+              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+            />
           </div>
-        ) : jobs.length === 0 ? (
-          <div className="text-center py-12">
-            <FaClock className="mx-auto text-gray-400 text-5xl mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No audio jobs found</p>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+            <select
+              aria-label="Status"
+              value={filterStatus}
+              onChange={(e) => {
+                setFilterStatus(e.target.value);
+                setPage(1);
+              }}
+              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+            >
+              <option value="">All statuses</option>
+              <option value="queued">Queued</option>
+              <option value="processing">Processing</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
           </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Text
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Provider
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Queued
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Details
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Progress
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {jobs.map((job) => (
-                    <tr key={job.id}>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(job.status)}
-                          <span className={`px-2 py-1 text-xs rounded-full ${getStatusBadgeClass(job.status)}`}>
-                            {job.status}
-                          </span>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Provider</label>
+            <select
+              aria-label="Provider"
+              value={filterProvider}
+              onChange={(e) => {
+                setFilterProvider(e.target.value);
+                setPage(1);
+              }}
+              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+            >
+              <option value="">All providers</option>
+              <option value="google">Google TTS</option>
+              <option value="spitch">Spitch</option>
+              <option value="elevenlabs">ElevenLabs</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Content Type</label>
+            <select
+              aria-label="Content type"
+              value={filterContentType}
+              onChange={(e) => {
+                setFilterContentType(e.target.value);
+                setPage(1);
+              }}
+              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+            >
+              <option value="">All types</option>
+              <option value="word">Words</option>
+              <option value="phrase">Phrases</option>
+              <option value="proverb">Proverbs</option>
+              <option value="number">Numbers</option>
+              <option value="letter">Letters</option>
+              <option value="sentence">Sentences</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="mt-4 overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
+                <th className="px-3 py-3">Status</th>
+                <th className="px-3 py-3">Text</th>
+                <th className="px-3 py-3">Provider</th>
+                <th className="px-3 py-3">Content</th>
+                <th className="px-3 py-3">Queued</th>
+                <th className="px-3 py-3">Duration</th>
+                <th className="px-3 py-3">Retries</th>
+                <th className="px-3 py-3">Audio</th>
+                <th className="px-3 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={9} className="px-3 py-10 text-center text-gray-500 dark:text-gray-400">
+                    Loading audio jobs…
+                  </td>
+                </tr>
+              ) : jobs.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-3 py-10 text-center text-gray-500 dark:text-gray-400">
+                    No audio jobs found.
+                  </td>
+                </tr>
+              ) : (
+                jobs.map((job) => (
+                  <tr key={job.id} className="border-b border-gray-100 align-top dark:border-gray-800">
+                    <td className="px-3 py-3">
+                      <StatusCell status={job.status} />
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="max-w-[16rem] truncate font-medium text-gray-900 dark:text-white">
+                        {job.text_to_speak}
+                      </div>
+                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        {job.language_code ? `Lang: ${job.language_code}` : null}
+                        {job.voice_code ? ` • Voice: ${job.voice_code}` : null}
+                      </div>
+                      {job.error_message ? (
+                        <div className="mt-1 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+                          <FaExclamationTriangle className="text-[10px]" />
+                          <span className="max-w-[16rem] truncate">{job.error_message}</span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 dark:text-white max-w-xs truncate">
-                          {job.text_to_speak}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {job.content_type}
-                          {job.language_code ? ` • ${job.language_code}` : ""}
-                          {job.voice_code ? ` • ${job.voice_code}` : ""}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                          {job.provider || "-"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                        {formatDateTime(getQueuedAt(job))}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        {job.output_duration_sec != null && <div>Duration: {formatDuration(job.output_duration_sec)}</div>}
-                        {job.audio_format && <div>Format: {job.audio_format.toUpperCase()}</div>}
-                        {job.error_message && (
-                          <div className="text-xs text-red-600 dark:text-red-400 max-w-xs truncate">
-                            Error: {job.error_message}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                        <div>Retries: {job.retry_count}/{job.max_retries}</div>
-                        {job.started_at && <div className="text-xs text-gray-500">Started: {formatDateTime(job.started_at)}</div>}
-                        {job.completed_at && <div className="text-xs text-gray-500">Done: {formatDateTime(job.completed_at)}</div>}
-                      </td>
-                      <td className="px-6 py-4 text-right space-x-2">
-                        {job.audio_url && (
-                          <a
-                            href={job.audio_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-green-600 hover:text-green-800 dark:text-green-400 text-sm inline-flex items-center gap-1"
-                          >
-                            <FaPlay className="text-xs" /> Play
-                          </a>
-                        )}
-                        {job.status === "failed" && job.retry_count < job.max_retries && (
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">
+                      <span className="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                        {job.provider || '—'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">
+                      <div className="text-sm capitalize">{job.content_type}</div>
+                      <div className="text-xs text-gray-500">{job.audio_format?.toUpperCase() || '—'}</div>
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap text-gray-700 dark:text-gray-200">
+                      {formatDateTime(job.queued_at)}
+                    </td>
+                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">
+                      {formatDuration(job.output_duration_sec)}
+                    </td>
+                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">
+                      <span className={job.retry_count >= job.max_retries ? 'text-red-600 dark:text-red-400' : ''}>
+                        {job.retry_count}/{job.max_retries}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3">
+                      {job.audio_url && job.status === 'completed' ? (
+                        <AudioPlayer src={job.audio_url} />
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        {job.status === 'failed' && job.retry_count < job.max_retries && (
                           <button
-                            onClick={() => retryJob(job.id)}
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm"
+                            type="button"
+                            onClick={() => void retryJob(job.id)}
+                            className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-300"
                           >
                             Retry
                           </button>
                         )}
-                        {(job.status === "queued" || job.status === "processing") && (
+                        {(job.status === 'queued' || job.status === 'processing') && (
                           <button
-                            onClick={() => cancelJob(job.id)}
-                            className="text-red-600 hover:text-red-800 dark:text-red-400 text-sm"
+                            type="button"
+                            onClick={() => void cancelJob(job.id)}
+                            className="text-xs font-medium text-red-600 hover:underline dark:text-red-300"
                           >
                             Cancel
                           </button>
                         )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <div className="text-sm text-gray-700 dark:text-gray-300">
-                  Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} jobs
-                </div>
-                <div className="ml-auto">
-                  <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-                </div>
-              </div>
-            )}
-          </>
-        )}
+        {/* Pagination */}
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {pageStart} to {pageEnd} of {total} jobs
+          </p>
+          <div className="ml-auto">
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        </div>
       </div>
     </div>
   );
