@@ -52,6 +52,7 @@ import {
   Game,
   GameType,
 } from '@/types/api';
+import { useAuth } from '@/context/AuthContext';
 
 /**
  * Generic fetcher function for SWR

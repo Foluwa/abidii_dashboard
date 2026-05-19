@@ -17,7 +17,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { ConfirmationModal } from '@/components/ui/modal/ConfirmationModal';
 import { useToast } from '@/contexts/ToastContext';
 import { apiClient } from '@/lib/api';
 
@@ -481,45 +480,7 @@ export function GoogleSheetsBulkImport({
         </div>
       </div>
 
-      <ConfirmationModal
-        isOpen={!!confirmApplyBatchId}
-        onClose={() => setConfirmApplyBatchId(null)}
-        onConfirm={async () => {
-          const batchId = confirmApplyBatchId;
-          if (!batchId) return;
-          try {
-            await handleApplyExistingBatch(batchId);
-          } finally {
-            setConfirmApplyBatchId(null);
-          }
-        }}
-        title="Apply Import Batch"
-        message="Apply this validated batch now? This will apply the stored validated snapshot to the database."
-        confirmText="Apply"
-        cancelText="Cancel"
-        variant="warning"
-        isLoading={applying}
-      />
 
-      <ConfirmationModal
-        isOpen={!!confirmDiscardBatchId}
-        onClose={() => setConfirmDiscardBatchId(null)}
-        onConfirm={async () => {
-          const batchId = confirmDiscardBatchId;
-          if (!batchId) return;
-          try {
-            await handleDiscardBatch(batchId);
-          } finally {
-            setConfirmDiscardBatchId(null);
-          }
-        }}
-        title="Discard Import Batch"
-        message="Discard this batch from history to save space? This cannot be undone."
-        confirmText="Discard"
-        cancelText="Cancel"
-        variant="danger"
-        isLoading={discarding}
-      />
         </div>
       </div>
     </div>

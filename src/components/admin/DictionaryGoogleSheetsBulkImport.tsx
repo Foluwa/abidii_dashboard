@@ -174,8 +174,6 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [activeBatchId, setActiveBatchId] = useState<string | null>(null);
   const [confirmApplyBatchId, setConfirmApplyBatchId] = useState<string | null>(null);
-  const [confirmDiscardBatchId, setConfirmDiscardBatchId] = useState<string | null>(null);
-  const [discarding, setDiscarding] = useState(false);
   const [showAllIssues, setShowAllIssues] = useState(false);
   const [showRowPreview, setShowRowPreview] = useState(true);
 
@@ -186,15 +184,14 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
       setActiveBatchId(batchFromUrl);
       // Auto-poll if batch is still running
       void (async () => {
-        try {
-          const batch = await getDictionaryImportBatch(batchFromUrl);
-          if (batch.status === 'validated' || batch.status === 'validation_failed') {
-            const report = await getDictionaryImportBatch(batchFromUrl);
-            setValidation(report);
-          } else if (batch.status === 'validating' || batch.status === 'applying') {
-            startPolling(batchFromUrl);
-          }
-        } catch {
+              try {
+                const batch = await getDictionaryImportBatch(batchFromUrl);
+                if (batch.status === 'validated' || batch.status === 'validation_failed') {
+                  setValidation(null as any);
+                } else if (batch.status === 'validating' || batch.status === 'applying') {
+                  startPolling(batchFromUrl);
+                }
+              } catch {
           // Batch may have been discarded; clear it from URL
           const next = new URLSearchParams(searchParams.toString());
           next.delete('batch');
@@ -224,10 +221,10 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
       const startedAt = Date.now();
       const timeoutMs = 10 * 60 * 1000;
       while (Date.now() - startedAt < timeoutMs) {
-        const batch = await getDictionaryImportBatch(batchId);
-        if (batch.status === 'validated' || batch.status === 'validation_failed') {
-          const report = await getDictionaryImportValidationReport(batchId);
-          setValidation(report);
+                const batch = await getDictionaryImportBatch(batchId);
+                if (batch.status === 'validated' || batch.status === 'validation_failed') {
+                  const report = batch as any;
+                  setValidation(report);
           setActiveBatchId(null);
           // Remove batch from URL
           const next = new URLSearchParams(searchParams.toString());
@@ -279,14 +276,14 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
         header_row: headerRow,
         ...parseSheetInput(trimmedReference),
       });
-      setActiveBatchId(result.batch_id);
+      setActiveBatchId(result.batch_id ?? null);
       // Persist batch ID in URL
       const next = new URLSearchParams(searchParams.toString());
       next.set('batch', result.batch_id ?? '');
       router.replace(`${window.location.pathname}?${next.toString()}`, { scroll: false });
       toast.success('Validation queued. Watch Batch History for progress.');
       await refreshHistory();
-      startPolling(result.batch_id);
+      if (result.batch_id) startPolling(result.batch_id);
       return;
     } catch (error: any) {
       // Fall back to the synchronous endpoint if the worker isn't running yet.
@@ -344,21 +341,6 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
       toast.error(error?.response?.data?.detail ?? error?.message ?? 'Apply failed');
     } finally {
       setApplying(false);
-    }
-  };
-
-  const handleDiscardBatch = async (batchId: string) => {
-    setDiscarding(true);
-    try {
-      const batch = history.find((item) => item.id === batchId);
-      const force = (batch?.status || '').toLowerCase() === 'applied';
-      await discardDictionaryImportBatch(batchId, { force });
-      toast.success('Batch discarded.');
-      await refreshHistory();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.detail ?? error?.message ?? 'Discard failed');
-    } finally {
-      setDiscarding(false);
     }
   };
 
@@ -615,33 +597,6 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
         cancelText="Cancel"
         variant="warning"
         isLoading={applying}
-      />
-
-      <ConfirmationModal
-        isOpen={!!confirmDiscardBatchId}
-        onClose={() => setConfirmDiscardBatchId(null)}
-        onConfirm={async () => {
-          const batchId = confirmDiscardBatchId;
-          if (!batchId) return;
-          try {
-            await handleDiscardBatch(batchId);
-          } finally {
-            setConfirmDiscardBatchId(null);
-          }
-        }}
-        title="Discard Import Batch"
-        message={(() => {
-          const batch = history.find((item) => item.id === confirmDiscardBatchId);
-          const isApplied = (batch?.status || '').toLowerCase() === 'applied';
-          if (isApplied) {
-            return 'Discard this applied batch from the database to save space? This is permanent and is admin-only.';
-          }
-          return 'Discard this batch from the database to save space? This deletes staging rows and issues for this batch.';
-        })()}
-        confirmText="Discard"
-        cancelText="Cancel"
-        variant="danger"
-        isLoading={discarding}
       />
         </div>
       </div>
