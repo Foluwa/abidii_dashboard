@@ -34,7 +34,6 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/content/') ||
     pathname.startsWith('/curriculum/') ||
     pathname.startsWith('/media/') ||
-    pathname.startsWith('/reports/') ||
     pathname.startsWith('/community/') ||
     pathname.startsWith('/subscriptions/') ||
     pathname.startsWith('/notifications/') ||

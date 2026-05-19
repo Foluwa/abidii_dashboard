@@ -30,22 +30,6 @@ export const mainNavigationItems: AdminNavItem[] = [
     path: "/dashboard",
   },
   {
-    name: "Reports",
-    icon: <PieChartIcon />,
-    permission: "users:read",
-    subItems: [
-      { name: "Game Analytics", path: "/analytics" },
-      {
-        name: "Player Analytics",
-        path: "/analytics/players",
-      },
-      {
-        name: "Curriculum Ops",
-        path: "/analytics/curriculum-ops",
-      },
-    ],
-  },
-  {
     name: "Content",
     icon: <ListIcon />,
     permission: "content:read",
