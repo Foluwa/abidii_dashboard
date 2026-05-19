@@ -230,6 +230,29 @@ function getStepRuntimeType(step: Record<string, unknown>): string {
   return getString(step.type) || getString(step.runtimeType);
 }
 
+function generateId(prefix: string): string {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function getStepValidationCounts(validation: import('@/types/curriculum').ValidationResultPayload | null | undefined) {
+  const errorsByStep = new Map<number, { errors: number; warnings: number }>();
+  const allIssues = [...(validation?.errors ?? []), ...(validation?.warnings ?? [])];
+  allIssues.forEach((issue) => {
+    const match = (issue.path || '').match(/^steps\[(\d+)\]/);
+    if (match) {
+      const stepIndex = Number(match[1]);
+      const existing = errorsByStep.get(stepIndex) || { errors: 0, warnings: 0 };
+      if (issue.severity === 'ERROR') {
+        existing.errors += 1;
+      } else {
+        existing.warnings += 1;
+      }
+      errorsByStep.set(stepIndex, existing);
+    }
+  });
+  return errorsByStep;
+}
+
 function isMediaBindingCompatible(binding: LessonBlueprintMediaBinding, targetFieldPath: string): boolean {
   const targetKind = inferAssetKindFromFieldPath(targetFieldPath);
   return (binding.asset_kind || inferAssetKindFromFieldPath(binding.field_path || targetFieldPath)) === targetKind;
@@ -565,6 +588,7 @@ export function LessonBlueprintEditor({
   initialBlueprintKey,
   focusFieldPath,
   showPreviewResult = true,
+  validation,
 }: {
   mode: Mode;
   blueprint?: LessonBlueprintAdminResponse | null;
@@ -575,6 +599,7 @@ export function LessonBlueprintEditor({
   initialBlueprintKey?: string | null;
   focusFieldPath?: string | null;
   showPreviewResult?: boolean;
+  validation?: import('@/types/curriculum').ValidationResultPayload | null;
 }) {
   const toast = useToast();
 
@@ -600,6 +625,7 @@ export function LessonBlueprintEditor({
   const [isCloning, setIsCloning] = useState(false);
   const [uploadingFieldPath, setUploadingFieldPath] = useState<string | null>(null);
   const [uploadProgressByField, setUploadProgressByField] = useState<Record<string, number>>({});
+  const [generatingAudioFieldPath, setGeneratingAudioFieldPath] = useState<string | null>(null);
   const [assetLibraryTargetFieldPath, setAssetLibraryTargetFieldPath] = useState<string | null>(null);
   const [isAssetLibraryModalOpen, setIsAssetLibraryModalOpen] = useState(false);
   const [isAssetDropActive, setIsAssetDropActive] = useState(false);
@@ -917,6 +943,7 @@ export function LessonBlueprintEditor({
   );
   const rawPayloadInvalid = safeParsePayload(payloadText) === null;
   const editableSteps = useMemo(() => getObjectArray(editablePayload.steps), [editablePayload]);
+  const stepValidationCounts = useMemo(() => getStepValidationCounts(validation), [validation]);
   const mediaBindings = useMemo(() => getMediaBindings(editablePayload), [editablePayload]);
   const mediaFieldOptions = useMemo(() => {
     const topLevel = [
@@ -1361,7 +1388,13 @@ export function LessonBlueprintEditor({
       const steps = getObjectArray(prev.steps);
       const nextSteps = [...steps];
       const existingStep = { ...(nextSteps[stepIndex] ?? {}) };
-      existingStep[collectionName] = [...getObjectArray(existingStep[collectionName]), template];
+      const existingItems = getObjectArray(existingStep[collectionName]);
+      const itemPrefix = collectionName === 'options' ? 'opt' : 'pair';
+      const newItem = {
+        id: generateId(itemPrefix),
+        ...template,
+      };
+      existingStep[collectionName] = [...existingItems, newItem];
       nextSteps[stepIndex] = existingStep;
       return {
         ...prev,
@@ -1522,9 +1555,15 @@ export function LessonBlueprintEditor({
   };
 
   const addStep = () => {
+    const existingSteps = getObjectArray(editablePayload.steps);
+    const stepNumber = existingSteps.length + 1;
     updatePayload((prev) => ({
       ...prev,
-      steps: [...getObjectArray(prev.steps), { type: 'lessonStart', title: 'New step' }],
+      steps: [...getObjectArray(prev.steps), { 
+        type: 'lessonStart', 
+        title: `Step ${stepNumber}`,
+        stepId: generateId('step'),
+      }],
     }));
   };
 
@@ -1533,6 +1572,54 @@ export function LessonBlueprintEditor({
       ...prev,
       steps: getObjectArray(prev.steps).filter((_, itemIndex) => itemIndex !== index),
     }));
+  };
+
+  const moveStep = (index: number, direction: -1 | 1) => {
+    updatePayload((prev) => {
+      const steps = getObjectArray(prev.steps);
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= steps.length) return prev;
+      const nextSteps = [...steps];
+      const [moved] = nextSteps.splice(index, 1);
+      nextSteps.splice(newIndex, 0, moved);
+      return { ...prev, steps: nextSteps };
+    });
+  };
+
+  const handleGenerateAudio = async (fieldPath: string, textToSpeak: string) => {
+    if (!textToSpeak.trim()) {
+      toast.error('No text available to generate audio from. Add content text first.');
+      return;
+    }
+    setGeneratingAudioFieldPath(fieldPath);
+    try {
+      const languageCode = selectedCourse?.target_language_code || 'yor';
+      const response = await apiClient.post('/api/v1/admin/audio/generate', {
+        text: textToSpeak.trim(),
+        provider: 'spitch',
+        voice_code: 'funmi',
+        language_code: languageCode,
+        save_to_s3: true,
+        audio_format: 'wav',
+      });
+      const audioUrl = response.data?.audio_url;
+      if (audioUrl) {
+        updatePayload((prev) => setPayloadFieldValue(prev, fieldPath, audioUrl));
+        setPayloadText((prev) => {
+          const parsed = safeParsePayload(prev);
+          if (!parsed) return prev;
+          const next = setPayloadFieldValue(parsed, fieldPath, audioUrl);
+          return JSON.stringify(next, null, 2);
+        });
+        toast.success('Audio generated and saved.');
+      } else {
+        toast.error('Audio generation succeeded but no URL was returned.');
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || 'Failed to generate audio');
+    } finally {
+      setGeneratingAudioFieldPath(null);
+    }
   };
 
   const buildRequest = (): LessonBlueprintDraftUpsertRequest | null => {
@@ -2758,6 +2845,14 @@ export function LessonBlueprintEditor({
                   >
                     Library
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateAudio('audioUrl', getString(editablePayload.title) || getString(editablePayload.prompt) || 'audio content')}
+                    disabled={generatingAudioFieldPath === 'audioUrl'}
+                    className="rounded-lg border border-purple-300 bg-purple-50 px-3 py-2 text-xs font-medium text-purple-700 hover:bg-purple-100 disabled:opacity-50 dark:border-purple-800 dark:bg-purple-950/30 dark:text-purple-300"
+                  >
+                    {generatingAudioFieldPath === 'audioUrl' ? 'Generating…' : 'Generate'}
+                  </button>
                 </div>
                 {getString(editablePayload.audioUrl) ? (
                   <div className="mt-3">
@@ -3184,21 +3279,68 @@ export function LessonBlueprintEditor({
                     const recognitionOptions = getObjectArray(step.options);
                     const matchPairs = getObjectArray(step.pairs);
 
+                    const stepCounts = stepValidationCounts.get(index);
+                    const hasStepErrors = stepCounts && stepCounts.errors > 0;
+                    const hasStepWarnings = stepCounts && stepCounts.warnings > 0;
+
                     return (
                     <div
                       key={`${getString(step.stepId) || stepType || 'step'}-${index}`}
-                      className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                      className={`rounded-lg border bg-white p-4 dark:bg-gray-900 ${
+                        hasStepErrors
+                          ? 'border-red-300 dark:border-red-800'
+                          : hasStepWarnings
+                          ? 'border-amber-300 dark:border-amber-800'
+                          : 'border-gray-200 dark:border-gray-800'
+                      }`}
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white">Step {index + 1}</div>
-                        <button
-                          type="button"
-                          onClick={() => removeStep(index)}
-                          className="rounded-lg border border-red-300 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
-                        >
-                          Remove
-                        </button>
-                      </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-semibold text-gray-900 dark:text-white">Step {index + 1}</div>
+                          {hasStepErrors && (
+                            <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                              {stepCounts.errors} error{stepCounts.errors === 1 ? '' : 's'}
+                            </span>
+                          )}
+                          {!hasStepErrors && hasStepWarnings && (
+                            <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                              {stepCounts.warnings} warning{stepCounts.warnings === 1 ? '' : 's'}
+                            </span>
+                          )}
+                          {!hasStepErrors && !hasStepWarnings && stepCounts && (
+                            <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                              Valid
+                            </span>
+                          )}
+                        </div>
+                         <div className="flex items-center gap-2">
+                           <button
+                             type="button"
+                             onClick={() => moveStep(index, -1)}
+                             disabled={index === 0}
+                             className="rounded-lg border border-gray-300 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                             title="Move up"
+                           >
+                             ↑
+                           </button>
+                           <button
+                             type="button"
+                             onClick={() => moveStep(index, 1)}
+                             disabled={index === editableSteps.length - 1}
+                             className="rounded-lg border border-gray-300 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                             title="Move down"
+                           >
+                             ↓
+                           </button>
+                           <button
+                             type="button"
+                             onClick={() => removeStep(index)}
+                             className="rounded-lg border border-red-300 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
+                           >
+                             Remove
+                           </button>
+                         </div>
+                       </div>
                       <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2">
                         <div>
                           <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</label>
@@ -3211,11 +3353,11 @@ export function LessonBlueprintEditor({
                           />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Step id</label>
+                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Step id <span className="text-gray-400">(auto-generated)</span></label>
                           <input
                             value={getString(step.stepId)}
-                            onChange={(event) => updateStepField(index, 'stepId', event.target.value)}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                            readOnly
+                            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-400"
                           />
                         </div>
                         <div className="lg:col-span-2">
@@ -3453,16 +3595,14 @@ export function LessonBlueprintEditor({
                                           </div>
                                         </div>
                                         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                                          <div>
-                                            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Option id</label>
-                                            <input
-                                              value={getString(option.id)}
-                                              onChange={(event) =>
-                                                updateStepCollectionItemField(index, 'options', optionIndex, 'id', event.target.value)
-                                              }
-                                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                                            />
-                                          </div>
+                                           <div>
+                                             <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Option id <span className="text-gray-400">(auto-generated)</span></label>
+                                             <input
+                                               value={getString(option.id)}
+                                               readOnly
+                                               className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-400"
+                                             />
+                                           </div>
                                           <div>
                                             <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">English text</label>
                                             <input
@@ -3651,16 +3791,14 @@ export function LessonBlueprintEditor({
                                           Advanced fields
                                         </summary>
                                         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                                          <div>
-                                            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Pair id</label>
-                                            <input
-                                              value={getString(pair.id)}
-                                              onChange={(event) =>
-                                                updateStepCollectionItemField(index, 'pairs', pairIndex, 'id', event.target.value)
-                                              }
-                                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                                            />
-                                          </div>
+                                           <div>
+                                             <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Pair id <span className="text-gray-400">(auto-generated)</span></label>
+                                             <input
+                                               value={getString(pair.id)}
+                                               readOnly
+                                               className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-400"
+                                             />
+                                           </div>
                                           <div>
                                             <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">English text</label>
                                             <input
@@ -3710,6 +3848,14 @@ export function LessonBlueprintEditor({
                                               }`}
                                             >
                                               Library
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleGenerateAudio(pairAudioFieldPath, getString(pair.yorubaText) || getString(pair.englishText) || `pair ${pairIndex + 1}`)}
+                                              disabled={generatingAudioFieldPath === pairAudioFieldPath}
+                                              className="rounded-lg border border-purple-300 bg-purple-50 px-3 py-2 text-xs font-medium text-purple-700 hover:bg-purple-100 disabled:opacity-50 dark:border-purple-800 dark:bg-purple-950/30 dark:text-purple-300"
+                                            >
+                                              {generatingAudioFieldPath === pairAudioFieldPath ? 'Generating…' : 'Generate'}
                                             </button>
                                           </div>
                                           {getString(pair.audioUrl) ? (
@@ -3842,6 +3988,14 @@ export function LessonBlueprintEditor({
                               }`}
                             >
                               Library
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleGenerateAudio(`steps[${index}].audioUrl`, getString(step.yorubaText) || getString(step.phrase) || getString(step.title) || getString(step.prompt) || `step ${index + 1}`)}
+                              disabled={generatingAudioFieldPath === `steps[${index}].audioUrl`}
+                              className="rounded-lg border border-purple-300 bg-purple-50 px-3 py-2 text-xs font-medium text-purple-700 hover:bg-purple-100 disabled:opacity-50 dark:border-purple-800 dark:bg-purple-950/30 dark:text-purple-300"
+                            >
+                              {generatingAudioFieldPath === `steps[${index}].audioUrl` ? 'Generating…' : 'Generate'}
                             </button>
                           </div>
                           {getString(step.audioUrl) ? (

@@ -896,6 +896,7 @@ export default function AdminLessonBlueprintDetailPage({
         onPreviewResultChange={setPreviewResult}
         showPreviewResult={false}
         focusFieldPath={focusFieldPath}
+        validation={displayedValidation}
         onSaved={(result) => {
           void mutateAdmin(result, { revalidate: false });
           void refreshVersionHistory();
