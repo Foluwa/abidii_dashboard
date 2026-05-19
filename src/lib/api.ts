@@ -67,6 +67,10 @@ function buildIdempotencyKey() {
   return `req_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function shouldUseAdminProxy(url?: string): boolean {
+  return !!url && url.startsWith('/api/v1/admin/');
+}
+
 /**
  * Request interceptor
  * Adds auth token to requests and deduplicates identical in-flight GETs
@@ -146,6 +150,11 @@ apiClient.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+
+    // Guard: if no request config, we can't retry or inspect the URL
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
 
     // If the backend is explicitly telling us the admin monitoring token is invalid,
     // this is unrelated to the JWT access token. Do NOT try to refresh JWTs for this.
