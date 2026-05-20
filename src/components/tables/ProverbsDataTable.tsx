@@ -19,6 +19,8 @@ interface ProverbsDataTableProps {
   onEdit: (proverb: Proverb) => void;
   onDelete: (proverbId: string) => void;
   onRegenerateAudio: (proverb: Proverb) => void;
+  onAcceptAudio?: (proverbId: string, versionId: string) => Promise<void>;
+  onRejectAudio?: (proverbId: string, versionId: string) => Promise<void>;
 }
 
 export default function ProverbsDataTable({
@@ -30,6 +32,8 @@ export default function ProverbsDataTable({
   onEdit,
   onDelete,
   onRegenerateAudio,
+  onAcceptAudio,
+  onRejectAudio,
 }: ProverbsDataTableProps) {
   const renderPublishBadge = (proverb: Proverb) => (
     <span
@@ -241,30 +245,90 @@ export default function ProverbsDataTable({
 
                   {/* Audio */}
                   <TableCell className="px-5 py-4">
-                    {proverb.audio_url ? (
-                      <div className="min-w-[280px] max-w-md space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {getAudioFormat(proverb) && (
-                            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                              {getAudioFormat(proverb)}
+                    {/* Pending candidate -- show before current */}
+                      {proverb.pending_audio_version && (
+                        <div className="min-w-[280px] max-w-md rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20 p-3 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-800 dark:text-amber-200">
+                              Pending Review
                             </span>
+                          </div>
+                          {proverb.pending_audio_version.audio_url && (
+                            <AudioWaveform
+                              src={proverb.pending_audio_version.audio_url}
+                              height={32}
+                              waveColor="#f59e0b"
+                              progressColor="#d97706"
+                              cursorColor="#b45309"
+                            />
                           )}
-                          {renderRegenerationBadge(proverb.last_regeneration_status, proverb.last_regeneration_error)}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const btn = e.currentTarget as HTMLButtonElement;
+                                btn.disabled = true;
+                                btn.textContent = "...";
+                                try {
+                                  await onAcceptAudio?.(proverb.id, proverb.pending_audio_version!.id);
+                                } finally {
+                                  btn.disabled = false;
+                                  btn.textContent = "Accept";
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-emerald-700 transition-colors"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const btn = e.currentTarget as HTMLButtonElement;
+                                btn.disabled = true;
+                                btn.textContent = "...";
+                                try {
+                                  await onRejectAudio?.(proverb.id, proverb.pending_audio_version!.id);
+                                } finally {
+                                  btn.disabled = false;
+                                  btn.textContent = "Reject";
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 rounded-md border border-red-300 bg-white px-2.5 py-1 text-[11px] font-medium text-red-600 hover:bg-red-50 transition-colors dark:border-red-700 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
+                            >
+                              Reject
+                            </button>
+                          </div>
                         </div>
-                        <AudioWaveform
-                          src={proverb.audio_url}
-                          height={40}
-                          waveColor="#94a3b8"
-                          progressColor="#3b82f6"
-                          cursorColor="#1d4ed8"
-                        />
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {renderRegenerationBadge(proverb.last_regeneration_status, proverb.last_regeneration_error)}
-                        <span className="text-xs text-gray-400 dark:text-gray-600">No audio</span>
-                      </div>
-                    )}
+                      )}
+
+                      {/* Current approved audio */}
+                      {proverb.audio_url ? (
+                        <div className="min-w-[280px] max-w-md space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {getAudioFormat(proverb) && (
+                              <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                {getAudioFormat(proverb)}
+                              </span>
+                            )}
+                            <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-green-700 dark:bg-green-800 dark:text-green-200">
+                              Approved
+                            </span>
+                            {renderRegenerationBadge(proverb.last_regeneration_status, proverb.last_regeneration_error)}
+                          </div>
+                          <AudioWaveform
+                            src={proverb.audio_url}
+                            height={40}
+                            waveColor="#94a3b8"
+                            progressColor="#3b82f6"
+                            cursorColor="#1d4ed8"
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {renderRegenerationBadge(proverb.last_regeneration_status, proverb.last_regeneration_error)}
+                          <span className="text-xs text-gray-400 dark:text-gray-600">No audio</span>
+                        </div>
+                      )}
                   </TableCell>
 
                   {/* Actions */}

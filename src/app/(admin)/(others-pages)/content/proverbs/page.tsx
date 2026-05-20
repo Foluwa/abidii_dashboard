@@ -1246,6 +1246,30 @@ export default function ProverbsPage() {
     }
   };
 
+  const handleAcceptAudio = async (proverbId: string, versionId: string) => {
+    try {
+      await apiClient.post(`/api/v1/admin/proverbs/${proverbId}/audio-versions/${versionId}/accept`);
+      setSuccessMessage('Audio candidate accepted and set as current');
+      refresh();
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error: any) {
+      setErrorMessage(formatErrorMessage(error, 'Failed to accept audio candidate'));
+      setTimeout(() => setErrorMessage(''), 5000);
+    }
+  };
+
+  const handleRejectAudio = async (proverbId: string, versionId: string) => {
+    try {
+      await apiClient.post(`/api/v1/admin/proverbs/${proverbId}/audio-versions/${versionId}/reject`);
+      setSuccessMessage('Audio candidate rejected');
+      refresh();
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error: any) {
+      setErrorMessage(formatErrorMessage(error, 'Failed to reject audio candidate'));
+      setTimeout(() => setErrorMessage(''), 5000);
+    }
+  };
+
   const handleBulkRegenerateAudio = async () => {
     if (selectedProverbs.length === 0) return;
     
@@ -1563,6 +1587,8 @@ export default function ProverbsPage() {
         onSelectProverb={handleSelectProverb}
         onEdit={openEditModal}
         onRegenerateAudio={handleRegenerateAudio}
+        onAcceptAudio={handleAcceptAudio}
+        onRejectAudio={handleRejectAudio}
         onDelete={(id) => {
           const proverb = uniqueProverbs.find((p: Proverb) => p.id === id);
           handleDeleteClick(id, proverb?.proverb || 'this proverb');
