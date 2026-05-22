@@ -294,7 +294,10 @@ export function MLTrainingOverviewPage() {
             </div>
           </div>
         </Panel>
-        <Panel title="Model Versions" action={<Link className="text-sm font-medium text-brand-600" href="/system/ml-training/models">View all</Link>}>
+        <Panel title="Model Versions" action={<>
+          <Link className="text-sm font-medium text-brand-600 mr-3" href="https://dev-mlflow.abidii.app" target="_blank">MLflow ↗</Link>
+          <Link className="text-sm font-medium text-brand-600" href="/system/ml-training/models">View all</Link>
+        </>}>
           {models.length > 0 ? (
             <div className="space-y-2 text-sm">
               {models.slice(0, 5).map((m) => (
