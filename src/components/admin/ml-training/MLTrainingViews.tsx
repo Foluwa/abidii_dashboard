@@ -210,8 +210,6 @@ export function MLTrainingOverviewPage() {
     }
   }, [trainingLang, refresh]);
 
-  const queueTraining = useCallback(async () => {
-
   return (
     <div className="space-y-6 p-6">
       <PageBreadCrumb pageTitle="ML Training" />
