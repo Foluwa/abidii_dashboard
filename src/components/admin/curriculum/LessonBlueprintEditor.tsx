@@ -410,12 +410,14 @@ function getStarterSteps(lessonKind: string): Record<string, unknown>[] | null {
 
 function getStepTypeOptions(lessonKind: string): Array<{ value: string; label: string }> {
   const common = [
+    { value: 'overview', label: 'Overview (intro)' },
     { value: 'lessonStart', label: 'Lesson Start' },
     { value: 'recognitionTask', label: 'Recognition Task' },
     { value: 'listeningTiles', label: 'Listening Tiles' },
     { value: 'matchingPairs', label: 'Matching Pairs' },
     { value: 'conceptCheck', label: 'Concept Check' },
     { value: 'cultureTip', label: 'Culture Tip' },
+    { value: 'completion', label: 'Completion (outro)' },
   ];
 
   switch (lessonKind) {
@@ -465,12 +467,14 @@ function getStepTypeOptions(lessonKind: string): Array<{ value: string; label: s
 }
 
 const STEP_TYPE_DESCRIPTIONS: Record<string, string> = {
+  overview: 'Required intro screen. Shows lesson title, part number, level, and estimated time. Sets the context for the entire lesson.',
   lessonStart: 'Intro screen with a title, image, and optional audio. Sets the context before the activity begins. Shows a "Start" button.',
   recognitionTask: 'Multiple-choice quiz. Shows a prompt (text/audio/image) and several options. User picks the correct one. Uses options[] for answer choices.',
   listeningTiles: 'Audio-focused grid. Shows tappable tiles that play sounds. User listens and selects the matching tile. Great for ear training.',
   matchingPairs: 'Drag-and-drop or tap-to-match pairs. Shows English↔Yoruba word pairs. Uses pairs[] for the match items. Failed matches shake.',
   conceptCheck: 'A comprehension question after teaching content. Tests understanding with a single question. Often used mid-lesson.',
   cultureTip: 'Informational card about cultural context. No interaction required. Shows text + optional image. Used to share cultural notes.',
+  completion: 'Required outro screen. Shows lesson summary, score/accuracy, and a "Continue" button. Closes the lesson flow.',
   guessMeaning: 'Shows a word and asks the user to guess the meaning before revealing. Used in reading practice.',
   wordBuilder: 'Interactive word construction. User builds words from syllables or letters. Used in reading and spelling lessons.',
   dialogueContext: 'Contextual dialogue scenario. User engages with a simulated conversation. Used in reading practice.',
@@ -3567,7 +3571,10 @@ export function LessonBlueprintEditor({
                            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</label>
                            <StyledSelect
                              value={stepType}
-                             onChange={(event) => updateStepField(index, 'type', event.target.value)}
+                             onChange={(event) => {
+                               updateStepField(index, 'type', event.target.value);
+                               updateStepField(index, 'runtimeType', event.target.value);
+                             }}
                              options={stepTypeOptions}
                              placeholder=""
                              fullWidth
