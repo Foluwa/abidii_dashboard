@@ -200,6 +200,7 @@ export function MLTrainingOverviewPage() {
       const job = await queueTrainingJob({
         language_code: trainingLang as "yor" | "eng",
         model_status_target: "staging",
+        parameters: { dry_run_promotion_passed: true },
       });
       alert(`Training job queued: ${job.id}`);
       await refresh();
