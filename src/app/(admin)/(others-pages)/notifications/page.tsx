@@ -29,6 +29,7 @@ export default function NotificationsPage() {
     failed: number;
   } | null>(null);
 
+  const { users: usersData } = useUsers({ limit: 200 });
   const userList = Array.isArray(usersData) ? usersData : (usersData as any)?.items || [];
 
   const handleSend = useCallback(async () => {
