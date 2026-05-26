@@ -29,7 +29,7 @@ export default function NotificationsPage() {
     failed: number;
   } | null>(null);
 
-  const { users: usersData } = useUsers({ limit: 200 });
+  const userList = Array.isArray(usersData) ? usersData : (usersData as any)?.items || [];
 
   const handleSend = useCallback(async () => {
     if (!title.trim() || !body.trim()) {
@@ -159,7 +159,7 @@ export default function NotificationsPage() {
                   checked={targetMode === 'all'}
                   onChange={() => setTargetMode('all')}
                 />
-                <span className="text-sm">All Users</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">All Users</span>
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -168,7 +168,7 @@ export default function NotificationsPage() {
                   checked={targetMode === 'selected'}
                   onChange={() => setTargetMode('selected')}
                 />
-                <span className="text-sm">Selected Users</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Selected Users</span>
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -177,7 +177,7 @@ export default function NotificationsPage() {
                   checked={targetMode === 'filtered'}
                   onChange={() => setTargetMode('filtered')}
                 />
-                <span className="text-sm">Filtered</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Filtered</span>
               </label>
             </div>
           </div>
@@ -195,7 +195,7 @@ export default function NotificationsPage() {
                 }
                 className="h-32 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               >
-                {(usersData as any[])?.map((user: any) => (
+                {userList.map((user: any) => (
                   <option key={user.id} value={user.id}>
                     {user.display_name || user.email || user.id}
                   </option>

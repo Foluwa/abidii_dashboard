@@ -79,12 +79,8 @@ export const mainNavigationItems: AdminNavItem[] = [
   {
     name: "Analytics",
     icon: <PieChartIcon />,
+    path: "/analytics",
     permission: "users:read",
-    subItems: [
-      { name: "Game Analytics", path: "/analytics" },
-      { name: "Player Analytics", path: "/analytics/players" },
-      { name: "Curriculum Ops", path: "/analytics/curriculum-ops" },
-    ],
   },
   {
     name: "Media",
