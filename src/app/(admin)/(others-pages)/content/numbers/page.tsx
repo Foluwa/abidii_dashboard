@@ -847,7 +847,7 @@ export default function NumbersPage() {
         >
           <form onSubmit={handleSubmit} className="space-y-5">
             {errorMessage && (
-              <Alert variant="error" title="Error" message={errorMessage} />
+              <Alert variant="error">{errorMessage}</Alert>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -100,7 +100,7 @@ export default function QuickPracticePage() {
         </button>
       </div>
 
-      {error && <Alert variant="error" title="Error" message={error} />}
+      {error && <Alert variant="error">{error}</Alert>}
 
       <div className="rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] overflow-hidden">
         <table className="w-full text-sm">

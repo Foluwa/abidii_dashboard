@@ -385,7 +385,7 @@ export default function VoicesPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {error && <Alert variant="error" title="Error" message={error} />}
+              {error && <Alert variant="error">{error}</Alert>}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

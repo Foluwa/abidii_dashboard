@@ -1687,7 +1687,7 @@ export default function PhrasesPage() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="max-h-[calc(90vh-10rem)] overflow-y-auto pr-1 space-y-4">
-              {error && <Alert variant="error" title="Error" message={error} />}
+              {error && <Alert variant="error">{error}</Alert>}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
@@ -1835,7 +1835,7 @@ export default function PhrasesPage() {
                     alignmentLoading ? (
                       <div className="text-sm text-gray-600 dark:text-gray-400">Loading alignment...</div>
                     ) : (
-                      <Alert variant="error" title="Alignment" message={alignmentError} />
+                      <Alert variant="error">{alignmentError}</Alert>
                     )
                   )}
 

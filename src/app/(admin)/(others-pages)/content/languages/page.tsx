@@ -133,7 +133,7 @@ export default function LanguagesPage() {
     return (
       <div className="p-6">
         <PageBreadCrumb pageTitle="Languages" />
-        <Alert variant="error" title="Error" message="Failed to load languages. Please check your API connection." />
+        <Alert variant="error">Failed to load languages. Please check your API connection.</Alert>
       </div>
     );
   }
@@ -386,7 +386,7 @@ export default function LanguagesPage() {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {errorMessage && (
-                <Alert variant="error" title="Error" message={errorMessage} />
+                <Alert variant="error">{errorMessage}</Alert>
               )}
 
               <div>

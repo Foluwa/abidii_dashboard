@@ -1348,7 +1348,7 @@ export default function ProverbsPage() {
     return (
       <div className="space-y-6">
         <PageBreadCrumb pageTitle="Proverbs" />
-        <Alert variant="error" title="Error" message="Failed to load proverbs. Please check your API connection." />
+        <Alert variant="error">Failed to load proverbs. Please check your API connection.</Alert>
       </div>
     );
   }
@@ -1622,7 +1622,7 @@ export default function ProverbsPage() {
               </div>
             )}
 
-            {errorMessage && <Alert variant="error" title="Error" message={errorMessage} />}
+            {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <StyledSelect
@@ -1734,7 +1734,7 @@ export default function ProverbsPage() {
                     alignmentLoading ? (
                       <div className="text-sm text-gray-600 dark:text-gray-400">Loading alignment...</div>
                     ) : (
-                      <Alert variant="error" title="Alignment" message={alignmentError} />
+                      <Alert variant="error">{alignmentError}</Alert>
                     )
                   )}
 

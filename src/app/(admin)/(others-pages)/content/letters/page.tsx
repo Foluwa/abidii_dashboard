@@ -537,7 +537,7 @@ export default function LettersPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {error && <Alert variant="error" title="Error" message={error} />}
+              {error && <Alert variant="error">{error}</Alert>}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
