@@ -1349,7 +1349,391 @@ export default function ProverbsPage() {
       <div className="space-y-6">
         <PageBreadCrumb pageTitle="Proverbs" />
         <Alert variant="error" title="Error" message="Failed to load proverbs. Please check your API connection." />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <ContentPageHeader
+        title="Proverbs"
+        subtitle="Manage proverbs and cultural sayings"
+        onAdd={openCreateModal}
+        addLabel="Add Proverb"
+      />
+
+      {/* Messages */}
+      {successMessage && <Toast type="success" message={successMessage} onClose={() => setSuccessMessage("")} />}
+      {errorMessage && <Toast type="error" message={errorMessage} onClose={() => setErrorMessage("")} />}
+
+      <ContentStatsGrid cols={4}>
+        <ContentStatsCard label="Total" value={total} icon={FiBarChart2} />
+        <ContentStatsCard label="With Audio" value={stats.withAudio} icon={FiVolume2} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+        <ContentStatsCard label="Aligned" value={stats.aligned} icon={FiCheckCircle} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
+        <ContentStatsCard label="Needs Cleanup" value={stats.needsCleanup} icon={FiAlertTriangle} iconBgClass="bg-red-100 dark:bg-red-900/20" iconTextClass="text-red-600 dark:text-red-400" />
+      </ContentStatsGrid>
+
+      <ContentFiltersCard
+        activeFilterCount={activeFilters.length}
+        onClearAll={clearAllFilters}
+        showAdvanced={showAdvancedFilters}
+        onToggleAdvanced={() => setShowAdvancedFilters(!showAdvancedFilters)}
+      >
+        {/* Primary Filters Row */}
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <div className="flex items-center gap-1.5">
+                <FiGlobe className="h-3.5 w-3.5" />
+                Language
+              </div>
+            </label>
+            <StyledSelect
+              value={selectedLanguage || ""}
+              onChange={(e) => {
+                setSelectedLanguage(e.target.value ? Number(e.target.value) : undefined);
+                setPage(1);
+              }}
+              options={[
+                { value: "", label: "All Languages" },
+                ...(languages?.map((lang: any) => ({
+                  value: lang.id,
+                  label: lang.name
+                })) || [])
+              ]}
+              fullWidth
+            />
+          </div>
+
+          <div className="flex-1 min-w-[240px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Search
+            </label>
+            <input
+              type="text"
+              placeholder="Search proverbs..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+            />
+          </div>
+
+          <div className="min-w-[140px]">
+            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Per Page
+            </label>
+            <StyledSelect
+              value={limit}
+              onChange={(e) => {
+                setLimit(Number(e.target.value));
+                setPage(1);
+              }}
+              options={[
+                { value: 20, label: "20" },
+                { value: 50, label: "50" },
+                { value: 100, label: "100" }
+              ]}
+              fullWidth
+            />
+          </div>
+        </div>
+
+        {/* Advanced Filters Panel */}
+        {showAdvancedFilters && (
+          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div>
+                <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                  Category
+                </label>
+                <input
+                  type="text"
+                  value={category}
+                  onChange={(e) => {
+                    setCategory(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Filter by category..."
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <ActiveFilterChips filters={activeFilters} />
+      </ContentFiltersCard>
+
+      {/* Cleanup Accordion */}
+      <div className="overflow-hidden rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10">
+        <button
+          onClick={() => setShowCleanupAccordion(!showCleanupAccordion)}
+          className="flex w-full items-center justify-between px-5 py-3 text-left"
+        >
+          <span className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+            ▶ Old Audio Format Cleanup
+          </span>
+          <span className="text-xs text-amber-800 dark:text-amber-200">
+            {showCleanupAccordion ? "Collapse" : "Expand"}
+          </span>
+        </button>
+        {showCleanupAccordion && (
+          <div className="border-t border-amber-200 px-5 py-4 dark:border-amber-500/20">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-sm text-amber-900/80 dark:text-amber-100/80">
+                  Preview or remove old proverb audio database rows. Apply creates a backup table and does not delete R2 objects.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => void queueProverbCleanupJob(true)}
+                  disabled={proverbCleanupLoading}
+                  className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-900 disabled:opacity-60 dark:border-amber-500/30 dark:bg-gray-900 dark:text-amber-100"
+                >
+                  Preview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowProverbCleanupApplyConfirm(true)}
+                  disabled={proverbCleanupLoading}
+                  className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+            {currentProverbCleanupJob ? (
+              <div className="mt-4 rounded-lg bg-white p-3 text-sm text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="font-mono text-xs">{currentProverbCleanupJob.id.slice(0, 8)}</span>
+                  <span className="font-medium">{currentProverbCleanupJob.status}</span>
+                  <span>{Math.round(currentProverbCleanupJob.progress.percent)}%</span>
+                  {currentProverbCleanupJob.error ? <span className="text-red-600 dark:text-red-300">{currentProverbCleanupJob.error}</span> : null}
+                </div>
+                {currentProverbCleanupJob.result ? (
+                  <div className="mt-2 grid gap-2 sm:grid-cols-4">
+                    {([
+                      ["Affected", currentProverbCleanupJob.result.candidate_count ?? 0],
+                      ["Backed up", currentProverbCleanupJob.result.backup_count ?? "-"],
+                      ["Deleted", currentProverbCleanupJob.result.deleted_count ?? "-"],
+                      ["R2", currentProverbCleanupJob.result.r2_cleanup ?? "not_run"],
+                    ] as Array<[string, unknown]>).map(([label, value]) => (
+                      <div key={label} className="rounded-lg border border-gray-200 p-2 dark:border-gray-800">
+                        <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</div>
+                        <div className="mt-1 font-semibold text-gray-900 dark:text-white">{String(value)}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="mt-2 text-xs text-amber-700 dark:text-amber-200">
+                  R2 object deletion is not handled by this dashboard action.
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
+      </div>
+
+      {/* Bulk Import from Google Sheets (has built-in accordion) */}
+      {selectedLanguage && (
+        <div className="mb-6">
+          <GoogleSheetsBulkImport
+            contentType="proverbs"
+            onImportComplete={() => refresh()}
+            defaultWorksheetTitle="yo_proverbs"
+            expectedColumns={[
+              { name: 'source_row_key', required: true, description: 'Stable spreadsheet row key', example: 'proverb_yor_0001' },
+              { name: 'yoruba_text', required: true, description: 'Proverb in Yoruba', example: "Ìwà l'ẹ̀so ẹni" },
+              { name: 'english_translation', required: true, description: 'Direct translation', example: "Character is one's beauty" },
+              { name: 'english_meaning', required: false, description: 'Interpretation/meaning', example: 'Good character is more important than physical appearance' },
+              { name: 'romanization', required: false, description: 'Romanized version', example: "iwa l'eso eni" },
+              { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '3' },
+              { name: 'category', required: false, description: 'Primary category', example: 'character' },
+              { name: 'tags', required: false, description: 'Comma-separated tags', example: 'wisdom,values' },
+              { name: 'cultural_context', required: false, description: 'Cultural context', example: 'Used to emphasize inner beauty' },
+              { name: 'is_published', required: false, description: 'Published status', example: 'false' },
+              { name: 'review_status', required: false, description: 'Editorial review status', example: 'approved' },
+            ]}
+          />
+        </div>
+      )}
+
+      <StickyBulkActionBar
+        selectedCount={selectedProverbs.length}
+        onClear={() => setSelectedProverbs([])}
+        itemName="proverb"
+        actions={[
+          {
+            label: isLoadingVoices ? 'Loading voices...' : isBulkRegenerating ? 'Queueing...' : 'Regenerate Audio',
+            onClick: handleBulkRegenerateAudio,
+            disabled: isBulkRegenerating || isLoadingVoices,
+            loading: isBulkRegenerating || isLoadingVoices,
+            icon: <FiVolume2 className="h-4 w-4" />,
+          },
+        ]}
+      />
+
+      {/* Proverbs Table - Desktop and Mobile */}
+      <ProverbsDataTable
+        proverbs={uniqueProverbs}
+        isLoading={isLoading}
+        selectedProverbs={selectedProverbs}
+        onSelectAll={handleSelectAllProverbs}
+        onSelectProverb={handleSelectProverb}
+        onEdit={openEditModal}
+        onRegenerateAudio={handleRegenerateAudio}
+        onAcceptAudio={handleAcceptAudio}
+        onRejectAudio={handleRejectAudio}
+        onDelete={(id) => {
+          const proverb = uniqueProverbs.find((p: Proverb) => p.id === id);
+          handleDeleteClick(id, proverb?.proverb || 'this proverb');
+        }}
+      />
+
+      {/* Pagination */}
+      {total > limit && (
+        <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} proverbs
+          </p>
+          <div className="ml-auto">
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        </div>
+      )}
+
+      {/* Modal */}
+      <Modal
+        isOpen={showModal}
+        onClose={closeModal}
+        title={editingProverb ? "Edit Proverb" : "Add New Proverb"}
+        maxWidth="4xl"
+      >
+        <div className="max-h-[calc(90vh-10rem)] overflow-y-auto pr-1">
+          <div className="space-y-4">
+            {editingProverb && (
+              <div className="flex items-start justify-end gap-3">
+                {renderModalAlignmentStatus()}
+              </div>
+            )}
+
             {errorMessage && <Alert variant="error" title="Error" message={errorMessage} />}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <StyledSelect
+                label="Language"
+                value={formData.language_id}
+                onChange={(e) => setFormData({ ...formData, language_id: Number(e.target.value) })}
+                required
+                fullWidth
+                options={[
+                  { value: "", label: "Select language", disabled: true },
+                  ...(languages?.map((lang: any) => ({
+                    value: lang.id,
+                    label: lang.name
+                  })) || [])
+                ]}
+                placeholder="Select language"
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Proverb *</label>
+                <textarea
+                  value={formData.proverb}
+                  onChange={(e) => setFormData({ ...formData, proverb: e.target.value })}
+                  required
+                  rows={2}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Translation *</label>
+                <textarea
+                  value={formData.translation}
+                  onChange={(e) => setFormData({ ...formData, translation: e.target.value })}
+                  required
+                  rows={2}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meaning/Context</label>
+                <textarea
+                  value={formData.meaning}
+                  onChange={(e) => setFormData({ ...formData, meaning: e.target.value })}
+                  rows={3}
+                  placeholder="Explain the cultural context or deeper meaning..."
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                <input
+                  type="text"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  placeholder="e.g., Wisdom, Life, Family, Nature"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+
+              <label className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-200">
+                <input
+                  type="checkbox"
+                  checked={formData.is_published}
+                  onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                />
+                <span>Publish this proverb</span>
+              </label>
+
+              {/* Audio Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Audio File (Optional)
+                </label>
+                <input
+                  type="file"
+                  accept="audio/*"
+                  onChange={handleAudioChange}
+                  className="block w-full text-sm text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-white dark:bg-gray-700 focus:outline-none p-2"
+                />
+                {audioPreview && (
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      {audioFile ? 'New audio file selected' : 'Current audio'}
+                    </p>
+                    <audio controls className="w-full h-10">
+                      <source src={audioPreview} />
+                    </audio>
+                  </div>
+                )}
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Max file size: 5MB. Supported formats: MP3, WAV, OGG
+                </p>
+              </div>
+
+              {editingProverb && (
+                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/30 p-4 space-y-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Proverb Alignment</h3>
+                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                      Review the generated draft, set explicit prompt and answer timing, then optionally refine word timings for karaoke and sentence completion.
+                    </p>
+                  </div>
+
+                  {(alignmentError || alignmentLoading) && (
+                    alignmentLoading ? (
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Loading alignment...</div>
+                    ) : (
                       <Alert variant="error" title="Alignment" message={alignmentError} />
                     )
                   )}
