@@ -549,7 +549,7 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
                 <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Batch</th>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Pair</th>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Started</th>
-                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">I / U / S / E / W</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Inserted / Updated / Skipped / Errors / Warnings</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
