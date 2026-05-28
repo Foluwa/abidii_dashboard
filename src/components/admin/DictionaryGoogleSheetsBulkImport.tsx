@@ -549,13 +549,17 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
                 <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Batch</th>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Pair</th>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Started</th>
-                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Inserted / Updated / Skipped / Errors / Warnings</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Ins</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Upd</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Skip</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Err</th>
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Warn</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {history.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-4 text-gray-600 dark:text-gray-300">No dictionary import batches found.</td>
+                   <td colSpan={9} className="px-3 py-4 text-gray-600 dark:text-gray-300">No dictionary import batches found.</td>
                 </tr>
               ) : (
                 history.map((batch) => (
@@ -568,9 +572,11 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
                     </td>
                     <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.pair_code ?? '-'}</td>
                     <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{formatDate(batch.started_at)}</td>
-                     <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">
-                       {(batch as any).inserted_count ?? 0} / {(batch as any).updated_count ?? 0} / {(batch as any).skipped_count ?? 0} / {(batch as any).error_count ?? 0} / {(batch as any).warning_count ?? 0}
-                     </td>
+                     <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{(batch as any).inserted_count ?? 0}</td>
+                     <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{(batch as any).updated_count ?? 0}</td>
+                     <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{(batch as any).skipped_count ?? 0}</td>
+                     <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{(batch as any).error_count ?? 0}</td>
+                     <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{(batch as any).warning_count ?? 0}</td>
                   </tr>
                 ))
               )}
