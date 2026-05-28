@@ -181,18 +181,18 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
   useEffect(() => {
     const batchFromUrl = searchParams.get('batch');
     if (batchFromUrl) {
-      setActiveBatchId(batchFromUrl);
-      // Auto-poll if batch is still running
       void (async () => {
-              try {
-                const batch = await getDictionaryImportBatch(batchFromUrl);
-                if (batch.status === 'validated' || batch.status === 'validation_failed') {
-                  setValidation(null as any);
-                } else if (batch.status === 'validating' || batch.status === 'applying') {
-                  startPolling(batchFromUrl);
-                }
-              } catch {
-          // Batch may have been discarded; clear it from URL
+        try {
+          const batch = await getDictionaryImportBatch(batchFromUrl);
+          if (batch.status === 'validation_failed' || batch.status === 'apply_failed') {
+            setActiveBatchId(batchFromUrl);
+          } else if (batch.status === 'validated') {
+            setActiveBatchId(null);
+          } else if (batch.status === 'validating' || batch.status === 'applying') {
+            setActiveBatchId(batchFromUrl);
+            startPolling(batchFromUrl);
+          }
+        } catch {
           const next = new URLSearchParams(searchParams.toString());
           next.delete('batch');
           router.replace(`${window.location.pathname}?${next.toString()}`, { scroll: false });
@@ -461,7 +461,7 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
             disabled={applying || validating}
             className="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {applying ? 'Importing...' : `Import ${validation.counters.staged_rows} rows`}
+            {applying ? 'Importing...' : `Import ${validation?.counters?.staged_rows ?? 0} rows`}
           </button>
         )}
       </div>
@@ -568,9 +568,9 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
                     </td>
                     <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.pair_code ?? '-'}</td>
                     <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{formatDate(batch.started_at)}</td>
-                    <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">
-                      {batch.inserted_count} / {batch.updated_count} / {batch.skipped_count} / {batch.error_count} / {batch.warning_count}
-                    </td>
+                     <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">
+                       {(batch as any).inserted_count ?? 0} / {(batch as any).updated_count ?? 0} / {(batch as any).skipped_count ?? 0} / {(batch as any).error_count ?? 0} / {(batch as any).warning_count ?? 0}
+                     </td>
                   </tr>
                 ))
               )}
