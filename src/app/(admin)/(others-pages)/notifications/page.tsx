@@ -135,7 +135,7 @@ export default function NotificationsPage() {
 
   return (
     <div>
-      <PageBreadCrumb pageTitle="Push Notifications" />
+      <PageBreadCrumb pageTitle="Notifications" />
       <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-3">
         {/* Compose Column */}
         <div className="space-y-6 lg:col-span-2">

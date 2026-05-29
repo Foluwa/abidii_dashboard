@@ -42,6 +42,9 @@ export default function TTSGenerationPage() {
   const [isLoadingProviders, setIsLoadingProviders] = useState(true);
   const [isLoadingVoices, setIsLoadingVoices] = useState(false);
   const [isLoadingLemmas, setIsLoadingLemmas] = useState(false);
+  const [providersError, setProvidersError] = useState<string | null>(null);
+  const [voicesError, setVoicesError] = useState<string | null>(null);
+  const [lemmasError, setLemmasError] = useState<string | null>(null);
 
   // Fetch providers on mount
   useEffect(() => {
@@ -64,6 +67,7 @@ export default function TTSGenerationPage() {
     try {
       const response = await apiClient.get('/api/v1/admin/audio/providers');
       setProviders(response.data.providers || []);
+      setProvidersError(null);
       
       // Auto-select first available provider
       const firstAvailable = response.data.providers.find((p: TTSProvider) => p.is_available);
@@ -72,6 +76,7 @@ export default function TTSGenerationPage() {
       }
     } catch (error: any) {
       console.error('Error fetching providers:', error);
+      setProvidersError('Failed to load TTS providers. Check your connection.');
       toast.error(error.response?.data?.detail || 'Failed to load TTS providers');
     } finally {
       setIsLoadingProviders(false);
@@ -263,6 +268,7 @@ export default function TTSGenerationPage() {
                       </option>
                     ))}
                   </select>
+                  {lemmasError && <p className="mt-1 text-xs text-red-500">{lemmasError}</p>}
                 </div>
 
                 <div>

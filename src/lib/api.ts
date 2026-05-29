@@ -282,7 +282,7 @@ apiClient.interceptors.response.use(
           }
           // Use setTimeout to avoid affecting current request flow
           setTimeout(() => {
-            window.location.href = '/';
+            window.location.href = '/signin';
           }, 100);
         }
 

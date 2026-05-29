@@ -197,13 +197,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       
       // Force a hard redirect to login page (clears all state)
-      window.location.href = '/';
+      window.location.href = '/signin';
     } catch (error) {
       console.error('Logout error:', error);
       // Force redirect even on error
       sessionStorage.clear();
       document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      window.location.href = '/';
+      window.location.href = '/signin';
     }
   };
 
@@ -275,7 +275,7 @@ export const useRequireAuth = (requiredPermission?: string) => {
           window.location.pathname !== '/' && 
           window.location.pathname !== '/signin') {
         hasCheckedRef.current = true;
-        window.location.href = '/';
+        window.location.href = '/signin';
       }
       return;
     }

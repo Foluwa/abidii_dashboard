@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -16,9 +16,13 @@ import {
 type MenuType = "main" | "others";
 
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered, closeMobileSidebar } = useSidebar();
   const { checkPermission } = useAuth();
   const pathname = usePathname();
+
+  useEffect(() => {
+    closeMobileSidebar();
+  }, [pathname, closeMobileSidebar]);
 
   const [manualOpenSubmenu, setManualOpenSubmenu] = useState<{ type: MenuType; index: number } | null>(null);
   const [manualOpenNestedSubmenuKey, setManualOpenNestedSubmenuKey] = useState<string | null>(null);
