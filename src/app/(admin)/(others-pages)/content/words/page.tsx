@@ -490,13 +490,18 @@ export default function WordsPage() {
       return;
     }
     
+    const translationText = word.primary_translation || word.word;
+    const targetLang = word.target_languages?.[0]?.language_code
+      || word.glosses?.[0]?.language_code
+      || 'yor';
+    
     // Open modal with word details
     setRegeneratingWord({
       id: word.id,
       contentType: 'word',
       displayText: word.word,
-      defaultText: word.word,
-      languageCode: word.language_code || 'yor',
+      defaultText: translationText,
+      languageCode: targetLang,
       submitEndpoint: `/api/v1/admin/content/words/single/${word.id}/regenerate-audio`,
     });
     setShowRegenerateModal(true);
