@@ -71,7 +71,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
   const handleGlossAudio = async (glossId: string) => {
     setGeneratingGlossId(glossId);
     try {
-      const res = await apiClient.post();
+      const res = await apiClient.post(`/api/v1/admin/content/glosses/${glossId}/regenerate-audio`);
       toast.success('Gloss audio generated');
       const url = res.data.audio_url;
       setGlossAudioUrls(prev => ({ ...prev, [glossId]: url }));
