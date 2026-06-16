@@ -51,6 +51,8 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
   const [editingFormId, setEditingFormId] = useState<string | null>(null);
   const [editedForm, setEditedForm] = useState('');
   const [editedFormType, setEditedFormType] = useState('');
+  const [generatingGlossId, setGeneratingGlossId] = useState<string | null>(null);
+  const [glossAudioUrls, setGlossAudioUrls] = useState<Record<string, string>>({});
 
   const handleUpdateLemma = async () => {
     if (!editedLemma.trim()) return;
@@ -63,6 +65,20 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
       onUpdate();
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to update lemma');
+    }
+  };
+
+  const handleGlossAudio = async (glossId: string) => {
+    setGeneratingGlossId(glossId);
+    try {
+      const res = await apiClient.post();
+      toast.success('Gloss audio generated');
+      const url = res.data.audio_url;
+      setGlossAudioUrls(prev => ({ ...prev, [glossId]: url }));
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || 'Failed to generate gloss audio');
+    } finally {
+      setGeneratingGlossId(null);
     }
   };
 
@@ -403,12 +419,26 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                                     <p className="flex-1 text-gray-900 dark:text-white">
                                       {gloss.definition}
                                     </p>
-                                    <button
-                                      onClick={() => startEditGloss(gloss.id, gloss.definition)}
-                                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                                    >
-                                      <FiEdit2 size={14} />
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => handleGlossAudio(gloss.id)}
+                                        disabled={generatingGlossId === gloss.id}
+                                        className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-50"
+                                        title="Generate audio for this translation"
+                                      >
+                                        {generatingGlossId === gloss.id ? (
+                                          <FiLoader className="animate-spin" size={14} />
+                                        ) : (
+                                          <FiVolume2 size={14} />
+                                        )}
+                                      </button>
+                                      <button
+                                        onClick={() => startEditGloss(gloss.id, gloss.definition)}
+                                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                      >
+                                        <FiEdit2 size={14} />
+                                      </button>
+                                    </div>
                                   </div>
                                 )}
                                 {gloss.gloss_index > 0 && (
