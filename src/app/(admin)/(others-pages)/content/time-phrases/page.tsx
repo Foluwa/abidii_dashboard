@@ -30,8 +30,8 @@ import { FiClock, FiTrash2, FiEdit2, FiVolume2, FiChevronDown, FiChevronUp, FiCh
 interface TimePhrase {
   id: string;
   language_id: string;
-  phrase: string; // Contains the Yoruba time phrase
-  translation: string; // English translation
+  phrase: string;
+  translation: string;
   romanization?: string;
   difficulty_level?: number;
   category?: string;
@@ -51,6 +51,17 @@ interface TimePhrase {
   last_regeneration_error?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+function parseTimeValue(translation: string): number {
+  const match = translation.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (!match) return 0;
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const period = match[3].toUpperCase();
+  if (period === 'PM' && hours !== 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+  return hours * 60 + minutes;
 }
 
 type AlignmentStatus = "draft" | "reviewed" | "approved" | "stale";
@@ -288,7 +299,7 @@ export default function TimePhrasesPage() {
   const [startsWithFilter, setStartsWithFilter] = useState("");
   const [endsWithFilter, setEndsWithFilter] = useState("");
   const [containsFilter, setContainsFilter] = useState("");
-  const [sortBy, setSortBy] = useState<'phrase' | 'translation' | 'created_at' | 'updated_at'>('translation');
+  const [sortBy, setSortBy] = useState<'phrase' | 'translation' | 'created_at' | 'updated_at' | 'time'>('time');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   // Bulk operations
@@ -386,7 +397,7 @@ export default function TimePhrasesPage() {
     if (startsWithFilter) params.set('starts_with', startsWithFilter);
     if (endsWithFilter) params.set('ends_with', endsWithFilter);
     if (containsFilter) params.set('contains', containsFilter);
-    if (sortBy !== 'phrase') params.set('sort_by', sortBy);
+    if (sortBy !== 'time') params.set('sort_by', sortBy);
     if (sortDir !== 'asc') params.set('sort_dir', sortDir);
 
     const queryString = params.toString();
@@ -491,6 +502,9 @@ export default function TimePhrasesPage() {
             break;
           case 'translation':
             comparison = a.translation.localeCompare(b.translation);
+            break;
+          case 'time':
+            comparison = (parseTimeValue(a.translation) || 0) - (parseTimeValue(b.translation) || 0);
             break;
           case 'created_at':
             comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
@@ -1412,6 +1426,7 @@ export default function TimePhrasesPage() {
                     onChange={(e) => setSortBy(e.target.value as any)}
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                   >
+                    <option value="time">Time (12:00 AM →)</option>
                     <option value="phrase">Phrase</option>
                     <option value="translation">Translation</option>
                     <option value="created_at">Created Date</option>
