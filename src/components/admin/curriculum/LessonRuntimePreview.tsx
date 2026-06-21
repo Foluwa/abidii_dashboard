@@ -16,6 +16,11 @@ type PreviewBlueprintShape = {
 };
 
 const STEP_TYPE_LABELS: Record<string, string> = {
+  sceneSetup: 'Scene Setup',
+  listen: 'Listen',
+  speakOrBuild: 'Speak or Build',
+  respond: 'Respond',
+  complete: 'Complete',
   guessMeaning: 'Guess meaning',
   matchingPairs: 'Match pairs',
   wordBuilder: 'Build the word',
@@ -30,6 +35,11 @@ const STEP_TYPE_LABELS: Record<string, string> = {
   infoCard: 'Info card',
   summary: 'Lesson summary',
   summaryCard: 'Lesson summary',
+  overview: 'Overview (intro)',
+  lessonStart: 'Lesson Start',
+  conceptCheck: 'Concept Check',
+  cultureTip: 'Culture Tip',
+  completion: 'Completion (outro)',
 };
 
 function asString(value: unknown): string | null {
@@ -287,6 +297,97 @@ function collectCompactReadingMediaRefs(payload: Record<string, unknown>) {
     .filter((item) => item.fieldPath);
 }
 
+
+
+function DialogueCompletionPreview({ step }: { step: Record<string, unknown> }) {
+  const conversation = asObjectList(step.conversation);
+  const options = asObjectList(step.options);
+  const correctId = asString(step.correctOptionId);
+  const answerSlot = asObject(step.answerSlot);
+
+  return (
+    <div className="mt-3 space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <span>Dialogue Completion</span>
+        {correctId && (
+          <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+            correct: {correctId}
+          </span>
+        )}
+      </div>
+
+      {/* Conversation turns */}
+      {conversation.length > 0 && (
+        <div className="space-y-2">
+          {conversation.map((turn, ti) => {
+            const speaker = asString(turn.speaker) || '?';
+            const role = asString(turn.speakerRole) || 'system';
+            const yoruba = asString(turn.yorubaText) || asString(turn.text) || '';
+            const english = asString(turn.englishTranslation) || asString(turn.translation) || '';
+            const hasSrc = typeof turn.sourceRef === 'object' && turn.sourceRef !== null;
+            const hasAudio = typeof turn.audioUrl === 'string' && turn.audioUrl.trim().length > 0;
+            const isLearner = role === 'learner';
+            return (
+              <div key={ti} className={`flex ${isLearner ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                  isLearner
+                    ? 'bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-200'
+                    : 'bg-white text-gray-900 dark:bg-gray-700 dark:text-gray-200'
+                } border ${
+                  isLearner ? 'border-blue-200 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'
+                }`}>
+                  <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <span>{speaker}</span>
+                    {hasSrc && <span className="text-green-600 dark:text-green-400">sourceRef</span>}
+                    {hasAudio && <span className="text-blue-600 dark:text-blue-400">audio</span>}
+                    {!hasSrc && <span className="text-red-500">missing ref</span>}
+                  </div>
+                  {yoruba && <div className="mt-1 font-medium">{yoruba}</div>}
+                  {english && <div className="text-xs text-gray-500 dark:text-gray-400">{english}</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Answer slot */}
+      {answerSlot && (
+        <div className="flex justify-end">
+          <div className="max-w-[75%] rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-400 dark:border-gray-600 dark:text-gray-500">
+            {asString(answerSlot.speaker) || 'You'}: {asString(answerSlot.placeholderText) || 'Choose your reply'}
+          </div>
+        </div>
+      )}
+
+      {/* Options */}
+      {options.length > 0 && (
+        <div className="space-y-1">
+          <div className="text-xs font-medium text-gray-500 dark:text-gray-400">Options ({options.length}):</div>
+          {options.map((opt, oi) => {
+            const yoruba = asString(opt.yorubaText) || asString(opt.text) || '';
+            const isCorrect = asString(opt.id) === correctId;
+            const hasSrc = typeof opt.sourceRef === 'object' && opt.sourceRef !== null;
+            return (
+              <div key={oi} className={`flex items-center gap-2 rounded border px-3 py-1.5 text-sm ${
+                isCorrect ? 'border-green-400 bg-green-50 dark:border-green-600 dark:bg-green-900/20' : 'border-gray-200 dark:border-gray-600'
+              }`}>
+                <span className="font-mono text-xs text-gray-400">{asString(opt.id) || `#${oi+1}`}</span>
+                <span className="flex-1">{yoruba || '(no text)'}</span>
+                {isCorrect && <span className="text-xs text-green-600 dark:text-green-400">correct</span>}
+                {hasSrc ? (
+                  <span className="text-xs text-green-600 dark:text-green-400">sourceRef</span>
+                ) : (
+                  <span className="text-xs text-red-500">missing ref</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 export function LessonRuntimePreview({
   blueprint,
   heading,
@@ -495,6 +596,9 @@ export function LessonRuntimePreview({
                 asString(step.text) ||
                 asString(step.instruction);
               const stepType = asString(step.type) || asString(step.stepId) || `step_${index + 1}`;
+              const isDialogueComplete =
+                asString(step.runtimeType) === 'respond' &&
+                asString(step.interactionType) === 'dialogueCompletion';
               return (
                 <div
                   key={`${stepType}-${index}`}
@@ -519,6 +623,7 @@ export function LessonRuntimePreview({
                       ))}
                     </div>
                   ) : null}
+                  {isDialogueComplete ? <DialogueCompletionPreview step={step} /> : null}
                 </div>
               );
             })}

@@ -410,6 +410,11 @@ function getStarterSteps(lessonKind: string): Record<string, unknown>[] | null {
 
 function getStepTypeOptions(lessonKind: string): Array<{ value: string; label: string }> {
   const common = [
+    { value: 'sceneSetup', label: 'Scene Setup' },
+    { value: 'listen', label: 'Listen' },
+    { value: 'speakOrBuild', label: 'Speak or Build' },
+    { value: 'respond', label: 'Respond' },
+    { value: 'complete', label: 'Complete' },
     { value: 'overview', label: 'Overview (intro)' },
     { value: 'lessonStart', label: 'Lesson Start' },
     { value: 'recognitionTask', label: 'Recognition Task' },
@@ -467,6 +472,11 @@ function getStepTypeOptions(lessonKind: string): Array<{ value: string; label: s
 }
 
 const STEP_TYPE_DESCRIPTIONS: Record<string, string> = {
+  sceneSetup: 'Sets the scene context. Shows a scene image, title, and situation description. Prepares the learner for an immersive language moment.',
+  listen: 'Audio-first listening step. Plays native speaker audio while showing the scene image. Optionally reveals text after listening. Uses sourceRef for audio hydration.',
+  speakOrBuild: 'Speaking or word-building exercise. In "repeat" mode: learner repeats after native speaker. In "build" mode: learner constructs phrases from wordRef tokens.',
+  respond: 'Response choice step. Learner picks the correct response in-scene from multiple options. Each option can have its own audio and image.',
+  complete: 'Scene completion screen. Shows what the learner achieved, XP earned, and an optional badge image.',
   overview: 'Required intro screen. Shows lesson title, part number, level, and estimated time. Sets the context for the entire lesson.',
   lessonStart: 'Intro screen with a title, image, and optional audio. Sets the context before the activity begins. Shows a "Start" button.',
   recognitionTask: 'Multiple-choice quiz. Shows a prompt (text/audio/image) and several options. User picks the correct one. Uses options[] for answer choices.',
