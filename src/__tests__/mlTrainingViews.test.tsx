@@ -25,7 +25,7 @@ const mockedApi = adminMlApi as jest.Mocked<typeof adminMlApi>;
 function mockOverviewApi() {
   mockedApi.getMlReadiness.mockResolvedValue({
     generated_at: "2026-04-30T00:00:00Z",
-    threshold: 300,
+    threshold: 180,
     languages: [],
     model_versions: {},
     training_jobs: {},
@@ -33,8 +33,8 @@ function mockOverviewApi() {
   mockedApi.getHandwritingDatasetReadiness.mockResolvedValue({
     manifest_id: "manifest-1",
     generated_at: "2026-04-30T00:00:00Z",
-    target_min_count: 300,
-    target_high_count: 500,
+    target_min_count: 180,
+    target_high_count: 300,
     global_readiness: {
       total_classes: 3,
       ready_classes: 1,
@@ -55,13 +55,13 @@ function mockOverviewApi() {
         verified_count: 0,
         approved_pending_count: 9,
         rejected_count: 0,
-        target_min_count: 300,
-        target_high_count: 500,
+        target_min_count: 180,
+        target_high_count: 300,
         readiness_status: "missing",
         is_blocking_training: true,
         recommended_action: "Collect candidate samples.",
-        needed_to_300: 291,
-        needed_to_500: 491,
+        needed_to_300: 171,
+        needed_to_500: 291,
       },
       {
         class_label: "G",
@@ -71,29 +71,29 @@ function mockOverviewApi() {
         verified_count: 120,
         approved_pending_count: 1,
         rejected_count: 0,
-        target_min_count: 300,
-        target_high_count: 500,
+        target_min_count: 180,
+        target_high_count: 300,
         readiness_status: "low",
         is_blocking_training: true,
         recommended_action: "Collect more samples.",
-        needed_to_300: 179,
-        needed_to_500: 379,
+        needed_to_300: 59,
+        needed_to_500: 179,
       },
       {
         class_label: "ẹ́",
         language: "yor",
         script_group: "Yoruba",
         candidate_count: 0,
-        verified_count: 300,
+        verified_count: 180,
         approved_pending_count: 0,
         rejected_count: 0,
-        target_min_count: 300,
-        target_high_count: 500,
+        target_min_count: 180,
+        target_high_count: 300,
         readiness_status: "ready",
         is_blocking_training: false,
         recommended_action: "No action.",
         needed_to_300: 0,
-        needed_to_500: 200,
+        needed_to_500: 120,
       },
     ],
   });
@@ -106,8 +106,8 @@ beforeEach(() => {
   mockOverviewApi();
   mockedApi.listVerifiedPromotionManifests.mockResolvedValue({ items: [] });
   mockedApi.listHandwritingCandidateManifests.mockResolvedValue({ items: [], total: 0, limit: 50, offset: 0 });
-  mockedApi.getVerifiedPromotionReadiness.mockResolvedValue({ threshold: 300, languages: [] });
-  mockedApi.getVerifiedPromotionCollectionGaps.mockResolvedValue({ target_low: 300, target_high: 500, items: [] });
+  mockedApi.getVerifiedPromotionReadiness.mockResolvedValue({ threshold: 180, languages: [] });
+  mockedApi.getVerifiedPromotionCollectionGaps.mockResolvedValue({ target_low: 180, target_high: 300, items: [] });
   mockedApi.getHandwritingCandidateManifest.mockResolvedValue({
     id: "manifest-1",
     language_code: "eng",

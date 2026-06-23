@@ -165,7 +165,7 @@ function useMlOverview() {
     setError(null);
     try {
       const [readinessData, jobData, modelData] = await Promise.all([
-        getMlReadiness(300),
+        getMlReadiness(180),
         listMlTrainingJobs({ limit: 50, offset: 0 }),
         listMlModelVersions({ limit: 20, offset: 0 }),
       ]);
@@ -199,8 +199,12 @@ export function MLTrainingOverviewPage() {
     try {
       const job = await queueTrainingJob({
         language_code: trainingLang as "yor" | "eng",
+        dataset_path: `datasets/training/${trainingLang}/alphabets/`,
         model_status_target: "staging",
-        parameters: { dry_run_promotion_passed: true },
+        parameters: {
+          direct_training_dataset_ack: true,
+          readiness_min_count: 180,
+        },
       });
       alert(`Training job queued: ${job.id}`);
       await refresh();
@@ -283,7 +287,7 @@ export function MLTrainingOverviewPage() {
 
         <Panel title="Training Trigger">
           <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-            <p>Queue a new handwriting training job on Lambda GPU. Requires dataset readiness (300+ samples per class).</p>
+            <p>Queue a new handwriting training job on Lambda GPU from the R2 training dataset. Current Yoruba gate is 180+ samples per class.</p>
             <div className="flex flex-wrap gap-2">
               <select value={trainingLang} onChange={(event) => setTrainingLang(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                 <option value="yor">Yoruba</option>
@@ -691,8 +695,8 @@ export function MLVerifiedPromotionManifestsPage() {
     try {
       const [manifestResponse, readinessResponse, gapResponse] = await Promise.all([
         listVerifiedPromotionManifests(),
-        getVerifiedPromotionReadiness(300),
-        getVerifiedPromotionCollectionGaps({ target_low: 300, target_high: 500 }),
+        getVerifiedPromotionReadiness(180),
+        getVerifiedPromotionCollectionGaps({ target_low: 180, target_high: 300 }),
       ]);
       setManifests(manifestResponse.items);
       setReadiness(readinessResponse);
@@ -776,8 +780,8 @@ export function MLVerifiedPromotionManifestsPage() {
                 <th className="px-3 py-2">Approved Pending</th>
                 <th className="px-3 py-2">Verified</th>
                 <th className="px-3 py-2">Projected</th>
+                <th className="px-3 py-2">Need 180</th>
                 <th className="px-3 py-2">Need 300</th>
-                <th className="px-3 py-2">Need 500</th>
                 <th className="px-3 py-2">Collection Target</th>
               </tr>
             </thead>
