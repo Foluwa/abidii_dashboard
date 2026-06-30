@@ -6,6 +6,7 @@ import type { ApexOptions } from 'apexcharts';
 
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Pagination from '@/components/tables/Pagination';
+import StatusBadge from '@/components/admin/StatusBadge';
 import { useToast } from '@/contexts/ToastContext';
 import {
   listDailyContentFeed,
@@ -53,6 +54,14 @@ function openRate(item: DailyContentFeedItem): number {
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
+}
+
+// A row is "scheduled" (not yet sent) if it's dated in the future, or
+// dated today but the job hasn't run yet — either way sent_count is 0
+// so far. Once sent_count > 0 it's a real send, even if it happens to
+// still be "today."
+function isUpcoming(item: DailyContentFeedItem): boolean {
+  return item.content_date >= todayIso() && item.sent_count === 0;
 }
 
 export default function DailyContentNotificationsPage() {
@@ -387,6 +396,7 @@ export default function DailyContentNotificationsPage() {
           <table className="min-w-full text-left text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
+                <th className="px-3 py-3">Status</th>
                 <th className="px-3 py-3">Date</th>
                 <th className="px-3 py-3">Type</th>
                 <th className="px-3 py-3">Content</th>
@@ -402,19 +412,26 @@ export default function DailyContentNotificationsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={11} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
                     Loading...
                   </td>
                 </tr>
               ) : pageItems.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={11} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
                     No daily content sent yet.
                   </td>
                 </tr>
               ) : (
                 pageItems.map((item) => (
                   <tr key={item.content_log_id} className="border-b border-gray-100 align-top dark:border-gray-800">
+                    <td className="px-3 py-3">
+                      {isUpcoming(item) ? (
+                        <StatusBadge status="pending" label="Scheduled" />
+                      ) : (
+                        <StatusBadge status="success" label="Sent" />
+                      )}
+                    </td>
                     <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatDate(item.content_date)}</td>
                     <td className="px-3 py-3 capitalize text-gray-700 dark:text-gray-300">{item.content_type}</td>
                     <td className="px-3 py-3 font-medium text-gray-900 dark:text-white">{item.content_text || '—'}</td>
