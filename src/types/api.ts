@@ -135,6 +135,7 @@ export interface UserListItem {
   device_name?: string | null;
   device_app_version?: string | null;
   device_build_number?: string | null;
+  country_code?: string | null;
 
   // Premium entitlement summary (computed from subscriptions)
   has_premium?: boolean;
