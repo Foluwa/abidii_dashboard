@@ -37,7 +37,7 @@ export async function sendFilteredNotification(payload: {
   data?: Record<string, string>;
   language_code?: string;
   platform?: 'android' | 'ios' | 'all';
-  user_ids?: number[];
+  user_ids?: string[];
 }) {
   const res = await apiClient.post<NotificationResponse>(
     '/api/v1/notifications/send-filtered',

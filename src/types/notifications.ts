@@ -1,5 +1,5 @@
 export interface NotificationSendRequest {
-  user_ids: number[];
+  user_ids: string[];
   title: string;
   body: string;
   data?: Record<string, string>;
