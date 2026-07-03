@@ -81,7 +81,11 @@ export default function NotificationsPage() {
     limit: 20,
     search: userSearchQuery || undefined,
   });
-  const userList = Array.isArray(usersData) ? usersData : (usersData as any)?.items || [];
+  // GET /admin/users responds { total, limit, offset, users: [...] } —
+  // not a bare array and not `.items` (the pre-existing fallback here was
+  // wrong, which is why search always showed 0 results despite the network
+  // request itself succeeding).
+  const userList = Array.isArray(usersData) ? usersData : (usersData as any)?.users || [];
 
   const toggleUser = (id: string, label: string) => {
     setSelectedUsers((prev) =>
