@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import { useToast } from '@/contexts/ToastContext';
 import {
@@ -9,6 +9,8 @@ import {
   sendFilteredNotification,
 } from '@/lib/notificationsApi';
 import { useUsers } from '@/hooks/useApi';
+
+type SelectedUser = { id: string; label: string };
 
 const TargetOption: React.FC<{
   active: boolean;
@@ -53,7 +55,7 @@ export default function NotificationsPage() {
   const [body, setBody] = useState('');
   const [dataPayload, setDataPayload] = useState('{}');
   const [targetMode, setTargetMode] = useState<'all' | 'selected' | 'filtered'>('all');
-  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<SelectedUser[]>([]);
   const [platform, setPlatform] = useState<'android' | 'ios' | 'all'>('all');
   const [languageCode, setLanguageCode] = useState('');
   const [sending, setSending] = useState(false);
@@ -65,8 +67,33 @@ export default function NotificationsPage() {
     failed: number;
   } | null>(null);
 
-  const { users: usersData } = useUsers({ limit: 200 });
-  const userList = Array.isArray(usersData) ? usersData : (usersData as any)?.items || [];
+  const selectedUserIds = selectedUsers.map((u) => u.id);
+
+  // Debounced user search — avoids firing a request on every keystroke.
+  const [userSearchInput, setUserSearchInput] = useState('');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setUserSearchQuery(userSearchInput.trim()), 300);
+    return () => clearTimeout(t);
+  }, [userSearchInput]);
+
+  const { users: usersData, isLoading: usersLoading } = useUsers({
+    limit: 20,
+    search: userSearchQuery || undefined,
+  });
+  // GET /admin/users responds { total, limit, offset, users: [...] } —
+  // not a bare array and not `.items` (the pre-existing fallback here was
+  // wrong, which is why search always showed 0 results despite the network
+  // request itself succeeding).
+  const userList = Array.isArray(usersData) ? usersData : (usersData as any)?.users || [];
+
+  const toggleUser = (id: string, label: string) => {
+    setSelectedUsers((prev) =>
+      prev.some((u) => u.id === id)
+        ? prev.filter((u) => u.id !== id)
+        : [...prev, { id, label }]
+    );
+  };
 
   const doSend = useCallback(
     async (testMode = false) => {
@@ -130,7 +157,7 @@ export default function NotificationsPage() {
         setSending(false);
       }
     },
-    [title, body, dataPayload, targetMode, selectedUserIds, platform, languageCode, toast]
+    [title, body, dataPayload, targetMode, selectedUsers, platform, languageCode, toast]
   );
 
   return (
@@ -214,24 +241,72 @@ export default function NotificationsPage() {
               {targetMode === 'selected' && (
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Select Users ({selectedUserIds.length} chosen)
+                    Select Users ({selectedUsers.length} chosen)
                   </label>
-                  <select
-                    multiple
-                    value={selectedUserIds.map(String)}
-                    onChange={(e) =>
-                      setSelectedUserIds(
-                        Array.from(e.target.selectedOptions, (opt) => Number(opt.value))
-                      )
-                    }
-                    className="h-40 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  >
-                    {userList.map((user: any) => (
-                      <option key={user.id} value={user.id}>
-                        {user.display_name || user.email || user.id}
-                      </option>
-                    ))}
-                  </select>
+
+                  {/* Selected users as removable chips — kept separate from
+                      the search results below so a selection survives
+                      refining/clearing the search query. */}
+                  {selectedUsers.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-1.5">
+                      {selectedUsers.map((u) => (
+                        <span
+                          key={u.id}
+                          className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-500/10 dark:text-brand-300"
+                        >
+                          {u.label}
+                          <button
+                            type="button"
+                            onClick={() => toggleUser(u.id, u.label)}
+                            aria-label={`Remove ${u.label}`}
+                            className="text-brand-500 hover:text-brand-700 dark:hover:text-brand-100"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <input
+                    type="text"
+                    value={userSearchInput}
+                    onChange={(e) => setUserSearchInput(e.target.value)}
+                    placeholder="Search by name or email..."
+                    className="mb-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                  />
+
+                  <div className="h-48 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-600">
+                    {usersLoading ? (
+                      <p className="p-3 text-sm text-gray-400">Searching...</p>
+                    ) : userList.length === 0 ? (
+                      <p className="p-3 text-sm text-gray-400">
+                        {userSearchQuery ? 'No matching users.' : 'Type to search users.'}
+                      </p>
+                    ) : (
+                      userList.map((user: any) => {
+                        const label = user.display_name || user.email || user.id;
+                        const checked = selectedUserIds.includes(user.id);
+                        return (
+                          <label
+                            key={user.id}
+                            className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleUser(user.id, label)}
+                              className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                            />
+                            <span className="flex-1 truncate">{label}</span>
+                            {user.email && user.display_name && (
+                              <span className="truncate text-xs text-gray-400">{user.email}</span>
+                            )}
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
               )}
 

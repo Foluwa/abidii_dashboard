@@ -151,6 +151,12 @@ export default function UsersPage() {
     }
   };
 
+  const countryFlag = (code?: string | null) => {
+    if (!code || code.trim().length !== 2) return null;
+    const cc = code.trim().toUpperCase();
+    return String.fromCodePoint(...[...cc].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+  };
+
   const getDeviceIcon = (platform: string | null) => {
     const commonClassName = "h-5 w-5 text-gray-900 dark:text-white";
 
@@ -379,6 +385,9 @@ export default function UsersPage() {
                       Device
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Country
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Last Login
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -455,6 +464,14 @@ export default function UsersPage() {
                                 </div>
                               )}
                             </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                            {countryFlag(user.country_code) && (
+                              <span className="text-base leading-none">{countryFlag(user.country_code)}</span>
+                            )}
+                            <span>{user.country_code ? user.country_code.toUpperCase() : "—"}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
