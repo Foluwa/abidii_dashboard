@@ -11,6 +11,7 @@ import Alert from "@/components/ui/alert/SimpleAlert";
 import PlatformDistributionChart from "@/components/charts/PlatformDistributionChart";
 import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
 import MonthlySubscriberGrowthChart from "@/components/charts/MonthlySubscriberGrowthChart";
+import DailyActiveUsersChart from "@/components/charts/DailyActiveUsersChart";
 import CountryMap from "@/components/ecommerce/CountryMap";
 import RecentActivityFeed from "@/components/dashboard/RecentActivityFeed";
 import BillingPlansCard from "@/components/billing/BillingPlansCard";
@@ -202,6 +203,21 @@ export default function Dashboard() {
         </div>
         <div className="p-5">
           <MonthlySubscriberGrowthChart />
+        </div>
+      </div>
+
+      {/* Daily Active Users Chart */}
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+            Daily Active Users
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Distinct users with at least one session per day, last 30 days
+          </p>
+        </div>
+        <div className="p-5">
+          <DailyActiveUsersChart />
         </div>
       </div>
 
