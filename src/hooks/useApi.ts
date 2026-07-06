@@ -177,15 +177,17 @@ export function useSystemMetrics() {
 /**
  * Users List Hook with filters
  */
-export function useUsers(filters?: { 
-  search?: string; 
-  role?: UserRole; 
-  page?: number; 
+export function useUsers(filters?: {
+  search?: string;
+  role?: UserRole;
+  page?: number;
   limit?: number;
   is_active?: boolean;
   provider?: string;
   min_xp?: number;
   max_xp?: number;
+  last_login_after?: string;
+  last_login_before?: string;
 }) {
   const params = new URLSearchParams();
   if (filters?.page) params.append('page', filters.page.toString());
@@ -196,6 +198,8 @@ export function useUsers(filters?: {
   if (filters?.provider) params.append('provider', filters.provider);
   if (filters?.min_xp !== undefined) params.append('min_xp', filters.min_xp.toString());
   if (filters?.max_xp !== undefined) params.append('max_xp', filters.max_xp.toString());
+  if (filters?.last_login_after) params.append('last_login_after', filters.last_login_after);
+  if (filters?.last_login_before) params.append('last_login_before', filters.last_login_before);
 
   const url = `/api/v1/admin/users?${params.toString()}`;
 
@@ -1020,6 +1024,32 @@ export function useMonthlyUserGrowth(months: number = 12) {
   return {
     data: series,
     total: totalCount,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/**
+ * Daily Active Users Hook
+ * Returns distinct users with at least one session per day
+ */
+export function useDailyActiveUsers(days: number = 30) {
+  const { data, error, mutate } = useSWR(
+    `/api/v1/admin/analytics/daily-active-users?days=${days}`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+  const series = Array.isArray(data?.data) ? data.data : [];
+  const average = Number.isFinite(data?.average)
+    ? data.average
+    : series.length
+      ? series.reduce((sum: number, item: any) => sum + (Number(item?.count) || 0), 0) / series.length
+      : 0;
+
+  return {
+    data: series,
+    average,
     isLoading: !error && !data,
     isError: error,
     refresh: mutate,

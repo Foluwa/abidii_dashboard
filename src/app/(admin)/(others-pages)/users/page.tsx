@@ -34,6 +34,8 @@ export default function UsersPage() {
   const [providerFilter, setProviderFilter] = useState<string>("all");
   const [minXp, setMinXp] = useState<string>("");
   const [maxXp, setMaxXp] = useState<string>("");
+  const [lastLoginAfter, setLastLoginAfter] = useState<string>("");
+  const [lastLoginBefore, setLastLoginBefore] = useState<string>("");
   const [showFilters, setShowFilters] = useState(false);
   
   // Action confirmation modal
@@ -53,6 +55,8 @@ export default function UsersPage() {
     provider,
     min_xp: minXp ? parseInt(minXp) : undefined,
     max_xp: maxXp ? parseInt(maxXp) : undefined,
+    last_login_after: lastLoginAfter ? new Date(lastLoginAfter).toISOString() : undefined,
+    last_login_before: lastLoginBefore ? new Date(lastLoginBefore).toISOString() : undefined,
   });
 
   const totalPages = users ? Math.max(1, Math.ceil(users.total / limit)) : 1;
@@ -346,6 +350,36 @@ export default function UsersPage() {
                   />
                 </div>
 
+                <div className="min-w-[170px]">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Last Login After
+                  </label>
+                  <input
+                    type="date"
+                    value={lastLoginAfter}
+                    onChange={(e) => {
+                      setLastLoginAfter(e.target.value);
+                      setPage(1);
+                    }}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+
+                <div className="min-w-[170px]">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Last Login Before
+                  </label>
+                  <input
+                    type="date"
+                    value={lastLoginBefore}
+                    onChange={(e) => {
+                      setLastLoginBefore(e.target.value);
+                      setPage(1);
+                    }}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+
                 <button
                   onClick={() => {
                     setSearch("");
@@ -353,6 +387,8 @@ export default function UsersPage() {
                     setProviderFilter("all");
                     setMinXp("");
                     setMaxXp("");
+                    setLastLoginAfter("");
+                    setLastLoginBefore("");
                     setActiveTab("all");
                     setPage(1);
                   }}
