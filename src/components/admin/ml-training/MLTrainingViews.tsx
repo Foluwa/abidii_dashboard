@@ -38,6 +38,38 @@ import {
 
 const PAGE_SIZE = 20;
 
+// Falls back to the staging URL only as a last resort - every real
+// deployment should set NEXT_PUBLIC_MLFLOW_URL (generated per-environment by
+// abidii_backend/scripts/pull-dashboard.sh from MLFLOW_PUBLIC_URL) so a
+// production dashboard doesn't link admins to the staging MLflow instance.
+const MLFLOW_URL = process.env.NEXT_PUBLIC_MLFLOW_URL || "https://dev-mlflow.abidii.app";
+
+// Mirrors ML_TRAINING_STALE_AFTER_SECONDS (app/config/settings.py) - the
+// backend sweep that auto-fails a "running" job with no heartbeat for this
+// long. Shown so admins don't mistake a normal long training stage (which
+// only reports heartbeats at coarse stage transitions, not per epoch) for a
+// stuck job before the backend would actually consider it one.
+const STALE_AFTER_SECONDS = 10800;
+
+function formatHeartbeatAge(value?: string | null): string | null {
+  if (!value) return null;
+  const then = new Date(value).getTime();
+  if (Number.isNaN(then)) return null;
+  const seconds = Math.max(0, Math.floor((Date.now() - then) / 1000));
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ${minutes % 60}m ago`;
+}
+
+function isHeartbeatStale(value?: string | null): boolean {
+  if (!value) return false;
+  const then = new Date(value).getTime();
+  if (Number.isNaN(then)) return false;
+  return (Date.now() - then) / 1000 > STALE_AFTER_SECONDS;
+}
+
 function formatDate(value?: string | null) {
   if (!value) return "-";
   try {
@@ -300,7 +332,7 @@ export function MLTrainingOverviewPage() {
           </div>
         </Panel>
         <Panel title="Model Versions" action={<>
-          <Link className="text-sm font-medium text-brand-600 mr-3" href="https://dev-mlflow.abidii.app" target="_blank">MLflow ↗</Link>
+          <Link className="text-sm font-medium text-brand-600 mr-3" href={MLFLOW_URL} target="_blank">MLflow ↗</Link>
           <Link className="text-sm font-medium text-brand-600" href="/system/ml-training/models">View all</Link>
         </>}>
           {models.length > 0 ? (
@@ -337,7 +369,14 @@ function JobsTable({ jobs }: { jobs: MlTrainingJob[] }) {
         <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
           {jobs.map((job) => (
             <tr key={job.id}>
-              <td className="px-3 py-3"><StatusPill status={job.status} /></td>
+              <td className="px-3 py-3">
+                <div className="flex items-center gap-2">
+                  <StatusPill status={job.status} />
+                  {job.status === "running" && isHeartbeatStale(job.heartbeat_at) ? (
+                    <span title="No heartbeat in a while - may be stuck" className="text-amber-500">⚠</span>
+                  ) : null}
+                </div>
+              </td>
               <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{job.language_code || "-"}</td>
               <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{job.current_stage}</td>
               <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatPercent(job.progress_percentage)}</td>
@@ -482,14 +521,31 @@ export function MLTrainingJobDetailPage() {
             <div className="h-full bg-brand-500" style={{ width: `${Math.min(100, Math.max(0, Number(job.progress_percentage || 0)))}%` }} />
           </div>
           {job.error_message ? <InlineError message={job.error_message} /> : null}
+          {job.status === "running" && isHeartbeatStale(job.heartbeat_at) ? (
+            <InlineError message={`No heartbeat for over ${Math.round(STALE_AFTER_SECONDS / 3600)}h - the backend will auto-mark this failed and terminate the instance on its next sweep, if it hasn't already.`} />
+          ) : null}
           <div className="grid gap-6 lg:grid-cols-2">
             <Panel title="Lambda Metadata"><JsonPreview value={metadataFromJob(job)} /></Panel>
             <Panel title="Timing">
               <div className="grid gap-3 text-sm text-gray-700 dark:text-gray-300">
                 <div>Queued: {formatDate(job.queued_at)}</div>
                 <div>Started: {formatDate(job.started_at)}</div>
-                <div>Heartbeat: {formatDate(job.heartbeat_at)}</div>
+                <div>
+                  Heartbeat: {formatDate(job.heartbeat_at)}
+                  {job.heartbeat_at ? <span className="ml-2 text-gray-500 dark:text-gray-400">({formatHeartbeatAge(job.heartbeat_at)})</span> : null}
+                </div>
                 <div>Finished: {formatDate(job.finished_at)}</div>
+                <div>
+                  MLflow run:{" "}
+                  {job.mlflow_run_id ? (
+                    <>
+                      <span className="font-mono text-xs">{job.mlflow_run_id}</span>{" "}
+                      <Link className="text-brand-600" href={MLFLOW_URL} target="_blank">Open MLflow ↗</Link>
+                    </>
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">not recorded yet</span>
+                  )}
+                </div>
               </div>
             </Panel>
           </div>
