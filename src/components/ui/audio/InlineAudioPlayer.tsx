@@ -51,6 +51,7 @@ export default function InlineAudioPlayer({ src, size = 'sm' }: InlineAudioPlaye
         onClick={toggle}
         className={`inline-flex ${btnSize} items-center justify-center rounded-full bg-brand-600 text-white hover:bg-brand-700 transition-colors`}
         title={playing ? 'Pause' : 'Play'}
+        aria-label={playing ? 'Pause' : 'Play'}
       >
         {playing ? (
           <FiPause className={iconSize} />
