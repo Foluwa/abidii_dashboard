@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Pagination from "@/components/tables/Pagination";
 import Button from "@/components/ui/button/Button";
+import { useToast } from "@/contexts/ToastContext";
 import {
   getMlReadiness,
   getMlTrainingJob,
@@ -219,6 +220,7 @@ function useMlOverview() {
 }
 
 export function MLTrainingOverviewPage() {
+  const toast = useToast();
   const { readiness, jobs, models, loading, error, refresh } = useMlOverview();
   const latestSmoke = useMemo(() => getLatestSmoke(jobs), [jobs]);
   const runningJobs = readiness?.training_jobs.running || 0;
@@ -240,15 +242,15 @@ export function MLTrainingOverviewPage() {
             readiness_min_count: 180,
           },
         });
-        alert(`Training job queued: ${job.id}`);
+        toast.success(`Training job queued: ${job.id}`);
         await refresh();
       } catch (err: any) {
-        alert(err?.response?.data?.detail?.message ?? err?.message ?? "Failed to queue training.");
+        toast.error(err?.response?.data?.detail?.message ?? err?.message ?? "Failed to queue training.");
       } finally {
         setTrainingLoading(null);
       }
     },
-    [trainingLang, refresh]
+    [trainingLang, refresh, toast]
   );
 
   return (
