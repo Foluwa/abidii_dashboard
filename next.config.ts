@@ -46,7 +46,8 @@ const nextConfig: NextConfig = {
       { source: '/content/library/letters', destination: '/content/letters', permanent: true },
       { source: '/content/library/numbers', destination: '/content/numbers', permanent: true },
       { source: '/content/library/games', destination: '/content/learning-items', permanent: true },
-      { source: '/content/library', destination: '/content/words', permanent: true },
+      // NOTE: /content/library itself is now a real page (tabbed Content
+      // Library) — do not redirect it away.
 
       // Legacy games → Learning Items
       { source: '/games', destination: '/content/learning-items', permanent: true },
