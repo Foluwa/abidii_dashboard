@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Pagination from '@/components/tables/Pagination';
 import StatusBadge from '@/components/admin/StatusBadge';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { useToast } from '@/contexts/ToastContext';
 import { listNotificationHistory } from '@/lib/notificationsApi';
 import type { NotificationLogItem } from '@/types/notifications';
@@ -137,39 +138,37 @@ export default function NotificationHistoryPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Target Type</label>
-            <select
+            <StyledSelect
               aria-label="Target type"
+              label="Target Type"
               value={targetType}
               onChange={(e) => {
                 setTargetType(e.target.value);
                 setPage(1);
               }}
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
-            >
-              <option value="">All targets</option>
-              {targetTypes.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: 'All targets' },
+                ...targetTypes.map((t) => ({ value: t, label: t })),
+              ]}
+              fullWidth
+            />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-            <select
+            <StyledSelect
               aria-label="Status"
+              label="Status"
               value={status}
               onChange={(e) => {
                 setStatus(e.target.value);
                 setPage(1);
               }}
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
-            >
-              <option value="">All statuses</option>
-              <option value="sent">Sent</option>
-              <option value="partial">Partial</option>
-            </select>
+              options={[
+                { value: '', label: 'All statuses' },
+                { value: 'sent', label: 'Sent' },
+                { value: 'partial', label: 'Partial' },
+              ]}
+              fullWidth
+            />
           </div>
         </div>
 

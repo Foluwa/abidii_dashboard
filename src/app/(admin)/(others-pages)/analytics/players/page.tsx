@@ -7,6 +7,7 @@ import { usePlayerLeaderboard, usePlayerDetail, useLanguages, useAvailableGames 
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Alert from '@/components/ui/alert/SimpleAlert';
 import Pagination from '@/components/tables/Pagination';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { cleanSvgForDisplay, getInitials as getSvgInitials, getAvatarColor as getSvgAvatarColor } from '@/lib/svg-utils';
 
 type TimeRange = 'week' | 'month' | 'all';
@@ -193,58 +194,59 @@ export default function PlayerAnalyticsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Period</label>
-                <select
+                <StyledSelect
+                  label="Time Period"
                   value={timeRange}
                   onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-                  className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="week">This Week</option>
-                  <option value="month">This Month</option>
-                  <option value="all">All Time</option>
-                </select>
+                  options={[
+                    { value: 'week', label: 'This Week' },
+                    { value: 'month', label: 'This Month' },
+                    { value: 'all', label: 'All Time' },
+                  ]}
+                  fullWidth
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
-                <select
+                <StyledSelect
+                  label="Language"
                   value={languageFilter}
                   onChange={(e) => setLanguageFilter(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="">All Languages</option>
-                  {languages.map((lang: any) => (
-                    <option key={lang.id} value={lang.id}>{lang.name}</option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: 'All Languages' },
+                    ...languages.map((lang: any) => ({ value: lang.id, label: lang.name })),
+                  ]}
+                  fullWidth
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Game Type</label>
-                <select
+                <StyledSelect
+                  label="Game Type"
                   value={gameFilter}
                   onChange={(e) => setGameFilter(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="">All Games</option>
-                  {games.map((game: any) => (
-                    <option key={game.game_key} value={game.game_key}>
-                      {formatGameName(game.game_key)}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: 'All Games' },
+                    ...games.map((game: any) => ({
+                      value: game.game_key,
+                      label: formatGameName(game.game_key),
+                    })),
+                  ]}
+                  fullWidth
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</label>
-                <select
+                <StyledSelect
+                  label="Sort By"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortBy)}
-                  className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="score">Highest Score</option>
-                  <option value="sessions">Most Sessions</option>
-                  <option value="accuracy">Best Accuracy</option>
-                  <option value="time">Most Time Played</option>
-                  <option value="xp">Highest XP</option>
-                </select>
+                  options={[
+                    { value: 'score', label: 'Highest Score' },
+                    { value: 'sessions', label: 'Most Sessions' },
+                    { value: 'accuracy', label: 'Best Accuracy' },
+                    { value: 'time', label: 'Most Time Played' },
+                    { value: 'xp', label: 'Highest XP' },
+                  ]}
+                  fullWidth
+                />
               </div>
             </div>
           </div>

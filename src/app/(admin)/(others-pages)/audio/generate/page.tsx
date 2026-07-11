@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api';
 import { toast } from 'sonner';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import {
   TTSProvider,
   TTSProviderVoice,
@@ -249,25 +250,23 @@ export default function TTSGenerationPage() {
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Word/Lemma
-                  </label>
-                  <select
+                  <StyledSelect
+                    label="Word/Lemma"
                     value={selectedLemma?.id || ''}
                     onChange={(e) => {
                       const lemma = lemmas.find(l => l.id === e.target.value);
                       setSelectedLemma(lemma || null);
                       if (lemma) setCustomText(lemma.word);
                     }}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="">Select a word...</option>
-                    {lemmas.map((lemma) => (
-                      <option key={lemma.id} value={lemma.id}>
-                        {lemma.word} {lemma.word_class ? `(${lemma.word_class})` : ''}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      { value: '', label: 'Select a word...' },
+                      ...lemmas.map((lemma) => ({
+                        value: lemma.id,
+                        label: `${lemma.word}${lemma.word_class ? ` (${lemma.word_class})` : ''}`,
+                      })),
+                    ]}
+                    fullWidth
+                  />
                   {lemmasError && <p className="mt-1 text-xs text-red-500">{lemmasError}</p>}
                 </div>
 
@@ -305,24 +304,21 @@ export default function TTSGenerationPage() {
               <div className="space-y-4">
                 {/* Provider Selection */}
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    TTS Provider
-                  </label>
-                  <select
+                  <StyledSelect
+                    label="TTS Provider"
                     value={selectedProvider}
                     onChange={(e) => setSelectedProvider(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="">Select provider...</option>
-                    {providers
-                      .filter(p => p.is_available)
-                      .map((provider) => (
-                        <option key={provider.name} value={provider.name}>
-                          {provider.display_name}
-                          {!provider.is_configured && ' (Not Configured)'}
-                        </option>
-                      ))}
-                  </select>
+                    options={[
+                      { value: '', label: 'Select provider...' },
+                      ...providers
+                        .filter(p => p.is_available)
+                        .map((provider) => ({
+                          value: provider.name,
+                          label: `${provider.display_name}${!provider.is_configured ? ' (Not Configured)' : ''}`,
+                        })),
+                    ]}
+                    fullWidth
+                  />
                 </div>
 
                 {/* Voice Selection */}
@@ -336,22 +332,18 @@ export default function TTSGenerationPage() {
                         <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-primary border-r-transparent"></div>
                       </div>
                     ) : voices.length > 0 ? (
-                      <select
+                      <StyledSelect
                         value={selectedVoice?.id || ''}
                         onChange={(e) => {
                           const voice = voices.find(v => v.id === e.target.value);
                           setSelectedVoice(voice || null);
                         }}
-                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                      >
-                        {voices.map((voice) => (
-                          <option key={voice.id} value={voice.id}>
-                            {voice.display_name}
-                            {voice.gender && ` (${voice.gender})`}
-                            {voice.is_premium && ' 👑'}
-                          </option>
-                        ))}
-                      </select>
+                        options={voices.map((voice) => ({
+                          value: voice.id,
+                          label: `${voice.display_name}${voice.gender ? ` (${voice.gender})` : ''}${voice.is_premium ? ' 👑' : ''}`,
+                        }))}
+                        fullWidth
+                      />
                     ) : (
                       <p className="text-sm text-gray-500">No voices available for this provider</p>
                     )}

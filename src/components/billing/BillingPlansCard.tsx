@@ -5,6 +5,7 @@ import Badge from "@/components/ui/badge/Badge";
 import { useBillingPlans } from "@/hooks/useApi";
 import type { BillingPlan } from "@/types/api";
 import { ChevronDownIcon } from "@/icons";
+import { StyledSelect } from "@/components/ui/form/StyledSelect";
 
 function PlanDetails({ plan }: { plan: BillingPlan }) {
   return (
@@ -89,17 +90,15 @@ export default function BillingPlansCard() {
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-end">
               <label className="text-[11px] text-gray-500 dark:text-gray-400">Country</label>
-              <select
+              <StyledSelect
                 value={selectedCountry}
                 onChange={(e) => setSelectedCountry(e.target.value)}
-                className="mt-1 h-8 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-700 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-white/80"
-              >
-                {countryOptions.map((opt) => (
-                  <option key={opt.code} value={opt.code}>
-                    {opt.code} • {opt.name}
-                  </option>
-                ))}
-              </select>
+                options={countryOptions.map((opt) => ({
+                  value: opt.code,
+                  label: `${opt.code} • ${opt.name}`,
+                }))}
+                className="mt-1"
+              />
             </div>
 
             <button

@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { apiClient } from "@/lib/api";
 import { useToast } from "@/contexts/ToastContext";
 import { Modal } from "@/components/ui/modal";
+import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { FiVolume2 } from "react-icons/fi";
 
 interface Voice {
@@ -189,20 +190,16 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Provider
-          </label>
-          <select
+          <StyledSelect
+            label="Provider"
             value={selectedProvider}
             onChange={(e) => setSelectedProvider(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-400"
-          >
-            {providerOptions.map((provider) => (
-              <option key={provider} value={provider}>
-                {provider === "all" ? "All Providers" : provider}
-              </option>
-            ))}
-          </select>
+            options={providerOptions.map((provider) => ({
+              value: provider,
+              label: provider === "all" ? "All Providers" : provider,
+            }))}
+            fullWidth
+          />
           <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
             Filter voices by TTS provider. Generated audio will prefer WAV when the provider supports it, otherwise it will fall back automatically.
           </p>
@@ -221,18 +218,16 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
               No compatible voices available for {target.languageCode}{selectedProvider !== "all" ? ` using ${selectedProvider}` : ""}
             </div>
           ) : (
-            <select
+            <StyledSelect
               value={selectedVoiceId}
               onChange={(e) => setSelectedVoiceId(e.target.value)}
               required
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-400"
-            >
-              {filteredVoices.map((voice) => (
-                <option key={voice.id} value={voice.id}>
-                  {getVoiceLabel(voice)} ({voice.provider})
-                </option>
-              ))}
-            </select>
+              options={filteredVoices.map((voice) => ({
+                value: voice.id,
+                label: `${getVoiceLabel(voice)} (${voice.provider})`,
+              }))}
+              fullWidth
+            />
           )}
           
           <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">

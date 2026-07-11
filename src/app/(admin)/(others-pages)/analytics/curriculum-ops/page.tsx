@@ -8,6 +8,7 @@ import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Alert from '@/components/ui/alert/SimpleAlert';
 import StatusBadge from '@/components/admin/StatusBadge';
 import Pagination from '@/components/tables/Pagination';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { useAdminAuditLogList, useAdminCurriculumOpsMetrics } from '@/hooks/useApi';
 
 function getResult(details: unknown): string {
@@ -297,28 +298,30 @@ export default function CurriculumOpsPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Result</label>
-              <select
+              <StyledSelect
+                label="Result"
                 value={recentResultFilter}
                 onChange={(e) => setRecentResultFilter(e.target.value as 'all' | 'blocked' | 'failed')}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-theme-xs focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              >
-                <option value="all">Blocked + Failed</option>
-                <option value="blocked">Blocked only</option>
-                <option value="failed">Failed only</option>
-              </select>
+                options={[
+                  { value: 'all', label: 'Blocked + Failed' },
+                  { value: 'blocked', label: 'Blocked only' },
+                  { value: 'failed', label: 'Failed only' },
+                ]}
+                fullWidth
+              />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Target type</label>
-              <select
+              <StyledSelect
+                label="Target type"
                 value={recentTargetFilter}
                 onChange={(e) => setRecentTargetFilter(e.target.value as 'all' | 'course' | 'lesson_blueprint')}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-theme-xs focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              >
-                <option value="all">All targets</option>
-                <option value="course">Course</option>
-                <option value="lesson_blueprint">Lesson blueprint</option>
-              </select>
+                options={[
+                  { value: 'all', label: 'All targets' },
+                  { value: 'course', label: 'Course' },
+                  { value: 'lesson_blueprint', label: 'Lesson blueprint' },
+                ]}
+                fullWidth
+              />
             </div>
             <div className="flex items-end">
               <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -379,24 +382,20 @@ export default function CurriculumOpsPage() {
       <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div>
-            <label
-              htmlFor="curriculumOpsDays"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-            >
-              Time Range
-            </label>
-            <select
+            <StyledSelect
               id="curriculumOpsDays"
+              label="Time Range"
               value={days}
               onChange={(e) => setDays(Number(e.target.value))}
-              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="7">Last 7 days</option>
-              <option value="14">Last 14 days</option>
-              <option value="30">Last 30 days</option>
-              <option value="60">Last 60 days</option>
-              <option value="90">Last 90 days</option>
-            </select>
+              options={[
+                { value: 7, label: 'Last 7 days' },
+                { value: 14, label: 'Last 14 days' },
+                { value: 30, label: 'Last 30 days' },
+                { value: 60, label: 'Last 60 days' },
+                { value: 90, label: 'Last 90 days' },
+              ]}
+              fullWidth
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Action filter</label>
@@ -408,18 +407,19 @@ export default function CurriculumOpsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Result filter</label>
-            <select
+            <StyledSelect
+              label="Result filter"
               value={metricsResultFilter}
               onChange={(e) => setMetricsResultFilter(e.target.value as 'all' | 'success' | 'blocked' | 'failed' | 'unknown')}
-              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="all">All results</option>
-              <option value="success">Success</option>
-              <option value="blocked">Blocked</option>
-              <option value="failed">Failed</option>
-              <option value="unknown">Unknown</option>
-            </select>
+              options={[
+                { value: 'all', label: 'All results' },
+                { value: 'success', label: 'Success' },
+                { value: 'blocked', label: 'Blocked' },
+                { value: 'failed', label: 'Failed' },
+                { value: 'unknown', label: 'Unknown' },
+              ]}
+              fullWidth
+            />
           </div>
           <div className="flex items-end">
             <div className="text-xs text-gray-500 dark:text-gray-400">

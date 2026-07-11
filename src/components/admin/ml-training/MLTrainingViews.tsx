@@ -7,6 +7,7 @@ import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Pagination from "@/components/tables/Pagination";
 import Button from "@/components/ui/button/Button";
 import { useToast } from "@/contexts/ToastContext";
+import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import {
   getMlReadiness,
   getMlTrainingJob,
@@ -327,10 +328,14 @@ export function MLTrainingOverviewPage() {
           <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
             <p>Train uses the verified R2 dataset only. Retrain additionally pulls in real user corrections, low-confidence predictions, and incorrect predictions collected since the model went live, merged on top of the verified dataset. Current Yoruba gate is 180+ samples per class.</p>
             <div className="flex flex-wrap items-center gap-2">
-              <select value={trainingLang} onChange={(event) => setTrainingLang(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-                <option value="yor">Yoruba</option>
-                <option value="eng">English</option>
-              </select>
+              <StyledSelect
+                value={trainingLang}
+                onChange={(event) => setTrainingLang(event.target.value)}
+                options={[
+                  { value: "yor", label: "Yoruba" },
+                  { value: "eng", label: "English" },
+                ]}
+              />
               <Button size="sm" onClick={() => void queueTraining("handwriting_tinyvgg_train")} disabled={trainingLoading !== null}>
                 {trainingLoading === "train" ? "Queueing..." : "Queue Training Job"}
               </Button>
@@ -449,15 +454,23 @@ export function MLTrainingJobsPage() {
       {error ? <InlineError message={error} /> : null}
       <Panel title="Jobs">
         <div className="mb-4 flex flex-wrap gap-3">
-          <select value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-            <option value="">All statuses</option>
-            {["queued", "running", "succeeded", "failed", "cancelled"].map((status) => <option key={status} value={status}>{status}</option>)}
-          </select>
-          <select value={languageFilter} onChange={(event) => { setLanguageFilter(event.target.value); setPage(1); }} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-            <option value="">All languages</option>
-            <option value="yor">yor</option>
-            <option value="eng">eng</option>
-          </select>
+          <StyledSelect
+            value={statusFilter}
+            onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }}
+            options={[
+              { value: "", label: "All statuses" },
+              ...["queued", "running", "succeeded", "failed", "cancelled"].map((status) => ({ value: status, label: status })),
+            ]}
+          />
+          <StyledSelect
+            value={languageFilter}
+            onChange={(event) => { setLanguageFilter(event.target.value); setPage(1); }}
+            options={[
+              { value: "", label: "All languages" },
+              { value: "yor", label: "yor" },
+              { value: "eng", label: "eng" },
+            ]}
+          />
         </div>
         {loading && jobs.length === 0 ? <LoadingBlock /> : jobs.length > 0 ? <JobsTable jobs={jobs} /> : <div className="text-sm text-gray-500 dark:text-gray-400">No jobs found.</div>}
         <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
@@ -644,17 +657,25 @@ export function MLModelVersionsPage() {
       {success ? <InlineSuccess message={success} /> : null}
       <Panel title="Versions">
         <div className="mb-4 flex flex-wrap gap-3">
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-            <option value="">All statuses</option>
-            <option value="staging">staging</option>
-            <option value="production">production</option>
-            <option value="archived">archived</option>
-          </select>
-          <select value={languageFilter} onChange={(event) => setLanguageFilter(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-            <option value="">All languages</option>
-            <option value="yor">yor</option>
-            <option value="eng">eng</option>
-          </select>
+          <StyledSelect
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            options={[
+              { value: "", label: "All statuses" },
+              { value: "staging", label: "staging" },
+              { value: "production", label: "production" },
+              { value: "archived", label: "archived" },
+            ]}
+          />
+          <StyledSelect
+            value={languageFilter}
+            onChange={(event) => setLanguageFilter(event.target.value)}
+            options={[
+              { value: "", label: "All languages" },
+              { value: "yor", label: "yor" },
+              { value: "eng", label: "eng" },
+            ]}
+          />
         </div>
         {loading && models.length === 0 ? <LoadingBlock /> : (
           <div className="overflow-x-auto">
@@ -1059,12 +1080,25 @@ export function MLVerifiedPromotionManifestDetailPage() {
       </Panel>
       <Panel title="Candidates">
         <div className="mb-4 flex flex-wrap gap-3">
-          <select value={language} onChange={(event) => { setOffset(0); setLanguage(event.target.value); }} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-            <option value="">All languages</option><option value="yor">yor</option><option value="eng">eng</option>
-          </select>
-          <select value={reviewStatus} onChange={(event) => { setOffset(0); setReviewStatus(event.target.value); }} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-            <option value="">All statuses</option><option value="pending">pending</option><option value="approved">approved</option><option value="rejected">rejected</option>
-          </select>
+          <StyledSelect
+            value={language}
+            onChange={(event) => { setOffset(0); setLanguage(event.target.value); }}
+            options={[
+              { value: "", label: "All languages" },
+              { value: "yor", label: "yor" },
+              { value: "eng", label: "eng" },
+            ]}
+          />
+          <StyledSelect
+            value={reviewStatus}
+            onChange={(event) => { setOffset(0); setReviewStatus(event.target.value); }}
+            options={[
+              { value: "", label: "All statuses" },
+              { value: "pending", label: "pending" },
+              { value: "approved", label: "approved" },
+              { value: "rejected", label: "rejected" },
+            ]}
+          />
           <input value={label} onChange={(event) => { setOffset(0); setLabel(event.target.value); }} placeholder="Label" className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
           <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={priorityOnly} onChange={(event) => { setOffset(0); setPriorityOnly(event.target.checked); }} /> Priority only</label>
           <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={conflictOnly} onChange={(event) => { setOffset(0); setConflictOnly(event.target.checked); }} /> Conflicts</label>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Pagination from '@/components/tables/Pagination';
 import StatusBadge from '@/components/admin/StatusBadge';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { useToast } from '@/contexts/ToastContext';
 import { listDictionaryImportBatches } from '@/lib/dictionaryImportApi';
 import type { DictionaryImportBatchListItem } from '@/types/dictionaryImport';
@@ -135,23 +136,24 @@ export default function DictionaryImportListPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-            <select
+            <StyledSelect
               aria-label="Status"
+              label="Status"
               value={status}
               onChange={(e) => {
                 setStatus(e.target.value);
                 setPage(1);
               }}
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
-            >
-              <option value="">All statuses</option>
-              <option value="validated">Validated</option>
-              <option value="validation_failed">Validation Failed</option>
-              <option value="applying">Applying</option>
-              <option value="applied">Applied</option>
-              <option value="apply_failed">Apply Failed</option>
-            </select>
+              options={[
+                { value: '', label: 'All statuses' },
+                { value: 'validated', label: 'Validated' },
+                { value: 'validation_failed', label: 'Validation Failed' },
+                { value: 'applying', label: 'Applying' },
+                { value: 'applied', label: 'Applied' },
+                { value: 'apply_failed', label: 'Apply Failed' },
+              ]}
+              fullWidth
+            />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Source</label>
