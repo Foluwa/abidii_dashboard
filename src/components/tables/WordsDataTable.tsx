@@ -214,19 +214,13 @@ export default function WordsDataTable({
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Headword
+                  Word
                 </TableCell>
                 <TableCell
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
                   Part of Speech
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Primary Translation
                 </TableCell>
                 <TableCell
                   isHeader
@@ -280,18 +274,22 @@ export default function WordsDataTable({
                         />
                       </TableCell>
                     )}
-                    {/* Word Column */}
+                    {/* Word Column — Yoruba (what a learner sees) is the
+                        headline, English lemma is the caption underneath.
+                        Same pattern as the mobile dictionary screens. */}
                     <TableCell className="px-5 py-4 text-start">
                       <div className="flex flex-col gap-1">
                         <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {word.headword || word.word}
+                          {getPrimaryTranslation(word) || (
+                            <span className="italic text-gray-400 dark:text-gray-500">
+                              No translation
+                            </span>
+                          )}
                         </span>
-                        {(word.source_language_name || word.source_language_code || word.language_name || word.language_code) && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {word.source_language_name || word.language_name || 'Source'}
-                            {(word.source_language_code || word.language_code) ? ` (${word.source_language_code || word.language_code})` : ''}
-                          </span>
-                        )}
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {word.headword || word.word}
+                          {(word.source_language_code || word.language_code) ? ` (${word.source_language_code || word.language_code})` : ''}
+                        </span>
                         {word.lemma_normalized !== (word.headword || word.word).toLowerCase() && (
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             Normalized: {word.lemma_normalized}
@@ -303,18 +301,6 @@ export default function WordsDataTable({
                     {/* Part of Speech */}
                     <TableCell className="px-4 py-3 text-start">
                       {getPOSBadge(word.pos)}
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3 text-start">
-                      {getPrimaryTranslation(word) ? (
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          {getPrimaryTranslation(word)}
-                        </span>
-                      ) : (
-                        <span className="text-xs italic text-gray-400 dark:text-gray-500">
-                          No primary translation
-                        </span>
-                      )}
                     </TableCell>
 
                     {/* Translations */}
@@ -483,12 +469,16 @@ export default function WordsDataTable({
               key={word.id}
               className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/[0.05] dark:bg-white/[0.03]"
             >
-              {/* Word Header */}
+              {/* Word Header — Yoruba headline, English lemma as caption */}
               <div className="mb-3 flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xl font-bold text-gray-900 dark:text-white">
-                      {word.headword || word.word}
+                      {getPrimaryTranslation(word) || (
+                        <span className="italic text-gray-400 dark:text-gray-500">
+                          No translation
+                        </span>
+                      )}
                     </span>
                     {onSelectWord && (
                       <input
@@ -499,8 +489,12 @@ export default function WordsDataTable({
                       />
                     )}
                   </div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {word.headword || word.word}
+                    {(word.source_language_code || word.language_code) ? ` (${word.source_language_code || word.language_code})` : ''}
+                  </span>
                   {word.lemma_normalized !== (word.headword || word.word).toLowerCase() && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className="block text-xs text-gray-500 dark:text-gray-400">
                       Normalized: {word.lemma_normalized}
                     </span>
                   )}
@@ -511,22 +505,6 @@ export default function WordsDataTable({
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 {getPOSBadge(word.pos)}
                 {word.difficulty_level && getDifficultyBadge(word.difficulty_level)}
-              </div>
-
-              {/* Translations */}
-              <div className="mb-3">
-                <div className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  Primary Translation
-                </div>
-                {getPrimaryTranslation(word) ? (
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {getPrimaryTranslation(word)}
-                  </div>
-                ) : (
-                  <div className="text-xs italic text-gray-400 dark:text-gray-500">
-                    No primary translation
-                  </div>
-                )}
               </div>
 
               <div className="mb-3">
