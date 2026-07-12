@@ -30,20 +30,27 @@ export const mainNavigationItems: AdminNavItem[] = [
     path: "/dashboard",
   },
   {
+    name: "Analytics",
+    icon: <PieChartIcon />,
+    path: "/analytics",
+    permission: "users:read",
+  },
+  {
     name: "Content",
     icon: <ListIcon />,
     permission: "content:read",
     subItems: [
       {
         name: "Library",
-        subItems: [
-          { name: "Words", path: "/content/words" },
-          { name: "Phrases", path: "/content/phrases" },
-          { name: "Time Phrases", path: "/content/time-phrases" },
-          { name: "Sentences", path: "/content/sentences" },
-          { name: "Proverbs", path: "/content/proverbs" },
-          { name: "Letters", path: "/content/letters" },
-          { name: "Numbers", path: "/content/numbers" },
+        path: "/content/library",
+        activePaths: [
+          "/content/words",
+          "/content/phrases",
+          "/content/time-phrases",
+          "/content/sentences",
+          "/content/proverbs",
+          "/content/letters",
+          "/content/numbers",
         ],
       },
       {
@@ -55,6 +62,14 @@ export const mainNavigationItems: AdminNavItem[] = [
         path: "/content/learning-items",
       },
       { name: "Languages", path: "/content/languages" },
+      {
+        name: "Quick Practice",
+        path: "/content/quick-practice",
+      },
+      {
+        name: "Patterns",
+        path: "/content/patterns",
+      },
     ],
   },
   {
@@ -64,23 +79,23 @@ export const mainNavigationItems: AdminNavItem[] = [
     subItems: [
       {
         name: "Courses",
-        subItems: [
-          { name: "All Courses", path: "/curriculum/courses" },
-          { name: "Publishing Readiness", path: "/curriculum/publishing" },
-        ],
+        path: "/curriculum/courses-hub",
+        activePaths: ["/curriculum/courses", "/curriculum/publishing"],
       },
       { name: "Curriculum Editor", path: "/curriculum/editor" },
       {
         name: "Lesson Blueprints",
         path: "/curriculum/lesson-blueprints",
       },
+      {
+        name: "Lesson Import",
+        path: "/curriculum/lesson-import",
+      },
+      {
+        name: "Blueprint Assets",
+        path: "/curriculum/assets",
+      },
     ],
-  },
-  {
-    name: "Analytics",
-    icon: <PieChartIcon />,
-    path: "/analytics",
-    permission: "users:read",
   },
   {
     name: "Media",
@@ -89,7 +104,6 @@ export const mainNavigationItems: AdminNavItem[] = [
       { name: "Voices", path: "/audio/voices", permission: "audio:read" },
       { name: "Audio Jobs", path: "/audio/jobs", permission: "audio:read" },
       { name: "Audio Generate", path: "/audio/generate", permission: "audio:read" },
-      { name: "Orphan Assets", path: "/content/audit-log/orphan-assets", permission: "content:read" },
     ],
   },
   {
@@ -115,16 +129,43 @@ export const mainNavigationItems: AdminNavItem[] = [
     name: "System",
     icon: <TableIcon />,
     subItems: [
-      { name: "Status", path: "/system/status", permission: "system:read" },
-      { name: "Metrics", path: "/system/metrics", permission: "system:read" },
-      { name: "Alerts", path: "/system/alerts", permission: "system:read" },
-      { name: "Cron Jobs", path: "/system/cron", permission: "system:read" },
-      { name: "Admin Jobs", path: "/admin/jobs", permission: "system:read" },
-      { name: "ML Training", path: "/operations/ml-training", permission: "system:read" },
-      { name: "Configuration", path: "/system/configuration" },
-      { name: "Email Templates", path: "/system/email-templates" },
-      { name: "Audit Log", path: "/content/audit-log", permission: "content:read" },
-      { name: "Testing", path: "/system/testing", permission: "testing:access" },
+      {
+        name: "Infrastructure",
+        subItems: [
+          { name: "Status", path: "/system/status", permission: "system:read" },
+          { name: "Metrics", path: "/system/metrics", permission: "system:read" },
+          {
+            name: "Alerts",
+            path: "/system/alerts-hub",
+            activePaths: ["/system/alerts", "/system/testing"],
+            permission: "system:read",
+          },
+          { name: "Idempotency", path: "/system/idempotency", permission: "system:read" },
+          { name: "Enforcement", path: "/enforcement", permission: "system:read" },
+        ],
+      },
+      {
+        name: "Jobs",
+        subItems: [
+          { name: "Cron Jobs", path: "/system/cron", permission: "system:read" },
+          { name: "Admin Jobs", path: "/admin/jobs", permission: "system:read" },
+          { name: "ML Training", path: "/operations/ml-training", permission: "system:read" },
+        ],
+      },
+      {
+        name: "Platform",
+        subItems: [
+          { name: "Configuration", path: "/system/configuration" },
+          { name: "Email Templates", path: "/system/email-templates" },
+        ],
+      },
+      {
+        name: "Content Ops",
+        subItems: [
+          { name: "Audit Log", path: "/content/audit-log", permission: "content:read" },
+          { name: "Orphan Assets", path: "/content/audit-log/orphan-assets", permission: "content:read" },
+        ],
+      },
     ],
   },
 ];
@@ -133,9 +174,7 @@ export const personalNavigationItems: AdminNavItem[] = [
   {
     name: "Settings",
     icon: <BoxCubeIcon />,
-    subItems: [
-      { name: "Profile", path: "/profile" },
-      { name: "Change Password", path: "/settings/change-password" },
-    ],
+    path: "/settings",
+    activePaths: ["/profile", "/settings/change-password"],
   },
 ];

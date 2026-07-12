@@ -47,7 +47,10 @@ export default function WordsPage() {
   const searchParams = useSearchParams();
 
   // Basic state
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
+  // Dictionary content is English-anchored (see restructure.md) — every
+  // lemma's source language is English, so there's no meaningful "source
+  // language" to filter or create-by anymore. Only the translation
+  // (target) language varies (Yoruba today, more later).
   const [selectedTargetLanguage, setSelectedTargetLanguage] = useState<string>("");
   const [search, setSearch] = useState("");
   const [primaryTranslationFilter, setPrimaryTranslationFilter] = useState("");
@@ -89,7 +92,6 @@ export default function WordsPage() {
 
   // Initialize filters from URL params
   useEffect(() => {
-    const langId = searchParams.get('source_language_id') || searchParams.get('language_id');
     const targetLangId = searchParams.get('target_language_id');
     const searchQ = searchParams.get('search');
     const primaryTranslationQ = searchParams.get('primary_translation');
@@ -110,7 +112,6 @@ export default function WordsPage() {
     const sortByP = searchParams.get('sort_by');
     const sortDirP = searchParams.get('sort_dir');
 
-    if (langId) setSelectedLanguage(langId);
     if (targetLangId) setSelectedTargetLanguage(targetLangId);
     if (searchQ) setSearch(searchQ);
     if (primaryTranslationQ) setPrimaryTranslationFilter(primaryTranslationQ);
@@ -140,7 +141,6 @@ export default function WordsPage() {
   // Update URL when filters change
   const updateURL = useCallback(() => {
     const params = new URLSearchParams();
-    if (selectedLanguage) params.set('source_language_id', selectedLanguage);
     if (selectedTargetLanguage) params.set('target_language_id', selectedTargetLanguage);
     if (search) params.set('search', search);
     if (primaryTranslationFilter) params.set('primary_translation', primaryTranslationFilter);
@@ -163,7 +163,7 @@ export default function WordsPage() {
 
     const queryString = params.toString();
     router.replace(`${pathname}${queryString ? '?' + queryString : ''}`, { scroll: false });
-  }, [selectedLanguage, selectedTargetLanguage, search, primaryTranslationFilter, page, limit, hasAudio, hasExamples, hasRelated, hasPronunciation, posFilter, startsWithFilter, endsWithFilter, containsFilter, toneMarksPresent, ipaPresent, wordLengthMin, wordLengthMax, sortBy, sortDir, router, pathname]);
+  }, [selectedTargetLanguage, search, primaryTranslationFilter, page, limit, hasAudio, hasExamples, hasRelated, hasPronunciation, posFilter, startsWithFilter, endsWithFilter, containsFilter, toneMarksPresent, ipaPresent, wordLengthMin, wordLengthMax, sortBy, sortDir, router, pathname]);
 
   // Debounced URL update
   useEffect(() => {
@@ -233,8 +233,7 @@ export default function WordsPage() {
     setPage(1);
   };
 
-  const { words, total, isLoading, isError, refresh, filtersApplied } = useWords({ 
-    source_language_id: selectedLanguage || undefined,
+  const { words, total, isLoading, isError, refresh, filtersApplied } = useWords({
     target_language_id: selectedTargetLanguage || undefined,
     search, 
     primary_translation: primaryTranslationFilter || undefined,
@@ -256,6 +255,9 @@ export default function WordsPage() {
     sort_dir: sortDir,
   });
   const { languages } = useLanguages();
+  // The lemma pool is English-anchored — there is exactly one valid
+  // source language for creating/editing an entry.
+  const englishLanguage = languages?.find((lang: any) => lang.iso_639_3 === 'eng');
 
   // Deduplicate words to prevent duplicate key errors
   const uniqueWords = React.useMemo(() => {
@@ -287,7 +289,7 @@ export default function WordsPage() {
   const openCreateModal = () => {
     setEditingWord(null);
     setFormData({
-      language_id: selectedLanguage || (languages?.[0]?.id ?? ""),
+      language_id: englishLanguage?.id ?? "",
       word: "",
       pos: "noun",
       word_category: "",
@@ -539,37 +541,15 @@ export default function WordsPage() {
       >
         {/* Basic Filters Row */}
         <div className="flex flex-wrap gap-4">
-          {/* Source Language Filter */}
+          {/* Translation Language Filter — the lemma pool is
+              English-anchored (see restructure.md), so there's no
+              meaningful "source language" to filter by anymore; this is
+              the one language axis that actually varies. */}
           <div className="flex-1 min-w-[200px]">
             <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
               <div className="flex items-center gap-1.5">
                 <FiGlobe className="h-3.5 w-3.5" />
-                Source Language
-              </div>
-            </label>
-            <StyledSelect
-              value={selectedLanguage}
-              onChange={(e) => {
-                setSelectedLanguage(e.target.value);
-                setPage(1);
-              }}
-              options={[
-                { value: "", label: "All Source Languages" },
-                ...(languages?.map((lang: any) => ({
-                  value: lang.id,
-                  label: lang.name
-                })) || [])
-              ]}
-              fullWidth
-            />
-          </div>
-
-          {/* Target Language Filter */}
-          <div className="flex-1 min-w-[200px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
-              <div className="flex items-center gap-1.5">
-                <FiGlobe className="h-3.5 w-3.5" />
-                Target Language
+                Translation Language
               </div>
             </label>
             <StyledSelect
@@ -579,7 +559,7 @@ export default function WordsPage() {
                 setPage(1);
               }}
               options={[
-                { value: "", label: "All Target Languages" },
+                { value: "", label: "All Translation Languages" },
                 ...(languages?.map((lang: any) => ({
                   value: lang.id,
                   label: lang.name
@@ -1019,14 +999,14 @@ export default function WordsPage() {
                 <StyledSelect
                   label="Language"
                   required
+                  disabled
                   value={formData.language_id}
                   onChange={(e) => setFormData({ ...formData, language_id: e.target.value })}
                   options={[
-                    { value: "", label: "Select language" },
-                    ...(languages?.map((lang: any) => ({
-                      value: lang.id,
-                      label: lang.name
-                    })) || [])
+                    {
+                      value: englishLanguage?.id ?? "",
+                      label: englishLanguage ? `${englishLanguage.name} (fixed — the lemma pool is English-anchored)` : "English",
+                    },
                   ]}
                   fullWidth
                 />

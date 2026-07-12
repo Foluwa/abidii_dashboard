@@ -7,6 +7,7 @@ import MediaLinkPreview from '@/components/admin/curriculum/MediaLinkPreview';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Pagination from '@/components/tables/Pagination';
 import { Modal } from '@/components/ui/modal';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { useToast } from '@/contexts/ToastContext';
 import {
   cleanupOrphanedBlueprintAssets,
@@ -181,39 +182,37 @@ export default function CurriculumAssetLibraryPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Course</label>
-            <select
+            <StyledSelect
+              label="Course"
               value={courseId}
               onChange={(event) => {
                 setCourseId(event.target.value);
                 setPage(1);
               }}
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
-            >
-              <option value="">All courses</option>
-              {courses.map((course) => (
-                <option key={course.id} value={course.id}>
-                  {course.title}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: 'All courses' },
+                ...courses.map((course) => ({ value: course.id, label: course.title })),
+              ]}
+              fullWidth
+            />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Asset type</label>
-            <select
+            <StyledSelect
+              label="Asset type"
               value={assetKind}
               onChange={(event) => {
                 setAssetKind(event.target.value);
                 setPage(1);
               }}
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
-            >
-              <option value="">All assets</option>
-              <option value="image">Images</option>
-              <option value="audio">Audio</option>
-              <option value="video">Video</option>
-            </select>
+              options={[
+                { value: '', label: 'All assets' },
+                { value: 'image', label: 'Images' },
+                { value: 'audio', label: 'Audio' },
+                { value: 'video', label: 'Video' },
+              ]}
+              fullWidth
+            />
           </div>
         </div>
 

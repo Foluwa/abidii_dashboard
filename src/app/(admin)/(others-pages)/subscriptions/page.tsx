@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api";
 import Alert from "@/components/ui/alert/SimpleAlert";
 import Pagination from "@/components/tables/Pagination";
+import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import {
   useSubscriptions,
   useSubscriptionAttempts,
@@ -515,18 +516,19 @@ export function SubscriptionsPageContent({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                  <select
+                  <StyledSelect
+                    label="Status"
                     value={createStatus}
                     onChange={(e) => setCreateStatus(e.target.value as SubscriptionStatus)}
-                    className="block w-full h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="active">active</option>
-                    <option value="trialing">trialing</option>
-                    <option value="past_due">past_due</option>
-                    <option value="canceled">canceled</option>
-                    <option value="expired">expired</option>
-                  </select>
+                    options={[
+                      { value: "active", label: "active" },
+                      { value: "trialing", label: "trialing" },
+                      { value: "past_due", label: "past_due" },
+                      { value: "canceled", label: "canceled" },
+                      { value: "expired", label: "expired" },
+                    ]}
+                    fullWidth
+                  />
                 </div>
 
                 <div>
@@ -619,18 +621,19 @@ export function SubscriptionsPageContent({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                  <select
+                  <StyledSelect
+                    label="Status"
                     value={editStatus}
                     onChange={(e) => setEditStatus(e.target.value)}
-                    className="block w-full h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="active">active</option>
-                    <option value="trialing">trialing</option>
-                    <option value="past_due">past_due</option>
-                    <option value="canceled">canceled</option>
-                    <option value="expired">expired</option>
-                  </select>
+                    options={[
+                      { value: "active", label: "active" },
+                      { value: "trialing", label: "trialing" },
+                      { value: "past_due", label: "past_due" },
+                      { value: "canceled", label: "canceled" },
+                      { value: "expired", label: "expired" },
+                    ]}
+                    fullWidth
+                  />
                 </div>
 
                 <div>
@@ -790,44 +793,44 @@ export function SubscriptionsPageContent({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Status
-            </label>
-            <select
+            <StyledSelect
+              label="Status"
               value={status}
               onChange={(e) => {
                 setStatus(e.target.value as SubscriptionStatus);
                 setPage(1);
               }}
-              className="block w-full sm:w-56 h-12 px-4 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base"
-            >
-              <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="trialing">Trialing</option>
-              <option value="past_due">Past Due</option>
-              <option value="canceled">Canceled</option>
-              <option value="expired">Expired</option>
-            </select>
+              options={[
+                { value: "", label: "All Statuses" },
+                { value: "active", label: "Active" },
+                { value: "trialing", label: "Trialing" },
+                { value: "past_due", label: "Past Due" },
+                { value: "canceled", label: "Canceled" },
+                { value: "expired", label: "Expired" },
+              ]}
+              className="w-full sm:w-56"
+              fullWidth
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Provider
-            </label>
-            <select
+            <StyledSelect
+              label="Provider"
               value={provider}
               onChange={(e) => {
                 setProvider(e.target.value as SubscriptionProvider);
                 setPage(1);
               }}
-              className="block w-full sm:w-56 h-12 px-4 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base"
-            >
-              <option value="">All Providers</option>
-              <option value="apple">Apple</option>
-              <option value="google">Google</option>
-              <option value="stripe">Stripe</option>
-              <option value="manual">Manual</option>
-            </select>
+              options={[
+                { value: "", label: "All Providers" },
+                { value: "apple", label: "Apple" },
+                { value: "google", label: "Google" },
+                { value: "stripe", label: "Stripe" },
+                { value: "manual", label: "Manual" },
+              ]}
+              className="w-full sm:w-56"
+              fullWidth
+            />
           </div>
         </div>
       </div>
@@ -1017,35 +1020,39 @@ export function SubscriptionsPageContent({
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Event type</label>
-              <select
+              <StyledSelect
+                label="Event type"
                 value={eventsEventType}
                 onChange={(e) => {
                   setEventsEventType(e.target.value);
                   setEventsPage(1);
                 }}
-                className="block w-full sm:w-56 h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">All event types</option>
-                <option value="purchase">Purchase</option>
-                <option value="renewal">Renewal</option>
-                <option value="cancellation">Cancellation</option>
-              </select>
+                options={[
+                  { value: "", label: "All event types" },
+                  { value: "purchase", label: "Purchase" },
+                  { value: "renewal", label: "Renewal" },
+                  { value: "cancellation", label: "Cancellation" },
+                ]}
+                className="w-full sm:w-56"
+                fullWidth
+              />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Platform</label>
-              <select
+              <StyledSelect
+                label="Platform"
                 value={eventsPlatform}
                 onChange={(e) => {
                   setEventsPlatform(e.target.value);
                   setEventsPage(1);
                 }}
-                className="block w-full sm:w-48 h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">All platforms</option>
-                <option value="ios">iOS</option>
-                <option value="android">Android</option>
-              </select>
+                options={[
+                  { value: "", label: "All platforms" },
+                  { value: "ios", label: "iOS" },
+                  { value: "android", label: "Android" },
+                ]}
+                className="w-full sm:w-48"
+                fullWidth
+              />
             </div>
           </div>
         </div>

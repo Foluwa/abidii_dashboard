@@ -5,6 +5,7 @@ import { apiClient } from '@/lib/api';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Pagination from '@/components/tables/Pagination';
 import StatusBadge from '@/components/admin/StatusBadge';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { useToast } from '@/contexts/ToastContext';
 import {
   FaSync,
@@ -299,60 +300,63 @@ export default function AudioJobsPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-            <select
+            <StyledSelect
               aria-label="Status"
+              label="Status"
               value={filterStatus}
               onChange={(e) => {
                 setFilterStatus(e.target.value);
                 setPage(1);
               }}
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
-            >
-              <option value="">All statuses</option>
-              <option value="queued">Queued</option>
-              <option value="processing">Processing</option>
-              <option value="completed">Completed</option>
-              <option value="failed">Failed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+              options={[
+                { value: '', label: 'All statuses' },
+                { value: 'queued', label: 'Queued' },
+                { value: 'processing', label: 'Processing' },
+                { value: 'completed', label: 'Completed' },
+                { value: 'failed', label: 'Failed' },
+                { value: 'cancelled', label: 'Cancelled' },
+              ]}
+              fullWidth
+            />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Provider</label>
-            <select
+            <StyledSelect
               aria-label="Provider"
+              label="Provider"
               value={filterProvider}
               onChange={(e) => {
                 setFilterProvider(e.target.value);
                 setPage(1);
               }}
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
-            >
-              <option value="">All providers</option>
-              <option value="google">Google TTS</option>
-              <option value="spitch">Spitch</option>
-              <option value="elevenlabs">ElevenLabs</option>
-            </select>
+              options={[
+                { value: '', label: 'All providers' },
+                { value: 'google', label: 'Google TTS' },
+                { value: 'spitch', label: 'Spitch' },
+                { value: 'elevenlabs', label: 'ElevenLabs' },
+              ]}
+              fullWidth
+            />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Content Type</label>
-            <select
+            <StyledSelect
               aria-label="Content type"
+              label="Content Type"
               value={filterContentType}
               onChange={(e) => {
                 setFilterContentType(e.target.value);
                 setPage(1);
               }}
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
-            >
-              <option value="">All types</option>
-              <option value="word">Words</option>
-              <option value="phrase">Phrases</option>
-              <option value="proverb">Proverbs</option>
-              <option value="number">Numbers</option>
-              <option value="letter">Letters</option>
-              <option value="sentence">Sentences</option>
-            </select>
+              options={[
+                { value: '', label: 'All types' },
+                { value: 'word', label: 'Words' },
+                { value: 'phrase', label: 'Phrases' },
+                { value: 'proverb', label: 'Proverbs' },
+                { value: 'number', label: 'Numbers' },
+                { value: 'letter', label: 'Letters' },
+                { value: 'sentence', label: 'Sentences' },
+              ]}
+              fullWidth
+            />
           </div>
         </div>
 

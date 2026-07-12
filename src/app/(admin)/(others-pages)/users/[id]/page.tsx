@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useUserDetail } from "@/hooks/useApi";
+import { usePlayerDetail, useUserDetail } from "@/hooks/useApi";
 import { useParams, useRouter } from "next/navigation";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
@@ -10,6 +10,137 @@ import ConfirmationModal from "@/components/modals/ConfirmationModal";
 import type { UserRole } from "@/types/auth";
 
 type ModalType = "deactivate" | "reactivate" | "delete" | "purge" | null;
+type DailyActivity = {
+  date: string;
+  sessions: number;
+  avg_score?: number;
+};
+
+const formatDateTime = (value?: string | null) => {
+  if (!value) return "Never";
+  return new Date(value).toLocaleString();
+};
+
+const formatDate = (value?: string | null) => {
+  if (!value) return "Never";
+  return new Date(value).toLocaleDateString();
+};
+
+const dateKey = (date: Date) => {
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+};
+
+const buildActivityWeeks = (dailyActivity: DailyActivity[] = []) => {
+  const byDate = new Map(
+    dailyActivity.map((day) => [
+      day.date.slice(0, 10),
+      {
+        date: day.date.slice(0, 10),
+        sessions: Number(day.sessions || 0),
+        avg_score: Number(day.avg_score || 0),
+      },
+    ])
+  );
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(today.getDate() - 364);
+
+  const cells: Array<DailyActivity | null> = Array.from(
+    { length: start.getDay() },
+    () => null
+  );
+
+  for (let cursor = new Date(start); cursor <= today; cursor.setDate(cursor.getDate() + 1)) {
+    const key = dateKey(cursor);
+    cells.push(byDate.get(key) ?? { date: key, sessions: 0, avg_score: 0 });
+  }
+
+  const weeks: Array<Array<DailyActivity | null>> = [];
+  for (let index = 0; index < cells.length; index += 7) {
+    weeks.push(cells.slice(index, index + 7));
+  }
+
+  return weeks;
+};
+
+const activityCellClass = (sessions: number) => {
+  if (sessions >= 8) return "bg-emerald-700 dark:bg-emerald-500";
+  if (sessions >= 5) return "bg-emerald-600 dark:bg-emerald-600";
+  if (sessions >= 2) return "bg-emerald-400 dark:bg-emerald-700";
+  if (sessions >= 1) return "bg-emerald-200 dark:bg-emerald-900";
+  return "bg-gray-100 dark:bg-gray-800";
+};
+
+function ActivityHeatMap({
+  dailyActivity,
+  isLoading,
+}: {
+  dailyActivity?: DailyActivity[];
+  isLoading: boolean;
+}) {
+  const weeks = buildActivityWeeks(dailyActivity);
+  const totalSessions = dailyActivity?.reduce((sum, day) => sum + Number(day.sessions || 0), 0) ?? 0;
+  const activeDays = dailyActivity?.filter((day) => Number(day.sessions || 0) > 0).length ?? 0;
+
+  return (
+    <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
+      <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Activity Heat Map
+          </h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Daily game/session activity over the last 365 days
+          </p>
+        </div>
+        <div className="text-sm text-gray-600 dark:text-gray-300">
+          <span className="font-semibold text-gray-900 dark:text-white">{totalSessions}</span> sessions ·{" "}
+          <span className="font-semibold text-gray-900 dark:text-white">{activeDays}</span> active days
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="h-32 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
+      ) : (
+        <>
+          <div className="overflow-x-auto pb-2">
+            <div className="flex gap-1 min-w-max">
+              {weeks.map((week, weekIndex) => (
+                <div key={weekIndex} className="grid grid-rows-7 gap-1">
+                  {Array.from({ length: 7 }).map((_, dayIndex) => {
+                    const day = week[dayIndex] ?? null;
+                    return day ? (
+                      <div
+                        key={day.date}
+                        className={`h-3 w-3 rounded-sm ${activityCellClass(day.sessions)}`}
+                        title={`${new Date(day.date).toLocaleDateString()}: ${day.sessions} session${day.sessions === 1 ? "" : "s"}, ${day.avg_score ?? 0}% avg score`}
+                      />
+                    ) : (
+                      <div key={`empty-${weekIndex}-${dayIndex}`} className="h-3 w-3" />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 mt-4 text-xs text-gray-500 dark:text-gray-400">
+            <span>Less</span>
+            <div className="h-3 w-3 rounded-sm bg-gray-100 dark:bg-gray-800" />
+            <div className="h-3 w-3 rounded-sm bg-emerald-200 dark:bg-emerald-900" />
+            <div className="h-3 w-3 rounded-sm bg-emerald-400 dark:bg-emerald-700" />
+            <div className="h-3 w-3 rounded-sm bg-emerald-600 dark:bg-emerald-600" />
+            <div className="h-3 w-3 rounded-sm bg-emerald-700 dark:bg-emerald-500" />
+            <span>More</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function UserDetailPage() {
   const params = useParams();
@@ -17,6 +148,9 @@ export default function UserDetailPage() {
   // User IDs are UUIDs - do NOT convert to Number
   const userId = params.id as string;
   const { user, isLoading, isError, refresh } = useUserDetail(userId);
+  const { player, isLoading: isActivityLoading } = usePlayerDetail(userId, {
+    days: 365,
+  });
   
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -147,6 +281,9 @@ export default function UserDetailPage() {
       </div>
     );
   }
+
+  const lastRequestAt =
+    user.last_request_at === undefined ? user.last_login_at : user.last_request_at;
 
   return (
     <div className="space-y-6">
@@ -292,29 +429,34 @@ export default function UserDetailPage() {
               Created At
             </label>
             <p className="text-base text-gray-900 dark:text-white">
-              {user.created_at ? new Date(user.created_at).toLocaleDateString() : "Unknown"}
+              {formatDate(user.created_at) === "Never" ? "Unknown" : formatDate(user.created_at)}
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-              Last Login
+              Last Request
             </label>
             <p className="text-base text-gray-900 dark:text-white">
-              {user.last_login_at ? new Date(user.last_login_at).toLocaleString() : "Never"}
+              {formatDateTime(lastRequestAt)}
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-              Last Active
+              Last Study Day
             </label>
             <p className="text-base text-gray-900 dark:text-white">
-              {user.last_activity_date ? new Date(user.last_activity_date).toLocaleDateString() : "Never"}
+              {formatDate(user.last_activity_date)}
             </p>
           </div>
         </div>
       </div>
+
+      <ActivityHeatMap
+        dailyActivity={player?.daily_activity}
+        isLoading={isActivityLoading}
+      />
 
       {/* Learning Progress Card */}
       <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">

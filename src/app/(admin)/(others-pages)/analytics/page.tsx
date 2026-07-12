@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useGameAnalytics, useLanguages, useAvailableGames } from '@/hooks/useApi';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Alert from '@/components/ui/alert/SimpleAlert';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 
 // Game key to friendly name mapping
 const GAME_NAMES: Record<string, string> = {
@@ -102,45 +103,45 @@ export default function GameAnalyticsPage() {
       <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Range</label>
-            <select
+            <StyledSelect
+              label="Time Range"
               value={days}
               onChange={(e) => setDays(Number(e.target.value))}
-              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="7">Last 7 days</option>
-              <option value="30">Last 30 days</option>
-              <option value="60">Last 60 days</option>
-              <option value="90">Last 90 days</option>
-            </select>
+              options={[
+                { value: 7, label: 'Last 7 days' },
+                { value: 30, label: 'Last 30 days' },
+                { value: 60, label: 'Last 60 days' },
+                { value: 90, label: 'Last 90 days' },
+              ]}
+              fullWidth
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
-            <select
+            <StyledSelect
+              label="Language"
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="">All Languages</option>
-              {languages.map((lang: any) => (
-                <option key={lang.id} value={lang.id}>{lang.name}</option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: 'All Languages' },
+                ...languages.map((lang: any) => ({ value: lang.id, label: lang.name })),
+              ]}
+              fullWidth
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Game Type</label>
-            <select
+            <StyledSelect
+              label="Game Type"
               value={selectedGame}
               onChange={(e) => setSelectedGame(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="">All Games</option>
-              {games.map((game: any) => (
-                <option key={game.game_key} value={game.game_key}>
-                  {formatGameName(game.game_key)} ({game.session_count})
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: 'All Games' },
+                ...games.map((game: any) => ({
+                  value: game.game_key,
+                  label: `${formatGameName(game.game_key)} (${game.session_count})`,
+                })),
+              ]}
+              fullWidth
+            />
           </div>
           <div className="flex items-end">
             <button

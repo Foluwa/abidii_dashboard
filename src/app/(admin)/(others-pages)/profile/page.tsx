@@ -1,12 +1,8 @@
+"use client";
+
 import UserInfoCard from "@/components/user-profile/UserInfoCard";
 import UserMetaCard from "@/components/user-profile/UserMetaCard";
-import { Metadata } from "next";
 import React from "react";
-
-export const metadata: Metadata = {
-  title: "Profile | Abidii Dashboard",
-  description: "Admin profile for Abidii Dashboard",
-};
 
 export default function Profile() {
   return (

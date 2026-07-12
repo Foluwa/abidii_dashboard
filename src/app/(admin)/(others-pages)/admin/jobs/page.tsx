@@ -6,6 +6,7 @@ import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Pagination from "@/components/tables/Pagination";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { Modal } from "@/components/ui/modal";
+import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { useToast } from "@/contexts/ToastContext";
 import {
   cancelAdminJob,
@@ -262,59 +263,46 @@ export default function AdminJobsPage() {
       <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="grid gap-4 md:grid-cols-4">
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Status
-            </label>
-            <select
+            <StyledSelect
+              label="Status"
               value={statusFilter}
               onChange={(event) => {
                 setStatusFilter(event.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-            >
-              {STATUS_OPTIONS.map((status) => (
-                <option key={status || "all"} value={status}>
-                  {status || "All statuses"}
-                </option>
-              ))}
-            </select>
+              options={STATUS_OPTIONS.map((status) => ({
+                value: status,
+                label: status || "All statuses",
+              }))}
+              fullWidth
+            />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Type
-            </label>
-            <select
+            <StyledSelect
+              label="Type"
               value={typeFilter}
               onChange={(event) => {
                 setTypeFilter(event.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-            >
-              {TYPE_OPTIONS.map((type) => (
-                <option key={type || "all"} value={type}>
-                  {type || "All types"}
-                </option>
-              ))}
-            </select>
+              options={TYPE_OPTIONS.map((type) => ({
+                value: type,
+                label: type || "All types",
+              }))}
+              fullWidth
+            />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Page Size
-            </label>
-            <select
+            <StyledSelect
+              label="Page Size"
               value={limit}
               onChange={(event) => {
                 setLimit(Number(event.target.value));
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-            >
-              {[10, 20, 50, 100].map((value) => (
-                <option key={value} value={value}>{value}</option>
-              ))}
-            </select>
+              options={[10, 20, 50, 100].map((value) => ({ value, label: String(value) }))}
+              fullWidth
+            />
           </div>
           <div className="flex items-end text-sm text-gray-600 dark:text-gray-300">
             {total} total jobs

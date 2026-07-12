@@ -8,6 +8,7 @@ import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Pagination from '@/components/tables/Pagination';
 import StatusBadge from '@/components/admin/StatusBadge';
 import DatePicker from '@/components/form/date-picker';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { useLanguages } from '@/hooks/useApi';
 import { useToast } from '@/contexts/ToastContext';
 import {
@@ -290,20 +291,20 @@ export default function DailyContentNotificationsPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Language</label>
-            <select
+            <StyledSelect
+              label="Language"
               value={overrideLanguage}
               onChange={(e) => setOverrideLanguage(e.target.value)}
-              className="block h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
-            >
-              {(languages ?? []).length > 0
-                ? (languages ?? []).map((lang: { id: string; name: string; iso_639_3: string }) => (
-                    <option key={lang.id} value={lang.iso_639_3}>
-                      {lang.name} ({lang.iso_639_3})
-                    </option>
-                  ))
-                : <option value="yor">Yoruba (yor)</option>}
-            </select>
+              options={
+                (languages ?? []).length > 0
+                  ? (languages ?? []).map((lang: { id: string; name: string; iso_639_3: string }) => ({
+                      value: lang.iso_639_3,
+                      label: `${lang.name} (${lang.iso_639_3})`,
+                    }))
+                  : [{ value: 'yor', label: 'Yoruba (yor)' }]
+              }
+              fullWidth
+            />
           </div>
           <div className="relative sm:col-span-2">
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Word</label>

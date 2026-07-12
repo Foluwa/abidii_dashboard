@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useUsers } from "@/hooks/useApi";
+import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api";
 import type { UserRole } from "@/types/auth";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
@@ -45,9 +46,10 @@ export default function UsersPage() {
   const role = activeTab === "all" ? undefined : activeTab;
   const isActive = statusFilter === "all" ? undefined : statusFilter === "active";
   const provider = providerFilter === "all" ? undefined : providerFilter;
-  
-  const { users, isLoading, isError, refresh } = useUsers({ 
-    search, 
+  const debouncedSearch = useDebounce(search, 300);
+
+  const { users, isLoading, isError, refresh } = useUsers({
+    search: debouncedSearch,
     role, 
     page, 
     limit,
@@ -176,9 +178,9 @@ export default function UsersPage() {
     }
   };
 
-  const formatLastLogin = (lastLoginAt: string | null) => {
-    if (!lastLoginAt) return "Never";
-    const date = new Date(lastLoginAt);
+  const formatLastRequest = (lastRequestAt: string | null | undefined) => {
+    if (!lastRequestAt) return "Never";
+    const date = new Date(lastRequestAt);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
@@ -191,6 +193,11 @@ export default function UsersPage() {
     if (diffDays < 7) return `${diffDays}d ago`;
     return date.toLocaleDateString();
   };
+
+  const getLastRequestAt = (user: {
+    last_request_at?: string | null;
+    last_login_at?: string | null;
+  }) => (user.last_request_at === undefined ? user.last_login_at : user.last_request_at);
 
   if (isError) {
     return (
@@ -352,7 +359,7 @@ export default function UsersPage() {
 
                 <div className="min-w-[170px]">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Last Login After
+                    Last Request After
                   </label>
                   <input
                     type="date"
@@ -367,7 +374,7 @@ export default function UsersPage() {
 
                 <div className="min-w-[170px]">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Last Login Before
+                    Last Request Before
                   </label>
                   <input
                     type="date"
@@ -424,7 +431,7 @@ export default function UsersPage() {
                       Country
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Last Login
+                      Last Request
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       XP
@@ -511,8 +518,8 @@ export default function UsersPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-600 dark:text-gray-400" title={user.last_login_at ? new Date(user.last_login_at).toLocaleString() : "Never"}>
-                            {formatLastLogin(user.last_login_at)}
+                          <div className="text-sm text-gray-600 dark:text-gray-400" title={getLastRequestAt(user) ? new Date(getLastRequestAt(user)!).toLocaleString() : "Never"}>
+                            {formatLastRequest(getLastRequestAt(user))}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

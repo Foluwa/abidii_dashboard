@@ -121,12 +121,11 @@ apiClient.interceptors.request.use(
       config.headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
-    // Monitoring/admin tooling endpoints use a separate x-admin-token header,
-    // which is NOT the JWT. It should be configured via env.
-    const adminMonitoringToken = process.env.NEXT_PUBLIC_ADMIN_MONITORING_TOKEN;
-    if (adminMonitoringToken && config.url?.startsWith('/api/v1/admin/')) {
-      config.headers['x-admin-token'] = adminMonitoringToken;
-    }
+    // The x-admin-token header (separate from the JWT) is attached
+    // server-side only, by the /api/admin/* proxy route — never here.
+    // A NEXT_PUBLIC_-prefixed copy of that token must never exist: Next.js
+    // inlines NEXT_PUBLIC_* values into the client bundle at build time
+    // regardless of whether the code path referencing it is reachable.
 
     const method = config.method?.toLowerCase();
     if (method && ['post', 'put', 'patch', 'delete'].includes(method) && !config.headers['Idempotency-Key']) {

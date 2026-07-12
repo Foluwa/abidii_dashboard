@@ -12,7 +12,9 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 
 const BACKEND_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.abidii.app';
-const ADMIN_TOKEN = process.env.ADMIN_MONITORING_TOKEN || process.env.NEXT_PUBLIC_ADMIN_MONITORING_TOKEN || '';
+// Server-only var — never fall back to a NEXT_PUBLIC_-prefixed copy here,
+// or the token would ship in the client bundle the moment one is set.
+const ADMIN_TOKEN = process.env.ADMIN_MONITORING_TOKEN || '';
 
 async function handleRequest(request: NextRequest, method: string) {
   try {

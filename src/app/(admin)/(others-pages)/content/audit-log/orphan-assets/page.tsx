@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import StatusBadge from '@/components/admin/StatusBadge';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Pagination from '@/components/tables/Pagination';
 import { useToast } from '@/contexts/ToastContext';
@@ -339,61 +340,62 @@ export default function OrphanAssetsPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Asset type</label>
-            <select
+            <StyledSelect
               aria-label="Asset type"
+              label="Asset type"
               value={assetType}
               onChange={(event) => {
                 setAssetType(event.target.value);
                 setPage(1);
               }}
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
-            >
-              <option value="">All types</option>
-              <option value="lesson_media">lesson_media</option>
-              <option value="audio">audio</option>
-              <option value="generated_audio">generated_audio</option>
-              <option value="image">image</option>
-              <option value="misc">misc</option>
-            </select>
+              options={[
+                { value: '', label: 'All types' },
+                { value: 'lesson_media', label: 'lesson_media' },
+                { value: 'audio', label: 'audio' },
+                { value: 'generated_audio', label: 'generated_audio' },
+                { value: 'image', label: 'image' },
+                { value: 'misc', label: 'misc' },
+              ]}
+              fullWidth
+            />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Prefix</label>
-            <select
+            <StyledSelect
               aria-label="Prefix"
+              label="Prefix"
               value={prefix}
               onChange={(event) => {
                 setPrefix(event.target.value);
                 setPage(1);
               }}
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
-            >
-              <option value="">All prefixes</option>
-              {prefixOptions.map((option) => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: 'All prefixes' },
+                ...prefixOptions.map((option) => ({ value: option, label: option })),
+              ]}
+              fullWidth
+            />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-            <select
+            <StyledSelect
               aria-label="Status"
+              label="Status"
               value={status}
               onChange={(event) => {
                 setStatus(event.target.value);
                 setPage(1);
               }}
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
-            >
-              <option value="">All statuses</option>
-              <option value="candidate">candidate</option>
-              <option value="reviewed">reviewed</option>
-              <option value="protected">protected</option>
-              <option value="scheduled_for_delete">scheduled_for_delete</option>
-              <option value="deleted">deleted</option>
-              <option value="skipped">skipped</option>
-              <option value="delete_failed">delete_failed</option>
-            </select>
+              options={[
+                { value: '', label: 'All statuses' },
+                { value: 'candidate', label: 'candidate' },
+                { value: 'reviewed', label: 'reviewed' },
+                { value: 'protected', label: 'protected' },
+                { value: 'scheduled_for_delete', label: 'scheduled_for_delete' },
+                { value: 'deleted', label: 'deleted' },
+                { value: 'skipped', label: 'skipped' },
+                { value: 'delete_failed', label: 'delete_failed' },
+              ]}
+              fullWidth
+            />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Min age days</label>

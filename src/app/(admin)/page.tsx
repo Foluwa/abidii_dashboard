@@ -146,7 +146,7 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-gray-900 dark:text-white">Configuration</p>
           </Link>
           <Link
-            href="/system/alerts"
+            href="/system/alerts-hub"
             className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
           >
             <GridIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />

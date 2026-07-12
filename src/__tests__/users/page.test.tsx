@@ -93,7 +93,7 @@ describe('UsersPage', () => {
       // Check column headers
       expect(tableQueries.getByText('User', { selector: 'th' })).toBeInTheDocument();
       expect(tableQueries.getByText('Device', { selector: 'th' })).toBeInTheDocument();
-      expect(tableQueries.getByText('Last Login', { selector: 'th' })).toBeInTheDocument();
+      expect(tableQueries.getByText('Last Request', { selector: 'th' })).toBeInTheDocument();
       expect(tableQueries.getByText('XP', { selector: 'th' })).toBeInTheDocument();
       expect(tableQueries.getByText('Role', { selector: 'th' })).toBeInTheDocument();
       expect(tableQueries.getByText('Status', { selector: 'th' })).toBeInTheDocument();
@@ -229,10 +229,16 @@ describe('UsersPage', () => {
       const searchInput = screen.getByPlaceholderText(/search by name/i);
       await userEvent.type(searchInput, 'test@email.com');
 
-      expect(mockUseUsers).toHaveBeenCalledWith(
-        expect.objectContaining({
-          search: 'test@email.com',
-        })
+      // Search is debounced (300ms) so the hook doesn't get the raw
+      // keystrokes; wait for the debounced value to propagate.
+      await waitFor(
+        () =>
+          expect(mockUseUsers).toHaveBeenCalledWith(
+            expect.objectContaining({
+              search: 'test@email.com',
+            })
+          ),
+        { timeout: 1000 }
       );
     });
 

@@ -12,6 +12,17 @@ export interface SystemStatus {
   uptime_seconds: number;
 }
 
+export interface ServiceHealth {
+  name: string;
+  status: 'online' | 'offline' | 'not_configured';
+  detail: string | null;
+  latency_ms: number | null;
+}
+
+export interface ServicesStatusResponse {
+  services: ServiceHealth[];
+}
+
 export interface ConfigEntry {
   key: string;
   value_type: string;
@@ -130,6 +141,9 @@ export interface UserListItem {
   created_at: string;
   updated_at: string;
   last_login?: string;
+  last_login_at?: string | null;
+  last_request_at?: string | null;
+  last_activity_date?: string | null;
   is_active?: boolean;
   device_platform?: string | null;
   device_name?: string | null;

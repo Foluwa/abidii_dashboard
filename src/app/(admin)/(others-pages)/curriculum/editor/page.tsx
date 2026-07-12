@@ -11,6 +11,7 @@ import { LessonRuntimePreview } from '@/components/admin/curriculum/LessonRuntim
 import StatusBadge from '@/components/admin/StatusBadge';
 import { Modal } from '@/components/ui/modal';
 import { ConfirmationModal } from '@/components/ui/modal/ConfirmationModal';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminCoursesList, useAdminCourseCurriculumByKey, useConfig } from '@/hooks/useApi';
 import type { CurriculumSection, CurriculumUnit, PublicLessonBlueprintResponse } from '@/types/curriculum';
@@ -1072,18 +1073,13 @@ export default function CurriculumEditorPage() {
           <label htmlFor="courseKey" className="text-sm font-medium text-gray-700 dark:text-gray-200">
             Course
           </label>
-          <select
+          <StyledSelect
             id="courseKey"
             value={selectedCourseKey}
             onChange={(e) => setSelectedCourseKey(e.target.value)}
-            className="min-w-[240px] rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
-          >
-            {courseOptions.map((course) => (
-              <option key={course.id} value={course.course_key}>
-                {course.title}
-              </option>
-            ))}
-          </select>
+            options={courseOptions.map((course) => ({ value: course.course_key, label: course.title }))}
+            className="min-w-[240px]"
+          />
           {coursesLoading && (
             <span className="text-xs text-gray-500">Loading courses…</span>
           )}
@@ -1372,21 +1368,17 @@ export default function CurriculumEditorPage() {
           >
             <div className="grid gap-4">
               <div>
-                <label htmlFor="section-unit" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Unit
-                </label>
-                <select
+                <StyledSelect
                   id="section-unit"
+                  label="Unit"
                   value={sectionEditor.unitKey}
                   onChange={(e) => setSectionEditor({ ...sectionEditor, unitKey: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-                >
-                  {draftUnits.map((unit) => (
-                    <option key={unit.unit_key} value={unit.unit_key}>
-                      {unit.title} ({unit.unit_key})
-                    </option>
-                  ))}
-                </select>
+                  options={draftUnits.map((unit) => ({
+                    value: unit.unit_key,
+                    label: `${unit.title} (${unit.unit_key})`,
+                  }))}
+                  fullWidth
+                />
               </div>
               <div>
                 <label htmlFor="section-key" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">

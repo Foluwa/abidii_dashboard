@@ -81,12 +81,13 @@ export default function PatternsPage() {
 
   const fetchLanguages = async () => {
     try {
-      const response = await apiClient.get<Language[]>('/api/v1/languages');
-      setLanguages(response.data);
-      if (response.data.length > 0) {
+      const response = await apiClient.get<{ languages: Language[] }>('/api/v1/languages');
+      const fetchedLanguages = response.data.languages;
+      setLanguages(fetchedLanguages);
+      if (fetchedLanguages.length > 0) {
         // Default to Yoruba if available
-        const yoruba = response.data.find(l => l.iso_639_3 === 'yor');
-        setSelectedLanguage(yoruba?.id || response.data[0].id);
+        const yoruba = fetchedLanguages.find(l => l.iso_639_3 === 'yor');
+        setSelectedLanguage(yoruba?.id || fetchedLanguages[0].id);
       }
     } catch (error) {
       toast.error('Failed to fetch languages');

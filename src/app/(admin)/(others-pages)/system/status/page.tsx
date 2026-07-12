@@ -1,16 +1,24 @@
 "use client";
 
 import React from "react";
-import { useSystemStatus } from "@/hooks/useApi";
-import StatusBadge from "@/components/admin/StatusBadge";
+import { useSystemStatus, useServicesStatus } from "@/hooks/useApi";
+import StatusBadge, { StatusType } from "@/components/admin/StatusBadge";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
 
+function serviceStatusBadgeType(status: string): StatusType {
+  if (status === "online") return "online";
+  if (status === "offline") return "offline";
+  return "inactive";
+}
+
 export default function SystemStatusPage() {
   const { status, isLoading, isError, refresh } = useSystemStatus();
+  const { services, refresh: refreshServices } = useServicesStatus();
 
   const handleRefresh = () => {
     refresh();
+    refreshServices();
   };
 
   if (isLoading) {
@@ -57,6 +65,44 @@ export default function SystemStatusPage() {
           Refresh Now
         </button>
       </div>
+
+      {/* Infrastructure Services Card */}
+      {services.length > 0 && (
+        <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
+          <h3 className="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
+            Infrastructure Services
+          </h3>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {services.map((service) => (
+              <div
+                key={service.name}
+                className="p-4 border border-gray-200 rounded-lg dark:border-gray-800"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {service.name}
+                  </h4>
+                  <StatusBadge
+                    status={serviceStatusBadgeType(service.status)}
+                    label={
+                      service.status === "not_configured"
+                        ? "Not configured"
+                        : undefined
+                    }
+                  />
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {service.status === "online" && service.latency_ms != null
+                    ? `Responding in ${service.latency_ms}ms`
+                    : service.status === "not_configured"
+                      ? "No connection configured for this environment"
+                      : service.detail || "Unreachable"}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Main Status Card */}
       {status && (

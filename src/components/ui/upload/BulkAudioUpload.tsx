@@ -304,6 +304,8 @@ export const BulkAudioUpload: React.FC<BulkAudioUploadProps> = ({
                 <button
                   onClick={() => removeFile(file.id)}
                   className="flex-shrink-0 p-1 text-gray-400 hover:text-red-600 transition-colors"
+                  title="Remove file"
+                  aria-label="Remove file"
                 >
                   <FiX className="w-4 h-4" />
                 </button>

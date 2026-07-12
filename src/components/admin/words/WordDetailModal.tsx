@@ -16,6 +16,7 @@ import { useWordDetail, useExampleGeneration, useExampleManagement } from '@/hoo
 import { FiX, FiVolume2, FiPlus, FiEdit2, FiTrash2, FiLoader, FiSave, FiRefreshCw, FiEye, FiEyeOff } from 'react-icons/fi';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 
 interface WordDetailModalProps {
   wordId: string;
@@ -506,19 +507,18 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                         {editingFormId === form.id ? (
                           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Form Type
-                              </label>
-                              <select
+                              <StyledSelect
+                                label="Form Type"
                                 value={editedFormType}
                                 onChange={(e) => setEditedFormType(e.target.value)}
-                                className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-gray-900 dark:text-white"
-                              >
-                                <option value="variant">Variant</option>
-                                <option value="canonical">Canonical</option>
-                                <option value="plural">Plural</option>
-                                <option value="singular">Singular</option>
-                              </select>
+                                options={[
+                                  { value: 'variant', label: 'Variant' },
+                                  { value: 'canonical', label: 'Canonical' },
+                                  { value: 'plural', label: 'Plural' },
+                                  { value: 'singular', label: 'Singular' },
+                                ]}
+                                fullWidth
+                              />
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

@@ -6,6 +6,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Pagination from "@/components/tables/Pagination";
 import Button from "@/components/ui/button/Button";
+import { useToast } from "@/contexts/ToastContext";
+import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import {
   getMlReadiness,
   getMlTrainingJob,
@@ -37,6 +39,38 @@ import {
 } from "@/lib/adminMlApi";
 
 const PAGE_SIZE = 20;
+
+// Falls back to the staging URL only as a last resort - every real
+// deployment should set NEXT_PUBLIC_MLFLOW_URL (generated per-environment by
+// abidii_backend/scripts/pull-dashboard.sh from MLFLOW_PUBLIC_URL) so a
+// production dashboard doesn't link admins to the staging MLflow instance.
+const MLFLOW_URL = process.env.NEXT_PUBLIC_MLFLOW_URL || "https://dev-mlflow.abidii.app";
+
+// Mirrors ML_TRAINING_STALE_AFTER_SECONDS (app/config/settings.py) - the
+// backend sweep that auto-fails a "running" job with no heartbeat for this
+// long. Shown so admins don't mistake a normal long training stage (which
+// only reports heartbeats at coarse stage transitions, not per epoch) for a
+// stuck job before the backend would actually consider it one.
+const STALE_AFTER_SECONDS = 10800;
+
+function formatHeartbeatAge(value?: string | null): string | null {
+  if (!value) return null;
+  const then = new Date(value).getTime();
+  if (Number.isNaN(then)) return null;
+  const seconds = Math.max(0, Math.floor((Date.now() - then) / 1000));
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ${minutes % 60}m ago`;
+}
+
+function isHeartbeatStale(value?: string | null): boolean {
+  if (!value) return false;
+  const then = new Date(value).getTime();
+  if (Number.isNaN(then)) return false;
+  return (Date.now() - then) / 1000 > STALE_AFTER_SECONDS;
+}
 
 function formatDate(value?: string | null) {
   if (!value) return "-";
@@ -187,33 +221,38 @@ function useMlOverview() {
 }
 
 export function MLTrainingOverviewPage() {
+  const toast = useToast();
   const { readiness, jobs, models, loading, error, refresh } = useMlOverview();
   const latestSmoke = useMemo(() => getLatestSmoke(jobs), [jobs]);
   const runningJobs = readiness?.training_jobs.running || 0;
   const succeededJobs = readiness?.training_jobs.succeeded || 0;
   const [trainingLang, setTrainingLang] = useState("yor");
-  const [trainingLoading, setTrainingLoading] = useState(false);
+  const [trainingLoading, setTrainingLoading] = useState<"train" | "retrain" | null>(null);
 
-  const queueTraining = useCallback(async () => {
-    setTrainingLoading(true);
-    try {
-      const job = await queueTrainingJob({
-        language_code: trainingLang as "yor" | "eng",
-        dataset_path: `datasets/training/${trainingLang}/alphabets/`,
-        model_status_target: "staging",
-        parameters: {
-          direct_training_dataset_ack: true,
-          readiness_min_count: 180,
-        },
-      });
-      alert(`Training job queued: ${job.id}`);
-      await refresh();
-    } catch (err: any) {
-      alert(err?.response?.data?.detail?.message ?? err?.message ?? "Failed to queue training.");
-    } finally {
-      setTrainingLoading(false);
-    }
-  }, [trainingLang, refresh]);
+  const queueTraining = useCallback(
+    async (jobType: "handwriting_tinyvgg_train" | "handwriting_tinyvgg_retrain") => {
+      setTrainingLoading(jobType === "handwriting_tinyvgg_retrain" ? "retrain" : "train");
+      try {
+        const job = await queueTrainingJob({
+          job_type: jobType,
+          language_code: trainingLang as "yor" | "eng",
+          dataset_path: `datasets/training/${trainingLang}/alphabets/`,
+          model_status_target: "staging",
+          parameters: {
+            direct_training_dataset_ack: true,
+            readiness_min_count: 180,
+          },
+        });
+        toast.success(`Training job queued: ${job.id}`);
+        await refresh();
+      } catch (err: any) {
+        toast.error(err?.response?.data?.detail?.message ?? err?.message ?? "Failed to queue training.");
+      } finally {
+        setTrainingLoading(null);
+      }
+    },
+    [trainingLang, refresh, toast]
+  );
 
   return (
     <div className="space-y-6 p-6">
@@ -275,7 +314,7 @@ export function MLTrainingOverviewPage() {
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-2"><StatusPill status={latestSmoke.status} /><span className="text-gray-700 dark:text-gray-300">{latestSmoke.current_stage}</span></div>
               <div className="font-mono text-xs text-gray-500 dark:text-gray-400">{latestSmoke.id}</div>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid gap-2 text-gray-700 dark:text-gray-300 sm:grid-cols-2">
                 <div>Progress: {formatPercent(latestSmoke.progress_percentage)}</div>
                 <div>Executor: {latestSmoke.executor_type}</div>
                 <div>Instance: {latestSmoke.external_job_id || "-"}</div>
@@ -287,20 +326,27 @@ export function MLTrainingOverviewPage() {
 
         <Panel title="Training Trigger">
           <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-            <p>Queue a new handwriting training job on Lambda GPU from the R2 training dataset. Current Yoruba gate is 180+ samples per class.</p>
-            <div className="flex flex-wrap gap-2">
-              <select value={trainingLang} onChange={(event) => setTrainingLang(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-                <option value="yor">Yoruba</option>
-                <option value="eng">English</option>
-              </select>
-              <Button size="sm" onClick={() => void queueTraining()} disabled={trainingLoading}>
-                {trainingLoading ? "Queueing..." : "Queue Training Job"}
+            <p>Train uses the verified R2 dataset only. Retrain additionally pulls in real user corrections, low-confidence predictions, and incorrect predictions collected since the model went live, merged on top of the verified dataset. Current Yoruba gate is 180+ samples per class.</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <StyledSelect
+                value={trainingLang}
+                onChange={(event) => setTrainingLang(event.target.value)}
+                options={[
+                  { value: "yor", label: "Yoruba" },
+                  { value: "eng", label: "English" },
+                ]}
+              />
+              <Button size="sm" onClick={() => void queueTraining("handwriting_tinyvgg_train")} disabled={trainingLoading !== null}>
+                {trainingLoading === "train" ? "Queueing..." : "Queue Training Job"}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void queueTraining("handwriting_tinyvgg_retrain")} disabled={trainingLoading !== null}>
+                {trainingLoading === "retrain" ? "Queueing..." : "Queue Retrain from Corrections"}
               </Button>
             </div>
           </div>
         </Panel>
         <Panel title="Model Versions" action={<>
-          <Link className="text-sm font-medium text-brand-600 mr-3" href="https://dev-mlflow.abidii.app" target="_blank">MLflow ↗</Link>
+          <Link className="text-sm font-medium text-brand-600 mr-3" href={MLFLOW_URL} target="_blank">MLflow ↗</Link>
           <Link className="text-sm font-medium text-brand-600" href="/system/ml-training/models">View all</Link>
         </>}>
           {models.length > 0 ? (
@@ -337,7 +383,14 @@ function JobsTable({ jobs }: { jobs: MlTrainingJob[] }) {
         <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
           {jobs.map((job) => (
             <tr key={job.id}>
-              <td className="px-3 py-3"><StatusPill status={job.status} /></td>
+              <td className="px-3 py-3">
+                <div className="flex items-center gap-2">
+                  <StatusPill status={job.status} />
+                  {job.status === "running" && isHeartbeatStale(job.heartbeat_at) ? (
+                    <span title="No heartbeat in a while - may be stuck" className="text-amber-500">⚠</span>
+                  ) : null}
+                </div>
+              </td>
               <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{job.language_code || "-"}</td>
               <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{job.current_stage}</td>
               <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatPercent(job.progress_percentage)}</td>
@@ -401,15 +454,23 @@ export function MLTrainingJobsPage() {
       {error ? <InlineError message={error} /> : null}
       <Panel title="Jobs">
         <div className="mb-4 flex flex-wrap gap-3">
-          <select value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-            <option value="">All statuses</option>
-            {["queued", "running", "succeeded", "failed", "cancelled"].map((status) => <option key={status} value={status}>{status}</option>)}
-          </select>
-          <select value={languageFilter} onChange={(event) => { setLanguageFilter(event.target.value); setPage(1); }} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-            <option value="">All languages</option>
-            <option value="yor">yor</option>
-            <option value="eng">eng</option>
-          </select>
+          <StyledSelect
+            value={statusFilter}
+            onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }}
+            options={[
+              { value: "", label: "All statuses" },
+              ...["queued", "running", "succeeded", "failed", "cancelled"].map((status) => ({ value: status, label: status })),
+            ]}
+          />
+          <StyledSelect
+            value={languageFilter}
+            onChange={(event) => { setLanguageFilter(event.target.value); setPage(1); }}
+            options={[
+              { value: "", label: "All languages" },
+              { value: "yor", label: "yor" },
+              { value: "eng", label: "eng" },
+            ]}
+          />
         </div>
         {loading && jobs.length === 0 ? <LoadingBlock /> : jobs.length > 0 ? <JobsTable jobs={jobs} /> : <div className="text-sm text-gray-500 dark:text-gray-400">No jobs found.</div>}
         <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
@@ -482,14 +543,31 @@ export function MLTrainingJobDetailPage() {
             <div className="h-full bg-brand-500" style={{ width: `${Math.min(100, Math.max(0, Number(job.progress_percentage || 0)))}%` }} />
           </div>
           {job.error_message ? <InlineError message={job.error_message} /> : null}
+          {job.status === "running" && isHeartbeatStale(job.heartbeat_at) ? (
+            <InlineError message={`No heartbeat for over ${Math.round(STALE_AFTER_SECONDS / 3600)}h - the backend will auto-mark this failed and terminate the instance on its next sweep, if it hasn't already.`} />
+          ) : null}
           <div className="grid gap-6 lg:grid-cols-2">
             <Panel title="Lambda Metadata"><JsonPreview value={metadataFromJob(job)} /></Panel>
             <Panel title="Timing">
               <div className="grid gap-3 text-sm text-gray-700 dark:text-gray-300">
                 <div>Queued: {formatDate(job.queued_at)}</div>
                 <div>Started: {formatDate(job.started_at)}</div>
-                <div>Heartbeat: {formatDate(job.heartbeat_at)}</div>
+                <div>
+                  Heartbeat: {formatDate(job.heartbeat_at)}
+                  {job.heartbeat_at ? <span className="ml-2 text-gray-500 dark:text-gray-400">({formatHeartbeatAge(job.heartbeat_at)})</span> : null}
+                </div>
                 <div>Finished: {formatDate(job.finished_at)}</div>
+                <div>
+                  MLflow run:{" "}
+                  {job.mlflow_run_id ? (
+                    <>
+                      <span className="font-mono text-xs">{job.mlflow_run_id}</span>{" "}
+                      <Link className="text-brand-600" href={MLFLOW_URL} target="_blank">Open MLflow ↗</Link>
+                    </>
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">not recorded yet</span>
+                  )}
+                </div>
               </div>
             </Panel>
           </div>
@@ -579,17 +657,25 @@ export function MLModelVersionsPage() {
       {success ? <InlineSuccess message={success} /> : null}
       <Panel title="Versions">
         <div className="mb-4 flex flex-wrap gap-3">
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-            <option value="">All statuses</option>
-            <option value="staging">staging</option>
-            <option value="production">production</option>
-            <option value="archived">archived</option>
-          </select>
-          <select value={languageFilter} onChange={(event) => setLanguageFilter(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-            <option value="">All languages</option>
-            <option value="yor">yor</option>
-            <option value="eng">eng</option>
-          </select>
+          <StyledSelect
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            options={[
+              { value: "", label: "All statuses" },
+              { value: "staging", label: "staging" },
+              { value: "production", label: "production" },
+              { value: "archived", label: "archived" },
+            ]}
+          />
+          <StyledSelect
+            value={languageFilter}
+            onChange={(event) => setLanguageFilter(event.target.value)}
+            options={[
+              { value: "", label: "All languages" },
+              { value: "yor", label: "yor" },
+              { value: "eng", label: "eng" },
+            ]}
+          />
         </div>
         {loading && models.length === 0 ? <LoadingBlock /> : (
           <div className="overflow-x-auto">
@@ -994,12 +1080,25 @@ export function MLVerifiedPromotionManifestDetailPage() {
       </Panel>
       <Panel title="Candidates">
         <div className="mb-4 flex flex-wrap gap-3">
-          <select value={language} onChange={(event) => { setOffset(0); setLanguage(event.target.value); }} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-            <option value="">All languages</option><option value="yor">yor</option><option value="eng">eng</option>
-          </select>
-          <select value={reviewStatus} onChange={(event) => { setOffset(0); setReviewStatus(event.target.value); }} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-            <option value="">All statuses</option><option value="pending">pending</option><option value="approved">approved</option><option value="rejected">rejected</option>
-          </select>
+          <StyledSelect
+            value={language}
+            onChange={(event) => { setOffset(0); setLanguage(event.target.value); }}
+            options={[
+              { value: "", label: "All languages" },
+              { value: "yor", label: "yor" },
+              { value: "eng", label: "eng" },
+            ]}
+          />
+          <StyledSelect
+            value={reviewStatus}
+            onChange={(event) => { setOffset(0); setReviewStatus(event.target.value); }}
+            options={[
+              { value: "", label: "All statuses" },
+              { value: "pending", label: "pending" },
+              { value: "approved", label: "approved" },
+              { value: "rejected", label: "rejected" },
+            ]}
+          />
           <input value={label} onChange={(event) => { setOffset(0); setLabel(event.target.value); }} placeholder="Label" className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
           <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={priorityOnly} onChange={(event) => { setOffset(0); setPriorityOnly(event.target.checked); }} /> Priority only</label>
           <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={conflictOnly} onChange={(event) => { setOffset(0); setConflictOnly(event.target.checked); }} /> Conflicts</label>

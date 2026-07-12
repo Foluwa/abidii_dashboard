@@ -32,6 +32,7 @@ import type {
 } from '@/types/orphan-assets';
 import {
   SystemStatus,
+  ServicesStatusResponse,
   SystemStats,
   UserListItem,
   UserDetail,
@@ -121,6 +122,31 @@ export function useSystemStatus() {
 
   return {
     status: data,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/**
+ * Infrastructure Services Status Hook (database, Redis, object storage,
+ * MLflow, Lambda GPU cloud). Auto-refreshes every 60 seconds so a service
+ * coming back online is reflected without a manual refresh.
+ */
+export function useServicesStatus() {
+  const { data, error, mutate } = useSWR<ServicesStatusResponse>(
+    '/api/v1/admin/services-status',
+    fetcher,
+    {
+      refreshInterval: 60000,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      shouldRetryOnError: false,
+    }
+  );
+
+  return {
+    services: data?.services || [],
     isLoading: !error && !data,
     isError: error,
     refresh: mutate,

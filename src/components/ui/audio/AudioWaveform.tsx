@@ -265,6 +265,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           }`}
           disabled={!src || hasError}
           title={hasError ? 'Audio unavailable' : src ? 'Play/Pause' : 'No audio source'}
+          aria-label={hasError ? 'Audio unavailable' : isPlaying ? 'Pause' : 'Play'}
         >
           {isPlaying ? (
             <FiPause className="w-4 h-4" />
@@ -293,6 +294,8 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           <button
             onClick={toggleMute}
             className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+            title={isMuted || volume === 0 ? 'Unmute' : 'Mute'}
+            aria-label={isMuted || volume === 0 ? 'Unmute' : 'Mute'}
           >
             {isMuted || volume === 0 ? (
               <FiVolumeX className="w-4 h-4" />

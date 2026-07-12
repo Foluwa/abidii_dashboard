@@ -29,6 +29,7 @@ const mockUser = {
   is_premium: false,
   created_at: '2024-01-15T10:00:00Z',
   last_login_at: '2024-06-01T15:30:00Z',
+  last_request_at: '2024-06-02T09:45:00Z',
   last_activity_date: '2024-06-01',
   total_sessions: 42,
   languages_learning: 2,
@@ -48,6 +49,7 @@ const mockUserWithNulls = {
   is_premium: null,
   created_at: null,
   last_login_at: null,
+  last_request_at: null,
   last_activity_date: null,
   total_sessions: null,
   languages_learning: null,
@@ -74,7 +76,8 @@ describe('User Detail Page Schema Compliance', () => {
       expect(mockUser).not.toHaveProperty('telegram_username');
     });
 
-    it('should use last_login_at instead of last_login', () => {
+    it('should use last_request_at for request recency and keep last_login_at as fallback', () => {
+      expect(mockUser).toHaveProperty('last_request_at');
       expect(mockUser).toHaveProperty('last_login_at');
       expect(mockUser).not.toHaveProperty('last_login');
     });
@@ -202,6 +205,7 @@ describe('User Detail Page - Data Mapping', () => {
       is_premium: true,
       created_at: '2024-01-01T00:00:00Z',
       last_login_at: '2024-06-15T12:00:00Z',
+      last_request_at: '2024-06-16T08:30:00Z',
       last_activity_date: '2024-06-15',
       total_sessions: 100,
       languages_learning: 3,

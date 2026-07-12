@@ -6,6 +6,7 @@ import { apiClient } from "@/lib/api";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
 import StatusBadge from "@/components/admin/StatusBadge";
+import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { useToast } from "@/contexts/ToastContext";
 
 interface ConfigItem {
@@ -232,14 +233,15 @@ export default function ConfigPage() {
                         {editingKey === item.key ? (
                           <div className="space-y-2">
                             {item.value_type === "boolean" ? (
-                              <select
+                              <StyledSelect
                                 value={String(editValue ?? false)}
                                 onChange={(e) => setEditValue(e.target.value === "true")}
-                                className="w-full px-3 py-1 text-sm border border-gray-300 rounded dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                              >
-                                <option value="true">true</option>
-                                <option value="false">false</option>
-                              </select>
+                                options={[
+                                  { value: "true", label: "true" },
+                                  { value: "false", label: "false" },
+                                ]}
+                                fullWidth
+                              />
                             ) : (
                               <input
                                 type={item.value_type === "int" || item.value_type === "float" ? "number" : "text"}
@@ -434,31 +436,33 @@ function CreateConfigModal({ onClose, onSuccess }: { onClose: () => void; onSucc
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type *</label>
-            <select
+            <StyledSelect
+              label="Type *"
               value={formData.value_type}
               onChange={(e) => setFormData({...formData, value_type: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-            >
-              <option value="int">Integer</option>
-              <option value="float">Float</option>
-              <option value="boolean">Boolean</option>
-              <option value="string">String</option>
-            </select>
+              options={[
+                { value: "int", label: "Integer" },
+                { value: "float", label: "Float" },
+                { value: "boolean", label: "Boolean" },
+                { value: "string", label: "String" },
+              ]}
+              fullWidth
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Value *</label>
             {formData.value_type === "boolean" ? (
-              <select
+              <StyledSelect
                 value={formData.value}
                 onChange={(e) => setFormData({...formData, value: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              >
-                <option value="">Select...</option>
-                <option value="true">true</option>
-                <option value="false">false</option>
-              </select>
+                options={[
+                  { value: "", label: "Select..." },
+                  { value: "true", label: "true" },
+                  { value: "false", label: "false" },
+                ]}
+                fullWidth
+              />
             ) : (
               <input
                 type={formData.value_type === "int" || formData.value_type === "float" ? "number" : "text"}
