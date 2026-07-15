@@ -391,7 +391,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                             {idx + 1}
                           </span>
                           <div className="flex-1 space-y-2">
-                            {sense.glosses.map((gloss) => (
+                            {sense.glosses.map((gloss, glossIdx) => (
                               <div key={gloss.id}>
                                 {editingGlossId === gloss.id ? (
                                   <div className="flex items-center gap-2">
@@ -442,9 +442,9 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                                     </div>
                                   </div>
                                 )}
-                                {gloss.gloss_index > 0 && (
+                                {sense.glosses.length > 1 && (
                                   <span className="inline-block mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    Variant {gloss.gloss_index}
+                                    Variant {glossIdx + 1}
                                   </span>
                                 )}
                               </div>
