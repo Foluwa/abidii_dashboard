@@ -23,11 +23,14 @@ RUN if [ ! -f .env.production ]; then echo "Warning: .env.production not found";
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Build-time public env vars (baked into the JS bundle)
-ARG NEXT_PUBLIC_ADMIN_MONITORING_TOKEN
+# Build-time public env vars (baked into the JS bundle). The admin token is
+# deliberately NOT here — it's attached server-side only, by the /api/admin/*
+# proxy route, from the non-NEXT_PUBLIC_ ADMIN_MONITORING_TOKEN env var. A
+# NEXT_PUBLIC_-prefixed copy must never exist here again: Next.js inlines it
+# into the client bundle at build time regardless of whether any code path
+# references it.
 ARG NEXT_PUBLIC_API_BASE_URL
 ARG NEXT_PUBLIC_APP_ENV
-ENV NEXT_PUBLIC_ADMIN_MONITORING_TOKEN=$NEXT_PUBLIC_ADMIN_MONITORING_TOKEN
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_APP_ENV=$NEXT_PUBLIC_APP_ENV
 

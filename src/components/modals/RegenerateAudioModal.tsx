@@ -23,6 +23,9 @@ export interface RegenerateAudioTarget {
   defaultText: string;
   languageCode: string;
   submitEndpoint: string;
+  /** Total translation variants this entry has, if more than one — shown as a
+   * warning since this action only ever targets the primary one. */
+  totalVariants?: number;
 }
 
 interface RegenerateAudioModalProps {
@@ -234,6 +237,14 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
             Choose the TTS provider and voice for audio generation
           </p>
         </div>
+
+        {target.totalVariants && target.totalVariants > 1 && (
+          <div className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+            This entry has {target.totalVariants} translation variants. This action only
+            regenerates audio for the primary one shown below — use "View" on this word
+            and the audio icon next to each definition to target a specific variant.
+          </div>
+        )}
 
         {/* Text Override */}
         <div>

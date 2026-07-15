@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api";
 
 /**
  * Slice 2.9: Minimal Dashboard Observability UI for Phase 2 Enforcement
@@ -61,35 +62,29 @@ interface EnforcementMetricsResponse {
   timestamp: string;
 }
 
-// API fetch functions
+// API fetch functions. Routed through apiClient (not raw fetch) so the
+// /api/v1/admin/ -> /api/admin/ proxy rewrite and Authorization header
+// (sessionStorage, not localStorage — this is the only place that used to
+// read the wrong storage) are handled the same way as every other admin page.
 async function fetchEnforcementFlags(): Promise<EnforcementFlagsResponse> {
-  const response = await fetch("/api/v1/admin/enforcement/flags", {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-    },
-  });
-  if (!response.ok) throw new Error("Failed to fetch enforcement flags");
-  return response.json();
+  const response = await apiClient.get<EnforcementFlagsResponse>(
+    "/api/v1/admin/enforcement/flags"
+  );
+  return response.data;
 }
 
 async function fetchEnforcementEvents(hours: number = 24): Promise<EnforcementEventsResponse> {
-  const response = await fetch(`/api/v1/admin/enforcement/events?hours=${hours}`, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-    },
-  });
-  if (!response.ok) throw new Error("Failed to fetch enforcement events");
-  return response.json();
+  const response = await apiClient.get<EnforcementEventsResponse>(
+    `/api/v1/admin/enforcement/events?hours=${hours}`
+  );
+  return response.data;
 }
 
 async function fetchEnforcementMetrics(): Promise<EnforcementMetricsResponse> {
-  const response = await fetch("/api/v1/admin/enforcement/metrics", {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-    },
-  });
-  if (!response.ok) throw new Error("Failed to fetch enforcement metrics");
-  return response.json();
+  const response = await apiClient.get<EnforcementMetricsResponse>(
+    "/api/v1/admin/enforcement/metrics"
+  );
+  return response.data;
 }
 
 export default function EnforcementObservabilityPage() {
