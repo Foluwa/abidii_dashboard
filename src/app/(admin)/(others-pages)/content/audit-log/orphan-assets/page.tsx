@@ -52,24 +52,16 @@ function isAudioAsset(assetType: string) {
   return assetType === 'audio' || assetType === 'generated_audio' || assetType.includes('audio');
 }
 
-function MediaPreview({ storageKey, assetType }: { storageKey: string; assetType: string }) {
+// The backend resolves storage_key into a real playable URL (CDN or
+// presigned, whichever applies) via preview_url - there's no /api/v1/media/
+// proxy route on the backend, so we can't construct a URL from storage_key
+// ourselves.
+function MediaPreview({ previewUrl, assetType }: { previewUrl: string | null | undefined; assetType: string }) {
   if (!isAudioAsset(assetType)) return <span className="text-xs text-gray-400">—</span>;
-  const baseUrl = process.env.NEXT_PUBLIC_MEDIA_BASE_URL || (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.abidii.app');
-  const src = `${baseUrl}/api/v1/media/${encodeURIComponent(storageKey)}`;
+  if (!previewUrl) return <span className="text-xs text-gray-400">unavailable</span>;
   return (
-    <audio
-      controls
-      preload="none"
-      className="h-8 w-48"
-      onError={(e) => {
-        // Fallback: try without /api/v1/media/ prefix if first fails
-        const el = e.currentTarget;
-        if (el.src.includes('/api/v1/media/')) {
-          el.src = `${baseUrl}/${encodeURIComponent(storageKey)}`;
-        }
-      }}
-    >
-      <source src={src} />
+    <audio controls preload="none" className="h-8 w-48">
+      <source src={previewUrl} />
     </audio>
   );
 }
@@ -532,7 +524,7 @@ export default function OrphanAssetsPage() {
                     <td className="px-3 py-3 text-gray-700 dark:text-gray-200">{ageInDays(item.last_modified)}d</td>
                     <td className="px-3 py-3">{mapStatusBadge(item.status)}</td>
                     <td className="px-3 py-3">
-                      <MediaPreview storageKey={item.storage_key} assetType={item.asset_type} />
+                      <MediaPreview previewUrl={item.preview_url} assetType={item.asset_type} />
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex flex-wrap gap-2">

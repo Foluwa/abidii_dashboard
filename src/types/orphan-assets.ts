@@ -37,6 +37,7 @@ export interface OrphanAssetCandidateItem {
   candidate_id: string;
   latest_scan_id?: string | null;
   storage_key: string;
+  preview_url?: string | null;
   asset_type: string;
   bucket: string;
   prefix: string;
