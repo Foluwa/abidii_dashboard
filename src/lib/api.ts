@@ -22,7 +22,7 @@ const _apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: false, // Tokens are sent via Authorization header, not cookies
+  withCredentials: true, // Auth token rides in an httpOnly cookie the browser attaches automatically
 });
 
 /**
@@ -100,7 +100,6 @@ apiClient.interceptors.request.use(
         url: config.url,
         baseURL: config.baseURL,
         fullURL: `${config.baseURL}${config.url}`,
-        hasToken: !!sessionStorage.getItem('access_token'),
       });
     }
 
@@ -114,12 +113,10 @@ apiClient.interceptors.request.use(
       config.baseURL = undefined;
     }
 
-    // Get access token from sessionStorage and attach to Authorization header
-    // FastAPI HTTPBearer-secured endpoints expect: "Authorization: Bearer <token>"
-    const accessToken = sessionStorage.getItem('access_token');
-    if (accessToken) {
-      config.headers['Authorization'] = `Bearer ${accessToken}`;
-    }
+    // No Authorization header to attach anymore — the auth token lives in
+    // an httpOnly access_token cookie, which the browser sends on its own
+    // (withCredentials: true above) and this code can't read even if it
+    // wanted to.
 
     // The x-admin-token header (separate from the JWT) is attached
     // server-side only, by the /api/admin/* proxy route — never here.
@@ -185,8 +182,8 @@ apiClient.interceptors.response.use(
     }
 
     // Don't try to refresh token for login or refresh endpoints
-    const isAuthEndpoint = originalRequest.url?.includes('/auth/admin/login') || 
-                          originalRequest.url?.includes('/auth/refresh');
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/admin/login') ||
+                          originalRequest.url?.includes('/auth/admin/refresh');
     
     // ONLY refresh token on 401 Unauthorized (not 403, 422, or other errors)
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
@@ -224,36 +221,18 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Get the refresh token from sessionStorage
-        const refreshToken = sessionStorage.getItem('refresh_token');
-        
-        if (!refreshToken) {
-          if (process.env.NODE_ENV === 'development') {
-            console.error('❌ No refresh token available, cannot refresh');
-          }
-          throw new Error('No refresh token available');
-        }
-
-        // Call refresh endpoint (same for admin and regular users)
-        const refreshResponse = await apiClient.post<{ 
-          access_token: string; 
-          refresh_token: string;
-          expires_in: number;
-        }>(
-          '/api/v1/auth/refresh',
-          { refresh_token: refreshToken }
+        // Cookie-based: the refresh_token cookie rides along automatically
+        // (withCredentials: true, scoped by the backend to only this path),
+        // and the response sets fresh cookies via Set-Cookie — nothing to
+        // read or store here.
+        const refreshResponse = await apiClient.post<{ expires_in: number }>(
+          '/api/v1/auth/admin/refresh'
         );
 
-        
-        // Calculate new expiry time
+        // Non-sensitive: how long until the new access token expires, so
+        // AuthContext can keep scheduling its proactive pre-expiry refresh.
         const expiryTime = Date.now() + ((refreshResponse.data.expires_in || 3600) * 1000);
-        
-        // Store new tokens in sessionStorage (clears on browser/tab close)
-        sessionStorage.setItem('access_token', refreshResponse.data.access_token);
         sessionStorage.setItem('token_expiry', expiryTime.toString());
-        if (refreshResponse.data.refresh_token) {
-          sessionStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
-        }
 
         processQueue(null, null);
         isRefreshing = false;
@@ -267,12 +246,11 @@ apiClient.interceptors.response.use(
         processQueue(refreshError as Error, null);
         isRefreshing = false;
 
-        // Clear only auth keys — preserve UI preferences and other non-auth state
-        for (const key of ['access_token', 'refresh_token', 'token_expiry']) {
+        // Clear only auth-adjacent keys — preserve UI preferences and other non-auth state
+        for (const key of ['user', 'token_expiry']) {
           sessionStorage.removeItem(key);
         }
-        document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-        
+
         // Only redirect if we're not already on the login page
         const currentPath = window.location.pathname;
         if (currentPath !== '/' && currentPath !== '/signin') {

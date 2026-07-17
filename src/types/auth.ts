@@ -21,8 +21,7 @@ export interface AdminLoginRequest {
 }
 
 export interface AdminLoginResponse {
-  access_token: string;
-  refresh_token: string;
+  // access_token/refresh_token are set as httpOnly cookies, not returned here.
   token_type: string;
   expires_in: number;
   user: User;

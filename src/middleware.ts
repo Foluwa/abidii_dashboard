@@ -12,9 +12,13 @@ export function middleware(request: NextRequest) {
   const publicRoutes = ['/', '/signin', '/signup'];
   const isPublicRoute = publicRoutes.includes(pathname);
 
-  // Check if user data exists in cookies (set by client after login)
-  const userCookie = request.cookies.get('user')?.value;
-  const isAuthenticated = !!userCookie;
+  // Coarse presence check on the httpOnly access_token cookie the backend
+  // sets on login. Middleware runs server-side/at the Edge, so it can read
+  // this even though client JS can't — no decoding needed, same
+  // presence-only check this middleware always did, just against the real
+  // auth cookie now instead of a separate client-set mirror of it.
+  const accessTokenCookie = request.cookies.get('access_token')?.value;
+  const isAuthenticated = !!accessTokenCookie;
 
   // If authenticated and trying to access login/signin page, redirect to dashboard
   // BUT: Add check to prevent redirect if we just came from dashboard (prevent loop)
