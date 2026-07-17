@@ -7,6 +7,7 @@ import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
 import StatusBadge from "@/components/admin/StatusBadge";
 import ConfirmationModal from "@/components/modals/ConfirmationModal";
+import { apiClient, handleApiError } from "@/lib/api";
 import type { UserRole } from "@/types/auth";
 
 type ModalType = "deactivate" | "reactivate" | "delete" | "purge" | null;
@@ -176,12 +177,9 @@ export default function UserDetailPage() {
     setActionError(null);
     
     try {
-      const token = localStorage.getItem("admin_token");
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
-      
       let endpoint = "";
-      let method = "POST";
-      
+      let method: "post" | "delete" = "post";
+
       switch (action) {
         case "deactivate":
           endpoint = `/api/v1/admin/users/${userId}/deactivate`;
@@ -191,27 +189,20 @@ export default function UserDetailPage() {
           break;
         case "delete":
           endpoint = `/api/v1/admin/users/${userId}`;
-          method = "DELETE";
+          method = "delete";
           break;
         case "purge":
           endpoint = `/api/v1/admin/users/${userId}/purge`;
-          method = "DELETE";
+          method = "delete";
           break;
       }
-      
-      const response = await fetch(`${baseUrl}${endpoint}`, {
-        method,
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Action failed");
-      }
-      
+
+      // Auth rides on the httpOnly cookie apiClient sends automatically -
+      // this used to build its own fetch() with a token read from
+      // localStorage under a key ("admin_token") nothing in the app ever
+      // wrote, so this action has been silently broken until now.
+      await apiClient[method](endpoint);
+
       // Close modal
       setActiveModal(null);
       
@@ -223,7 +214,7 @@ export default function UserDetailPage() {
         refresh();
       }
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "An error occurred");
+      setActionError(handleApiError(err));
     } finally {
       setActionLoading(false);
     }

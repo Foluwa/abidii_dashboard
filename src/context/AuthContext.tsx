@@ -27,115 +27,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const isRefreshingSessionRef = React.useRef(false);
-
-  const refreshSession = React.useCallback(async (): Promise<boolean> => {
-    const refreshToken = sessionStorage.getItem('refresh_token');
-    if (!refreshToken) return false;
-
-    if (isRefreshingSessionRef.current) return true;
-    isRefreshingSessionRef.current = true;
-
-    try {
-      const refreshResponse = await apiClient.post<{
-        access_token: string;
-        refresh_token: string;
-        expires_in: number;
-      }>(
-        '/api/v1/auth/refresh',
-        { refresh_token: refreshToken }
-      );
-
-      const expiryTime = Date.now() + ((refreshResponse.data.expires_in || 3600) * 1000);
-      sessionStorage.setItem('access_token', refreshResponse.data.access_token);
-      sessionStorage.setItem('token_expiry', expiryTime.toString());
-      if (refreshResponse.data.refresh_token) {
-        sessionStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('❌ Silent token refresh failed:', error);
-      return false;
-    } finally {
-      isRefreshingSessionRef.current = false;
-    }
-  }, []);
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    // Auth state tracking
-  }, [user, isLoading]);
-
   /**
-   * Load user from sessionStorage on mount
-   * sessionStorage is more secure as it clears when browser/tab closes
+   * Restore the session on mount by asking the backend who's authenticated,
+   * relying on the httpOnly access_token cookie the browser sends
+   * automatically. Every tab does this independently on its own mount —
+   * since the token is no longer in any JS-readable storage, this is what
+   * actually makes multiple tabs work (a cookie isn't tab-scoped the way
+   * sessionStorage was).
    */
   useEffect(() => {
-    const loadUser = () => {
-      try {
-        const storedUser = sessionStorage.getItem('user');
-        const accessToken = sessionStorage.getItem('access_token');
-        const tokenExpiry = sessionStorage.getItem('token_expiry');
-        
-        // Check if token has expired
-        if (tokenExpiry && Date.now() > parseInt(tokenExpiry)) {
-          // Refresh is async; we defer completion below.
-        }
-        
-        // Validate both user data and token exist
-        if (storedUser && accessToken) {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-        } else {
-          // Clear invalid session
-          sessionStorage.clear();
-        }
-      } catch (error) {
-        console.error('Failed to load user from sessionStorage:', error);
-        sessionStorage.clear();
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    let cancelled = false;
 
-    // Load user, and if needed attempt a silent refresh first.
     (async () => {
       try {
-        const tokenExpiry = sessionStorage.getItem('token_expiry');
-        if (tokenExpiry && Date.now() > parseInt(tokenExpiry)) {
-          const refreshed = await refreshSession();
-          if (!refreshed) {
-            sessionStorage.clear();
-            document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-          }
+        const response = await apiClient.get<User>('/api/v1/auth/admin/me');
+        if (!cancelled) {
+          setUser(response.data);
+        }
+      } catch {
+        if (!cancelled) {
+          setUser(null);
         }
       } finally {
-        loadUser();
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     })();
 
-    // Set up a periodic check for token expiry (every minute)
-    const expiryCheckInterval = setInterval(() => {
-      const tokenExpiry = sessionStorage.getItem('token_expiry');
-      if (!tokenExpiry) return;
-
-      const expiryMs = parseInt(tokenExpiry);
-      const remainingMs = expiryMs - Date.now();
-
-      // Refresh if the token is expired or will expire soon.
-      // This prevents idle sessions from being logged out purely client-side.
-      if (remainingMs <= 2 * 60 * 1000) {
-        (async () => {
-          const refreshed = await refreshSession();
-          if (!refreshed) {
-            logout();
-          }
-        })();
-      }
-    }, 60000); // Check every minute
-
-    return () => clearInterval(expiryCheckInterval);
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   /**
@@ -148,29 +70,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         credentials
       );
 
-      const { user: userData, access_token, refresh_token } = response.data;
+      // access_token/refresh_token are no longer in the body — the backend
+      // already set them as httpOnly cookies via Set-Cookie before this
+      // response resolved, and the browser attaches them automatically
+      // from here on.
+      setUser(response.data.user);
 
-
-      // Calculate token expiry time (expires_in is in seconds)
-      const expiryTime = Date.now() + (response.data.expires_in * 1000);
-
-      // Store tokens FIRST in sessionStorage (more secure - clears on browser/tab close)
-      sessionStorage.setItem('access_token', access_token);
-      sessionStorage.setItem('refresh_token', refresh_token);
-      sessionStorage.setItem('user', JSON.stringify(userData));
-      sessionStorage.setItem('token_expiry', expiryTime.toString());
-
-      // Set a client-side cookie for middleware detection (session cookie)
-      document.cookie = `user=${encodeURIComponent(JSON.stringify(userData))}; path=/; SameSite=Strict; Secure`;
-
-      // Update state
-      setUser(userData);
-
-
-      // Wait longer to ensure everything is set
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Redirect to dashboard
       router.push('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
@@ -181,28 +86,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   /**
    * Logout function
-   * Clears all auth data and redirects to login
+   * Revokes the session server-side (so a captured cookie stops working
+   * immediately, not just on this browser) and redirects to login.
    */
   const logout = async () => {
     try {
-      
-      // Clear state first to prevent any race conditions
-      setUser(null);
-      
-      // Clear all session storage (more thorough than removing individual items)
-      sessionStorage.clear();
-
-      // Clear client-side cookie
-      document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-
-      
-      // Force a hard redirect to login page (clears all state)
-      window.location.href = '/signin';
+      await apiClient.post('/api/v1/auth/admin/logout');
     } catch (error) {
       console.error('Logout error:', error);
-      // Force redirect even on error
-      sessionStorage.clear();
-      document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      // Proceed with client-side logout regardless — worst case the
+      // cookie's already invalid/expired, which is the state we want anyway.
+    } finally {
+      setUser(null);
       window.location.href = '/signin';
     }
   };
@@ -251,6 +146,10 @@ export const useRequireAuth = (requiredPermission?: string) => {
   const [shouldRender, setShouldRender] = React.useState(false);
   const hasCheckedRef = React.useRef(false);
 
+  /* eslint-disable react-hooks/set-state-in-effect --
+     This effect's whole job is synchronously deciding "render or redirect"
+     from auth state that just settled - there's no external system to
+     subscribe to instead. */
   useEffect(() => {
     // Skip if we've already completed auth check
     if (hasCheckedRef.current && shouldRender) {
@@ -263,11 +162,9 @@ export const useRequireAuth = (requiredPermission?: string) => {
       return;
     }
 
-    // Check if we have tokens in sessionStorage as a fallback
-    const hasToken = typeof window !== 'undefined' && sessionStorage.getItem('access_token');
-    
-    // Only redirect if truly not authenticated (no user AND no token)
-    if (!isAuthenticated && !hasToken) {
+    // No sessionStorage token to fall back on anymore — isAuthenticated
+    // (backed by the /auth/admin/me mount-time check) is the only signal.
+    if (!isAuthenticated) {
       setShouldRender(false);
       // Prevent redirect loops - only redirect once
       if (typeof window !== 'undefined' && 

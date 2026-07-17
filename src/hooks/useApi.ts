@@ -63,15 +63,13 @@ const fetcher = (url: string) => apiClient.get(url).then((res) => res.data);
 
 function useAdminApiEnabled() {
   const { isAuthenticated, isLoading } = useAuth();
-  const hasToken = typeof window !== 'undefined' && !!window.sessionStorage.getItem('access_token');
-  return !isLoading && (isAuthenticated || hasToken);
+  return !isLoading && isAuthenticated;
 }
 
 function useAdminApiReady() {
   const { isAuthenticated, isLoading } = useAuth();
-  const hasToken = typeof window !== 'undefined' && !!window.sessionStorage.getItem('access_token');
   return {
-    enabled: !isLoading && (isAuthenticated || hasToken),
+    enabled: !isLoading && isAuthenticated,
     isAuthLoading: isLoading,
   };
 }
