@@ -27,6 +27,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  // Set the instant login() resolves, so the mount-effect's session-restore
+  // check (below) can tell its own response is now stale and must not
+  // apply it. Without this, a user who submits the login form quickly
+  // enough races the initial (pre-login, unauthenticated) /auth/admin/me
+  // check: login() correctly sets the real user, but the original check's
+  // 401 can still land afterward and its `catch { setUser(null) }` silently
+  // wipes that state back out - isAuthenticated flips back to false,
+  // useRequireAuth hard-redirects to /signin, which remounts this provider
+  // and restarts the exact same race. Reported as "signs me in and signs
+  // me out automatically" / never actually landing on /dashboard.
+  const authResolvedRef = React.useRef(false);
+
   /**
    * Restore the session on mount by asking the backend who's authenticated,
    * relying on the httpOnly access_token cookie the browser sends
@@ -41,11 +53,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     (async () => {
       try {
         const response = await apiClient.get<User>('/api/v1/auth/admin/me');
-        if (!cancelled) {
+        if (!cancelled && !authResolvedRef.current) {
           setUser(response.data);
         }
       } catch {
-        if (!cancelled) {
+        if (!cancelled && !authResolvedRef.current) {
           setUser(null);
         }
       } finally {
@@ -74,6 +86,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // already set them as httpOnly cookies via Set-Cookie before this
       // response resolved, and the browser attaches them automatically
       // from here on.
+      authResolvedRef.current = true;
       setUser(response.data.user);
 
       router.push('/dashboard');
