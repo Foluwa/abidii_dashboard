@@ -293,7 +293,7 @@ const renderAlignmentJobBadge = (proverb: Proverb) => {
 };
 
 export default function ProverbsPage() {
-  const [selectedLanguage, setSelectedLanguage] = useState<number | undefined>(undefined);
+  const [selectedLanguage, setSelectedLanguage] = useState<string | undefined>(undefined);
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
@@ -1065,7 +1065,7 @@ export default function ProverbsPage() {
   };
 
   const [formData, setFormData] = useState({
-    language_id: 0,
+    language_id: "",
     proverb: "",
     translation: "",
     meaning: "",
@@ -1391,7 +1391,7 @@ export default function ProverbsPage() {
             <StyledSelect
               value={selectedLanguage || ""}
               onChange={(e) => {
-                setSelectedLanguage(e.target.value ? Number(e.target.value) : undefined);
+                setSelectedLanguage(e.target.value || undefined);
                 setPage(1);
               }}
               options={[
@@ -1628,7 +1628,7 @@ export default function ProverbsPage() {
               <StyledSelect
                 label="Language"
                 value={formData.language_id}
-                onChange={(e) => setFormData({ ...formData, language_id: Number(e.target.value) })}
+                onChange={(e) => setFormData({ ...formData, language_id: e.target.value })}
                 required
                 fullWidth
                 options={[
