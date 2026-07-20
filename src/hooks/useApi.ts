@@ -952,7 +952,7 @@ export function useWords(filters?: WordsFilters) {
 /**
  * Proverbs Hook
  */
-export function useProverbs(filters?: { language_id?: number; category?: string; page?: number; limit?: number }) {
+export function useProverbs(filters?: { language_id?: string; category?: string; page?: number; limit?: number }) {
   const params = new URLSearchParams();
   if (filters?.language_id) params.append('language_id', filters.language_id.toString());
   if (filters?.category) params.append('category', filters.category);

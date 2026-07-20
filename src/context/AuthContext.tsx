@@ -89,7 +89,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       authResolvedRef.current = true;
       setUser(response.data.user);
 
-      router.push('/dashboard');
+      // Hard navigation, not router.push: the access_token cookie was just
+      // set via Set-Cookie on this response, and middleware.ts's
+      // isAuthenticated check reads request.cookies server-side. A
+      // client-side RSC push for /dashboard can race that cookie becoming
+      // visible to the very next request, bouncing back to /signin -
+      // window.location.href forces a full navigation that's guaranteed to
+      // carry current cookies, matching what a manual URL entry does.
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error('Login error:', error);
       const errorMessage = handleApiError(error);

@@ -246,7 +246,7 @@ export interface Word {
 
 export interface Proverb {
   id: string; // UUID
-  language_id: number;
+  language_id: string; // UUID
   proverb: string;
   translation: string;
   meaning: string | null;
