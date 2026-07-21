@@ -9,7 +9,7 @@ import {
 import Badge from "../ui/badge/Badge";
 import { FiTrash2, FiVolume2, FiSearch, FiFilter, FiEye } from "react-icons/fi";
 import { ConfirmationModal } from "../ui/modal/ConfirmationModal";
-import { AudioWaveform } from "@/components/ui/audio/AudioWaveform";
+import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
 
 interface Word {
   id: string;
@@ -343,13 +343,7 @@ export default function WordsDataTable({
                     <TableCell className="px-4 py-3 text-start">
                       {word.audio_url ? (
                         <div className="min-w-[280px] max-w-md">
-                          <AudioWaveform
-                            src={word.audio_url}
-                            height={40}
-                            waveColor="#94a3b8"
-                            progressColor="#3b82f6"
-                            cursorColor="#1d4ed8"
-                          />
+                          <InlineAudioPlayer src={word.audio_url} size="md" />
                         </div>
                       ) : (
                         <span className="text-xs italic text-gray-400 dark:text-gray-500">
@@ -525,13 +519,7 @@ export default function WordsDataTable({
               {/* Audio */}
               {word.audio_url && (
                 <div className="mb-3">
-                  <AudioWaveform
-                    src={word.audio_url}
-                    height={40}
-                    waveColor="#94a3b8"
-                    progressColor="#3b82f6"
-                    cursorColor="#1d4ed8"
-                  />
+                  <InlineAudioPlayer src={word.audio_url} size="md" />
                 </div>
               )}
 

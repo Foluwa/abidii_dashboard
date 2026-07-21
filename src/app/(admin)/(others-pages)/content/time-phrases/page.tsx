@@ -1244,6 +1244,27 @@ export default function TimePhrasesPage() {
         <ContentStatsCard label="Aligned" value={stats.aligned} icon={FiGitMerge} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
       </ContentStatsGrid>
 
+      {/* Bulk Import from Google Sheets */}
+      {selectedLanguage && (
+        <GoogleSheetsBulkImport
+          contentType="phrases"
+          onImportComplete={() => fetchTimePhrases()}
+          defaultLanguageId={selectedLanguage}
+          defaultWorksheetTitle="yo_time"
+          expectedColumns={[
+            { name: 'source_row_key', required: true, description: 'Stable spreadsheet row key', example: 'time_yor_0001' },
+            { name: 'time_24h', required: false, description: '24-hour format (metadata)', example: '00:00' },
+            { name: 'time_12h', required: false, description: '12-hour format (metadata)', example: '12:00 AM' },
+            { name: 'phrase', required: true, description: 'Yoruba time phrase', example: 'Aago mejila òru' },
+            { name: 'translation', required: true, description: 'English time', example: '12:00 AM' },
+            { name: 'category', required: false, description: 'Category (should be "time")', example: 'time' },
+            { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '2' },
+            { name: 'is_published', required: false, description: 'Published status', example: 'false' },
+            { name: 'review_status', required: false, description: 'Editorial review status', example: 'approved' },
+          ]}
+        />
+      )}
+
       {selectedLanguage && (
         <ContentFiltersCard
           activeFilterCount={activeFilters.length}
@@ -1455,27 +1476,6 @@ export default function TimePhrasesPage() {
         </ContentFiltersCard>
       )}
 
-      {/* Bulk Import from Google Sheets */}
-      {selectedLanguage && (
-        <GoogleSheetsBulkImport
-          contentType="phrases"
-          onImportComplete={() => fetchTimePhrases()}
-          defaultLanguageId={selectedLanguage}
-          defaultWorksheetTitle="yo_time"
-          expectedColumns={[
-            { name: 'source_row_key', required: true, description: 'Stable spreadsheet row key', example: 'time_yor_0001' },
-            { name: 'time_24h', required: false, description: '24-hour format (metadata)', example: '00:00' },
-            { name: 'time_12h', required: false, description: '12-hour format (metadata)', example: '12:00 AM' },
-            { name: 'phrase', required: true, description: 'Yoruba time phrase', example: 'Aago mejila òru' },
-            { name: 'translation', required: true, description: 'English time', example: '12:00 AM' },
-            { name: 'category', required: false, description: 'Category (should be "time")', example: 'time' },
-            { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '2' },
-            { name: 'is_published', required: false, description: 'Published status', example: 'false' },
-            { name: 'review_status', required: false, description: 'Editorial review status', example: 'approved' },
-          ]}
-        />
-      )}
-
       {/* Time Phrase Jobs Accordion */}
       {selectedLanguage && (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -1615,6 +1615,9 @@ export default function TimePhrasesPage() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Status
                         </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Alignment
+                        </th>
                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Actions
                         </th>
@@ -1689,11 +1692,18 @@ export default function TimePhrasesPage() {
                               >
                                 {phrase.is_published ? "Published" : "Draft"}
                               </span>
-                              {renderAlignmentBadge(phrase)}
-                              {renderAlignmentJobBadge(phrase)}
                               {renderRegenerationBadge(phrase.last_regeneration_status, phrase.last_regeneration_error)}
                               {phrase.difficulty_level && (
                                 <span className="text-xs text-gray-500">Lvl {phrase.difficulty_level}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex flex-col items-start gap-1">
+                              {renderAlignmentBadge(phrase)}
+                              {renderAlignmentJobBadge(phrase)}
+                              {!phrase.alignment_status && !phrase.alignment_job_status && (
+                                <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
                               )}
                             </div>
                           </td>

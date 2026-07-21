@@ -405,6 +405,29 @@ export default function SentencesPage() {
         <ContentStatsCard label="With Audio" value={stats.withAudio} icon={FiBarChart2} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
       </ContentStatsGrid>
 
+      {/* Bulk Import from Google Sheets (has built-in accordion) */}
+      {filters.language_id && (
+        <GoogleSheetsBulkImport
+          contentType="sentences"
+          onImportComplete={() => fetchSentences()}
+          defaultLanguageId={filters.language_id}
+          defaultWorksheetTitle="yo_sentences"
+          expectedColumns={[
+            { name: 'source_row_key', required: true, description: 'Stable spreadsheet row key', example: 'sentence_yor_0001' },
+            { name: 'text', required: true, description: 'Sentence text', example: 'Mo fẹ́ràn oúnjẹ Yorùbá' },
+            { name: 'translation', required: true, description: 'Translation', example: 'I love Yoruba food' },
+            { name: 'romanization', required: false, description: 'Romanized version', example: 'mo feran ounje Yoruba' },
+            { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '2' },
+            { name: 'category', required: false, description: 'Category/topic', example: 'food' },
+            { name: 'tags', required: false, description: 'Comma-separated tags', example: 'food,preferences' },
+            { name: 'usage_context', required: false, description: 'Usage context', example: 'Casual conversation' },
+            { name: 'cultural_notes', required: false, description: 'Cultural context', example: '' },
+            { name: 'is_published', required: false, description: 'Published status', example: 'false' },
+            { name: 'review_status', required: false, description: 'Editorial review status', example: 'approved' },
+          ]}
+        />
+      )}
+
       <ContentFiltersCard
         activeFilterCount={activeFilters.length}
         onClearAll={clearAllFilters}
@@ -509,29 +532,6 @@ export default function SentencesPage() {
 
         <ActiveFilterChips filters={activeFilters} />
       </ContentFiltersCard>
-
-      {/* Bulk Import from Google Sheets (has built-in accordion) */}
-      {filters.language_id && (
-        <GoogleSheetsBulkImport
-          contentType="sentences"
-          onImportComplete={() => fetchSentences()}
-          defaultLanguageId={filters.language_id}
-          defaultWorksheetTitle="yo_sentences"
-          expectedColumns={[
-            { name: 'source_row_key', required: true, description: 'Stable spreadsheet row key', example: 'sentence_yor_0001' },
-            { name: 'text', required: true, description: 'Sentence text', example: 'Mo fẹ́ràn oúnjẹ Yorùbá' },
-            { name: 'translation', required: true, description: 'Translation', example: 'I love Yoruba food' },
-            { name: 'romanization', required: false, description: 'Romanized version', example: 'mo feran ounje Yoruba' },
-            { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '2' },
-            { name: 'category', required: false, description: 'Category/topic', example: 'food' },
-            { name: 'tags', required: false, description: 'Comma-separated tags', example: 'food,preferences' },
-            { name: 'usage_context', required: false, description: 'Usage context', example: 'Casual conversation' },
-            { name: 'cultural_notes', required: false, description: 'Cultural context', example: '' },
-            { name: 'is_published', required: false, description: 'Published status', example: 'false' },
-            { name: 'review_status', required: false, description: 'Editorial review status', example: 'approved' },
-          ]}
-        />
-      )}
 
       <StickyBulkActionBar
         selectedCount={selectedIds.length}

@@ -545,6 +545,39 @@ export default function NumbersPage() {
         <ContentStatsCard label="Compound" value={stats.compound} icon={FiGitMerge} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
       </ContentStatsGrid>
 
+      {/* Bulk Import from Google Sheets (has built-in accordion) */}
+      {selectedLanguage && (
+        <GoogleSheetsBulkImport
+          contentType="numbers"
+          onImportComplete={() => fetchNumbers()}
+          defaultLanguageId={selectedLanguage}
+          defaultWorksheetTitle="yo_numbers"
+          expectedColumns={[
+            { name: 'source_row_key', required: true, description: 'Stable spreadsheet row key', example: 'number_yor_0001' },
+            { name: 'number_value', required: true, description: 'Numeric value', example: '1' },
+            { name: 'number_type', required: true, description: 'cardinal/ordinal', example: 'cardinal' },
+            { name: 'word', required: true, description: 'Number word in target language', example: 'Ọkan' },
+            { name: 'word_normalized', required: false, description: 'Normalized form', example: 'okan' },
+            { name: 'written_form', required: false, description: 'Alternative written form', example: '' },
+            { name: 'ordinal_word', required: false, description: 'Ordinal form', example: 'Èkíní' },
+            { name: 'is_compound', required: false, description: 'TRUE for compound numbers', example: 'false' },
+            { name: 'base_numbers', required: false, description: 'JSON array or comma-separated bases', example: '[20,5]' },
+            { name: 'formation_rule', required: false, description: 'Formation pattern', example: 'base' },
+            { name: 'arithmetic_expression', required: false, description: 'Arithmetic expression for compound numbers', example: '20 + 5' },
+            { name: 'ipa_pronunciation', required: false, description: 'IPA pronunciation', example: '' },
+            { name: 'romanization', required: false, description: 'Romanized form', example: 'okan' },
+            { name: 'etymology', required: false, description: 'Origin/history notes', example: '' },
+            { name: 'number_system', required: false, description: 'Number system', example: 'decimal' },
+            { name: 'cultural_context', required: false, description: 'Cultural context', example: '' },
+            { name: 'usage_notes', required: false, description: 'Usage notes', example: '' },
+            { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '1' },
+            { name: 'display_order', required: false, description: 'Sort order', example: '1' },
+            { name: 'is_active', required: false, description: 'Whether this number is active', example: 'true' },
+            { name: 'review_status', required: false, description: 'Editorial review status', example: 'approved' },
+          ]}
+        />
+      )}
+
       <ContentFiltersCard
         activeFilterCount={activeFilters.length}
         onClearAll={clearAllFilters}
@@ -648,39 +681,6 @@ export default function NumbersPage() {
 
         <ActiveFilterChips filters={activeFilters} />
       </ContentFiltersCard>
-
-      {/* Bulk Import from Google Sheets (has built-in accordion) */}
-      {selectedLanguage && (
-        <GoogleSheetsBulkImport
-          contentType="numbers"
-          onImportComplete={() => fetchNumbers()}
-          defaultLanguageId={selectedLanguage}
-          defaultWorksheetTitle="yo_numbers"
-          expectedColumns={[
-            { name: 'source_row_key', required: true, description: 'Stable spreadsheet row key', example: 'number_yor_0001' },
-            { name: 'number_value', required: true, description: 'Numeric value', example: '1' },
-            { name: 'number_type', required: true, description: 'cardinal/ordinal', example: 'cardinal' },
-            { name: 'word', required: true, description: 'Number word in target language', example: 'Ọkan' },
-            { name: 'word_normalized', required: false, description: 'Normalized form', example: 'okan' },
-            { name: 'written_form', required: false, description: 'Alternative written form', example: '' },
-            { name: 'ordinal_word', required: false, description: 'Ordinal form', example: 'Èkíní' },
-            { name: 'is_compound', required: false, description: 'TRUE for compound numbers', example: 'false' },
-            { name: 'base_numbers', required: false, description: 'JSON array or comma-separated bases', example: '[20,5]' },
-            { name: 'formation_rule', required: false, description: 'Formation pattern', example: 'base' },
-            { name: 'arithmetic_expression', required: false, description: 'Arithmetic expression for compound numbers', example: '20 + 5' },
-            { name: 'ipa_pronunciation', required: false, description: 'IPA pronunciation', example: '' },
-            { name: 'romanization', required: false, description: 'Romanized form', example: 'okan' },
-            { name: 'etymology', required: false, description: 'Origin/history notes', example: '' },
-            { name: 'number_system', required: false, description: 'Number system', example: 'decimal' },
-            { name: 'cultural_context', required: false, description: 'Cultural context', example: '' },
-            { name: 'usage_notes', required: false, description: 'Usage notes', example: '' },
-            { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '1' },
-            { name: 'display_order', required: false, description: 'Sort order', example: '1' },
-            { name: 'is_active', required: false, description: 'Whether this number is active', example: 'true' },
-            { name: 'review_status', required: false, description: 'Editorial review status', example: 'approved' },
-          ]}
-        />
-      )}
 
       <StickyBulkActionBar
         selectedCount={selectedNumbers.length}

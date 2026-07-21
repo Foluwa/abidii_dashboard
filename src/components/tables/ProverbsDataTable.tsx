@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { FiEdit, FiTrash2, FiVolume2 } from "react-icons/fi";
-import { AudioWaveform } from "@/components/ui/audio/AudioWaveform";
+import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
 import type { Proverb } from "@/types/api";
 
 interface ProverbsDataTableProps {
@@ -194,6 +194,9 @@ export default function ProverbsDataTable({
                 Category
               </th>
               <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Alignment
+              </th>
+              <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Audio
               </th>
               <th className="px-5 py-3.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -238,8 +241,17 @@ export default function ProverbsDataTable({
                         <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
                       )}
                       {renderPublishBadge(proverb)}
+                    </div>
+                  </TableCell>
+
+                  {/* Alignment */}
+                  <TableCell className="px-5 py-4">
+                    <div className="flex flex-col items-start gap-2">
                       {renderAlignmentBadge(proverb)}
                       {renderAlignmentJobBadge(proverb)}
+                      {!proverb.alignment_status && !proverb.alignment_job_status && (
+                        <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
+                      )}
                     </div>
                   </TableCell>
 
@@ -254,13 +266,7 @@ export default function ProverbsDataTable({
                             </span>
                           </div>
                           {proverb.pending_audio_version.audio_url && (
-                            <AudioWaveform
-                              src={proverb.pending_audio_version.audio_url}
-                              height={32}
-                              waveColor="#f59e0b"
-                              progressColor="#d97706"
-                              cursorColor="#b45309"
-                            />
+                            <InlineAudioPlayer src={proverb.pending_audio_version.audio_url} size="md" />
                           )}
                           <div className="flex items-center gap-2">
                             <button
@@ -315,13 +321,7 @@ export default function ProverbsDataTable({
                             </span>
                             {renderRegenerationBadge(proverb.last_regeneration_status, proverb.last_regeneration_error)}
                           </div>
-                          <AudioWaveform
-                            src={proverb.audio_url}
-                            height={40}
-                            waveColor="#94a3b8"
-                            progressColor="#3b82f6"
-                            cursorColor="#1d4ed8"
-                          />
+                          <InlineAudioPlayer src={proverb.audio_url} size="md" />
                         </div>
                       ) : (
                         <div className="space-y-2">
@@ -367,7 +367,7 @@ export default function ProverbsDataTable({
             ) : (
               <TableRow>
                 <td
-                  colSpan={onSelectAll ? 5 : 4}
+                  colSpan={onSelectAll ? 6 : 5}
                   className="px-5 py-12 text-center text-gray-500 dark:text-gray-400"
                 >
                   <div className="flex flex-col items-center gap-2">
@@ -453,15 +453,15 @@ export default function ProverbsDataTable({
               {renderPublishBadge(proverb)}
             </div>
 
-            {proverb.alignment_status && (
+            {(proverb.alignment_status || proverb.alignment_job_status) && (
               <div className="mb-3">
-                {renderAlignmentBadge(proverb)}
-              </div>
-            )}
-
-            {proverb.alignment_job_status && (
-              <div className="mb-3">
-                {renderAlignmentJobBadge(proverb)}
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                  Alignment
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {renderAlignmentBadge(proverb)}
+                  {renderAlignmentJobBadge(proverb)}
+                </div>
               </div>
             )}
 
@@ -483,13 +483,7 @@ export default function ProverbsDataTable({
                 </div>
               )}
               {proverb.audio_url ? (
-                <AudioWaveform
-                  src={proverb.audio_url}
-                  height={40}
-                  waveColor="#94a3b8"
-                  progressColor="#3b82f6"
-                  cursorColor="#1d4ed8"
-                />
+                <InlineAudioPlayer src={proverb.audio_url} size="md" />
               ) : (
                 <div className="text-xs text-gray-400 dark:text-gray-600">No audio</div>
               )}
