@@ -8,7 +8,7 @@ import Toast from "@/components/ui/toast/Toast";
 import Alert from "@/components/ui/alert/Alert";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
-import { AudioWaveform } from "@/components/ui/audio/AudioWaveform";
+import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
 import { GoogleSheetsBulkImport } from "@/components/admin/GoogleSheetsBulkImport";
 import {
   ContentPageHeader,
@@ -287,6 +287,24 @@ export default function LettersPage() {
         </ContentStatsGrid>
       )}
 
+      {/* Bulk Import from Google Sheets (has built-in accordion) */}
+      {selectedLanguage && (
+        <GoogleSheetsBulkImport
+          contentType="letters"
+          onImportComplete={() => fetchLetters(selectedLanguage)}
+          defaultLanguageId={selectedLanguage}
+          defaultWorksheetTitle="yo_letters"
+          expectedColumns={[
+            { name: "source_row_key", required: true, description: "Stable spreadsheet row key", example: "letter_yor_001" },
+            { name: "glyph", required: true, description: "Letter or digraph", example: "Ẹ" },
+            { name: "display_name", required: true, description: "Display name", example: "Ẹ" },
+            { name: "is_digraph", required: false, description: "TRUE for multi-character letters", example: "FALSE" },
+            { name: "order_index", required: true, description: "Sort order", example: "7" },
+            { name: "review_status", required: false, description: "Editorial review status", example: "approved" },
+          ]}
+        />
+      )}
+
       <ContentFiltersCard>
         <div className="max-w-md">
           <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
@@ -306,24 +324,6 @@ export default function LettersPage() {
           />
         </div>
       </ContentFiltersCard>
-
-      {/* Bulk Import from Google Sheets (has built-in accordion) */}
-      {selectedLanguage && (
-        <GoogleSheetsBulkImport
-          contentType="letters"
-          onImportComplete={() => fetchLetters(selectedLanguage)}
-          defaultLanguageId={selectedLanguage}
-          defaultWorksheetTitle="yo_letters"
-          expectedColumns={[
-            { name: "source_row_key", required: true, description: "Stable spreadsheet row key", example: "letter_yor_001" },
-            { name: "glyph", required: true, description: "Letter or digraph", example: "Ẹ" },
-            { name: "display_name", required: true, description: "Display name", example: "Ẹ" },
-            { name: "is_digraph", required: false, description: "TRUE for multi-character letters", example: "FALSE" },
-            { name: "order_index", required: true, description: "Sort order", example: "7" },
-            { name: "review_status", required: false, description: "Editorial review status", example: "approved" },
-          ]}
-        />
-      )}
 
       <StickyBulkActionBar
         selectedCount={selectedIds.length}
@@ -489,13 +489,7 @@ export default function LettersPage() {
                       <td className="px-6 py-4">
                         {letter.audio_url ? (
                           <div className="max-w-md">
-                            <AudioWaveform
-                              src={letter.audio_url}
-                              height={40}
-                              waveColor="#94a3b8"
-                              progressColor="#3b82f6"
-                              cursorColor="#1d4ed8"
-                            />
+                            <InlineAudioPlayer src={letter.audio_url} size="md" />
                           </div>
                         ) : (
                           <span className="text-xs text-gray-400 dark:text-gray-600">No audio</span>
