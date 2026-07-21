@@ -213,7 +213,7 @@ export type LessonStatus = 'draft' | 'published' | 'archived';
 
 export interface Lesson {
   id: number;
-  language_id: number;
+  language_id: string; // UUID
   order: number;
   title: string;
   description: string | null;
@@ -224,7 +224,7 @@ export interface Lesson {
 }
 
 export interface LessonCreateRequest {
-  language_id: number;
+  language_id: string; // UUID
   order: number;
   title: string;
   description?: string;
@@ -234,7 +234,7 @@ export interface LessonCreateRequest {
 
 export interface Word {
   id: number;
-  language_id: number;
+  language_id: string; // UUID
   word: string;
   translation: string;
   pronunciation: string | null;
@@ -326,7 +326,7 @@ export type GameType = 'flashcard' | 'quiz' | 'matching' | 'fill_blank' | 'pronu
 
 export interface Game {
   id: number;
-  language_id: number;
+  language_id: string; // UUID
   game_type: GameType;
   title: string;
   description: string | null;
@@ -337,7 +337,7 @@ export interface Game {
 }
 
 export interface GameCreateRequest {
-  language_id: number;
+  language_id: string; // UUID
   game_type: GameType;
   title: string;
   description?: string;
@@ -347,7 +347,7 @@ export interface GameCreateRequest {
 
 export interface Sentence {
   id: number;
-  language_id: number;
+  language_id: string; // UUID
   text: string;
   translation: string;
   audio_url?: string | null;
@@ -357,7 +357,7 @@ export interface Sentence {
 
 export interface Phrase {
   id: number;
-  language_id: number;
+  language_id: string; // UUID
   text: string;
   translation: string;
   audio_url?: string | null;
