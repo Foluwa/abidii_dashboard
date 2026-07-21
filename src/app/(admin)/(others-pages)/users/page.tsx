@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useUsers } from "@/hooks/useApi";
+import { useUsers, useLanguages } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api";
 import type { UserRole } from "@/types/auth";
@@ -33,6 +33,7 @@ export default function UsersPage() {
   // Advanced filters
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [providerFilter, setProviderFilter] = useState<string>("all");
+  const [languageFilter, setLanguageFilter] = useState<string>("all");
   const [minXp, setMinXp] = useState<string>("");
   const [maxXp, setMaxXp] = useState<string>("");
   const [lastLoginAfter, setLastLoginAfter] = useState<string>("");
@@ -46,15 +47,18 @@ export default function UsersPage() {
   const role = activeTab === "all" ? undefined : activeTab;
   const isActive = statusFilter === "all" ? undefined : statusFilter === "active";
   const provider = providerFilter === "all" ? undefined : providerFilter;
+  const languageCode = languageFilter === "all" ? undefined : languageFilter;
   const debouncedSearch = useDebounce(search, 300);
+  const { languages } = useLanguages();
 
   const { users, isLoading, isError, refresh } = useUsers({
     search: debouncedSearch,
-    role, 
-    page, 
+    role,
+    page,
     limit,
     is_active: isActive,
     provider,
+    language_code: languageCode,
     min_xp: minXp ? parseInt(minXp) : undefined,
     max_xp: maxXp ? parseInt(maxXp) : undefined,
     last_login_after: lastLoginAfter ? new Date(lastLoginAfter).toISOString() : undefined,
@@ -298,6 +302,22 @@ export default function UsersPage() {
             />
 
             <StyledSelect
+              label="Language"
+              value={languageFilter}
+              onChange={(e) => {
+                setLanguageFilter(e.target.value);
+                setPage(1);
+              }}
+              options={[
+                { value: "all", label: "All Languages" },
+                ...(languages?.map((lang: any) => ({
+                  value: lang.iso_639_3,
+                  label: lang.name
+                })) || [])
+              ]}
+            />
+
+            <StyledSelect
               label="Per Page"
               value={limit}
               onChange={(e) => {
@@ -431,6 +451,9 @@ export default function UsersPage() {
                       Country
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Learning
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Last Request
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -518,6 +541,13 @@ export default function UsersPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
+                          {user.current_language_name ? (
+                            <StatusBadge status="info" label={user.current_language_name} />
+                          ) : (
+                            <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-600 dark:text-gray-400" title={getLastRequestAt(user) ? new Date(getLastRequestAt(user)!).toLocaleString() : "Never"}>
                             {formatLastRequest(getLastRequestAt(user))}
                           </div>
@@ -576,7 +606,7 @@ export default function UsersPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={8} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={9} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                         No users found
                       </td>
                     </tr>
