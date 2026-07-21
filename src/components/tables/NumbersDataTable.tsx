@@ -1,6 +1,6 @@
 import React from "react";
 import { FiEdit, FiTrash2, FiHash, FiVolume2, FiRefreshCw } from "react-icons/fi";
-import { AudioWaveform } from "@/components/ui/audio/AudioWaveform";
+import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
 
 interface Number {
   id: string;
@@ -250,13 +250,7 @@ const NumbersDataTable: React.FC<Props> = ({
               <td className="px-4 py-3">
                 {(number.has_audio && number.audio_url) || (number.audio && number.audio.length > 0) ? (
                   <div className="min-w-[280px] max-w-md space-y-1.5">
-                    <AudioWaveform
-                      src={number.audio_url || number.audio![0].s3_bucket_key}
-                      height={40}
-                      waveColor="#94a3b8"
-                      progressColor="#3b82f6"
-                      cursorColor="#1d4ed8"
-                    />
+                    <InlineAudioPlayer src={number.audio_url || number.audio![0].s3_bucket_key} size="md" />
                     {number.last_regeneration_status === "processing" && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
                         Regenerating audio
@@ -394,13 +388,7 @@ const NumbersDataTable: React.FC<Props> = ({
           {/* Audio */}
           {((number.has_audio && number.audio_url) || (number.audio && number.audio.length > 0)) && (
             <div className="mb-3">
-              <AudioWaveform
-                src={number.audio_url || number.audio![0].s3_bucket_key}
-                height={40}
-                waveColor="#94a3b8"
-                progressColor="#3b82f6"
-                cursorColor="#1d4ed8"
-              />
+              <InlineAudioPlayer src={number.audio_url || number.audio![0].s3_bucket_key} size="md" />
             </div>
           )}
 

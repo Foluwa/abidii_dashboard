@@ -1373,6 +1373,30 @@ export default function ProverbsPage() {
         <ContentStatsCard label="Needs Cleanup" value={stats.needsCleanup} icon={FiAlertTriangle} iconBgClass="bg-red-100 dark:bg-red-900/20" iconTextClass="text-red-600 dark:text-red-400" />
       </ContentStatsGrid>
 
+      {/* Bulk Import from Google Sheets (has built-in accordion) */}
+      {selectedLanguage && (
+        <div className="mb-6">
+          <GoogleSheetsBulkImport
+            contentType="proverbs"
+            onImportComplete={() => refresh()}
+            defaultWorksheetTitle="yo_proverbs"
+            expectedColumns={[
+              { name: 'source_row_key', required: true, description: 'Stable spreadsheet row key', example: 'proverb_yor_0001' },
+              { name: 'yoruba_text', required: true, description: 'Proverb in Yoruba', example: "Ìwà l'ẹ̀so ẹni" },
+              { name: 'english_translation', required: true, description: 'Direct translation', example: "Character is one's beauty" },
+              { name: 'english_meaning', required: false, description: 'Interpretation/meaning', example: 'Good character is more important than physical appearance' },
+              { name: 'romanization', required: false, description: 'Romanized version', example: "iwa l'eso eni" },
+              { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '3' },
+              { name: 'category', required: false, description: 'Primary category', example: 'character' },
+              { name: 'tags', required: false, description: 'Comma-separated tags', example: 'wisdom,values' },
+              { name: 'cultural_context', required: false, description: 'Cultural context', example: 'Used to emphasize inner beauty' },
+              { name: 'is_published', required: false, description: 'Published status', example: 'false' },
+              { name: 'review_status', required: false, description: 'Editorial review status', example: 'approved' },
+            ]}
+          />
+        </div>
+      )}
+
       <ContentFiltersCard
         activeFilterCount={activeFilters.length}
         onClearAll={clearAllFilters}
@@ -1538,30 +1562,6 @@ export default function ProverbsPage() {
           </div>
         )}
       </div>
-
-      {/* Bulk Import from Google Sheets (has built-in accordion) */}
-      {selectedLanguage && (
-        <div className="mb-6">
-          <GoogleSheetsBulkImport
-            contentType="proverbs"
-            onImportComplete={() => refresh()}
-            defaultWorksheetTitle="yo_proverbs"
-            expectedColumns={[
-              { name: 'source_row_key', required: true, description: 'Stable spreadsheet row key', example: 'proverb_yor_0001' },
-              { name: 'yoruba_text', required: true, description: 'Proverb in Yoruba', example: "Ìwà l'ẹ̀so ẹni" },
-              { name: 'english_translation', required: true, description: 'Direct translation', example: "Character is one's beauty" },
-              { name: 'english_meaning', required: false, description: 'Interpretation/meaning', example: 'Good character is more important than physical appearance' },
-              { name: 'romanization', required: false, description: 'Romanized version', example: "iwa l'eso eni" },
-              { name: 'difficulty_level', required: false, description: 'Difficulty 1-5', example: '3' },
-              { name: 'category', required: false, description: 'Primary category', example: 'character' },
-              { name: 'tags', required: false, description: 'Comma-separated tags', example: 'wisdom,values' },
-              { name: 'cultural_context', required: false, description: 'Cultural context', example: 'Used to emphasize inner beauty' },
-              { name: 'is_published', required: false, description: 'Published status', example: 'false' },
-              { name: 'review_status', required: false, description: 'Editorial review status', example: 'approved' },
-            ]}
-          />
-        </div>
-      )}
 
       <StickyBulkActionBar
         selectedCount={selectedProverbs.length}

@@ -534,6 +534,8 @@ export default function WordsPage() {
         <ContentStatsCard label="Showing" value={`${Math.min((page - 1) * limit + 1, total)}-${Math.min(page * limit, total)}`} icon={FiCheckCircle} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
       </ContentStatsGrid>
 
+      <DictionaryGoogleSheetsBulkImport onImportComplete={() => refresh()} />
+
       <ContentFiltersCard
         activeFilterCount={activeFilterCount}
         onClearAll={clearAllFilters}
@@ -912,8 +914,6 @@ export default function WordsPage() {
 
         <ActiveFilterChips filters={activeFilterChips} />
       </ContentFiltersCard>
-
-      <DictionaryGoogleSheetsBulkImport onImportComplete={() => refresh()} />
 
       <StickyBulkActionBar
         selectedCount={selectedWords.length}
