@@ -151,6 +151,17 @@ export interface UserListItem {
   device_build_number?: string | null;
   country_code?: string | null;
 
+  // Learning language (content being studied) - distinct from ui_locale below.
+  current_language_code?: string | null;
+  current_language_name?: string | null;
+
+  // App/interface language - independent of the learning language above.
+  // See abidii_app_language.md. null means "not yet observed", not English.
+  ui_locale?: string | null;
+  ui_locale_name?: string | null;
+  ui_locale_source?: 'system' | 'user' | 'migration' | null;
+  ui_locale_updated_at?: string | null;
+
   // Premium entitlement summary (computed from subscriptions)
   has_premium?: boolean;
   premium_plan_id?: string | null;

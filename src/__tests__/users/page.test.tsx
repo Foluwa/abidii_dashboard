@@ -22,6 +22,7 @@ const mockUseUsers = jest.fn();
 
 jest.mock('@/hooks/useApi', () => ({
   useUsers: (filters: unknown) => mockUseUsers(filters),
+  useLanguages: () => ({ languages: [{ iso_639_3: 'yor', name: 'Yoruba' }] }),
 }));
 
 jest.mock('@/lib/api', () => ({
@@ -50,6 +51,8 @@ const sampleUsers = {
       provider: 'google',
       is_active: true,
       total_xp: 1000,
+      ui_locale: 'yo',
+      ui_locale_name: 'Yorùbá',
     },
     {
       id: 2,
@@ -59,6 +62,8 @@ const sampleUsers = {
       provider: 'apple',
       is_active: false,
       total_xp: 500,
+      ui_locale: null,
+      ui_locale_name: null,
     },
     {
       id: 3,
@@ -93,6 +98,8 @@ describe('UsersPage', () => {
       // Check column headers
       expect(tableQueries.getByText('User', { selector: 'th' })).toBeInTheDocument();
       expect(tableQueries.getByText('Device', { selector: 'th' })).toBeInTheDocument();
+      expect(tableQueries.getByText('Learning', { selector: 'th' })).toBeInTheDocument();
+      expect(tableQueries.getByText('App Language', { selector: 'th' })).toBeInTheDocument();
       expect(tableQueries.getByText('Last Request', { selector: 'th' })).toBeInTheDocument();
       expect(tableQueries.getByText('XP', { selector: 'th' })).toBeInTheDocument();
       expect(tableQueries.getByText('Role', { selector: 'th' })).toBeInTheDocument();
@@ -170,6 +177,20 @@ describe('UsersPage', () => {
       expect(screen.getByText(/failed to load users/i)).toBeInTheDocument();
     });
 
+    it('shows the App Language label for a user with a known ui_locale', () => {
+      render(<UsersPage />);
+      const table = screen.getByRole('table');
+      expect(within(table).getByText('Yorùbá')).toBeInTheDocument();
+    });
+
+    it('shows Unknown (not English) for a user with no ui_locale', () => {
+      render(<UsersPage />);
+      // User Two has ui_locale: null - must read "Unknown", never default to
+      // English (abidii_app_language.md: null means not-yet-synced).
+      const table = screen.getByRole('table');
+      expect(within(table).getAllByText('Unknown').length).toBeGreaterThan(0);
+    });
+
     it('shows empty state when no users', () => {
       mockUseUsers.mockReturnValue({
         users: { total: 0, users: [] },
@@ -223,6 +244,33 @@ describe('UsersPage', () => {
       );
     });
 
+    it('app language filter works independently of the learning language filter', async () => {
+      render(<UsersPage />);
+
+      const languageLabel = screen.getByText('Language', { selector: 'label' });
+      const languageSelect = languageLabel.parentElement?.querySelector('select');
+      if (!(languageSelect instanceof HTMLSelectElement)) {
+        throw new Error('Language select not found');
+      }
+      await userEvent.selectOptions(languageSelect, 'yor');
+
+      const appLanguageLabel = screen.getByText('App Language', { selector: 'label' });
+      const appLanguageSelect = appLanguageLabel.parentElement?.querySelector('select');
+      if (!(appLanguageSelect instanceof HTMLSelectElement)) {
+        throw new Error('App Language select not found');
+      }
+      await userEvent.selectOptions(appLanguageSelect, 'pt');
+
+      // Both filters must be usable together - learning Yoruba, app in
+      // Portuguese - see abidii_app_language.md §6.4.
+      expect(mockUseUsers).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          language_code: 'yor',
+          ui_locale: 'pt',
+        })
+      );
+    });
+
     it('search filter works', async () => {
       render(<UsersPage />);
 
@@ -245,6 +293,14 @@ describe('UsersPage', () => {
     it('clear filters button resets all filters', async () => {
       render(<UsersPage />);
 
+      // Set the App Language filter alongside the advanced filters.
+      const appLanguageLabel = screen.getByText('App Language', { selector: 'label' });
+      const appLanguageSelect = appLanguageLabel.parentElement?.querySelector('select');
+      if (!(appLanguageSelect instanceof HTMLSelectElement)) {
+        throw new Error('App Language select not found');
+      }
+      await userEvent.selectOptions(appLanguageSelect, 'yo');
+
       // Show advanced filters
       const moreFiltersBtn = screen.getByText('More Filters');
       await userEvent.click(moreFiltersBtn);
@@ -263,6 +319,7 @@ describe('UsersPage', () => {
           search: '',
           is_active: undefined,
           provider: undefined,
+          ui_locale: undefined,
           min_xp: undefined,
           max_xp: undefined,
         })
