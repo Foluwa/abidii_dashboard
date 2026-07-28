@@ -33,6 +33,11 @@ const mockUser = {
   last_activity_date: '2024-06-01',
   total_sessions: 42,
   languages_learning: 2,
+  current_language_name: 'Yoruba',
+  ui_locale: 'yo',
+  ui_locale_name: 'Yorùbá',
+  ui_locale_source: 'user',
+  ui_locale_updated_at: '2026-07-27T22:30:00Z',
 };
 
 // Mock user with null/undefined values
@@ -53,6 +58,11 @@ const mockUserWithNulls = {
   last_activity_date: null,
   total_sessions: null,
   languages_learning: null,
+  current_language_name: null,
+  ui_locale: null,
+  ui_locale_name: null,
+  ui_locale_source: null,
+  ui_locale_updated_at: null,
 };
 
 describe('User Detail Page Schema Compliance', () => {
@@ -185,6 +195,55 @@ describe('User Detail Page Schema Compliance', () => {
       const accountType = mockUser.is_premium ? 'Premium' : 'Free';
       expect(accountType).toBe('Free');
     });
+  });
+});
+
+describe('App Language Fields', () => {
+  // See abidii_app_language.md §8.3 - the detail page shows App language,
+  // Locale source, and Last synchronized time, distinct from the learning
+  // language shown alongside them.
+
+  it('shows the learning language name when present', () => {
+    const learningLanguage = mockUser.current_language_name || 'Unknown';
+    expect(learningLanguage).toBe('Yoruba');
+  });
+
+  it('learning language falls back to Unknown when absent', () => {
+    const learningLanguage = mockUserWithNulls.current_language_name || 'Unknown';
+    expect(learningLanguage).toBe('Unknown');
+  });
+
+  it('shows the app language name when present', () => {
+    const appLanguage = mockUser.ui_locale_name || 'Unknown';
+    expect(appLanguage).toBe('Yorùbá');
+  });
+
+  it('app language falls back to Unknown, and never defaults to English', () => {
+    // A null ui_locale means "not yet observed" - it must never be
+    // silently displayed as if the user had chosen English.
+    const appLanguage = mockUserWithNulls.ui_locale_name || 'Unknown';
+    expect(appLanguage).toBe('Unknown');
+    expect(appLanguage).not.toBe('English');
+  });
+
+  it('shows the locale source when present', () => {
+    const source = mockUser.ui_locale_source || 'Unknown';
+    expect(source).toBe('user');
+  });
+
+  it('locale source falls back to Unknown when null', () => {
+    const source = mockUserWithNulls.ui_locale_source || 'Unknown';
+    expect(source).toBe('Unknown');
+  });
+
+  it('formats the last-synced timestamp, falling back to Never', () => {
+    const formatDateTime = (value?: string | null) => {
+      if (!value) return 'Never';
+      return new Date(value).toLocaleString();
+    };
+
+    expect(formatDateTime(mockUser.ui_locale_updated_at)).not.toBe('Never');
+    expect(formatDateTime(mockUserWithNulls.ui_locale_updated_at)).toBe('Never');
   });
 });
 

@@ -209,6 +209,7 @@ export function useUsers(filters?: {
   is_active?: boolean;
   provider?: string;
   language_code?: string;
+  ui_locale?: string;
   min_xp?: number;
   max_xp?: number;
   last_login_after?: string;
@@ -222,6 +223,9 @@ export function useUsers(filters?: {
   if (filters?.is_active !== undefined) params.append('is_active', filters.is_active.toString());
   if (filters?.provider) params.append('provider', filters.provider);
   if (filters?.language_code) params.append('language_code', filters.language_code);
+  // App/interface language filter - independent of language_code (the
+  // learning language) - both are usable together, see abidii_app_language.md.
+  if (filters?.ui_locale) params.append('ui_locale', filters.ui_locale);
   if (filters?.min_xp !== undefined) params.append('min_xp', filters.min_xp.toString());
   if (filters?.max_xp !== undefined) params.append('max_xp', filters.max_xp.toString());
   if (filters?.last_login_after) params.append('last_login_after', filters.last_login_after);

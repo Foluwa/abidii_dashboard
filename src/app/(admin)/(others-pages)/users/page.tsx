@@ -16,6 +16,18 @@ import { FaApple, FaGoogle, FaGlobe, FaMobileAlt } from "react-icons/fa";
 type TabRole = "all" | UserRole;
 type ActionType = "deactivate" | "reactivate" | "delete" | "purge";
 
+// App/interface-language display list - see abidii_app_language.md §8.2.
+// Fixed (not fetched), since ui_locale is a small closed allowlist, unlike
+// the dynamic learning-language list above. No "Unknown" filter option:
+// the admin API's ui_locale filter doesn't support a null match.
+const APP_LANGUAGE_OPTIONS = [
+  { value: "en", label: "English" },
+  { value: "fr", label: "French" },
+  { value: "es", label: "Spanish" },
+  { value: "pt", label: "Portuguese (Brazil)" },
+  { value: "yo", label: "Yorùbá" },
+];
+
 interface ActionConfirm {
   userId: number;
   action: ActionType;
@@ -34,6 +46,7 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [providerFilter, setProviderFilter] = useState<string>("all");
   const [languageFilter, setLanguageFilter] = useState<string>("all");
+  const [appLanguageFilter, setAppLanguageFilter] = useState<string>("all");
   const [minXp, setMinXp] = useState<string>("");
   const [maxXp, setMaxXp] = useState<string>("");
   const [lastLoginAfter, setLastLoginAfter] = useState<string>("");
@@ -48,6 +61,7 @@ export default function UsersPage() {
   const isActive = statusFilter === "all" ? undefined : statusFilter === "active";
   const provider = providerFilter === "all" ? undefined : providerFilter;
   const languageCode = languageFilter === "all" ? undefined : languageFilter;
+  const uiLocale = appLanguageFilter === "all" ? undefined : appLanguageFilter;
   const debouncedSearch = useDebounce(search, 300);
   const { languages } = useLanguages();
 
@@ -59,6 +73,7 @@ export default function UsersPage() {
     is_active: isActive,
     provider,
     language_code: languageCode,
+    ui_locale: uiLocale,
     min_xp: minXp ? parseInt(minXp) : undefined,
     max_xp: maxXp ? parseInt(maxXp) : undefined,
     last_login_after: lastLoginAfter ? new Date(lastLoginAfter).toISOString() : undefined,
@@ -318,6 +333,19 @@ export default function UsersPage() {
             />
 
             <StyledSelect
+              label="App Language"
+              value={appLanguageFilter}
+              onChange={(e) => {
+                setAppLanguageFilter(e.target.value);
+                setPage(1);
+              }}
+              options={[
+                { value: "all", label: "All App Languages" },
+                ...APP_LANGUAGE_OPTIONS,
+              ]}
+            />
+
+            <StyledSelect
               label="Per Page"
               value={limit}
               onChange={(e) => {
@@ -412,6 +440,7 @@ export default function UsersPage() {
                     setSearch("");
                     setStatusFilter("all");
                     setProviderFilter("all");
+                    setAppLanguageFilter("all");
                     setMinXp("");
                     setMaxXp("");
                     setLastLoginAfter("");
@@ -452,6 +481,9 @@ export default function UsersPage() {
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Learning
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      App Language
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Last Request
@@ -548,6 +580,20 @@ export default function UsersPage() {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
+                          {user.ui_locale_name ? (
+                            <span title={user.ui_locale}>
+                              <StatusBadge status="info" label={user.ui_locale_name} />
+                            </span>
+                          ) : (
+                            <span
+                              className="text-sm text-gray-400 dark:text-gray-500"
+                              title="No ui_locale has been synced from a device yet"
+                            >
+                              Unknown
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-600 dark:text-gray-400" title={getLastRequestAt(user) ? new Date(getLastRequestAt(user)!).toLocaleString() : "Never"}>
                             {formatLastRequest(getLastRequestAt(user))}
                           </div>
@@ -606,7 +652,7 @@ export default function UsersPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={9} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={10} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                         No users found
                       </td>
                     </tr>

@@ -381,6 +381,44 @@ export default function UserDetailPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Learning Language
+            </label>
+            <p className="text-base text-gray-900 dark:text-white">
+              {user.current_language_name || "Unknown"}
+            </p>
+          </div>
+
+          {/* App/interface language - distinct from the learning language
+              above. See abidii_app_language.md §8.3. */}
+          <div>
+            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              App Language
+            </label>
+            <p className="text-base text-gray-900 dark:text-white" title={user.ui_locale || undefined}>
+              {user.ui_locale_name || "Unknown"}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              App Language Source
+            </label>
+            <p className="text-base text-gray-900 dark:text-white capitalize">
+              {user.ui_locale_source || "Unknown"}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              App Language Last Synced
+            </label>
+            <p className="text-base text-gray-900 dark:text-white">
+              {formatDateTime(user.ui_locale_updated_at)}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
               Current Level
             </label>
             <p className="text-base text-gray-900 dark:text-white">
