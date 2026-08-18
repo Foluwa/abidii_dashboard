@@ -61,14 +61,10 @@ function getStatusBadge(status: string | null | undefined) {
 export default function AdminLessonBlueprintDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }> | { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
-  const resolvedParams =
-    typeof (params as Promise<{ id: string }> & { then?: unknown })?.then === 'function'
-      ? React.use(params as Promise<{ id: string }>)
-      : (params as { id: string });
-  const { id: blueprintId } = resolvedParams;
+  const { id: blueprintId } = React.use(params);
 
   const {
     data: adminData,

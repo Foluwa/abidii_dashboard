@@ -1,5 +1,5 @@
 import React from 'react';
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import AdminLessonBlueprintDetailPage from '@/app/(admin)/(others-pages)/curriculum/lesson-blueprints/[id]/page';
@@ -301,7 +301,9 @@ describe('AdminLessonBlueprintDetailPage', () => {
   it('publishes the blueprint and revalidates the linked course from the same page', async () => {
     const user = userEvent.setup();
 
-    render(<AdminLessonBlueprintDetailPage params={{ id: 'bp-1' }} />);
+    await act(async () => {
+      render(<AdminLessonBlueprintDetailPage params={Promise.resolve({ id: 'bp-1' })} />);
+    });
 
     expect(screen.getByText('Linked Course Flow')).toBeInTheDocument();
     expect(
@@ -352,7 +354,9 @@ describe('AdminLessonBlueprintDetailPage', () => {
       refresh: mockRefreshLinkedCourse,
     });
 
-    render(<AdminLessonBlueprintDetailPage params={{ id: 'bp-1' }} />);
+    await act(async () => {
+      render(<AdminLessonBlueprintDetailPage params={Promise.resolve({ id: 'bp-1' })} />);
+    });
 
     await user.click(screen.getByRole('button', { name: 'Publish Linked Course' }));
     await user.click(screen.getByRole('button', { name: 'Publish Course' }));
