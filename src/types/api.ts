@@ -149,6 +149,8 @@ export interface UserListItem {
   device_name?: string | null;
   device_app_version?: string | null;
   device_build_number?: string | null;
+  device_id?: string | null;
+  last_ip_address?: string | null;
   country_code?: string | null;
 
   // Learning language (content being studied) - distinct from ui_locale below.
