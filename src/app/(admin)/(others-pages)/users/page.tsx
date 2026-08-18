@@ -561,6 +561,22 @@ export default function UsersPage() {
                                   v{user.device_app_version}{user.device_build_number ? `(${user.device_build_number})` : ''}
                                 </div>
                               )}
+                              {user.device_id && (
+                                <div
+                                  className="text-xs font-mono text-gray-400 dark:text-gray-500 truncate max-w-[140px]"
+                                  title={`Device ID: ${user.device_id}`}
+                                >
+                                  ID: {user.device_id}
+                                </div>
+                              )}
+                              {user.last_ip_address && (
+                                <div
+                                  className="text-xs font-mono text-gray-400 dark:text-gray-500 truncate max-w-[140px]"
+                                  title={`Last IP: ${user.last_ip_address}`}
+                                >
+                                  IP: {user.last_ip_address}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
