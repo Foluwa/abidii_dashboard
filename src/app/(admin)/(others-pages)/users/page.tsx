@@ -208,7 +208,10 @@ export default function UsersPage() {
 
     if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffHours < 24) {
+      const remainderMins = diffMins - diffHours * 60;
+      return remainderMins > 0 ? `${diffHours}h ${remainderMins}m ago` : `${diffHours}h ago`;
+    }
     if (diffDays < 7) return `${diffDays}d ago`;
     return date.toLocaleDateString();
   };
