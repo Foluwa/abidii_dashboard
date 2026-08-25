@@ -14,6 +14,7 @@ import SentencesPage from "@/app/(admin)/(others-pages)/content/sentences/page";
 import ProverbsPage from "@/app/(admin)/(others-pages)/content/proverbs/page";
 import LettersPage from "@/app/(admin)/(others-pages)/content/letters/page";
 import NumbersPage from "@/app/(admin)/(others-pages)/content/numbers/page";
+import CollectionsPage from "@/app/(admin)/(others-pages)/content/collections/page";
 
 type LibraryTab =
   | "words"
@@ -22,9 +23,11 @@ type LibraryTab =
   | "sentences"
   | "proverbs"
   | "letters"
-  | "numbers";
+  | "numbers"
+  | "collections";
 
 const TABS: { key: LibraryTab; label: string }[] = [
+  { key: "collections", label: "Collections" },
   { key: "words", label: "Words" },
   { key: "phrases", label: "Phrases" },
   { key: "timePhrases", label: "Time Phrases" },
@@ -35,7 +38,7 @@ const TABS: { key: LibraryTab; label: string }[] = [
 ];
 
 export default function ContentLibraryPage() {
-  const [activeTab, setActiveTab] = useState<LibraryTab>("words");
+  const [activeTab, setActiveTab] = useState<LibraryTab>("collections");
 
   return (
     <div className="space-y-6">
@@ -75,6 +78,7 @@ export default function ContentLibraryPage() {
       {activeTab === "proverbs" && <ProverbsPage />}
       {activeTab === "letters" && <LettersPage />}
       {activeTab === "numbers" && <NumbersPage />}
+      {activeTab === "collections" && <CollectionsPage />}
     </div>
   );
 }
