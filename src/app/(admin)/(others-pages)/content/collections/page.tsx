@@ -3,6 +3,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { apiClient } from "@/lib/api";
+import FormModal from "@/components/admin/FormModal";
+import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
 
 type Language = { id: string; iso_639_3: string; name: string; native_name?: string };
 type Collection = { collection_key: string; title: string; status: string; is_active: boolean; item_count: number };
@@ -16,6 +18,8 @@ type Item = {
   translation?: string;
   translation_status?: string;
   image_url?: string;
+  audio_url?: string;
+  translation_audio_url?: string;
 };
 type Coverage = { iso_639_3: string; name: string; translated_items: number; total_items: number };
 
@@ -42,6 +46,7 @@ export default function CollectionsPage() {
   const [newTranslation, setNewTranslation] = useState("");
   const [newCategoryKey, setNewCategoryKey] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const loadCollections = useCallback(async () => {
     const [languageResponse, collectionResponse] = await Promise.all([
@@ -69,7 +74,6 @@ export default function CollectionsPage() {
   }, [selected, learningLanguage, translationLanguage]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadCollections().catch((reason) => setError(reason?.response?.data?.detail || "Could not load collections"))
       .finally(() => setLoading(false));
   }, [loadCollections]);
@@ -77,7 +81,6 @@ export default function CollectionsPage() {
   useEffect(() => {
     // The callback performs network synchronization and only updates state
     // after its awaited requests resolve.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadItems().catch((reason) => setError(reason?.response?.data?.detail || "Could not load collection items"));
   }, [loadItems]);
 
@@ -111,19 +114,33 @@ export default function CollectionsPage() {
   async function saveItem(event: React.FormEvent) {
     event.preventDefault();
     if (!editing) return;
-    await Promise.all([
-      apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${editing.concept_key}/terms`, {
-        language: learningLanguage, term: editLearningTerm, status: "published",
-      }),
-      apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${editing.concept_key}/terms`, {
-        language: translationLanguage, term: editTranslation, status: "published",
-      }),
-      editImageUrl ? apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${editing.concept_key}/image`, {
-        language: learningLanguage, asset_url: editImageUrl, alt_text: editTranslation,
-      }) : Promise.resolve(),
-    ]);
-    setEditing(null);
-    await loadItems();
+    setIsSaving(true);
+    setError("");
+    try {
+      await Promise.all([
+        apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${editing.concept_key}/terms`, {
+          language: learningLanguage,
+          term: editLearningTerm,
+          audio_url: editing.audio_url || null,
+          status: "published",
+        }),
+        apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${editing.concept_key}/terms`, {
+          language: translationLanguage,
+          term: editTranslation,
+          audio_url: editing.translation_audio_url || null,
+          status: "published",
+        }),
+        editImageUrl ? apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${editing.concept_key}/image`, {
+          language: learningLanguage, asset_url: editImageUrl, alt_text: editTranslation,
+        }) : Promise.resolve(),
+      ]);
+      setEditing(null);
+      await loadItems();
+    } catch (reason: any) {
+      setError(reason?.response?.data?.detail || "Could not update item");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function addItem(event: React.FormEvent) {
@@ -187,7 +204,7 @@ export default function CollectionsPage() {
       {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
       <div className="flex flex-wrap justify-end gap-2">
         {selectedCollection && <button onClick={() => toggleCollectionPublished().catch((reason) => setError(reason?.response?.data?.detail || "Could not update collection"))} className="rounded-lg border border-brand-500 px-4 py-2 text-sm font-medium text-brand-600 dark:text-brand-300">{selectedCollection.status === "published" ? "Return to draft" : "Publish collection"}</button>}
-        {selected && <button onClick={() => setShowAddItem((value) => !value)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium dark:border-gray-700">{showAddItem ? "Cancel item" : "New item"}</button>}
+        {selected && <button onClick={() => setShowAddItem((value) => !value)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-white">{showAddItem ? "Cancel item" : "New item"}</button>}
         <button onClick={() => setShowCreate((value) => !value)} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white">{showCreate ? "Cancel" : "New collection"}</button>
       </div>
       {showCreate && <form onSubmit={createCollection} className="grid gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 md:grid-cols-[1fr_2fr_auto]">
@@ -208,17 +225,17 @@ export default function CollectionsPage() {
       </form>}
       <div className="grid gap-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 md:grid-cols-3">
         <label className="text-sm text-gray-600 dark:text-gray-300">Collection
-          <select value={selected} onChange={(event) => setSelected(event.target.value)} className="mt-1 w-full rounded-lg border p-2 dark:border-gray-700 dark:bg-gray-950">
+          <select value={selected} onChange={(event) => setSelected(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
             {collections.map((collection) => <option key={collection.collection_key} value={collection.collection_key}>{collection.title} ({collection.item_count})</option>)}
           </select>
         </label>
         <label className="text-sm text-gray-600 dark:text-gray-300">Learning language
-          <select value={learningLanguage} onChange={(event) => setLearningLanguage(event.target.value)} className="mt-1 w-full rounded-lg border p-2 dark:border-gray-700 dark:bg-gray-950">
+          <select value={learningLanguage} onChange={(event) => setLearningLanguage(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
             {languages.map((language) => <option key={language.id} value={language.iso_639_3}>{language.name}</option>)}
           </select>
         </label>
         <label className="text-sm text-gray-600 dark:text-gray-300">Translation language
-          <select value={translationLanguage} onChange={(event) => setTranslationLanguage(event.target.value)} className="mt-1 w-full rounded-lg border p-2 dark:border-gray-700 dark:bg-gray-950">
+          <select value={translationLanguage} onChange={(event) => setTranslationLanguage(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
             {languages.map((language) => <option key={language.id} value={language.iso_639_3}>{language.name}</option>)}
           </select>
         </label>
@@ -226,7 +243,7 @@ export default function CollectionsPage() {
 
       {selectedCollection && (
         <div className="flex flex-wrap items-center gap-3 text-sm">
-          <span className="rounded-full bg-gray-100 px-3 py-1 dark:bg-gray-800">{selectedCollection.status}</span>
+          <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700 dark:bg-gray-800 dark:text-white">{selectedCollection.status}</span>
           {coverage.map((entry) => (
             <span key={entry.iso_639_3} className="rounded-full bg-brand-50 px-3 py-1 text-brand-700 dark:bg-brand-950/30 dark:text-brand-300">
               {entry.name}: {entry.translated_items}/{entry.total_items}
@@ -235,36 +252,59 @@ export default function CollectionsPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-white">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-900"><tr>
-              {['Order', 'Image', 'Concept', 'Learning term', 'Translation', 'Category', 'Status'].map((heading) => <th key={heading} className="px-4 py-3 text-left font-medium text-gray-500">{heading}</th>)}
+              {['Order', 'Image', 'Audio', 'Concept', 'Learning term', 'Translation', 'Category', 'Status'].map((heading) => <th key={heading} className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-300">{heading}</th>)}
             </tr></thead>
             <tbody className="divide-y divide-gray-100 bg-white dark:divide-gray-800 dark:bg-gray-950">
-              {items.map((item) => <tr key={item.id} onClick={() => startEditing(item)} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900">
+              {items.map((item) => <tr key={item.id} onClick={() => startEditing(item)} className="cursor-pointer text-gray-800 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-900">
                 <td className="px-4 py-3">{item.sort_order + 1}</td>
                 <td className="px-4 py-3">{item.image_url ? <Image src={item.image_url} alt="" width={48} height={48} unoptimized className="h-12 w-12 rounded-lg object-contain" /> : <span className="text-gray-400">Missing</span>}</td>
-                <td className="px-4 py-3 font-mono text-xs">{item.concept_key}</td>
+                <td className="px-4 py-3"><div onClick={(event) => event.stopPropagation()}><InlineAudioPlayer src={item.audio_url} size="md" /></div></td>
+                <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-300">{item.concept_key}</td>
                 <td className="px-4 py-3 font-medium">{item.learning_term || 'Missing'}</td>
                 <td className="px-4 py-3">{item.translation || 'Missing'}</td>
                 <td className="px-4 py-3">{item.category_key || '—'}</td>
                 <td className="px-4 py-3">{item.learning_status || 'missing'} / {item.translation_status || 'missing'}</td>
               </tr>)}
-              {!items.length && <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-500">No items for this language pair.</td></tr>}
+              {!items.length && <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-500">No items for this language pair.</td></tr>}
             </tbody>
           </table>
         </div>
       </div>
-      {editing && <form onSubmit={saveItem} className="space-y-3 rounded-xl border border-brand-200 bg-brand-50/30 p-4 dark:border-brand-900 dark:bg-brand-950/10">
-        <div className="flex items-center justify-between"><h3 className="font-semibold">Edit {editing.concept_key}</h3><button type="button" onClick={() => setEditing(null)} className="text-sm text-gray-500">Close</button></div>
-        <div className="grid gap-3 md:grid-cols-3">
-          <label className="text-sm">{learningLanguage} term<input required value={editLearningTerm} onChange={(event) => setEditLearningTerm(event.target.value)} className="mt-1 w-full rounded-lg border p-2 dark:border-gray-700 dark:bg-gray-950" /></label>
-          <label className="text-sm">{translationLanguage} translation<input required value={editTranslation} onChange={(event) => setEditTranslation(event.target.value)} className="mt-1 w-full rounded-lg border p-2 dark:border-gray-700 dark:bg-gray-950" /></label>
-          <label className="text-sm">Primary image URL<input value={editImageUrl} onChange={(event) => setEditImageUrl(event.target.value)} className="mt-1 w-full rounded-lg border p-2 dark:border-gray-700 dark:bg-gray-950" /></label>
-        </div>
-        <button className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white">Save and publish terms</button>
-      </form>}
+      <FormModal
+        isOpen={Boolean(editing)}
+        onClose={() => !isSaving && setEditing(null)}
+        onSubmit={saveItem}
+        title={`Edit ${editing?.translation || editing?.learning_term || "collection item"}`}
+        submitLabel="Save and publish"
+        size="lg"
+        isSubmitting={isSaving}
+      >
+        {editing && (
+          <>
+            <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-950">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white dark:bg-gray-900">
+                {editImageUrl ? <Image src={editImageUrl} alt={editTranslation || editLearningTerm} width={80} height={80} unoptimized className="h-full w-full object-contain" /> : <span className="text-xs text-gray-400">No image</span>}
+              </div>
+              <div className="min-w-0 space-y-2">
+                <p className="truncate font-mono text-xs text-gray-500 dark:text-gray-400">{editing.concept_key}</p>
+                <div className="flex items-center gap-3">
+                  <InlineAudioPlayer src={editing.audio_url} size="md" />
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Play {learningLanguage} pronunciation</span>
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{learningLanguage} term<input required value={editLearningTerm} onChange={(event) => setEditLearningTerm(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{translationLanguage} translation<input required value={editTranslation} onChange={(event) => setEditTranslation(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
+            </div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Primary image URL<input value={editImageUrl} onChange={(event) => setEditImageUrl(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
+          </>
+        )}
+      </FormModal>
     </div>
   );
 }
