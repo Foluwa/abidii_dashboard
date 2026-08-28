@@ -27,6 +27,17 @@ export interface AdminLoginResponse {
   user: User;
 }
 
+export interface AdminLoginChallengeResponse {
+  requires_2fa: true;
+  challenge_id: string;
+  expires_in: number;
+}
+
+export interface Admin2FAVerifyRequest {
+  challenge_id: string;
+  code: string;
+}
+
 export interface RefreshTokenRequest {
   refresh_token: string;
 }
