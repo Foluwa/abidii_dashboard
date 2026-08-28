@@ -73,7 +73,7 @@ function isHeartbeatStale(value?: string | null): boolean {
   return (Date.now() - then) / 1000 > STALE_AFTER_SECONDS;
 }
 
-function formatDate(value?: string | null) {
+export function formatDate(value?: string | null) {
   if (!value) return "-";
   try {
     return new Date(value).toLocaleString();
@@ -122,7 +122,7 @@ function statusClass(status?: string | null) {
   return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
 }
 
-function StatusPill({ status }: { status?: string | null }) {
+export function StatusPill({ status }: { status?: string | null }) {
   return (
     <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusClass(status)}`}>
       {status || "unknown"}
@@ -130,7 +130,7 @@ function StatusPill({ status }: { status?: string | null }) {
   );
 }
 
-function InlineError({ message }: { message: string }) {
+export function InlineError({ message }: { message: string }) {
   return (
     <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
       {message}
@@ -138,7 +138,7 @@ function InlineError({ message }: { message: string }) {
   );
 }
 
-function InlineSuccess({ message }: { message: string }) {
+export function InlineSuccess({ message }: { message: string }) {
   return (
     <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
       {message}
@@ -146,11 +146,11 @@ function InlineSuccess({ message }: { message: string }) {
   );
 }
 
-function LoadingBlock({ label = "Loading..." }: { label?: string }) {
+export function LoadingBlock({ label = "Loading..." }: { label?: string }) {
   return <div className="rounded-lg border border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">{label}</div>;
 }
 
-function SummaryCard({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
+export function SummaryCard({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</div>
@@ -160,7 +160,7 @@ function SummaryCard({ label, value, detail }: { label: string; value: string | 
   );
 }
 
-function Panel({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
+export function Panel({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <section className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
@@ -172,7 +172,7 @@ function Panel({ title, children, action }: { title: string; children: React.Rea
   );
 }
 
-function JsonPreview({ value }: { value: unknown }) {
+export function JsonPreview({ value }: { value: unknown }) {
   return (
     <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-gray-50 p-4 text-xs text-gray-700 dark:bg-gray-900 dark:text-gray-300">
       {JSON.stringify(value ?? {}, null, 2)}

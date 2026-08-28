@@ -158,6 +158,7 @@ export const mainNavigationItems: AdminNavItem[] = [
           { name: "Cron Jobs", path: "/system/cron", permission: "system:read" },
           { name: "Admin Jobs", path: "/admin/jobs", permission: "system:read" },
           { name: "ML Training", path: "/operations/ml-training", permission: "system:read" },
+          { name: "Candidate Review", path: "/operations/ml-training/candidate-manifests", permission: "system:read" },
         ],
       },
       {
