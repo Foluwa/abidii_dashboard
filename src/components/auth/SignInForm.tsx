@@ -2,12 +2,11 @@
 import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
-import Button from "@/components/ui/button/Button";
 import { EyeCloseIcon, EyeIcon } from "@/icons";
-import Link from "next/link";
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Alert from "@/components/ui/alert/SimpleAlert";
+import TwoFactorForm from "@/components/auth/TwoFactorForm";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -17,7 +16,7 @@ export default function SignInForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, verifyTwoFactor, pendingChallenge, clearTwoFactor } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,9 +33,27 @@ export default function SignInForm() {
     }
   };
 
+  const handleResend = async () => {
+    await login({ email, password });
+  };
+
+  const handleBack = () => {
+    clearTwoFactor();
+    setError(null);
+  };
+
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
+        {pendingChallenge ? (
+          <TwoFactorForm
+            email={email}
+            challenge={pendingChallenge}
+            onVerify={verifyTwoFactor}
+            onResend={handleResend}
+            onBack={handleBack}
+          />
+        ) : (
         <div>
           <div className="mb-5 sm:mb-8">
             <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
@@ -121,6 +138,7 @@ export default function SignInForm() {
             </form>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

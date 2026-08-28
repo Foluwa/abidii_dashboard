@@ -3,13 +3,22 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient, handleApiError } from '@/lib/api';
-import { User, UserRole, AdminLoginRequest, AdminLoginResponse, hasPermission } from '@/types/auth';
+import {
+  User,
+  AdminLoginRequest,
+  AdminLoginResponse,
+  AdminLoginChallengeResponse,
+  hasPermission,
+} from '@/types/auth';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: AdminLoginRequest) => Promise<void>;
+  pendingChallenge: AdminLoginChallengeResponse | null;
+  login: (credentials: AdminLoginRequest) => Promise<AdminLoginChallengeResponse | void>;
+  verifyTwoFactor: (code: string) => Promise<void>;
+  clearTwoFactor: () => void;
   logout: () => Promise<void>;
   checkPermission: (permission: string) => boolean;
   isAdmin: boolean;
@@ -24,6 +33,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  */
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [pendingChallenge, setPendingChallenge] = useState<AdminLoginChallengeResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
@@ -77,16 +87,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    */
   const login = async (credentials: AdminLoginRequest) => {
     try {
-      const response = await apiClient.post<AdminLoginResponse>(
+      const response = await apiClient.post<AdminLoginResponse | AdminLoginChallengeResponse>(
         '/api/v1/auth/admin/login',
         credentials
       );
+
+      if ('requires_2fa' in response.data) {
+        setPendingChallenge(response.data);
+        return response.data;
+      }
 
       // access_token/refresh_token are no longer in the body — the backend
       // already set them as httpOnly cookies via Set-Cookie before this
       // response resolved, and the browser attaches them automatically
       // from here on.
       authResolvedRef.current = true;
+      setPendingChallenge(null);
       setUser(response.data.user);
 
       // Hard navigation, not router.push: the access_token cookie was just
@@ -104,6 +120,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const verifyTwoFactor = async (code: string) => {
+    if (!pendingChallenge) {
+      throw new Error('Your verification session has expired. Please sign in again.');
+    }
+    try {
+      const response = await apiClient.post<AdminLoginResponse>(
+        '/api/v1/auth/admin/login/verify-2fa',
+        { challenge_id: pendingChallenge.challenge_id, code }
+      );
+      authResolvedRef.current = true;
+      setPendingChallenge(null);
+      setUser(response.data.user);
+      window.location.href = '/dashboard';
+    } catch (error) {
+      console.error('Two-factor verification error:', error);
+      throw new Error(handleApiError(error));
+    }
+  };
+
+  const clearTwoFactor = () => setPendingChallenge(null);
+
   /**
    * Logout function
    * Revokes the session server-side (so a captured cookie stops working
@@ -118,6 +155,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // cookie's already invalid/expired, which is the state we want anyway.
     } finally {
       setUser(null);
+      setPendingChallenge(null);
       window.location.href = '/signin';
     }
   };
@@ -135,12 +173,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     isAuthenticated: !!user,
     isLoading,
+    pendingChallenge,
     login,
+    verifyTwoFactor,
+    clearTwoFactor,
     logout,
     checkPermission,
     isAdmin: user?.role === 'admin',
     isManager: user?.role === 'manager',
-  }), [user, isLoading, login, logout, checkPermission]);
+  }), [
+    user,
+    isLoading,
+    pendingChallenge,
+    login,
+    verifyTwoFactor,
+    clearTwoFactor,
+    logout,
+    checkPermission,
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

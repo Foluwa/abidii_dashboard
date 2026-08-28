@@ -183,6 +183,7 @@ apiClient.interceptors.response.use(
 
     // Don't try to refresh token for login or refresh endpoints
     const isAuthEndpoint = originalRequest.url?.includes('/auth/admin/login') ||
+                          originalRequest.url?.includes('/auth/admin/login/verify-2fa') ||
                           originalRequest.url?.includes('/auth/admin/refresh');
     
     // ONLY refresh token on 401 Unauthorized (not 403, 422, or other errors)
