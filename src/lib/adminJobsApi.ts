@@ -71,6 +71,19 @@ export async function createAudioReconciliationJob() {
   return res.data;
 }
 
+export async function createQualityReviewJob(payload: {
+  manifest_id: string;
+  provider: 'gemini' | 'openai' | 'deepseek';
+  model?: string;
+  confidence_threshold?: number;
+  limit?: number;
+  dry_run?: boolean;
+  force?: boolean;
+}) {
+  const res = await apiClient.post<AdminJob>('/api/v1/admin/ml/quality-review-jobs', payload);
+  return res.data;
+}
+
 export type ContentLocalizationLocale = 'fr' | 'pt-BR';
 
 export type ContentLocalizationRow = {
