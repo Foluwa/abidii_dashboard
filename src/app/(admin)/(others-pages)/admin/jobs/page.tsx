@@ -25,6 +25,7 @@ const TYPE_OPTIONS = [
   "proverb_cleanup",
   "time_phrase_processing",
   "content_audio_reconciliation",
+  "quality_review",
 ];
 
 function formatDate(value?: string | null) {
