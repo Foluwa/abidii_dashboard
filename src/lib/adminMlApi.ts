@@ -442,3 +442,252 @@ export async function getVerifiedPromotionCollectionGaps(params?: {
   );
   return res.data;
 }
+
+// ---------------------------------------------------------------------------
+// DB-backed handwriting candidate review / promotion (newer replacement for
+// the JSONL-based verified-promotion pipeline above - both run in parallel
+// for now, see docs/ml/HANDWRITING_DATASET_REVIEW_VISION_PLAN.md)
+// ---------------------------------------------------------------------------
+
+export type HandwritingCandidateManifest = {
+  id: string;
+  language_code: string;
+  dataset_kind: string;
+  source: string;
+  source_prefix?: string | null;
+  status: string;
+  created_by?: string | null;
+  summary?: Record<string, unknown>;
+  created_at?: string | null;
+  updated_at?: string | null;
+  status_counts?: Record<string, number>;
+  per_class_counts?: Array<{
+    case_group: string | null;
+    label: string | null;
+    review_status: string;
+    count: number;
+  }>;
+};
+
+export type HandwritingCandidateManifestListResponse = {
+  items: HandwritingCandidateManifest[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type HandwritingCandidate = {
+  id: string;
+  manifest_id: string;
+  language_code: string;
+  source_type: string;
+  source_key: string;
+  candidate_key?: string | null;
+  image_hash?: string | null;
+  raw_label?: string | null;
+  suggested_label?: string | null;
+  suggested_case_group?: string | null;
+  final_label?: string | null;
+  final_case_group?: string | null;
+  review_status: "pending" | "approved" | "rejected";
+  review_notes?: string | null;
+  quality_flags?: Record<string, unknown>;
+  vision_status: "not_requested" | "queued" | "completed" | "failed" | "skipped";
+  vision_suggestion?: Record<string, unknown> | null;
+  vision_provider?: string | null;
+  vision_model?: string | null;
+  vision_confidence?: number | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export type HandwritingCandidateListResponse = {
+  items: HandwritingCandidate[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type HandwritingPromotionResult = {
+  manifest_id: string;
+  mode: "dry_run" | "apply";
+  status: "succeeded" | "blocked" | "failed";
+  valid: boolean;
+  apply_allowed: boolean;
+  target_prefix: string;
+  approved_count: number;
+  files_to_copy: Array<Record<string, unknown>>;
+  copied_count: number;
+  skipped_count: number;
+  failed_count: number;
+  validation_errors: Array<Record<string, unknown>>;
+  per_class_impact: Array<{
+    language_code: string;
+    case_group: string;
+    label: string;
+    class_id: string;
+    before: number;
+    would_add: number;
+    added: number;
+    after: number;
+  }>;
+  created_at?: string | null;
+  promotion_run_id: string;
+};
+
+export type HandwritingPromotionRun = {
+  id: string;
+  manifest_id: string;
+  mode: "dry_run" | "apply";
+  status: string;
+  target_prefix?: string | null;
+  files_to_copy?: number | null;
+  copied_count?: number | null;
+  skipped_count?: number | null;
+  failed_count?: number | null;
+  validation_errors: Array<Record<string, unknown>>;
+  per_class_impact: Array<Record<string, unknown>>;
+  result: Record<string, unknown>;
+  created_by?: string | null;
+  created_at?: string | null;
+};
+
+export async function listHandwritingCandidateManifests(params?: {
+  language_code?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const res = await apiClient.get<HandwritingCandidateManifestListResponse>(
+    `/api/v1/admin/ml/handwriting/candidate-manifests${buildQuery({
+      language_code: params?.language_code,
+      status: params?.status,
+      limit: params?.limit,
+      offset: params?.offset,
+    })}`
+  );
+  return res.data;
+}
+
+export async function getHandwritingCandidateManifest(manifestId: string) {
+  const res = await apiClient.get<HandwritingCandidateManifest>(
+    `/api/v1/admin/ml/handwriting/candidate-manifests/${manifestId}`
+  );
+  return res.data;
+}
+
+export async function createHandwritingCandidateManifest(payload: {
+  language_code?: "yor" | "eng";
+  source?: "drawings" | "dashboard_upload" | "r2_import" | "feedback" | "mixed";
+  source_prefix?: string;
+  dry_run?: boolean;
+  limit?: number;
+}) {
+  const res = await apiClient.post<Record<string, unknown>>(
+    "/api/v1/admin/ml/handwriting/candidate-manifests",
+    {
+      language_code: payload.language_code ?? "yor",
+      dataset_kind: "alphabet_handwriting",
+      source: payload.source ?? "drawings",
+      source_prefix: payload.source_prefix,
+      dry_run: payload.dry_run ?? true,
+      limit: payload.limit ?? 1000,
+    }
+  );
+  return res.data;
+}
+
+export async function listHandwritingCandidates(params: {
+  manifest_id?: string;
+  language_code?: string;
+  case_group?: string;
+  label?: string;
+  suggested_label?: string;
+  final_label?: string;
+  review_status?: string;
+  vision_status?: string;
+  source_type?: string;
+  conflict_only?: boolean;
+  duplicate_only?: boolean;
+  limit?: number;
+  offset?: number;
+}) {
+  const res = await apiClient.get<HandwritingCandidateListResponse>(
+    `/api/v1/admin/ml/handwriting/candidates${buildQuery({
+      manifest_id: params.manifest_id,
+      language_code: params.language_code,
+      case_group: params.case_group,
+      label: params.label,
+      suggested_label: params.suggested_label,
+      final_label: params.final_label,
+      review_status: params.review_status,
+      vision_status: params.vision_status,
+      source_type: params.source_type,
+      conflict_only: params.conflict_only,
+      duplicate_only: params.duplicate_only,
+      limit: params.limit,
+      offset: params.offset,
+    })}`
+  );
+  return res.data;
+}
+
+export async function updateHandwritingCandidate(
+  candidateId: string,
+  payload: {
+    review_status: "pending" | "approved" | "rejected";
+    final_label?: string;
+    final_case_group?: "LOWER_CASE" | "UPPER_CASE";
+    review_notes?: string;
+  }
+) {
+  const res = await apiClient.patch<HandwritingCandidate>(
+    `/api/v1/admin/ml/handwriting/candidates/${candidateId}`,
+    payload
+  );
+  return res.data;
+}
+
+export async function bulkUpdateHandwritingCandidates(payload: {
+  candidate_ids: string[];
+  review_status: "pending" | "approved" | "rejected";
+  review_notes?: string;
+}) {
+  const res = await apiClient.patch<{ updated: number; items: HandwritingCandidate[] }>(
+    "/api/v1/admin/ml/handwriting/candidates/bulk",
+    payload
+  );
+  return res.data;
+}
+
+export async function getHandwritingCandidatePreviewUrl(candidateId: string, expiresSeconds = 900) {
+  const res = await apiClient.get<{ candidate_id: string; source_key: string; preview_url: string; expires_seconds: number }>(
+    `/api/v1/admin/ml/handwriting/candidates/${candidateId}/preview${buildQuery({ expires_seconds: expiresSeconds })}`
+  );
+  return res.data;
+}
+
+export async function dryRunHandwritingPromotion(manifestId: string, targetPrefix?: string) {
+  const res = await apiClient.post<HandwritingPromotionResult>(
+    `/api/v1/admin/ml/handwriting/candidate-manifests/${manifestId}/promotions/dry-run`,
+    { target_prefix: targetPrefix }
+  );
+  return res.data;
+}
+
+export async function applyHandwritingPromotion(manifestId: string, confirmation: string, targetPrefix?: string) {
+  const res = await apiClient.post<HandwritingPromotionResult>(
+    `/api/v1/admin/ml/handwriting/candidate-manifests/${manifestId}/promotions/apply`,
+    { confirmation, target_prefix: targetPrefix }
+  );
+  return res.data;
+}
+
+export async function getHandwritingPromotionRun(promotionId: string) {
+  const res = await apiClient.get<HandwritingPromotionRun>(
+    `/api/v1/admin/ml/handwriting/promotions/${promotionId}`
+  );
+  return res.data;
+}
