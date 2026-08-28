@@ -691,3 +691,151 @@ export async function getHandwritingPromotionRun(promotionId: string) {
   );
   return res.data;
 }
+
+// ---------------------------------------------------------------------------
+// Vision-assisted labeling (suggests final_label/final_case_group for
+// candidates via an LLM vision provider - assist only, never auto-approves)
+// ---------------------------------------------------------------------------
+
+export type HandwritingVisionProvider = {
+  name: string;
+  enabled: boolean;
+  supports_image_input: boolean;
+  supports_batch: boolean;
+  default_model: string;
+  disabled_reason?: string | null;
+};
+
+export type HandwritingVisionCostEstimate = {
+  candidate_count: number;
+  estimated_cost: { currency: string; low: number; high: number };
+  provider: string;
+  model: string;
+  mode: "sync" | "batch";
+  requires_confirmation: boolean;
+  confirmation_text: string;
+  blocked: boolean;
+  blocked_reason?: string | null;
+};
+
+export type HandwritingVisionJobItem = {
+  id: string;
+  job_id: string;
+  candidate_id: string;
+  status: "queued" | "running" | "completed" | "failed" | "skipped";
+  parsed_suggestion?: Record<string, unknown> | null;
+  error_message?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export type HandwritingVisionJob = {
+  id: string;
+  provider: string;
+  model: string;
+  mode: "sync" | "batch";
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
+  manifest_id?: string | null;
+  request_count: number;
+  completed_count: number;
+  failed_count: number;
+  estimated_cost?: { currency: string; low: number; high: number };
+  provider_batch_id?: string | null;
+  error_message?: string | null;
+  created_by?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  completed_at?: string | null;
+  items?: HandwritingVisionJobItem[];
+};
+
+export type HandwritingVisionJobListResponse = {
+  items: HandwritingVisionJob[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export async function listHandwritingVisionProviders() {
+  const res = await apiClient.get<{ providers: HandwritingVisionProvider[] }>(
+    "/api/v1/admin/ml/handwriting/vision/providers"
+  );
+  return res.data;
+}
+
+export type VisionJobRequestPayload = {
+  provider: "openai" | "deepseek";
+  model: string;
+  manifest_id?: string;
+  candidate_ids?: string[];
+  filters?: Record<string, unknown>;
+  mode?: "sync" | "batch";
+  max_candidates?: number;
+  language_code?: "yor" | "eng";
+};
+
+export async function estimateHandwritingVisionJob(payload: VisionJobRequestPayload) {
+  const res = await apiClient.post<HandwritingVisionCostEstimate>(
+    "/api/v1/admin/ml/handwriting/vision/jobs/estimate",
+    payload
+  );
+  return res.data;
+}
+
+export async function createHandwritingVisionJob(payload: VisionJobRequestPayload & { confirmation?: string }) {
+  const res = await apiClient.post<{ job_id?: string; id?: string; status: string; candidate_count?: number; message?: string }>(
+    "/api/v1/admin/ml/handwriting/vision/jobs",
+    payload
+  );
+  return res.data;
+}
+
+export async function listHandwritingVisionJobs(params?: {
+  status?: string;
+  provider?: string;
+  manifest_id?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const res = await apiClient.get<HandwritingVisionJobListResponse>(
+    `/api/v1/admin/ml/handwriting/vision/jobs${buildQuery({
+      status: params?.status,
+      provider: params?.provider,
+      manifest_id: params?.manifest_id,
+      limit: params?.limit,
+      offset: params?.offset,
+    })}`
+  );
+  return res.data;
+}
+
+export async function getHandwritingVisionJob(jobId: string) {
+  const res = await apiClient.get<HandwritingVisionJob>(`/api/v1/admin/ml/handwriting/vision/jobs/${jobId}`);
+  return res.data;
+}
+
+export async function cancelHandwritingVisionJob(jobId: string) {
+  const res = await apiClient.post<Record<string, unknown>>(`/api/v1/admin/ml/handwriting/vision/jobs/${jobId}/cancel`);
+  return res.data;
+}
+
+export async function pollHandwritingVisionJob(jobId: string) {
+  const res = await apiClient.post<Record<string, unknown>>(`/api/v1/admin/ml/handwriting/vision/jobs/${jobId}/poll`);
+  return res.data;
+}
+
+export async function suggestHandwritingCandidateLabel(candidateId: string, payload?: { provider?: string; model?: string }) {
+  const res = await apiClient.post<Record<string, unknown>>(
+    `/api/v1/admin/ml/handwriting/candidates/${candidateId}/vision-suggestion`,
+    payload || {}
+  );
+  return res.data;
+}
+
+export async function applyHandwritingCandidateSuggestion(candidateId: string, accept: boolean) {
+  const res = await apiClient.post<Record<string, unknown>>(
+    `/api/v1/admin/ml/handwriting/candidates/${candidateId}/vision-suggestion/apply`,
+    { accept }
+  );
+  return res.data;
+}

@@ -99,7 +99,12 @@ export function MLHandwritingCandidateManifestsPage() {
             individually or in bulk, then promotes approved candidates straight into <code>datasets/training/</code>.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
+        <div className="flex gap-2">
+          <Link href="/operations/ml-training/vision-jobs">
+            <Button variant="outline" size="sm">Vision Jobs</Button>
+          </Link>
+          <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
+        </div>
       </div>
       {error ? <InlineError message={error} /> : null}
 
