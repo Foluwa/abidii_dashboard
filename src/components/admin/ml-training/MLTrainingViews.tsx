@@ -37,6 +37,7 @@ import {
   type VerifiedPromotionReadinessResponse,
   validateVerifiedPromotionManifest,
 } from "@/lib/adminMlApi";
+import { createQualityReviewJob } from "@/lib/adminJobsApi";
 
 const PAGE_SIZE = 20;
 
@@ -962,6 +963,7 @@ function CandidatePreview({ manifestId, candidate }: { manifestId: string; candi
 }
 
 export function MLVerifiedPromotionManifestDetailPage() {
+  const toast = useToast();
   const params = useParams<{ id: string }>();
   const manifestId = String(params?.id || "");
   const [manifest, setManifest] = useState<VerifiedPromotionManifest | null>(null);
@@ -978,6 +980,10 @@ export function MLVerifiedPromotionManifestDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [report, setReport] = useState<Record<string, unknown> | null>(null);
+  const [reviewProvider, setReviewProvider] = useState<"gemini" | "openai" | "deepseek">("openai");
+  const [reviewLimit, setReviewLimit] = useState("");
+  const [reviewDryRun, setReviewDryRun] = useState(false);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const limit = 25;
 
   const refresh = useCallback(async () => {
@@ -1047,6 +1053,25 @@ export function MLVerifiedPromotionManifestDetailPage() {
     }
   }, [manifestId, refresh]);
 
+  const runQualityReview = useCallback(async () => {
+    setReviewSubmitting(true);
+    try {
+      const job = await createQualityReviewJob({
+        manifest_id: manifestId,
+        provider: reviewProvider,
+        limit: reviewLimit ? Number(reviewLimit) : undefined,
+        dry_run: reviewDryRun,
+      });
+      toast.success(
+        `Quality review job queued (${job.id.slice(0, 8)}...) - watch progress on the Admin Jobs page.`
+      );
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail?.message ?? err?.message ?? "Unable to queue quality review job.");
+    } finally {
+      setReviewSubmitting(false);
+    }
+  }, [manifestId, reviewDryRun, reviewLimit, reviewProvider, toast]);
+
   return (
     <div className="space-y-6 p-6">
       <PageBreadCrumb pageTitle="Verified Manifest Review" />
@@ -1077,6 +1102,39 @@ export function MLVerifiedPromotionManifestDetailPage() {
           <Button size="sm" onClick={() => void runPanelAction("apply")}>Apply Approved Promotion</Button>
         </div>
         {report ? <div className="mt-4"><JsonPreview value={report} /></div> : null}
+      </Panel>
+      <Panel title="AI Quality Review">
+        <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+          Runs a tiered AI review over this manifest&apos;s pending candidates - auto-approves
+          high-confidence matches, auto-rejects clear garbage, leaves everything else pending
+          for you to review below. Runs as a background job; watch progress on the{" "}
+          <Link href="/admin/jobs" className="text-brand-500 hover:underline">Admin Jobs page</Link>.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <StyledSelect
+            value={reviewProvider}
+            onChange={(event) => setReviewProvider(event.target.value as "gemini" | "openai" | "deepseek")}
+            options={[
+              { value: "openai", label: "openai" },
+              { value: "gemini", label: "gemini" },
+              { value: "deepseek", label: "deepseek" },
+            ]}
+          />
+          <input
+            value={reviewLimit}
+            onChange={(event) => setReviewLimit(event.target.value.replace(/\D/g, ""))}
+            placeholder="Limit (optional)"
+            inputMode="numeric"
+            className="w-40 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+          />
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <input type="checkbox" checked={reviewDryRun} onChange={(event) => setReviewDryRun(event.target.checked)} />
+            Dry-run (report only, no manifest changes)
+          </label>
+          <Button size="sm" onClick={() => void runQualityReview()} disabled={reviewSubmitting}>
+            {reviewSubmitting ? "Queuing..." : "Run Quality Review"}
+          </Button>
+        </div>
       </Panel>
       <Panel title="Candidates">
         <div className="mb-4 flex flex-wrap gap-3">
