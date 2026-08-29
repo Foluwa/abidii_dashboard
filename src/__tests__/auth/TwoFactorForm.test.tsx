@@ -28,9 +28,11 @@ describe("TwoFactorForm", () => {
       />
     );
 
-    const input = screen.getByLabelText("Verification code");
-    await user.type(input, "12x34567");
-    expect(input).toHaveValue("123456");
+    const firstDigit = screen.getByLabelText("Digit 1 of 6");
+    await user.type(firstDigit, "12x34567");
+    for (let i = 0; i < 6; i += 1) {
+      expect(screen.getByLabelText(`Digit ${i + 1} of 6`)).toHaveValue(String(i + 1));
+    }
     await user.click(screen.getByRole("button", { name: "Verify and sign in" }));
     await waitFor(() => expect(onVerify).toHaveBeenCalledWith("123456"));
   });
