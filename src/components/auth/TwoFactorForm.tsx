@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Alert from "@/components/ui/alert/SimpleAlert";
 import { AdminLoginChallengeResponse } from "@/types/auth";
+
+const OTP_LENGTH = 6;
 
 interface TwoFactorFormProps {
   email: string;
@@ -24,10 +26,12 @@ export default function TwoFactorForm({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   useEffect(() => {
     setSecondsLeft(challenge.expires_in);
     setCode("");
+    inputRefs.current[0]?.focus();
     const timer = window.setInterval(() => {
       setSecondsLeft((current) => {
         if (current <= 1) {
@@ -56,6 +60,56 @@ export default function TwoFactorForm({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const setDigit = (index: number, digit: string) => {
+    const digits = code.padEnd(OTP_LENGTH, " ").split("");
+    digits[index] = digit;
+    setCode(digits.join("").trimEnd());
+  };
+
+  const handleDigitChange = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value.replace(/\D/g, "");
+    if (!value) {
+      setDigit(index, "");
+      return;
+    }
+    const chars = value.split("");
+    const digits = code.padEnd(OTP_LENGTH, " ").split("");
+    let cursor = index;
+    for (const char of chars) {
+      if (cursor >= OTP_LENGTH) break;
+      digits[cursor] = char;
+      cursor += 1;
+    }
+    setCode(digits.join("").trimEnd());
+    const next = Math.min(cursor, OTP_LENGTH - 1);
+    inputRefs.current[next]?.focus();
+  };
+
+  const handleDigitKeyDown = (index: number, event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Backspace") {
+      if (code[index]) {
+        setDigit(index, "");
+      } else if (index > 0) {
+        setDigit(index - 1, "");
+        inputRefs.current[index - 1]?.focus();
+      }
+      event.preventDefault();
+    } else if (event.key === "ArrowLeft" && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+      event.preventDefault();
+    } else if (event.key === "ArrowRight" && index < OTP_LENGTH - 1) {
+      inputRefs.current[index + 1]?.focus();
+      event.preventDefault();
+    }
+  };
+
+  const handleDigitPaste = (index: number, event: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = event.clipboardData.getData("text").replace(/\D/g, "");
+    if (!pasted) return;
+    event.preventDefault();
+    handleDigitChange(index, { target: { value: pasted } } as React.ChangeEvent<HTMLInputElement>);
   };
 
   const handleResend = async () => {
@@ -91,22 +145,31 @@ export default function TwoFactorForm({
 
       <form onSubmit={handleVerify} className="space-y-6">
         <div>
-          <label htmlFor="admin-2fa-code" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span id="admin-2fa-label" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             Verification code
-          </label>
-          <input
-            id="admin-2fa-code"
-            value={code}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="[0-9]{6}"
-            maxLength={6}
-            autoFocus
-            disabled={isLoading || secondsLeft === 0}
-            className="h-14 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-center font-mono text-2xl tracking-[0.45em] text-gray-800 outline-none transition focus:border-brand-500 focus:ring-3 focus:ring-brand-500/10 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-            aria-describedby="admin-2fa-expiry"
-          />
+          </span>
+          <div role="group" aria-labelledby="admin-2fa-label" className="flex justify-between gap-2">
+            {Array.from({ length: OTP_LENGTH }).map((_, index) => (
+              <input
+                key={index}
+                ref={(el) => {
+                  inputRefs.current[index] = el;
+                }}
+                value={code[index] ?? ""}
+                onChange={(event) => handleDigitChange(index, event)}
+                onKeyDown={(event) => handleDigitKeyDown(index, event)}
+                onPaste={(event) => handleDigitPaste(index, event)}
+                inputMode="numeric"
+                autoComplete={index === 0 ? "one-time-code" : "off"}
+                maxLength={1}
+                autoFocus={index === 0}
+                disabled={isLoading || secondsLeft === 0}
+                aria-label={`Digit ${index + 1} of ${OTP_LENGTH}`}
+                aria-describedby="admin-2fa-expiry"
+                className="h-14 w-full rounded-lg border border-gray-300 bg-transparent text-center font-mono text-2xl text-gray-800 outline-none transition focus:border-brand-500 focus:ring-3 focus:ring-brand-500/10 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+              />
+            ))}
+          </div>
           <p id="admin-2fa-expiry" className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
             {secondsLeft > 0 ? `Code expires in ${minutes}:${seconds}` : "This code has expired. Resend a new code."}
           </p>

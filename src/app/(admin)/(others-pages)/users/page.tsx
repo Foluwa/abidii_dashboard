@@ -54,7 +54,7 @@ const countryName = (code: string) => {
 
 function UserAvatar({ user, size = "w-10 h-10" }: { user: any; size?: string }) {
   const [failed, setFailed] = useState(false);
-  const source = cleanSvgForDisplay(user.avatar_svg) || user.picture_url || null;
+  const source = cleanSvgForDisplay(user.avatar_svg) || null;
   const label = user.display_name || user.email || "User";
 
   if (source && !failed) {
