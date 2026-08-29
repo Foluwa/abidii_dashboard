@@ -214,6 +214,8 @@ export function useUsers(filters?: {
   max_xp?: number;
   last_login_after?: string;
   last_login_before?: string;
+  sort_by?: "created_at" | "last_active_at";
+  sort_order?: "asc" | "desc";
 }) {
   const params = new URLSearchParams();
   if (filters?.page) params.append('page', filters.page.toString());
@@ -230,6 +232,8 @@ export function useUsers(filters?: {
   if (filters?.max_xp !== undefined) params.append('max_xp', filters.max_xp.toString());
   if (filters?.last_login_after) params.append('last_login_after', filters.last_login_after);
   if (filters?.last_login_before) params.append('last_login_before', filters.last_login_before);
+  if (filters?.sort_by) params.append('sort_by', filters.sort_by);
+  if (filters?.sort_order) params.append('sort_order', filters.sort_order);
 
   const url = `/api/v1/admin/users?${params.toString()}`;
 
