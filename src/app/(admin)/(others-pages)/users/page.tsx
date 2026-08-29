@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useUsers, useLanguages } from "@/hooks/useApi";
+import { useUsers, useLanguages, useUserCountries } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api";
 import type { UserRole } from "@/types/auth";
@@ -12,6 +12,8 @@ import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import Pagination from "@/components/tables/Pagination";
 import Link from "next/link";
 import { FaApple, FaGoogle, FaGlobe, FaMobileAlt } from "react-icons/fa";
+import { FiEye, FiTrash2, FiUserCheck, FiUserX } from "react-icons/fi";
+import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
 
 type TabRole = "all" | UserRole;
 type ActionType = "deactivate" | "reactivate" | "delete" | "purge";
@@ -29,9 +31,49 @@ const APP_LANGUAGE_OPTIONS = [
 ];
 
 interface ActionConfirm {
-  userId: number;
+  userId: string;
   action: ActionType;
   userName: string;
+}
+
+type SortOption = "created_desc" | "created_asc" | "active_desc" | "active_asc";
+
+const toDateBoundary = (value: string, endOfDay = false) => {
+  if (!value) return undefined;
+  const time = endOfDay ? "23:59:59.999" : "00:00:00.000";
+  return new Date(`${value}T${time}`).toISOString();
+};
+
+const countryName = (code: string) => {
+  try {
+    return new Intl.DisplayNames(["en"], { type: "region" }).of(code) || code;
+  } catch {
+    return code;
+  }
+};
+
+function UserAvatar({ user, size = "w-10 h-10" }: { user: any; size?: string }) {
+  const [failed, setFailed] = useState(false);
+  const source = cleanSvgForDisplay(user.avatar_svg) || user.picture_url || null;
+  const label = user.display_name || user.email || "User";
+
+  if (source && !failed) {
+    return (
+      <img
+        src={source}
+        alt={`${label} avatar`}
+        className={`${size} rounded-full object-cover bg-gray-100 dark:bg-gray-700`}
+        referrerPolicy="no-referrer"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <div className={`${size} rounded-full ${getAvatarColor(user.id || label)} flex items-center justify-center`}>
+      <span className="font-semibold text-sm text-white">{getInitials(label)}</span>
+    </div>
+  );
 }
 
 export default function UsersPage() {
@@ -45,13 +87,14 @@ export default function UsersPage() {
   // Advanced filters
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [providerFilter, setProviderFilter] = useState<string>("all");
+  const [countryFilter, setCountryFilter] = useState<string>("all");
   const [languageFilter, setLanguageFilter] = useState<string>("all");
   const [appLanguageFilter, setAppLanguageFilter] = useState<string>("all");
   const [minXp, setMinXp] = useState<string>("");
   const [maxXp, setMaxXp] = useState<string>("");
   const [lastLoginAfter, setLastLoginAfter] = useState<string>("");
   const [lastLoginBefore, setLastLoginBefore] = useState<string>("");
-  const [sortBy, setSortBy] = useState<"created_at" | "last_active_at">("created_at");
+  const [sortOption, setSortOption] = useState<SortOption>("created_desc");
   const [showFilters, setShowFilters] = useState(false);
   
   // Action confirmation modal
@@ -61,10 +104,15 @@ export default function UsersPage() {
   const role = activeTab === "all" ? undefined : activeTab;
   const isActive = statusFilter === "all" ? undefined : statusFilter === "active";
   const provider = providerFilter === "all" ? undefined : providerFilter;
+  const countryCode = countryFilter === "all" ? undefined : countryFilter;
   const languageCode = languageFilter === "all" ? undefined : languageFilter;
   const uiLocale = appLanguageFilter === "all" ? undefined : appLanguageFilter;
   const debouncedSearch = useDebounce(search, 300);
   const { languages } = useLanguages();
+  const { countries } = useUserCountries();
+  const [sortBy, sortOrder] = sortOption.startsWith("active")
+    ? (["last_active_at", sortOption.endsWith("asc") ? "asc" : "desc"] as const)
+    : (["created_at", sortOption.endsWith("asc") ? "asc" : "desc"] as const);
 
   const { users, isLoading, isError, refresh } = useUsers({
     search: debouncedSearch,
@@ -73,14 +121,15 @@ export default function UsersPage() {
     limit,
     is_active: isActive,
     provider,
+    country_code: countryCode,
     language_code: languageCode,
     ui_locale: uiLocale,
     min_xp: minXp ? parseInt(minXp) : undefined,
     max_xp: maxXp ? parseInt(maxXp) : undefined,
-    last_login_after: lastLoginAfter ? new Date(lastLoginAfter).toISOString() : undefined,
-    last_login_before: lastLoginBefore ? new Date(lastLoginBefore).toISOString() : undefined,
+    last_login_after: toDateBoundary(lastLoginAfter),
+    last_login_before: toDateBoundary(lastLoginBefore, true),
     sort_by: sortBy,
-    sort_order: "desc",
+    sort_order: sortOrder,
   });
 
   const totalPages = users ? Math.max(1, Math.ceil(users.total / limit)) : 1;
@@ -331,6 +380,24 @@ export default function UsersPage() {
             />
 
             <StyledSelect
+              label="Country"
+              value={countryFilter}
+              onChange={(e) => {
+                setCountryFilter(e.target.value);
+                setPage(1);
+              }}
+              options={[
+                { value: "all", label: "All Countries" },
+                ...[...(countries || [])]
+                  .sort((a: any, b: any) => countryName(a.country_code).localeCompare(countryName(b.country_code)))
+                  .map((item: any) => ({
+                    value: item.country_code,
+                    label: `${countryFlag(item.country_code) || ""} ${countryName(item.country_code)} (${item.count})`.trim(),
+                  })),
+              ]}
+            />
+
+            <StyledSelect
               label="Language"
               value={languageFilter}
               onChange={(e) => {
@@ -361,14 +428,16 @@ export default function UsersPage() {
 
             <StyledSelect
               label="Sort By"
-              value={sortBy}
+              value={sortOption}
               onChange={(e) => {
-                setSortBy(e.target.value as "created_at" | "last_active_at");
+                setSortOption(e.target.value as SortOption);
                 setPage(1);
               }}
               options={[
-                { value: "created_at", label: "Newest Signups" },
-                { value: "last_active_at", label: "Most Recently Seen" },
+                { value: "active_desc", label: "Most Recently Seen" },
+                { value: "active_asc", label: "Least Recently Seen" },
+                { value: "created_desc", label: "Newest Signups" },
+                { value: "created_asc", label: "Oldest Signups" },
               ]}
             />
 
@@ -467,11 +536,14 @@ export default function UsersPage() {
                     setSearch("");
                     setStatusFilter("all");
                     setProviderFilter("all");
+                    setCountryFilter("all");
+                    setLanguageFilter("all");
                     setAppLanguageFilter("all");
                     setMinXp("");
                     setMaxXp("");
                     setLastLoginAfter("");
                     setLastLoginBefore("");
+                    setSortOption("created_desc");
                     setActiveTab("all");
                     setPage(1);
                   }}
@@ -540,19 +612,7 @@ export default function UsersPage() {
                           <div className="flex items-center gap-3">
                             {/* Avatar */}
                             <div className="flex-shrink-0">
-                              {user.avatar_svg ? (
-                                <img 
-                                  src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(user.avatar_svg)}`}
-                                  alt={user.display_name || "User avatar"}
-                                  className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-900 flex items-center justify-center">
-                                  <span className="text-brand-600 dark:text-brand-400 font-medium text-sm">
-                                    {(user.display_name || user.email || "U").charAt(0).toUpperCase()}
-                                  </span>
-                                </div>
-                              )}
+                              <UserAvatar user={user} />
                             </div>
                             {/* Name and Email */}
                             <div>
@@ -663,31 +723,39 @@ export default function UsersPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end gap-2">
                             <Link
-                              href={`/community/users/${user.id}`}
-                              className="text-brand-600 hover:text-brand-900 dark:text-brand-400 dark:hover:text-brand-300"
+                              href={`/users/${user.id}`}
+                              aria-label={`View ${user.display_name || user.email || "user"}`}
+                              title="View user"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-600 hover:bg-brand-50 hover:text-brand-900 dark:text-brand-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-300"
                             >
-                              View
+                              <FiEye className="h-5 w-5" aria-hidden="true" />
                             </Link>
                             {user.is_active ? (
                               <button
                                 onClick={() => setActionConfirm({ userId: user.id, action: "deactivate", userName: user.display_name || user.email })}
-                                className="text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300"
+                                aria-label={`Deactivate ${user.display_name || user.email || "user"}`}
+                                title="Deactivate user"
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-orange-600 hover:bg-orange-50 hover:text-orange-900 dark:text-orange-400 dark:hover:bg-orange-900/30 dark:hover:text-orange-300"
                               >
-                                Deactivate
+                                <FiUserX className="h-5 w-5" aria-hidden="true" />
                               </button>
                             ) : (
                               <button
                                 onClick={() => setActionConfirm({ userId: user.id, action: "reactivate", userName: user.display_name || user.email })}
-                                className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                                aria-label={`Reactivate ${user.display_name || user.email || "user"}`}
+                                title="Reactivate user"
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-green-600 hover:bg-green-50 hover:text-green-900 dark:text-green-400 dark:hover:bg-green-900/30 dark:hover:text-green-300"
                               >
-                                Reactivate
+                                <FiUserCheck className="h-5 w-5" aria-hidden="true" />
                               </button>
                             )}
                             <button
                               onClick={() => setActionConfirm({ userId: user.id, action: "delete", userName: user.display_name || user.email })}
-                              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                              aria-label={`Delete ${user.display_name || user.email || "user"}`}
+                              title="Delete user"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-600 hover:bg-red-50 hover:text-red-900 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                             >
-                              Delete
+                              <FiTrash2 className="h-5 w-5" aria-hidden="true" />
                             </button>
                           </div>
                         </td>
@@ -695,7 +763,7 @@ export default function UsersPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={10} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={11} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                         No users found
                       </td>
                     </tr>
