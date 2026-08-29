@@ -19,6 +19,7 @@ import {
   formatDate,
 } from "./MLTrainingViews";
 import {
+  applyHandwritingCandidateSuggestion,
   applyHandwritingPromotion,
   bulkUpdateHandwritingCandidates,
   createHandwritingCandidateManifest,
@@ -27,6 +28,7 @@ import {
   getHandwritingCandidatePreviewUrl,
   listHandwritingCandidateManifests,
   listHandwritingCandidates,
+  suggestHandwritingCandidateLabel,
   updateHandwritingCandidate,
   type HandwritingCandidate,
   type HandwritingCandidateManifest,
@@ -219,6 +221,87 @@ function CandidateImagePreview({ candidate }: { candidate: HandwritingCandidate 
           {loading ? "Loading..." : "Preview"}
         </button>
       )}
+    </div>
+  );
+}
+
+function parseSuggestionResponse(response: Record<string, unknown>): {
+  caseGroup?: string;
+  label?: string;
+  confidence?: number;
+} {
+  const suggestion = (response.suggestion as Record<string, unknown>) || response;
+  return {
+    caseGroup: (suggestion.case_group as string) ?? (suggestion.suggested_case_group as string) ?? undefined,
+    label: (suggestion.predicted_label as string) ?? (suggestion.label as string) ?? (suggestion.suggested_label as string) ?? undefined,
+    confidence: (suggestion.confidence as number) ?? (suggestion.vision_confidence as number) ?? undefined,
+  };
+}
+
+function CandidateVisionSuggestion({
+  candidate,
+  onApplied,
+}: {
+  candidate: HandwritingCandidate;
+  onApplied: () => Promise<void> | void;
+}) {
+  const toast = useToast();
+  const [suggestion, setSuggestion] = useState<{ caseGroup?: string; label?: string; confidence?: number } | null>(
+    candidate.suggested_label
+      ? { caseGroup: candidate.suggested_case_group ?? undefined, label: candidate.suggested_label, confidence: candidate.vision_confidence ?? undefined }
+      : null
+  );
+  const [loading, setLoading] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const requestSuggestion = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await suggestHandwritingCandidateLabel(candidate.id);
+      setSuggestion(parseSuggestionResponse(response));
+    } catch (err: any) {
+      setError(err?.response?.data?.detail?.message ?? err?.message ?? "Unable to fetch vision suggestion.");
+    } finally {
+      setLoading(false);
+    }
+  }, [candidate.id]);
+
+  const apply = useCallback(
+    async (accept: boolean) => {
+      setApplying(true);
+      setError(null);
+      try {
+        await applyHandwritingCandidateSuggestion(candidate.id, accept);
+        toast.success(accept ? "Suggestion applied to final label." : "Suggestion rejected.");
+        setSuggestion(null);
+        await onApplied();
+      } catch (err: any) {
+        setError(err?.response?.data?.detail?.message ?? err?.message ?? "Unable to apply suggestion.");
+      } finally {
+        setApplying(false);
+      }
+    },
+    [candidate.id, onApplied, toast]
+  );
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      <Button size="sm" variant="outline" onClick={() => void requestSuggestion()} disabled={loading}>
+        {loading ? "Requesting..." : "Get Vision Suggestion"}
+      </Button>
+      {suggestion ? (
+        <>
+          <span className="text-sm text-gray-700 dark:text-gray-300">
+            suggests: {suggestion.caseGroup || "-"} / {suggestion.label || "-"}
+            {suggestion.confidence != null ? ` (${(suggestion.confidence * 100).toFixed(0)}%)` : ""}
+          </span>
+          <Button size="sm" variant="outline" onClick={() => void apply(true)} disabled={applying}>Accept</Button>
+          <Button size="sm" variant="outline" onClick={() => void apply(false)} disabled={applying}>Reject</Button>
+        </>
+      ) : null}
+      {error ? <span className="text-xs text-error-500">{error}</span> : null}
     </div>
   );
 }
@@ -434,12 +517,7 @@ export function MLHandwritingCandidateManifestDetailPage() {
                     {candidate.vision_status !== "not_requested" ? <StatusPill status={`vision:${candidate.vision_status}`} /> : null}
                   </div>
                   <div className="mt-2 break-all text-xs text-gray-500 dark:text-gray-400">{candidate.source_key}</div>
-                  {candidate.suggested_label ? (
-                    <div className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                      vision suggestion: {candidate.suggested_case_group} / {candidate.suggested_label}
-                      {candidate.vision_confidence != null ? ` (${(candidate.vision_confidence * 100).toFixed(0)}%)` : ""}
-                    </div>
-                  ) : null}
+                  <CandidateVisionSuggestion candidate={candidate} onApplied={refresh} />
                 </div>
                 <div className="flex shrink-0 flex-row gap-2 md:flex-col">
                   <Button size="sm" variant="outline" onClick={() => void updateVisible("approved", [candidate.id])}>Approve</Button>
