@@ -138,11 +138,16 @@ export interface UserListItem {
   email: string | null;
   display_name: string | null;
   role: 'admin' | 'manager' | 'user';
+  provider?: string | null;
+  picture_url?: string | null;
+  avatar_svg?: string | null;
+  avatar_config?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
   last_login?: string;
   last_login_at?: string | null;
   last_request_at?: string | null;
+  last_active_at?: string | null;
   last_activity_date?: string | null;
   is_active?: boolean;
   device_platform?: string | null;
@@ -152,6 +157,9 @@ export interface UserListItem {
   device_id?: string | null;
   last_ip_address?: string | null;
   country_code?: string | null;
+  total_xp?: number;
+  current_level?: number;
+  current_streak?: number;
 
   // Learning language (content being studied) - distinct from ui_locale below.
   current_language_code?: string | null;
@@ -175,8 +183,6 @@ export interface UserListItem {
 }
 
 export interface UserDetail extends UserListItem {
-  picture_url: string | null;
-  avatar_config: Record<string, unknown> | null;
   total_xp: number;
   current_level: number;
   current_streak: number;
