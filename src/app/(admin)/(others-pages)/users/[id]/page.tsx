@@ -9,6 +9,7 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import ConfirmationModal from "@/components/modals/ConfirmationModal";
 import { apiClient, handleApiError } from "@/lib/api";
 import type { UserRole } from "@/types/auth";
+import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
 
 type ModalType = "deactivate" | "reactivate" | "delete" | "purge" | null;
 type DailyActivity = {
@@ -156,6 +157,7 @@ export default function UserDetailPage() {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [avatarFailed, setAvatarFailed] = useState(false);
 
   const getRoleBadgeStatus = (userRole: UserRole) => {
     switch (userRole) {
@@ -274,7 +276,10 @@ export default function UserDetailPage() {
   }
 
   const lastRequestAt =
-    user.last_request_at === undefined ? user.last_login_at : user.last_request_at;
+    user.last_active_at ??
+    (user.last_request_at === undefined ? user.last_login_at : user.last_request_at);
+  const avatarSource = cleanSvgForDisplay(user.avatar_svg) || user.picture_url || null;
+  const avatarLabel = user.display_name || user.email || "User";
 
   return (
     <div className="space-y-6">
@@ -341,9 +346,27 @@ export default function UserDetailPage() {
       {/* User Info Card */}
       <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
         <div className="flex items-start justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            User Information
-          </h3>
+          <div className="flex items-center gap-3">
+            {avatarSource && !avatarFailed ? (
+              <img
+                src={avatarSource}
+                alt={`${avatarLabel} avatar`}
+                className="h-12 w-12 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
+                referrerPolicy="no-referrer"
+                onError={() => setAvatarFailed(true)}
+              />
+            ) : (
+              <div className={`h-12 w-12 rounded-full ${getAvatarColor(user.id || avatarLabel)} flex items-center justify-center`}>
+                <span className="font-semibold text-white">{getInitials(avatarLabel)}</span>
+              </div>
+            )}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                User Information
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{avatarLabel}</p>
+            </div>
+          </div>
           <div className="flex gap-2">
             <StatusBadge status={getRoleBadgeStatus(user.role)} label={user.role} />
             <StatusBadge status={user.is_active ? "success" : "error"} 
@@ -385,6 +408,15 @@ export default function UserDetailPage() {
             </label>
             <p className="text-base text-gray-900 dark:text-white">
               {user.current_language_name || "Unknown"}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Country
+            </label>
+            <p className="text-base text-gray-900 dark:text-white uppercase">
+              {user.country_code || "Unknown"}
             </p>
           </div>
 
