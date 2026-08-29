@@ -23,6 +23,11 @@ const mockUseUsers = jest.fn();
 jest.mock('@/hooks/useApi', () => ({
   useUsers: (filters: unknown) => mockUseUsers(filters),
   useLanguages: () => ({ languages: [{ iso_639_3: 'yor', name: 'Yoruba' }] }),
+  useUserCountries: () => ({
+    countries: [{ country_code: 'NG', count: 2 }],
+    isLoading: false,
+    isError: false,
+  }),
 }));
 
 jest.mock('@/lib/api', () => ({
@@ -44,7 +49,7 @@ const sampleUsers = {
   offset: 0,
   users: [
     {
-      id: 1,
+      id: '00000000-0000-0000-0000-000000000001',
       email: 'user1@test.com',
       display_name: 'User One',
       role: 'user',
@@ -55,7 +60,7 @@ const sampleUsers = {
       ui_locale_name: 'Yorùbá',
     },
     {
-      id: 2,
+      id: '00000000-0000-0000-0000-000000000002',
       email: 'user2@test.com',
       display_name: 'User Two',
       role: 'user',
@@ -66,7 +71,7 @@ const sampleUsers = {
       ui_locale_name: null,
     },
     {
-      id: 3,
+      id: '00000000-0000-0000-0000-000000000003',
       email: 'admin@test.com',
       display_name: 'Admin User',
       role: 'admin',
@@ -331,20 +336,20 @@ describe('UsersPage', () => {
     it('shows deactivate button for active users', () => {
       render(<UsersPage />);
 
-      const deactivateButtons = screen.getAllByText('Deactivate');
+      const deactivateButtons = screen.getAllByRole('button', { name: /Deactivate .*user/i });
       expect(deactivateButtons.length).toBe(2); // Two active users
     });
 
     it('shows reactivate button for inactive users', () => {
       render(<UsersPage />);
 
-      expect(screen.getByText('Reactivate')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Reactivate User Two/i })).toBeInTheDocument();
     });
 
     it('opens confirmation modal on action click', async () => {
       render(<UsersPage />);
 
-      const deactivateBtn = screen.getAllByText('Deactivate')[0];
+      const deactivateBtn = screen.getAllByRole('button', { name: /Deactivate .*user/i })[0];
       await userEvent.click(deactivateBtn);
 
       // Modal should appear
@@ -358,7 +363,7 @@ describe('UsersPage', () => {
       render(<UsersPage />);
 
       // Click deactivate
-      const deactivateBtn = screen.getAllByText('Deactivate')[0];
+      const deactivateBtn = screen.getAllByRole('button', { name: /Deactivate .*user/i })[0];
       await userEvent.click(deactivateBtn);
 
       // Confirm in modal
@@ -366,7 +371,7 @@ describe('UsersPage', () => {
       await userEvent.click(confirmBtn);
 
       await waitFor(() => {
-        expect(mockApiClient.post).toHaveBeenCalledWith('/api/v1/admin/users/1/deactivate');
+        expect(mockApiClient.post).toHaveBeenCalledWith('/api/v1/admin/users/00000000-0000-0000-0000-000000000001/deactivate');
         expect(mockRefresh).toHaveBeenCalled();
       });
     });
@@ -375,7 +380,7 @@ describe('UsersPage', () => {
       render(<UsersPage />);
 
       // Open modal
-      const deactivateBtn = screen.getAllByText('Deactivate')[0];
+      const deactivateBtn = screen.getAllByRole('button', { name: /Deactivate .*user/i })[0];
       await userEvent.click(deactivateBtn);
 
       expect(screen.getByText('Confirm Deactivate')).toBeInTheDocument();
@@ -395,7 +400,7 @@ describe('UsersPage', () => {
 
       render(<UsersPage />);
 
-      const deactivateBtn = screen.getAllByText('Deactivate')[0];
+      const deactivateBtn = screen.getAllByRole('button', { name: /Deactivate .*user/i })[0];
       await userEvent.click(deactivateBtn);
 
       const confirmBtn = screen.getByText('Yes, deactivate');
