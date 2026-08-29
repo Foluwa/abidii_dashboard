@@ -51,6 +51,7 @@ export default function UsersPage() {
   const [maxXp, setMaxXp] = useState<string>("");
   const [lastLoginAfter, setLastLoginAfter] = useState<string>("");
   const [lastLoginBefore, setLastLoginBefore] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"created_at" | "last_active_at">("created_at");
   const [showFilters, setShowFilters] = useState(false);
   
   // Action confirmation modal
@@ -78,6 +79,8 @@ export default function UsersPage() {
     max_xp: maxXp ? parseInt(maxXp) : undefined,
     last_login_after: lastLoginAfter ? new Date(lastLoginAfter).toISOString() : undefined,
     last_login_before: lastLoginBefore ? new Date(lastLoginBefore).toISOString() : undefined,
+    sort_by: sortBy,
+    sort_order: "desc",
   });
 
   const totalPages = users ? Math.max(1, Math.ceil(users.total / limit)) : 1;
@@ -216,10 +219,18 @@ export default function UsersPage() {
     return date.toLocaleDateString();
   };
 
+  // Prefer last_active_at (devices.last_seen_at, touched on every app
+  // startup/foreground report) over last_request_at/last_login_at, which
+  // only update on explicit sign-in and go stale under offline-first
+  // sessions - see the same reasoning on the backend's last_login_after/
+  // before filters and the last_active_at sort option above.
   const getLastRequestAt = (user: {
+    last_active_at?: string | null;
     last_request_at?: string | null;
     last_login_at?: string | null;
-  }) => (user.last_request_at === undefined ? user.last_login_at : user.last_request_at);
+  }) =>
+    user.last_active_at ??
+    (user.last_request_at === undefined ? user.last_login_at : user.last_request_at);
 
   if (isError) {
     return (
@@ -345,6 +356,19 @@ export default function UsersPage() {
               options={[
                 { value: "all", label: "All App Languages" },
                 ...APP_LANGUAGE_OPTIONS,
+              ]}
+            />
+
+            <StyledSelect
+              label="Sort By"
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value as "created_at" | "last_active_at");
+                setPage(1);
+              }}
+              options={[
+                { value: "created_at", label: "Newest Signups" },
+                { value: "last_active_at", label: "Most Recently Seen" },
               ]}
             />
 
