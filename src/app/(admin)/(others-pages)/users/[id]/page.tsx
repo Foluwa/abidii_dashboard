@@ -278,7 +278,7 @@ export default function UserDetailPage() {
   const lastRequestAt =
     user.last_active_at ??
     (user.last_request_at === undefined ? user.last_login_at : user.last_request_at);
-  const avatarSource = cleanSvgForDisplay(user.avatar_svg) || user.picture_url || null;
+  const avatarSource = cleanSvgForDisplay(user.avatar_svg) || null;
   const avatarLabel = user.display_name || user.email || "User";
 
   return (
