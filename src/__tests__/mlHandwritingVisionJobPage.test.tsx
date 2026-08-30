@@ -175,12 +175,12 @@ describe('MLHandwritingVisionJobDetailPage', () => {
   it('cancels the job after confirmation', async () => {
     mockGetHandwritingVisionJob.mockResolvedValue(mockJob);
     mockCancelHandwritingVisionJob.mockResolvedValue({ ok: true });
-    window.confirm = jest.fn(() => true);
 
     render(<MLHandwritingVisionJobDetailPage />);
     await screen.findByText('candidate-1');
 
     await userEvent.click(screen.getByRole('button', { name: 'Cancel Job' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Yes, Cancel Job' }));
 
     await waitFor(() => expect(mockCancelHandwritingVisionJob).toHaveBeenCalledWith('job-1'));
   });
