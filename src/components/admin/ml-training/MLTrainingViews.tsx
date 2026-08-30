@@ -7,6 +7,7 @@ import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Pagination from "@/components/tables/Pagination";
 import Button from "@/components/ui/button/Button";
 import { useToast } from "@/contexts/ToastContext";
+import { useConfirm } from "@/hooks/useConfirm";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import {
   getMlReadiness,
@@ -223,6 +224,7 @@ function useMlOverview() {
 
 export function MLTrainingOverviewPage() {
   const toast = useToast();
+  const { confirm, modal: confirmModal } = useConfirm();
   const { readiness, jobs, models, loading, error, refresh } = useMlOverview();
   const latestSmoke = useMemo(() => getLatestSmoke(jobs), [jobs]);
   const runningJobs = readiness?.training_jobs.running || 0;
@@ -232,7 +234,16 @@ export function MLTrainingOverviewPage() {
 
   const queueTraining = useCallback(
     async (jobType: "handwriting_tinyvgg_train" | "handwriting_tinyvgg_retrain") => {
-      setTrainingLoading(jobType === "handwriting_tinyvgg_retrain" ? "retrain" : "train");
+      const isRetrain = jobType === "handwriting_tinyvgg_retrain";
+      const confirmed = await confirm({
+        title: isRetrain ? "Queue Retrain from Corrections" : "Queue Training Job",
+        message: `This dispatches a real GPU training job for "${trainingLang}" (${isRetrain ? "verified dataset + real user corrections" : "verified dataset only"}). It costs real compute time and cannot be undone once queued. Continue?`,
+        confirmLabel: isRetrain ? "Queue Retrain" : "Queue Training",
+        variant: "warning",
+      });
+      if (!confirmed) return;
+
+      setTrainingLoading(isRetrain ? "retrain" : "train");
       try {
         const job = await queueTrainingJob({
           job_type: jobType,
@@ -252,10 +263,12 @@ export function MLTrainingOverviewPage() {
         setTrainingLoading(null);
       }
     },
-    [trainingLang, refresh, toast]
+    [trainingLang, refresh, toast, confirm]
   );
 
   return (
+    <>
+    {confirmModal}
     <div className="space-y-6 p-6">
       <PageBreadCrumb pageTitle="ML Training" />
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -363,6 +376,7 @@ export function MLTrainingOverviewPage() {
         </Panel>
       </div>
     </div>
+    </>
   );
 }
 
@@ -596,6 +610,7 @@ export function MLTrainingJobDetailPage() {
 }
 
 export function MLModelVersionsPage() {
+  const { confirm, modal: confirmModal } = useConfirm();
   const [models, setModels] = useState<MlModelVersion[]>([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [languageFilter, setLanguageFilter] = useState("");
@@ -624,6 +639,17 @@ export function MLModelVersionsPage() {
 
   const runModelAction = useCallback(async (model: MlModelVersion, action: "promote" | "rollback") => {
     if (!model.id) return;
+    const modelLabel = `${model.model_name || model.id} (${model.language_code})`;
+    const confirmed = await confirm({
+      title: action === "promote" ? "Promote Model Version" : "Rollback Model Version",
+      message: action === "promote"
+        ? `Promote ${modelLabel} to production? This immediately changes which model serves live inference traffic.`
+        : `Roll back ${modelLabel}? This immediately changes which model serves live inference traffic.`,
+      confirmLabel: action === "promote" ? "Yes, Promote" : "Yes, Rollback",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+
     setActionId(model.id);
     setError(null);
     setSuccess(null);
@@ -638,7 +664,7 @@ export function MLModelVersionsPage() {
     } finally {
       setActionId(null);
     }
-  }, [refresh]);
+  }, [refresh, confirm]);
 
   useEffect(() => {
     void refresh();
@@ -646,6 +672,7 @@ export function MLModelVersionsPage() {
 
   return (
     <div className="space-y-6 p-6">
+      {confirmModal}
       <PageBreadCrumb pageTitle="Model Versions" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -964,6 +991,7 @@ function CandidatePreview({ manifestId, candidate }: { manifestId: string; candi
 
 export function MLVerifiedPromotionManifestDetailPage() {
   const toast = useToast();
+  const { confirm, modal: confirmModal } = useConfirm();
   const params = useParams<{ id: string }>();
   const manifestId = String(params?.id || "");
   const [manifest, setManifest] = useState<VerifiedPromotionManifest | null>(null);
@@ -1021,7 +1049,16 @@ export function MLVerifiedPromotionManifestDetailPage() {
   const updateVisible = useCallback(async (status: "pending" | "approved" | "rejected", candidateIds?: string[]) => {
     const ids = candidateIds || candidates.map((candidate) => candidate.candidate_id);
     if (ids.length === 0) return;
-    if (candidateIds === undefined && !window.confirm(`Set ${ids.length} visible candidates to ${status}?`)) return;
+    const confirmed = await confirm({
+      title: `Set ${ids.length} candidate${ids.length === 1 ? "" : "s"} to ${status}`,
+      message: candidateIds === undefined
+        ? `This sets ALL ${ids.length} currently visible candidates to "${status}". Continue?`
+        : `Set ${ids.length} candidate${ids.length === 1 ? "" : "s"} to "${status}"?`,
+      confirmLabel: "Confirm",
+      variant: status === "rejected" ? "danger" : "warning",
+    });
+    if (!confirmed) return;
+
     setError(null);
     setSuccess(null);
     try {
@@ -1031,7 +1068,7 @@ export function MLVerifiedPromotionManifestDetailPage() {
     } catch (err: any) {
       setError(err?.response?.data?.detail?.message ?? err?.message ?? "Unable to update candidates.");
     }
-  }, [candidates, manifestId, refresh]);
+  }, [candidates, manifestId, refresh, confirm]);
 
   const runPanelAction = useCallback(async (action: "validate" | "dry-run" | "apply") => {
     setError(null);
@@ -1054,6 +1091,14 @@ export function MLVerifiedPromotionManifestDetailPage() {
   }, [manifestId, refresh]);
 
   const runQualityReview = useCallback(async () => {
+    const confirmed = await confirm({
+      title: "Queue Quality Review Job",
+      message: `Run AI quality review on this manifest via ${reviewProvider}${reviewLimit ? ` (limit ${reviewLimit})` : ""}? This calls a paid ${reviewProvider} API${reviewDryRun ? " (dry run - no candidates will be mutated, but the API calls still happen)" : " and will update candidate review status"}.`,
+      confirmLabel: "Queue Review",
+      variant: "warning",
+    });
+    if (!confirmed) return;
+
     setReviewSubmitting(true);
     try {
       const job = await createQualityReviewJob({
@@ -1070,10 +1115,11 @@ export function MLVerifiedPromotionManifestDetailPage() {
     } finally {
       setReviewSubmitting(false);
     }
-  }, [manifestId, reviewDryRun, reviewLimit, reviewProvider, toast]);
+  }, [manifestId, reviewDryRun, reviewLimit, reviewProvider, toast, confirm]);
 
   return (
     <div className="space-y-6 p-6">
+      {confirmModal}
       <PageBreadCrumb pageTitle="Verified Manifest Review" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
