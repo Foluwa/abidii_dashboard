@@ -7,6 +7,7 @@ import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Pagination from "@/components/tables/Pagination";
 import Button from "@/components/ui/button/Button";
 import { useToast } from "@/contexts/ToastContext";
+import { useConfirm } from "@/hooks/useConfirm";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import {
   InlineError,
@@ -43,6 +44,7 @@ function statusCountFor(manifest: HandwritingCandidateManifest, status: string) 
 
 export function MLHandwritingCandidateManifestsPage() {
   const toast = useToast();
+  const { confirm, modal: confirmModal } = useConfirm();
   const [manifests, setManifests] = useState<HandwritingCandidateManifest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +75,14 @@ export function MLHandwritingCandidateManifestsPage() {
   }, [refresh]);
 
   const createManifest = useCallback(async () => {
+    const confirmed = await confirm({
+      title: "Create Candidate Manifest",
+      message: `Scan ${sourcePrefix || `drawings/${createLanguage}/`} (${createLanguage}) and create a new candidate manifest for review?`,
+      confirmLabel: "Yes, Create Manifest",
+      variant: "info",
+    });
+    if (!confirmed) return;
+
     setCreating(true);
     try {
       const result = await createHandwritingCandidateManifest({
@@ -88,10 +98,11 @@ export function MLHandwritingCandidateManifestsPage() {
     } finally {
       setCreating(false);
     }
-  }, [createLanguage, refresh, sourcePrefix, toast]);
+  }, [createLanguage, refresh, sourcePrefix, toast, confirm]);
 
   return (
     <div className="space-y-6 p-6">
+      {confirmModal}
       <PageBreadCrumb pageTitle="Candidate Review" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -308,6 +319,7 @@ function CandidateVisionSuggestion({
 
 export function MLHandwritingCandidateManifestDetailPage() {
   const toast = useToast();
+  const { confirm, modal: confirmModal } = useConfirm();
   const params = useParams<{ id: string }>();
   const manifestId = String(params?.id || "");
   const [manifest, setManifest] = useState<HandwritingCandidateManifest | null>(null);
@@ -357,7 +369,17 @@ export function MLHandwritingCandidateManifestDetailPage() {
     async (status: "pending" | "approved" | "rejected", candidateIds?: string[]) => {
       const ids = candidateIds || candidates.map((candidate) => candidate.id);
       if (ids.length === 0) return;
-      if (candidateIds === undefined && !window.confirm(`Set ${ids.length} visible candidates to ${status}?`)) return;
+
+      const confirmed = await confirm({
+        title: `Set ${ids.length} candidate${ids.length === 1 ? "" : "s"} to ${status}`,
+        message: candidateIds === undefined
+          ? `This sets ALL ${ids.length} currently visible candidates to "${status}". Continue?`
+          : `Set ${ids.length} candidate${ids.length === 1 ? "" : "s"} to "${status}"?`,
+        confirmLabel: "Confirm",
+        variant: status === "rejected" ? "danger" : "warning",
+      });
+      if (!confirmed) return;
+
       setError(null);
       setSuccess(null);
       try {
@@ -372,7 +394,7 @@ export function MLHandwritingCandidateManifestDetailPage() {
         setError(err?.response?.data?.detail?.message ?? err?.message ?? "Unable to update candidates.");
       }
     },
-    [candidates, refresh]
+    [candidates, refresh, confirm]
   );
 
   const runPromotion = useCallback(
@@ -406,6 +428,7 @@ export function MLHandwritingCandidateManifestDetailPage() {
 
   return (
     <div className="space-y-6 p-6">
+      {confirmModal}
       <PageBreadCrumb pageTitle="Candidate Manifest Review" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>

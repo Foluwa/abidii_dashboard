@@ -14,6 +14,7 @@ import Link from "next/link";
 import { FaApple, FaGoogle, FaGlobe, FaMobileAlt } from "react-icons/fa";
 import { FiEye, FiTrash2, FiUserCheck, FiUserX } from "react-icons/fi";
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
+import DatePicker from "@/components/form/date-picker";
 
 type TabRole = "all" | UserRole;
 type ActionType = "deactivate" | "reactivate" | "delete" | "purge";
@@ -502,32 +503,28 @@ export default function UsersPage() {
                 </div>
 
                 <div className="min-w-[170px]">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Last Request After
-                  </label>
-                  <input
-                    type="date"
-                    value={lastLoginAfter}
-                    onChange={(e) => {
-                      setLastLoginAfter(e.target.value);
+                  <DatePicker
+                    id="users-last-request-after"
+                    label="Last Request After"
+                    placeholder="Select date"
+                    defaultDate={lastLoginAfter || undefined}
+                    onChange={(_dates, dateStr) => {
+                      setLastLoginAfter(dateStr);
                       setPage(1);
                     }}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   />
                 </div>
 
                 <div className="min-w-[170px]">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Last Request Before
-                  </label>
-                  <input
-                    type="date"
-                    value={lastLoginBefore}
-                    onChange={(e) => {
-                      setLastLoginBefore(e.target.value);
+                  <DatePicker
+                    id="users-last-request-before"
+                    label="Last Request Before"
+                    placeholder="Select date"
+                    defaultDate={lastLoginBefore || undefined}
+                    onChange={(_dates, dateStr) => {
+                      setLastLoginBefore(dateStr);
                       setPage(1);
                     }}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   />
                 </div>
 

@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Button from "@/components/ui/button/Button";
 import { useToast } from "@/contexts/ToastContext";
+import { useConfirm } from "@/hooks/useConfirm";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import {
   InlineError,
@@ -32,6 +33,7 @@ import {
 
 export function MLHandwritingVisionJobsPage() {
   const toast = useToast();
+  const { confirm, modal: confirmModal } = useConfirm();
   const [jobs, setJobs] = useState<HandwritingVisionJob[]>([]);
   const [providers, setProviders] = useState<HandwritingVisionProvider[]>([]);
   const [loading, setLoading] = useState(false);
@@ -91,17 +93,28 @@ export function MLHandwritingVisionJobsPage() {
   }, [manifestId, maxCandidates, mode, model, provider]);
 
   const createJob = useCallback(async () => {
+    let confirmation: string | undefined;
+    if (estimate?.requires_confirmation) {
+      // Above the cost/count threshold - typed confirmation phrase, the
+      // stronger gate the backend itself requires.
+      confirmation = window.prompt(`Type "${estimate.confirmation_text}" to start this vision job`) || undefined;
+      if (!confirmation) return;
+    } else {
+      // Below the threshold, requires_confirmation is false - but this is
+      // still a real paid LLM API call, just a cheaper one, and used to
+      // dispatch with zero confirmation at all.
+      const confirmed = await confirm({
+        title: "Start Vision Job",
+        message: `Start a ${mode} vision-labeling job via ${provider} against up to ${maxCandidates || 50} approved candidates? This calls a paid ${provider} API.`,
+        confirmLabel: "Start Job",
+        variant: "warning",
+      });
+      if (!confirmed) return;
+    }
+
     setCreating(true);
     setError(null);
     try {
-      let confirmation: string | undefined;
-      if (estimate?.requires_confirmation) {
-        confirmation = window.prompt(`Type "${estimate.confirmation_text}" to start this vision job`) || undefined;
-        if (!confirmation) {
-          setCreating(false);
-          return;
-        }
-      }
       const job = await createHandwritingVisionJob({
         provider,
         model,
@@ -119,10 +132,11 @@ export function MLHandwritingVisionJobsPage() {
     } finally {
       setCreating(false);
     }
-  }, [estimate, manifestId, maxCandidates, mode, model, provider, refresh, toast]);
+  }, [estimate, manifestId, maxCandidates, mode, model, provider, refresh, toast, confirm]);
 
   return (
     <div className="space-y-6 p-6">
+      {confirmModal}
       <PageBreadCrumb pageTitle="Vision Jobs" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -245,6 +259,7 @@ export function MLHandwritingVisionJobsPage() {
 }
 
 export function MLHandwritingVisionJobDetailPage() {
+  const { confirm, modal: confirmModal } = useConfirm();
   const params = useParams<{ id: string }>();
   const jobId = String(params?.id || "");
   const [job, setJob] = useState<HandwritingVisionJob | null>(null);
@@ -287,7 +302,14 @@ export function MLHandwritingVisionJobDetailPage() {
   }, [jobId, refresh]);
 
   const cancel = useCallback(async () => {
-    if (!window.confirm("Cancel this vision job?")) return;
+    const confirmed = await confirm({
+      title: "Cancel Vision Job",
+      message: "Cancel this vision job? Any candidates it hasn't already labeled will not be processed.",
+      confirmLabel: "Yes, Cancel Job",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+
     setWorking(true);
     setError(null);
     setSuccess(null);
@@ -300,12 +322,13 @@ export function MLHandwritingVisionJobDetailPage() {
     } finally {
       setWorking(false);
     }
-  }, [jobId, refresh]);
+  }, [jobId, refresh, confirm]);
 
   const isTerminal = job && ["completed", "failed", "cancelled"].includes(job.status);
 
   return (
     <div className="space-y-6 p-6">
+      {confirmModal}
       <PageBreadCrumb pageTitle="Vision Job Detail" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
