@@ -132,6 +132,7 @@ describe('MLHandwritingCandidateManifestsPage', () => {
     await waitFor(() => expect(mockListHandwritingCandidateManifests).toHaveBeenCalledTimes(1));
 
     await userEvent.click(screen.getByRole('button', { name: 'Create Manifest' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Yes, Create Manifest' }));
 
     await waitFor(() => expect(mockCreateHandwritingCandidateManifest).toHaveBeenCalled());
     await waitFor(() => expect(mockListHandwritingCandidateManifests).toHaveBeenCalledTimes(2));
@@ -160,6 +161,7 @@ describe('MLHandwritingCandidateManifestDetailPage', () => {
     await screen.findByText('drawings/yor/a/candidate-1.png');
 
     await userEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Confirm' }));
 
     await waitFor(() =>
       expect(mockUpdateHandwritingCandidate).toHaveBeenCalledWith('candidate-1', { review_status: 'approved' })
