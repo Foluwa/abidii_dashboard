@@ -5,7 +5,9 @@ import { apiClient } from "@/lib/api";
 import { useToast } from "@/contexts/ToastContext";
 import { Modal } from "@/components/ui/modal";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
-import { FiVolume2 } from "react-icons/fi";
+import { FiVolume2, FiCheck, FiRefreshCw, FiX } from "react-icons/fi";
+import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
+import { useAudioJob, acceptAudioJob } from "@/hooks/useAudioJob";
 
 interface Voice {
   id: string;
@@ -35,6 +37,8 @@ interface RegenerateAudioModalProps {
   onSuccess?: () => void;
 }
 
+type Step = "form" | "polling" | "preview";
+
 const LANGUAGE_CODE_MAP: Record<string, string> = {
   yor: "yo",
   eng: "en",
@@ -57,24 +61,24 @@ const providerPriority = (provider: string) => {
 // Helper to format error messages (handles both string and object errors)
 const formatErrorMessage = (error: any, fallbackMessage: string): string => {
   const detail = error?.response?.data?.detail;
-  
+
   // If detail is a string, return it
   if (typeof detail === 'string') {
     return detail;
   }
-  
+
   // If detail is an array (Pydantic validation errors)
   if (Array.isArray(detail) && detail.length > 0) {
     // Extract first error message
     const firstError = detail[0];
     return firstError.msg || firstError.message || JSON.stringify(firstError);
   }
-  
+
   // If detail is an object, try to extract a message
   if (typeof detail === 'object' && detail !== null) {
     return detail.msg || detail.message || JSON.stringify(detail);
   }
-  
+
   // Fallback to error message or default
   return error?.message || fallbackMessage;
 };
@@ -87,6 +91,11 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
   const [textOverride, setTextOverride] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingVoices, setIsLoadingVoices] = useState(false);
+
+  const [step, setStep] = useState<Step>("form");
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const { job, status, audioUrl, error: jobError } = useAudioJob(jobId);
 
   const providerOptions = useMemo(() => {
     const uniqueProviders = Array.from(new Set(voices.map((voice) => voice.provider))).sort();
@@ -114,11 +123,11 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
 
   const fetchVoices = useCallback(async () => {
     if (!target) return;
-    
+
     setIsLoadingVoices(true);
     try {
       const ttsLanguageCode = LANGUAGE_CODE_MAP[target.languageCode] || target.languageCode;
-      
+
       const response = await apiClient.get('/api/v1/admin/audio/voices', {
         params: {
           language_code: ttsLanguageCode,
@@ -127,7 +136,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
           page_size: 100,
         }
       });
-      
+
       const voicesList: Voice[] = response.data.items || [];
       setVoices(voicesList);
 
@@ -148,15 +157,27 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
 
   useEffect(() => {
     if (isOpen && target) {
+      setStep("form");
+      setJobId(null);
       setTextOverride(target.defaultText);
       setSelectedProvider("all");
       fetchVoices();
     }
   }, [fetchVoices, isOpen, target]);
 
+  useEffect(() => {
+    if (step === "polling" && status === "completed") {
+      setStep("preview");
+    } else if (step === "polling" && status === "failed") {
+      toast.error(job?.error_message || "Audio regeneration failed");
+      setStep("form");
+      setJobId(null);
+    }
+  }, [step, status, job, toast]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!target || !selectedVoiceId) {
       toast.error("Please select a voice");
       return;
@@ -164,19 +185,52 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
 
     setIsLoading(true);
     try {
-      await apiClient.post(target.submitEndpoint, {
+      const response = await apiClient.post(target.submitEndpoint, {
         voice_id: selectedVoiceId,
         text_override: textOverride !== target.defaultText ? textOverride : null
       });
-      
-      toast.success("Audio regeneration queued successfully");
-      onSuccess?.();
-      onClose();
+
+      const newJobId = response?.data?.job_id;
+      if (!newJobId) {
+        // Fallback for any caller that doesn't yet return a job_id — keep the
+        // old fire-and-forget behavior rather than getting stuck on 'polling'.
+        toast.success("Audio regeneration queued successfully");
+        onSuccess?.();
+        onClose();
+        return;
+      }
+
+      setJobId(newJobId);
+      setStep("polling");
     } catch (error: any) {
       toast.error(formatErrorMessage(error, "Failed to regenerate audio"));
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleAccept = async () => {
+    if (!jobId) return;
+    setIsAccepting(true);
+    try {
+      await acceptAudioJob(jobId);
+      toast.success("Audio accepted and applied");
+      onSuccess?.();
+      onClose();
+    } catch (error: any) {
+      toast.error(formatErrorMessage(error, "Failed to accept audio"));
+    } finally {
+      setIsAccepting(false);
+    }
+  };
+
+  const handleRegenerateAgain = () => {
+    setStep("form");
+    setJobId(null);
+  };
+
+  const handleDiscard = () => {
+    onClose();
   };
 
   if (!target) return null;
@@ -191,6 +245,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
       title={`Regenerate Audio: ${target.displayText}`}
       maxWidth="md"
     >
+      {step === "form" && (
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <StyledSelect
@@ -213,7 +268,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Select Voice *
           </label>
-          
+
           {isLoadingVoices ? (
             <div className="text-sm text-gray-500">Loading voices...</div>
           ) : filteredVoices.length === 0 ? (
@@ -232,7 +287,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
               fullWidth
             />
           )}
-          
+
           <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
             Choose the TTS provider and voice for audio generation
           </p>
@@ -273,7 +328,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
                   {selectedVoice ? getVoiceLabel(selectedVoice) : "Selected voice"}
                 </p>
                 <p className="text-xs mt-1 text-blue-700 dark:text-blue-400">
-                  Provider: {selectedVoice?.provider} • 
+                  Provider: {selectedVoice?.provider} •
                   Language: {target.languageCode} • Preferred output: WAV when supported
                 </p>
               </div>
@@ -301,6 +356,65 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
           </button>
         </div>
       </form>
+      )}
+
+      {step === "polling" && (
+        <div className="flex flex-col items-center justify-center gap-4 py-10">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-200 border-t-brand-600 dark:border-gray-700 dark:border-t-brand-400" />
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Generating audio{status ? ` (${status})` : ""}...
+          </p>
+          {jobError && (
+            <p className="text-xs text-red-600 dark:text-red-400">{jobError}</p>
+          )}
+        </div>
+      )}
+
+      {step === "preview" && (
+        <div className="space-y-6">
+          <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800/60">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Preview: "{job?.text_to_speak ?? target.displayText}"
+            </p>
+            <InlineAudioPlayer src={audioUrl} size="md" />
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Listen to the new take before it replaces the live audio. Accept to publish it,
+            regenerate again to try a different voice or text, or discard to leave the
+            current live audio untouched.
+          </p>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={handleDiscard}
+              disabled={isAccepting}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white disabled:opacity-50"
+            >
+              <FiX className="h-4 w-4" />
+              Discard
+            </button>
+            <button
+              type="button"
+              onClick={handleRegenerateAgain}
+              disabled={isAccepting}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 disabled:opacity-50"
+            >
+              <FiRefreshCw className="h-4 w-4" />
+              Regenerate Again
+            </button>
+            <button
+              type="button"
+              onClick={handleAccept}
+              disabled={isAccepting || !audioUrl}
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900"
+            >
+              <FiCheck className="h-4 w-4" />
+              {isAccepting ? "Accepting..." : "Accept"}
+            </button>
+          </div>
+        </div>
+      )}
     </Modal>
   );
 }
