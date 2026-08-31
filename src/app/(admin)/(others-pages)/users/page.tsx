@@ -45,6 +45,17 @@ const toDateBoundary = (value: string, endOfDay = false) => {
   return new Date(`${value}T${time}`).toISOString();
 };
 
+// flatpickr allows free-text typing in the input (not just calendar
+// clicks), and can hand back a nonsensical dateStr (e.g. a 1-digit year)
+// from a partial/ambiguous typed value via its own parsing - confirmed
+// live: the backend received last_login_after with year 0002. Reject
+// anything that isn't a real YYYY-MM-DD with a plausible year before it
+// ever reaches state/the API.
+const isPlausibleDateString = (value: string) => {
+  const match = /^(\d{4})-\d{2}-\d{2}$/.exec(value);
+  return !!match && Number(match[1]) >= 2000;
+};
+
 const countryName = (code: string) => {
   try {
     return new Intl.DisplayNames(["en"], { type: "region" }).of(code) || code;
@@ -509,6 +520,7 @@ export default function UsersPage() {
                     placeholder="Select date"
                     defaultDate={lastLoginAfter || undefined}
                     onChange={(_dates, dateStr) => {
+                      if (!isPlausibleDateString(dateStr)) return;
                       setLastLoginAfter(dateStr);
                       setPage(1);
                     }}
@@ -522,6 +534,7 @@ export default function UsersPage() {
                     placeholder="Select date"
                     defaultDate={lastLoginBefore || undefined}
                     onChange={(_dates, dateStr) => {
+                      if (!isPlausibleDateString(dateStr)) return;
                       setLastLoginBefore(dateStr);
                       setPage(1);
                     }}
