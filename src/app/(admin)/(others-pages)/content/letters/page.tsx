@@ -19,6 +19,7 @@ import {
   StickyBulkActionBar,
 } from '@/components/admin/layout';
 import { FiBarChart2, FiCheckCircle, FiTrash2, FiVolume2, FiVolumeX } from "react-icons/fi";
+import { RegenerateAudioModal, RegenerateAudioTarget } from "@/components/modals/RegenerateAudioModal";
 
 interface Letter {
   id: string;
@@ -49,6 +50,8 @@ export default function LettersPage() {
   // Selection
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [regeneratingTarget, setRegeneratingTarget] = useState<RegenerateAudioTarget | null>(null);
 
   const [formData, setFormData] = useState({
     glyph: "",
@@ -230,6 +233,19 @@ export default function LettersPage() {
     }
   };
 
+  const handleRegenerateAudio = (letter: Letter) => {
+    const languageCode = languages.find((lang: Language) => lang.id === letter.language_id)?.iso_639_3 || "yor";
+    setRegeneratingTarget({
+      id: letter.id,
+      contentType: "letter",
+      displayText: letter.display_name,
+      defaultText: letter.display_name,
+      languageCode,
+      submitEndpoint: `/api/v1/admin/content/letters/${letter.id}/regenerate-audio`,
+    });
+    setShowRegenerateModal(true);
+  };
+
   const handleSelect = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
@@ -393,6 +409,13 @@ export default function LettersPage() {
                 )}
                 <div className="flex space-x-2 mt-3 justify-center">
                   <button
+                    onClick={() => handleRegenerateAudio(letter)}
+                    className="px-2 py-1 text-xs bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400 rounded hover:bg-green-100 dark:hover:bg-green-900/30"
+                    title="Regenerate audio"
+                  >
+                    Audio
+                  </button>
+                  <button
                     onClick={() => openEditModal(letter)}
                     className="px-2 py-1 text-xs bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30"
                   >
@@ -497,6 +520,14 @@ export default function LettersPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleRegenerateAudio(letter)}
+                            className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                            title="Regenerate audio"
+                          >
+                            <FiVolume2 className="h-3.5 w-3.5" />
+                            Audio
+                          </button>
                           <button
                             onClick={() => openEditModal(letter)}
                             className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
@@ -647,6 +678,16 @@ export default function LettersPage() {
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"
+      />
+
+      <RegenerateAudioModal
+        isOpen={showRegenerateModal}
+        onClose={() => {
+          setShowRegenerateModal(false);
+          setRegeneratingTarget(null);
+        }}
+        target={regeneratingTarget}
+        onSuccess={() => fetchLetters(selectedLanguage)}
       />
     </div>
   );

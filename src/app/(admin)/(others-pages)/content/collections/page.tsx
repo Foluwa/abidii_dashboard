@@ -5,6 +5,7 @@ import Image from "next/image";
 import { apiClient } from "@/lib/api";
 import FormModal from "@/components/admin/FormModal";
 import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
+import { RegenerateAudioModal, RegenerateAudioTarget } from "@/components/modals/RegenerateAudioModal";
 
 type Language = { id: string; iso_639_3: string; name: string; native_name?: string };
 type Collection = { collection_key: string; title: string; status: string; is_active: boolean; item_count: number };
@@ -47,6 +48,8 @@ export default function CollectionsPage() {
   const [newCategoryKey, setNewCategoryKey] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [regeneratingTarget, setRegeneratingTarget] = useState<RegenerateAudioTarget | null>(null);
 
   const loadCollections = useCallback(async () => {
     const [languageResponse, collectionResponse] = await Promise.all([
@@ -179,6 +182,19 @@ export default function CollectionsPage() {
     await Promise.all([loadItems(), loadCollections()]);
   }
 
+  function handleRegenerateAudio() {
+    if (!editing || !selected) return;
+    setRegeneratingTarget({
+      id: editing.id,
+      contentType: "term",
+      displayText: editLearningTerm || editing.learning_term || editing.concept_key,
+      defaultText: editLearningTerm || editing.learning_term || editing.concept_key,
+      languageCode: learningLanguage,
+      submitEndpoint: `/api/v1/admin/content-collections/${selected}/items/${editing.concept_key}/terms/${learningLanguage}/regenerate-audio`,
+    });
+    setShowRegenerateModal(true);
+  }
+
   async function toggleCollectionPublished() {
     if (!selectedCollection) return;
     setError("");
@@ -294,6 +310,13 @@ export default function CollectionsPage() {
                 <div className="flex items-center gap-3">
                   <InlineAudioPlayer src={editing.audio_url} size="md" />
                   <span className="text-sm text-gray-600 dark:text-gray-300">Play {learningLanguage} pronunciation</span>
+                  <button
+                    type="button"
+                    onClick={handleRegenerateAudio}
+                    className="rounded-lg border border-brand-500 px-2.5 py-1 text-xs font-medium text-brand-600 dark:text-brand-300"
+                  >
+                    Regenerate audio
+                  </button>
                 </div>
               </div>
             </div>
@@ -305,6 +328,19 @@ export default function CollectionsPage() {
           </>
         )}
       </FormModal>
+
+      <RegenerateAudioModal
+        isOpen={showRegenerateModal}
+        onClose={() => {
+          setShowRegenerateModal(false);
+          setRegeneratingTarget(null);
+        }}
+        target={regeneratingTarget}
+        onSuccess={() => {
+          setEditing(null);
+          loadItems().catch((reason) => setError(reason?.response?.data?.detail || "Could not refresh collection items"));
+        }}
+      />
     </div>
   );
 }

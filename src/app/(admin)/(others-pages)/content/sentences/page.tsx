@@ -29,6 +29,7 @@ import {
 } from '@/components/admin/layout';
 import { FiGlobe, FiBarChart2, FiCheckCircle, FiTrash2, FiVolume2 } from 'react-icons/fi';
 import InlineAudioPlayer from '@/components/ui/audio/InlineAudioPlayer';
+import { RegenerateAudioModal, RegenerateAudioTarget } from '@/components/modals/RegenerateAudioModal';
 
 export default function SentencesPage() {
   const router = useRouter();
@@ -61,6 +62,8 @@ export default function SentencesPage() {
   // Selection
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [regeneratingTarget, setRegeneratingTarget] = useState<RegenerateAudioTarget | null>(null);
 
   const pageStart = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const pageEnd = totalItems === 0 ? 0 : Math.min(currentPage * pageSize, totalItems);
@@ -258,6 +261,19 @@ export default function SentencesPage() {
       console.error('Failed to delete sentence:', error);
       alert('Failed to delete sentence');
     }
+  };
+
+  const handleRegenerateAudio = (sentence: Sentence) => {
+    const languageCode = languages.find((lang) => lang.id === sentence.language_id)?.iso_639_3 || "yor";
+    setRegeneratingTarget({
+      id: sentence.id,
+      contentType: "sentence",
+      displayText: sentence.text,
+      defaultText: sentence.text,
+      languageCode,
+      submitEndpoint: `/api/v1/admin/content/sentences/${sentence.id}/regenerate-audio`,
+    });
+    setShowRegenerateModal(true);
   };
 
   const handleSelect = (id: string) => {
@@ -562,6 +578,14 @@ export default function SentencesPage() {
         actions={(item: any) => (
           <>
             <button
+              onClick={() => handleRegenerateAudio(item)}
+              className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-900 dark:text-brand-400 dark:hover:text-brand-300"
+              title="Regenerate audio"
+            >
+              <FiVolume2 className="h-3.5 w-3.5" />
+              Audio
+            </button>
+            <button
               onClick={() => handleEdit(item)}
               className="text-brand-600 hover:text-brand-900 dark:text-brand-400 dark:hover:text-brand-300"
             >
@@ -706,6 +730,16 @@ export default function SentencesPage() {
           </div>
         </div>
       </FormModal>
+
+      <RegenerateAudioModal
+        isOpen={showRegenerateModal}
+        onClose={() => {
+          setShowRegenerateModal(false);
+          setRegeneratingTarget(null);
+        }}
+        target={regeneratingTarget}
+        onSuccess={() => fetchSentences()}
+      />
     </div>
   );
 }
