@@ -20,7 +20,7 @@ interface Voice {
 
 export interface RegenerateAudioTarget {
   id: string;
-  contentType: "word" | "phrase" | "proverb" | "number";
+  contentType: "word" | "phrase" | "proverb" | "number" | "sentence" | "letter" | "term";
   displayText: string;
   defaultText: string;
   languageCode: string;
