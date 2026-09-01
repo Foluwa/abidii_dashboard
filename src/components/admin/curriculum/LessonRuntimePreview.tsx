@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import MediaLinkPreview from '@/components/admin/curriculum/MediaLinkPreview';
 import StatusBadge from '@/components/admin/StatusBadge';
@@ -419,6 +419,12 @@ export function LessonRuntimePreview({
   }, [vocabLibraryItems]);
   const range = asNumberArray(payload.range);
   const steps = asObjectList(payload.steps);
+  // This component live-updates as the admin edits steps in the sibling
+  // editor pane, so `steps.length` can shrink/grow between renders - clamp
+  // inline rather than an effect+reset, to avoid an extra render/flicker
+  // whenever a step is added or removed while the carousel is on a later index.
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
+  const safeStepIndex = Math.min(activeStepIndex, Math.max(steps.length - 1, 0));
   const media = collectTopLevelMedia(payload);
   const readingTargetRefs = collectCompactReadingTargetRefs(payload);
   const readingMediaRefs = collectCompactReadingMediaRefs(payload);
@@ -582,54 +588,80 @@ export function LessonRuntimePreview({
         </div>
       )}
 
-      {steps.length > 0 && !compact && (
-        <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
-            Step Content
-          </div>
-          <div className="mt-3 space-y-3">
-            {steps.map((step, index) => {
-              const stepMedia = collectTopLevelMedia(step);
-              const prompt =
-                asString(step.prompt) ||
-                asString(step.body) ||
-                asString(step.text) ||
-                asString(step.instruction);
-              const stepType = asString(step.type) || asString(step.stepId) || `step_${index + 1}`;
-              const isDialogueComplete =
-                asString(step.runtimeType) === 'respond' &&
-                asString(step.interactionType) === 'dialogueCompletion';
-              return (
-                <div
-                  key={`${stepType}-${index}`}
-                  className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full border border-gray-300 bg-white px-2 py-1 text-xs font-medium dark:border-gray-700 dark:bg-gray-900">
-                      {stepType}
-                    </span>
-                    <span className="text-xs font-mono text-gray-400">#{index + 1}</span>
-                  </div>
-                  <div className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                    {getStepLabel(step, index)}
-                  </div>
-                  {prompt ? (
-                    <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">{prompt}</div>
-                  ) : null}
-                  {stepMedia.length > 0 ? (
-                    <div className="mt-3 space-y-2">
-                      {stepMedia.map((item) => (
-                        <MediaLinkPreview key={item.label} url={item.value} label={item.label} compact />
-                      ))}
-                    </div>
-                  ) : null}
-                  {isDialogueComplete ? <DialogueCompletionPreview step={step} /> : null}
+      {steps.length > 0 && !compact && (() => {
+        const step = steps[safeStepIndex];
+        const stepMedia = collectTopLevelMedia(step);
+        const prompt =
+          asString(step.prompt) ||
+          asString(step.body) ||
+          asString(step.text) ||
+          asString(step.instruction);
+        const stepType = asString(step.type) || asString(step.stepId) || `step_${safeStepIndex + 1}`;
+        const isDialogueComplete =
+          asString(step.runtimeType) === 'respond' &&
+          asString(step.interactionType) === 'dialogueCompletion';
+        return (
+          <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                Step Content
+              </div>
+              {steps.length > 1 ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveStepIndex(safeStepIndex - 1)}
+                    disabled={safeStepIndex === 0}
+                    className="rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    title="Previous step"
+                  >
+                    ←
+                  </button>
+                  <span className="text-xs font-mono text-gray-400">
+                    {safeStepIndex + 1} / {steps.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveStepIndex(safeStepIndex + 1)}
+                    disabled={safeStepIndex === steps.length - 1}
+                    className="rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    title="Next step"
+                  >
+                    →
+                  </button>
                 </div>
-              );
-            })}
+              ) : null}
+            </div>
+            <div className="mt-3">
+              <div
+                key={`${stepType}-${safeStepIndex}`}
+                className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-gray-300 bg-white px-2 py-1 text-xs font-medium dark:border-gray-700 dark:bg-gray-900">
+                    {stepType}
+                  </span>
+                  <span className="text-xs font-mono text-gray-400">#{safeStepIndex + 1}</span>
+                </div>
+                <div className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                  {getStepLabel(step, safeStepIndex)}
+                </div>
+                {prompt ? (
+                  <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">{prompt}</div>
+                ) : null}
+                {stepMedia.length > 0 ? (
+                  <div className="mt-3 space-y-2">
+                    {stepMedia.map((item) => (
+                      <MediaLinkPreview key={item.label} url={item.value} label={item.label} compact />
+                    ))}
+                  </div>
+                ) : null}
+                {isDialogueComplete ? <DialogueCompletionPreview step={step} /> : null}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
