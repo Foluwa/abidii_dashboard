@@ -411,9 +411,9 @@ export default function LettersPage() {
                   <button
                     onClick={() => handleRegenerateAudio(letter)}
                     className="px-2 py-1 text-xs bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400 rounded hover:bg-green-100 dark:hover:bg-green-900/30"
-                    title="Regenerate audio"
+                    title="Regenerate Audio"
                   >
-                    Audio
+                    Regenerate Audio
                   </button>
                   <button
                     onClick={() => openEditModal(letter)}
@@ -523,10 +523,10 @@ export default function LettersPage() {
                           <button
                             onClick={() => handleRegenerateAudio(letter)}
                             className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
-                            title="Regenerate audio"
+                            title="Regenerate Audio"
                           >
                             <FiVolume2 className="h-3.5 w-3.5" />
-                            Audio
+                            Regenerate Audio
                           </button>
                           <button
                             onClick={() => openEditModal(letter)}
