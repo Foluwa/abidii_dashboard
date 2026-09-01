@@ -1645,7 +1645,7 @@ export default function PhrasesPage() {
                         ? "Queued"
                         : phrase.last_regeneration_status === "processing"
                           ? "Processing..."
-                          : "Regenerate"}
+                          : "Regenerate Audio"}
                     </button>
                     <button
                       onClick={() => openEditModal(phrase)}

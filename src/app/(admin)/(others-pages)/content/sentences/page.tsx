@@ -580,10 +580,10 @@ export default function SentencesPage() {
             <button
               onClick={() => handleRegenerateAudio(item)}
               className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-900 dark:text-brand-400 dark:hover:text-brand-300"
-              title="Regenerate audio"
+              title="Regenerate Audio"
             >
               <FiVolume2 className="h-3.5 w-3.5" />
-              Audio
+              Regenerate Audio
             </button>
             <button
               onClick={() => handleEdit(item)}

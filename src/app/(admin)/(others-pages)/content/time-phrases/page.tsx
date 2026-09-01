@@ -1664,19 +1664,19 @@ export default function TimePhrasesPage() {
                                 <button
                                   onClick={() => openRegenerateModal(phrase)}
                                   className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                                  title="Regenerate audio"
+                                  title="Regenerate Audio"
                                 >
                                   <FiVolume2 className="w-4 h-4" />
-                                  <span>Regenerate</span>
+                                  <span>Regenerate Audio</span>
                                 </button>
                               ) : (
                                 <button
                                   onClick={() => openRegenerateModal(phrase)}
                                   className="flex items-center gap-1 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
-                                  title="Generate audio"
+                                  title="Generate Audio"
                                 >
                                   <FiVolume2 className="w-4 h-4" />
-                                  <span className="text-xs">Generate</span>
+                                  <span className="text-xs">Generate Audio</span>
                                 </button>
                               )}
                             </div>
