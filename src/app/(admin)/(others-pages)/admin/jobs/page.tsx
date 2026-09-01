@@ -10,6 +10,7 @@ import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { useToast } from "@/contexts/ToastContext";
 import {
   cancelAdminJob,
+  createOrphanedAudioCleanupJob,
   listAdminJobs,
   retryAdminJob,
   type AdminJob,
@@ -26,6 +27,7 @@ const TYPE_OPTIONS = [
   "time_phrase_processing",
   "content_audio_reconciliation",
   "quality_review",
+  "orphaned_audio_cleanup",
 ];
 
 function formatDate(value?: string | null) {
@@ -207,6 +209,14 @@ export default function AdminJobsPage() {
   const [loading, setLoading] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
+  const [showCleanupAccordion, setShowCleanupAccordion] = useState(false);
+  const [cleanupRetentionDays, setCleanupRetentionDays] = useState(14);
+  const [cleanupJob, setCleanupJob] = useState<AdminJob | null>(null);
+  const [cleanupLoading, setCleanupLoading] = useState(false);
+  const [showCleanupApplyConfirm, setShowCleanupApplyConfirm] = useState(false);
+  const trackedCleanupJob = useAdminJob(cleanupJob?.id);
+  const currentCleanupJob = trackedCleanupJob.job ?? cleanupJob;
+
   const offset = (page - 1) * limit;
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const hasActiveJobs = useMemo(() => jobs.some((job) => job.status === "queued" || job.status === "running"), [jobs]);
@@ -240,6 +250,23 @@ export default function AdminJobsPage() {
     }, 3000);
     return () => window.clearInterval(intervalId);
   }, [hasActiveJobs, refreshJobs]);
+
+  const queueCleanupJob = async (dryRun: boolean) => {
+    setCleanupLoading(true);
+    try {
+      const job = await createOrphanedAudioCleanupJob({
+        dry_run: dryRun,
+        retention_days: cleanupRetentionDays,
+      });
+      setCleanupJob(job);
+      toast.success(dryRun ? "Orphaned-audio preview queued." : "Orphaned-audio cleanup queued.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail ?? err?.message ?? "Failed to queue orphaned-audio cleanup job.");
+    } finally {
+      setCleanupLoading(false);
+      setShowCleanupApplyConfirm(false);
+    }
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -312,6 +339,95 @@ export default function AdminJobsPage() {
         </div>
       </div>
 
+      <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/5">
+        <button
+          type="button"
+          onClick={() => setShowCleanupAccordion((value) => !value)}
+          className="flex w-full items-center justify-between px-5 py-3 text-left"
+        >
+          <span className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+            ▶ Orphaned Audio Cleanup
+          </span>
+          <span className="text-xs text-amber-800 dark:text-amber-200">
+            {showCleanupAccordion ? "Collapse" : "Expand"}
+          </span>
+        </button>
+        {showCleanupAccordion && (
+          <div className="border-t border-amber-200 px-5 py-4 dark:border-amber-500/20">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="max-w-xl">
+                <p className="text-sm text-amber-900/80 dark:text-amber-100/80">
+                  Sweeps R2 for phrase/proverb/number audio objects superseded by a later
+                  regenerate-audio run. Apply only deletes objects older than the retention
+                  window below - anything more recent stays untouched as a grace period.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-end gap-2">
+                <label className="text-sm">
+                  <span className="mb-1 block text-xs font-medium text-amber-900 dark:text-amber-100">
+                    Retention (days)
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={cleanupRetentionDays}
+                    onChange={(event) => setCleanupRetentionDays(Number(event.target.value) || 14)}
+                    className="w-24 rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-amber-500/30 dark:bg-gray-900 dark:text-white"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void queueCleanupJob(true)}
+                  disabled={cleanupLoading}
+                  className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-900 disabled:opacity-60 dark:border-amber-500/30 dark:bg-gray-900 dark:text-amber-100"
+                >
+                  Preview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCleanupApplyConfirm(true)}
+                  disabled={cleanupLoading}
+                  className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+            {currentCleanupJob ? (
+              <div className="mt-4 rounded-lg bg-white p-3 text-sm text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="font-mono text-xs">{currentCleanupJob.id.slice(0, 8)}</span>
+                  <span className="font-medium">{currentCleanupJob.status}</span>
+                  <span>{Math.round(currentCleanupJob.progress.percent)}%</span>
+                  {currentCleanupJob.error ? (
+                    <span className="text-red-600 dark:text-red-300">{currentCleanupJob.error}</span>
+                  ) : null}
+                </div>
+                {currentCleanupJob.result ? (
+                  <div className="mt-2 grid gap-2 sm:grid-cols-4">
+                    {([
+                      ["Orphans found", currentCleanupJob.result.orphan_count ?? 0],
+                      ["Deleted", currentCleanupJob.result.deleted_count ?? "-"],
+                      ["Bytes reclaimed", currentCleanupJob.result.deleted_bytes ?? currentCleanupJob.result.orphan_bytes ?? 0],
+                      ["Failed", currentCleanupJob.result.failed_count ?? 0],
+                    ] as Array<[string, unknown]>).map(([label, value]) => (
+                      <div key={label} className="rounded-lg border border-gray-200 p-2 dark:border-gray-800">
+                        <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</div>
+                        <div className="mt-1 font-semibold text-gray-900 dark:text-white">{String(value)}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="mt-2 text-xs text-amber-700 dark:text-amber-200">
+                  Full deleted/failed key lists are logged to the Audit Log, not just the sample kept here.
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
+      </div>
+
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
@@ -380,10 +496,23 @@ export default function AdminJobsPage() {
         onChanged={() => void refreshJobs()}
       />
 
+      <ConfirmationModal
+        isOpen={showCleanupApplyConfirm}
+        onClose={() => setShowCleanupApplyConfirm(false)}
+        onConfirm={() => void queueCleanupJob(false)}
+        title="Apply Orphaned Audio Cleanup"
+        message={`This permanently deletes R2 objects. Orphaned phrase/proverb/number audio older than ${cleanupRetentionDays} day(s) will be removed - anything more recent stays untouched. Proceed?`}
+        confirmText="Apply Cleanup"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={cleanupLoading}
+      />
+
       <div className="text-sm text-gray-600 dark:text-gray-300">
         Need to create jobs? Use <Link href="/content/words" className="text-brand-600 hover:underline">Words Import</Link>,{" "}
-        <Link href="/content/proverbs" className="text-brand-600 hover:underline">Proverbs</Link>, or{" "}
-        <Link href="/content/time-phrases" className="text-brand-600 hover:underline">Time Phrases</Link>.
+        <Link href="/content/proverbs" className="text-brand-600 hover:underline">Proverbs</Link>,{" "}
+        <Link href="/content/time-phrases" className="text-brand-600 hover:underline">Time Phrases</Link>, or the{" "}
+        Orphaned Audio Cleanup panel above.
       </div>
     </div>
   );

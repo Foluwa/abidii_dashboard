@@ -66,6 +66,18 @@ export async function createTimePhraseJob(payload: {
   return res.data;
 }
 
+export async function createOrphanedAudioCleanupJob(payload: {
+  dry_run?: boolean;
+  retention_days?: number;
+}) {
+  const res = await apiClient.post<AdminJob>('/api/v1/admin/audio/orphaned-cleanup/jobs', {
+    dry_run: true,
+    retention_days: 14,
+    ...payload,
+  });
+  return res.data;
+}
+
 export async function createAudioReconciliationJob() {
   const res = await apiClient.post<AdminJob>('/api/v1/admin/content/audio-reconciliation/jobs');
   return res.data;
