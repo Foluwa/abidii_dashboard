@@ -182,15 +182,24 @@ export default function CollectionsPage() {
     await Promise.all([loadItems(), loadCollections()]);
   }
 
-  function handleRegenerateAudio() {
-    if (!editing || !selected) return;
+  function handleRegenerateAudio(item: Item) {
+    if (!selected) return;
+    // Editing the term text and regenerating are independent actions - if the
+    // edit modal happens to be open for this same item, prefer the in-progress
+    // edited text so a not-yet-saved term correction is reflected in the
+    // regenerated audio; otherwise (row-level trigger) fall back to the item's
+    // saved term.
+    const displayText =
+      editing?.id === item.id
+        ? editLearningTerm || item.learning_term || item.concept_key
+        : item.learning_term || item.concept_key;
     setRegeneratingTarget({
-      id: editing.id,
+      id: item.id,
       contentType: "term",
-      displayText: editLearningTerm || editing.learning_term || editing.concept_key,
-      defaultText: editLearningTerm || editing.learning_term || editing.concept_key,
+      displayText,
+      defaultText: displayText,
       languageCode: learningLanguage,
-      submitEndpoint: `/api/v1/admin/content-collections/${selected}/items/${editing.concept_key}/terms/${learningLanguage}/regenerate-audio`,
+      submitEndpoint: `/api/v1/admin/content-collections/${selected}/items/${item.concept_key}/terms/${learningLanguage}/regenerate-audio`,
     });
     setShowRegenerateModal(true);
   }
@@ -278,7 +287,18 @@ export default function CollectionsPage() {
               {items.map((item) => <tr key={item.id} onClick={() => startEditing(item)} className="cursor-pointer text-gray-800 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-900">
                 <td className="px-4 py-3">{item.sort_order + 1}</td>
                 <td className="px-4 py-3">{item.image_url ? <Image src={item.image_url} alt="" width={48} height={48} unoptimized className="h-12 w-12 rounded-lg object-contain" /> : <span className="text-gray-400">Missing</span>}</td>
-                <td className="px-4 py-3"><div onClick={(event) => event.stopPropagation()}><InlineAudioPlayer src={item.audio_url} size="md" /></div></td>
+                <td className="px-4 py-3">
+                  <div onClick={(event) => event.stopPropagation()} className="flex items-center gap-2">
+                    <InlineAudioPlayer src={item.audio_url} size="md" />
+                    <button
+                      type="button"
+                      onClick={() => handleRegenerateAudio(item)}
+                      className="text-xs font-medium text-brand-600 hover:text-brand-800 dark:text-brand-400"
+                    >
+                      Regenerate Audio
+                    </button>
+                  </div>
+                </td>
                 <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-300">{item.concept_key}</td>
                 <td className="px-4 py-3 font-medium">{item.learning_term || 'Missing'}</td>
                 <td className="px-4 py-3">{item.translation || 'Missing'}</td>
@@ -312,10 +332,10 @@ export default function CollectionsPage() {
                   <span className="text-sm text-gray-600 dark:text-gray-300">Play {learningLanguage} pronunciation</span>
                   <button
                     type="button"
-                    onClick={handleRegenerateAudio}
+                    onClick={() => editing && handleRegenerateAudio(editing)}
                     className="rounded-lg border border-brand-500 px-2.5 py-1 text-xs font-medium text-brand-600 dark:text-brand-300"
                   >
-                    Regenerate audio
+                    Regenerate Audio
                   </button>
                 </div>
               </div>

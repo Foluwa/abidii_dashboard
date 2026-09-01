@@ -344,7 +344,7 @@ export default function ProverbsDataTable({
                           ? "Queued"
                           : proverb.last_regeneration_status === "processing"
                             ? "Processing..."
-                            : "Regenerate"}
+                            : "Regenerate Audio"}
                       </button>
                       <button
                         onClick={() => onEdit(proverb)}
@@ -501,7 +501,7 @@ export default function ProverbsDataTable({
                   ? "Queued"
                   : proverb.last_regeneration_status === "processing"
                     ? "Processing..."
-                    : "Regenerate"}
+                    : "Regenerate Audio"}
               </button>
               <button
                 onClick={() => onEdit(proverb)}
