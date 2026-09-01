@@ -711,6 +711,7 @@ export function LessonBlueprintEditor({
   const [pairSearchError, setPairSearchError] = useState('');
   const pairAutocompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [vocabPickerStepIndex, setVocabPickerStepIndex] = useState<number | null>(null);
+  const [justAddedStepIndex, setJustAddedStepIndex] = useState<number | null>(null);
   const [vocabPickerSearch, setVocabPickerSearch] = useState('');
   const [vocabPickerItems, setVocabPickerItems] = useState<import('@/types/curriculum').CurriculumVocabLibraryItem[]>([]);
   const [isVocabPickerLoading, setIsVocabPickerLoading] = useState(false);
@@ -1781,10 +1782,11 @@ export function LessonBlueprintEditor({
   const addStep = () => {
     const existingSteps = getObjectArray(editablePayload.steps);
     const stepNumber = existingSteps.length + 1;
+    setJustAddedStepIndex(existingSteps.length);
     updatePayload((prev) => ({
       ...prev,
-      steps: [...getObjectArray(prev.steps), { 
-        type: 'lessonStart', 
+      steps: [...getObjectArray(prev.steps), {
+        type: 'lessonStart',
         title: `Step ${stepNumber}`,
         stepId: generateId('step'),
       }],
@@ -3584,9 +3586,15 @@ export function LessonBlueprintEditor({
                     const hasStepErrors = stepCounts && stepCounts.errors > 0;
                     const hasStepWarnings = stepCounts && stepCounts.warnings > 0;
 
+                    const stepSummaryLabel =
+                      getString(step.title) ||
+                      stepTypeOptions.find((option) => option.value === stepType)?.label ||
+                      stepType;
+
                     return (
-                    <div
+                    <details
                       key={`${getString(step.stepId) || stepType || 'step'}-${index}`}
+                      open={index === justAddedStepIndex || undefined}
                       className={`rounded-lg border bg-white p-4 dark:bg-gray-900 ${
                         hasStepErrors
                           ? 'border-red-300 dark:border-red-800'
@@ -3595,9 +3603,10 @@ export function LessonBlueprintEditor({
                           : 'border-gray-200 dark:border-gray-800'
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-3">
+                      <summary className="flex cursor-pointer items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
                           <div className="text-sm font-semibold text-gray-900 dark:text-white">Step {index + 1}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{stepSummaryLabel}</div>
                           {hasStepErrors && (
                             <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
                               {stepCounts.errors} error{stepCounts.errors === 1 ? '' : 's'}
@@ -3614,7 +3623,10 @@ export function LessonBlueprintEditor({
                             </span>
                           )}
                         </div>
-                         <div className="flex items-center gap-2">
+                         <div
+                           className="flex items-center gap-2"
+                           onClick={(event) => event.stopPropagation()}
+                         >
                            <button
                              type="button"
                              onClick={() => moveStep(index, -1)}
@@ -3641,7 +3653,7 @@ export function LessonBlueprintEditor({
                              Remove
                            </button>
                          </div>
-                       </div>
+                       </summary>
                        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2">
                          <div>
                            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</label>
@@ -4466,7 +4478,7 @@ export function LessonBlueprintEditor({
                            ) : null}
                          </div>
                       </div>
-                    </div>
+                    </details>
                   );
                   })
                 )}

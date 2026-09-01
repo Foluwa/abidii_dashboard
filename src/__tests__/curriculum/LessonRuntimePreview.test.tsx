@@ -1,5 +1,5 @@
 import React from 'react';
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 
 import { LessonRuntimePreview } from '@/components/admin/curriculum/LessonRuntimePreview';
 import { renderWithProviders as render } from '@/test-utils';
@@ -66,5 +66,46 @@ describe('LessonRuntimePreview', () => {
     expect(screen.queryByText(topLevelAudioUrl)).not.toBeInTheDocument();
     expect(screen.queryByText(stepImageUrl)).not.toBeInTheDocument();
     expect(screen.queryByText(stepAudioUrl)).not.toBeInTheDocument();
+  });
+
+  it('shows Step Content as a one-at-a-time carousel, not a stacked list', () => {
+    render(
+      <LessonRuntimePreview
+        blueprint={{
+          blueprint_key: 'lesson_reading_practice_02',
+          lesson_kind: 'reading_practice',
+          payload: {
+            title: 'Reading Practice',
+            steps: [
+              { runtimeType: 'listen', prompt: 'First step prompt' },
+              { runtimeType: 'listen', prompt: 'Second step prompt' },
+              { runtimeType: 'listen', prompt: 'Third step prompt' },
+            ],
+          },
+        }}
+      />
+    );
+
+    // Only the first step's content is rendered initially - proves this is
+    // a carousel, not the old stacked-list-of-all-steps layout.
+    expect(screen.getByText('First step prompt')).toBeInTheDocument();
+    expect(screen.queryByText('Second step prompt')).not.toBeInTheDocument();
+    expect(screen.queryByText('Third step prompt')).not.toBeInTheDocument();
+    expect(screen.getByText('1 / 3')).toBeInTheDocument();
+    expect(screen.getByTitle('Previous step')).toBeDisabled();
+    expect(screen.getByTitle('Next step')).not.toBeDisabled();
+
+    fireEvent.click(screen.getByTitle('Next step'));
+
+    expect(screen.queryByText('First step prompt')).not.toBeInTheDocument();
+    expect(screen.getByText('Second step prompt')).toBeInTheDocument();
+    expect(screen.getByText('2 / 3')).toBeInTheDocument();
+    expect(screen.getByTitle('Previous step')).not.toBeDisabled();
+
+    fireEvent.click(screen.getByTitle('Next step'));
+
+    expect(screen.getByText('Third step prompt')).toBeInTheDocument();
+    expect(screen.getByText('3 / 3')).toBeInTheDocument();
+    expect(screen.getByTitle('Next step')).toBeDisabled();
   });
 });
