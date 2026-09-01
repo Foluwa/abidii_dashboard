@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import Alert from '@/components/ui/alert/SimpleAlert';
 import MediaLinkPreview from '@/components/admin/curriculum/MediaLinkPreview';
+import { RegenerateAudioModal, type RegenerateAudioTarget } from '@/components/modals/RegenerateAudioModal';
 import { LessonRuntimePreview } from '@/components/admin/curriculum/LessonRuntimePreview';
 import ValidationResultViewer from '@/components/admin/curriculum/ValidationResultViewer';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
@@ -676,6 +677,14 @@ export function LessonBlueprintEditor({
   const [uploadingFieldPath, setUploadingFieldPath] = useState<string | null>(null);
   const [uploadProgressByField, setUploadProgressByField] = useState<Record<string, number>>({});
   const [generatingAudioFieldPath, setGeneratingAudioFieldPath] = useState<string | null>(null);
+  // Regenerate-Audio (preview/accept flow) for a step whose audio is linked
+  // to a content-library phrase via sourceRef - distinct from the raw
+  // "Generate" button above, which calls the TTS endpoint directly and has
+  // no listen-first review step. regeneratingAudioFieldPath is the payload
+  // field to patch (e.g. `steps[2].audioUrl`) once the admin accepts.
+  const [showRegenerateAudioModal, setShowRegenerateAudioModal] = useState(false);
+  const [regenerateAudioTarget, setRegenerateAudioTarget] = useState<RegenerateAudioTarget | null>(null);
+  const [regeneratingAudioFieldPath, setRegeneratingAudioFieldPath] = useState<string | null>(null);
   const [assetLibraryTargetFieldPath, setAssetLibraryTargetFieldPath] = useState<string | null>(null);
   const [isAssetLibraryModalOpen, setIsAssetLibraryModalOpen] = useState(false);
   const [isAssetDropActive, setIsAssetDropActive] = useState(false);
@@ -1834,6 +1843,57 @@ export function LessonBlueprintEditor({
       toast.error(error?.response?.data?.detail || 'Failed to generate audio');
     } finally {
       setGeneratingAudioFieldPath(null);
+    }
+  };
+
+  // Opens the same listen-before-accept Regenerate Audio flow the
+  // content-library pages use (RegenerateAudioModal), targeting the
+  // phrase a step's sourceRef points at. Only applies where a sourceRef
+  // exists - a step with audio set via raw Upload/Generate has no
+  // content-library record to regenerate against.
+  const handleRegenerateStepAudio = (fieldPath: string, contentId: string, displayText: string) => {
+    const languageCode = selectedCourse?.target_language_code || 'yor';
+    setRegeneratingAudioFieldPath(fieldPath);
+    setRegenerateAudioTarget({
+      id: contentId,
+      contentType: 'phrase',
+      displayText,
+      defaultText: displayText,
+      languageCode,
+      submitEndpoint: `/api/v1/admin/content/phrases/${contentId}/regenerate-audio`,
+    });
+    setShowRegenerateAudioModal(true);
+  };
+
+  // Fires once the admin has previewed and explicitly accepted the new
+  // take - the phrase's audio_url is already updated server-side at this
+  // point. This blueprint payload's own audioUrl field is a snapshot
+  // copy taken at link time (see the phrase-picker handlers above), not
+  // a live reference, so it needs the same explicit patch handleGenerateAudio
+  // does for a raw generate - otherwise this editor (and any runtime path
+  // that reads the stored field rather than re-resolving the sourceRef)
+  // would keep showing/serving the now-stale audio.
+  const handleRegenerateStepAudioSuccess = async () => {
+    const fieldPath = regeneratingAudioFieldPath;
+    const contentId = regenerateAudioTarget?.id;
+    setShowRegenerateAudioModal(false);
+    setRegenerateAudioTarget(null);
+    setRegeneratingAudioFieldPath(null);
+    if (!fieldPath || !contentId) return;
+
+    try {
+      const response = await apiClient.get(`/api/v1/admin/content/phrases/${contentId}`);
+      const freshAudioUrl = response.data?.audio_url;
+      if (!freshAudioUrl) return;
+      updatePayload((prev) => setPayloadFieldValue(prev, fieldPath, freshAudioUrl));
+      setPayloadText((prev) => {
+        const parsed = safeParsePayload(prev);
+        if (!parsed) return prev;
+        const next = setPayloadFieldValue(parsed, fieldPath, freshAudioUrl);
+        return JSON.stringify(next, null, 2);
+      });
+    } catch (error: any) {
+      toast.error('Audio was regenerated, but refreshing this editor failed - reopen the blueprint to see the new audio.');
     }
   };
 
@@ -3513,6 +3573,12 @@ export function LessonBlueprintEditor({
                     const stepType = getStepRuntimeType(step);
                     const recognitionOptions = getObjectArray(step.options);
                     const matchPairs = getObjectArray(step.pairs);
+                    const stepSourceRef = getObject(step.sourceRef);
+                    const stepSourceContentType =
+                      getString(step.sourceContentType) || getString(stepSourceRef?.contentType);
+                    const stepSourceContentId =
+                      getString(step.sourcePhraseId) ||
+                      (stepSourceContentType === 'phrase' ? getString(stepSourceRef?.contentId) : '');
 
                     const stepCounts = stepValidationCounts.get(index);
                     const hasStepErrors = stepCounts && stepCounts.errors > 0;
@@ -4238,6 +4304,22 @@ export function LessonBlueprintEditor({
                                                >
                                                  {generatingAudioFieldPath === pairAudioFieldPath ? 'Generating…' : 'Generate'}
                                                </button>
+                                               {sourceContentType === 'phrase' && sourcePhraseId ? (
+                                                 <button
+                                                   type="button"
+                                                   onClick={() =>
+                                                     handleRegenerateStepAudio(
+                                                       pairAudioFieldPath,
+                                                       sourcePhraseId,
+                                                       getString(pair.yorubaText) || getString(pair.englishText) || `pair ${pairIndex + 1}`
+                                                     )
+                                                   }
+                                                   title="Listen to a new take before it replaces the live audio for this phrase"
+                                                   className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                                                 >
+                                                   Regenerate Audio
+                                                 </button>
+                                               ) : null}
                                              </div>
                                               {getString(pair.audioUrl) ? (
                                                 <div className="mt-3">
@@ -4360,6 +4442,22 @@ export function LessonBlueprintEditor({
                              >
                                {generatingAudioFieldPath === `steps[${index}].audioUrl` ? 'Generating…' : 'Generate'}
                              </button>
+                             {stepSourceContentType === 'phrase' && stepSourceContentId ? (
+                               <button
+                                 type="button"
+                                 onClick={() =>
+                                   handleRegenerateStepAudio(
+                                     `steps[${index}].audioUrl`,
+                                     stepSourceContentId,
+                                     getString(step.yorubaText) || getString(step.phrase) || getString(step.title) || getString(step.prompt) || `step ${index + 1}`
+                                   )
+                                 }
+                                 title="Listen to a new take before it replaces the live audio for this phrase"
+                                 className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                               >
+                                 Regenerate Audio
+                               </button>
+                             ) : null}
                            </div>
                            {getString(step.audioUrl) ? (
                              <div className="mt-3">
@@ -4596,6 +4694,19 @@ export function LessonBlueprintEditor({
           <ValidationResultViewer validation={previewResult.validation} />
         </div>
       )}
+
+      <RegenerateAudioModal
+        isOpen={showRegenerateAudioModal}
+        onClose={() => {
+          setShowRegenerateAudioModal(false);
+          setRegenerateAudioTarget(null);
+          setRegeneratingAudioFieldPath(null);
+        }}
+        target={regenerateAudioTarget}
+        onSuccess={() => {
+          void handleRegenerateStepAudioSuccess();
+        }}
+      />
     </div>
   );
 }
