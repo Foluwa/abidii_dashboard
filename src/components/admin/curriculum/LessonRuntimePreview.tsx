@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import MediaLinkPreview from '@/components/admin/curriculum/MediaLinkPreview';
 import StatusBadge from '@/components/admin/StatusBadge';
 import { useCurriculumVocabLibrary } from '@/hooks/useApi';
+import { apiClient } from '@/lib/api';
 import type { AvailabilityStatus } from '@/types/curriculum';
 
 type PreviewBlueprintShape = {
@@ -428,6 +429,40 @@ export function LessonRuntimePreview({
   const media = collectTopLevelMedia(payload);
   const readingTargetRefs = collectCompactReadingTargetRefs(payload);
   const readingMediaRefs = collectCompactReadingMediaRefs(payload);
+  const readingTargetKeysSignature = readingTargetRefs
+    .map((ref) => `${asString(ref.contentType)}:${asString(ref.contentId)}`)
+    .join('|');
+  const [readingTargetLabels, setReadingTargetLabels] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const fetchable = Array.from(new Set(readingTargetKeysSignature ? readingTargetKeysSignature.split('|') : []))
+      .map((key) => {
+        const [contentType, contentId] = key.split(':');
+        return { key, contentType, contentId };
+      })
+      .filter((ref) => ref.contentId && (ref.contentType === 'phrase' || ref.contentType === 'sentence'));
+
+    let cancelled = false;
+    void Promise.all(
+      fetchable.map(async (ref) => {
+        try {
+          const endpoint = ref.contentType === 'sentence' ? 'sentences' : 'phrases';
+          const response = await apiClient.get(`/api/v1/admin/content/${endpoint}/${ref.contentId}`);
+          const text = ref.contentType === 'sentence' ? response.data?.text : response.data?.phrase;
+          return [ref.key, asString(text) || ''] as const;
+        } catch {
+          return [ref.key, ''] as const;
+        }
+      })
+    ).then((entries) => {
+      if (!cancelled) {
+        setReadingTargetLabels(Object.fromEntries(entries.filter(([, label]) => label)));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [readingTargetKeysSignature]);
   const title =
     asString(payload.title) || asString(payload.id) || blueprint.blueprint_key || 'Untitled lesson';
   const subtitle = asString(payload.description) || asString(payload.subtitle) || null;
@@ -511,15 +546,20 @@ export function LessonRuntimePreview({
               <div>
                 <div className="font-medium">Phrase targets</div>
                 <div className="mt-1 flex flex-wrap gap-2">
-                  {readingTargetRefs.map((item, index) => (
-                    <span
-                      key={`${asString(item.contentId) || 'target'}-${index}`}
-                      className="rounded-full border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900"
-                      title={asString(item.contentId) || undefined}
-                    >
-                      {asString(item.contentType) || 'content'}: {asString(item.contentId) || 'unknown'}
-                    </span>
-                  ))}
+                  {readingTargetRefs.map((item, index) => {
+                    const contentType = asString(item.contentType);
+                    const contentId = asString(item.contentId);
+                    const resolvedLabel = readingTargetLabels[`${contentType}:${contentId}`];
+                    return (
+                      <span
+                        key={`${contentId || 'target'}-${index}`}
+                        className="rounded-full border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900"
+                        title={contentId || undefined}
+                      >
+                        {contentType || 'content'}: {resolvedLabel || contentId || 'unknown'}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             ) : null}

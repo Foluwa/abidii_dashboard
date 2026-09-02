@@ -1,13 +1,20 @@
 import React from 'react';
-import { fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 
 import { LessonRuntimePreview } from '@/components/admin/curriculum/LessonRuntimePreview';
+import { apiClient } from '@/lib/api';
 import { renderWithProviders as render } from '@/test-utils';
 
 const mockUseCurriculumVocabLibrary = jest.fn();
 
 jest.mock('@/hooks/useApi', () => ({
   useCurriculumVocabLibrary: (filters: unknown) => mockUseCurriculumVocabLibrary(filters),
+}));
+
+jest.mock('@/lib/api', () => ({
+  apiClient: {
+    get: jest.fn(),
+  },
 }));
 
 describe('LessonRuntimePreview', () => {
@@ -107,5 +114,35 @@ describe('LessonRuntimePreview', () => {
     expect(screen.getByText('Third step prompt')).toBeInTheDocument();
     expect(screen.getByText('3 / 3')).toBeInTheDocument();
     expect(screen.getByTitle('Next step')).toBeDisabled();
+  });
+
+  it('resolves phrase target IDs to their phrase text instead of showing raw UUIDs', async () => {
+    const bawoId = '483fa13a-2cab-412d-82d5-7718728b1971';
+    (apiClient.get as jest.Mock).mockImplementation((url: string) => {
+      if (url === `/api/v1/admin/content/phrases/${bawoId}`) {
+        return Promise.resolve({ data: { phrase: 'Báwo ni', translation: 'How are you?' } });
+      }
+      return Promise.reject(new Error(`unexpected url: ${url}`));
+    });
+
+    await act(async () => {
+      render(
+        <LessonRuntimePreview
+          blueprint={{
+            blueprint_key: 'lesson_reading_practice_03',
+            lesson_kind: 'reading_practice',
+            payload: {
+              title: 'Reading Practice',
+              targetContentRefs: [{ contentType: 'phrase', contentId: bawoId }],
+            },
+          }}
+        />
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('phrase: Báwo ni')).toBeInTheDocument();
+    });
+    expect(screen.queryByText(`phrase: ${bawoId}`)).not.toBeInTheDocument();
   });
 });
