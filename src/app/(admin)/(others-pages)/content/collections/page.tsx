@@ -8,7 +8,14 @@ import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
 import { RegenerateAudioModal, RegenerateAudioTarget } from "@/components/modals/RegenerateAudioModal";
 
 type Language = { id: string; iso_639_3: string; name: string; native_name?: string };
-type Collection = { collection_key: string; title: string; status: string; is_active: boolean; item_count: number };
+type Collection = {
+  collection_key: string;
+  title: string;
+  description?: string;
+  status: string;
+  is_active: boolean;
+  item_count: number;
+};
 type Item = {
   id: string;
   concept_key: string;
@@ -34,20 +41,31 @@ export default function CollectionsPage() {
   const [coverage, setCoverage] = useState<Coverage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showCreate, setShowCreate] = useState(false);
+
+  const [showCreateCollection, setShowCreateCollection] = useState(false);
   const [newKey, setNewKey] = useState("");
   const [newTitle, setNewTitle] = useState("");
+  const [isCreatingCollection, setIsCreatingCollection] = useState(false);
+
+  const [editingCollection, setEditingCollection] = useState(false);
+  const [editCollectionTitle, setEditCollectionTitle] = useState("");
+  const [editCollectionDescription, setEditCollectionDescription] = useState("");
+  const [isSavingCollection, setIsSavingCollection] = useState(false);
+
   const [editing, setEditing] = useState<Item | null>(null);
   const [editLearningTerm, setEditLearningTerm] = useState("");
   const [editTranslation, setEditTranslation] = useState("");
   const [editImageUrl, setEditImageUrl] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
   const [showAddItem, setShowAddItem] = useState(false);
   const [newConceptKey, setNewConceptKey] = useState("");
   const [newLearningTerm, setNewLearningTerm] = useState("");
   const [newTranslation, setNewTranslation] = useState("");
   const [newCategoryKey, setNewCategoryKey] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const [isAddingItem, setIsAddingItem] = useState(false);
+
   const [showRegenerateModal, setShowRegenerateModal] = useState(false);
   const [regeneratingTarget, setRegeneratingTarget] = useState<RegenerateAudioTarget | null>(null);
 
@@ -95,16 +113,51 @@ export default function CollectionsPage() {
   async function createCollection(event: React.FormEvent) {
     event.preventDefault();
     setError("");
-    await apiClient.post("/api/v1/admin/content-collections", {
-      collection_key: newKey,
-      title: newTitle,
-      localization_language: "eng",
-      default_translation_language: "eng",
-    });
-    setNewKey("");
-    setNewTitle("");
-    setShowCreate(false);
-    await loadCollections();
+    setIsCreatingCollection(true);
+    try {
+      await apiClient.post("/api/v1/admin/content-collections", {
+        collection_key: newKey,
+        title: newTitle,
+        localization_language: "eng",
+        default_translation_language: "eng",
+      });
+      setNewKey("");
+      setNewTitle("");
+      setShowCreateCollection(false);
+      await loadCollections();
+    } catch (reason: any) {
+      setError(reason?.response?.data?.detail || "Could not create collection");
+    } finally {
+      setIsCreatingCollection(false);
+    }
+  }
+
+  function startEditingCollection() {
+    if (!selectedCollection) return;
+    setEditCollectionTitle(selectedCollection.title);
+    setEditCollectionDescription(selectedCollection.description || "");
+    setEditingCollection(true);
+  }
+
+  async function saveCollection(event: React.FormEvent) {
+    event.preventDefault();
+    if (!selectedCollection) return;
+    setError("");
+    setIsSavingCollection(true);
+    try {
+      await apiClient.put(`/api/v1/admin/content-collections/${selected}/localizations`, {
+        language: "eng",
+        title: editCollectionTitle,
+        description: editCollectionDescription || null,
+        status: selectedCollection.status,
+      });
+      setEditingCollection(false);
+      await loadCollections();
+    } catch (reason: any) {
+      setError(reason?.response?.data?.detail || "Could not update collection");
+    } finally {
+      setIsSavingCollection(false);
+    }
   }
 
   function startEditing(item: Item) {
@@ -150,36 +203,43 @@ export default function CollectionsPage() {
     event.preventDefault();
     if (!selected) return;
     setError("");
-    await apiClient.post(`/api/v1/admin/content-collections/${selected}/items`, {
-      concept_key: newConceptKey,
-      category_key: newCategoryKey || null,
-    });
-    await Promise.all([
-      apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${newConceptKey}/terms`, {
-        language: learningLanguage,
-        term: newLearningTerm,
-        status: "published",
-      }),
-      apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${newConceptKey}/terms`, {
-        language: translationLanguage,
-        term: newTranslation,
-        status: "published",
-      }),
-      newImageUrl
-        ? apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${newConceptKey}/image`, {
-            language: learningLanguage,
-            asset_url: newImageUrl,
-            alt_text: newTranslation,
-          })
-        : Promise.resolve(),
-    ]);
-    setNewConceptKey("");
-    setNewLearningTerm("");
-    setNewTranslation("");
-    setNewCategoryKey("");
-    setNewImageUrl("");
-    setShowAddItem(false);
-    await Promise.all([loadItems(), loadCollections()]);
+    setIsAddingItem(true);
+    try {
+      await apiClient.post(`/api/v1/admin/content-collections/${selected}/items`, {
+        concept_key: newConceptKey,
+        category_key: newCategoryKey || null,
+      });
+      await Promise.all([
+        apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${newConceptKey}/terms`, {
+          language: learningLanguage,
+          term: newLearningTerm,
+          status: "published",
+        }),
+        apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${newConceptKey}/terms`, {
+          language: translationLanguage,
+          term: newTranslation,
+          status: "published",
+        }),
+        newImageUrl
+          ? apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${newConceptKey}/image`, {
+              language: learningLanguage,
+              asset_url: newImageUrl,
+              alt_text: newTranslation,
+            })
+          : Promise.resolve(),
+      ]);
+      setNewConceptKey("");
+      setNewLearningTerm("");
+      setNewTranslation("");
+      setNewCategoryKey("");
+      setNewImageUrl("");
+      setShowAddItem(false);
+      await Promise.all([loadItems(), loadCollections()]);
+    } catch (reason: any) {
+      setError(reason?.response?.data?.detail || "Could not add item");
+    } finally {
+      setIsAddingItem(false);
+    }
   }
 
   function handleRegenerateAudio(item: Item) {
@@ -216,6 +276,7 @@ export default function CollectionsPage() {
       apiClient.put(`/api/v1/admin/content-collections/${selected}/localizations`, {
         language: "eng",
         title: selectedCollection.title,
+        description: selectedCollection.description || null,
         status: nextStatus,
       }),
     ]);
@@ -227,27 +288,7 @@ export default function CollectionsPage() {
   return (
     <div className="space-y-5">
       {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
-      <div className="flex flex-wrap justify-end gap-2">
-        {selectedCollection && <button onClick={() => toggleCollectionPublished().catch((reason) => setError(reason?.response?.data?.detail || "Could not update collection"))} className="rounded-lg border border-brand-500 px-4 py-2 text-sm font-medium text-brand-600 dark:text-brand-300">{selectedCollection.status === "published" ? "Return to draft" : "Publish collection"}</button>}
-        {selected && <button onClick={() => setShowAddItem((value) => !value)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-white">{showAddItem ? "Cancel item" : "New item"}</button>}
-        <button onClick={() => setShowCreate((value) => !value)} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white">{showCreate ? "Cancel" : "New collection"}</button>
-      </div>
-      {showCreate && <form onSubmit={createCollection} className="grid gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 md:grid-cols-[1fr_2fr_auto]">
-        <input required pattern="[a-z0-9][a-z0-9_-]+" value={newKey} onChange={(event) => setNewKey(event.target.value)} placeholder="Collection key, e.g. foods" className="rounded-lg border p-2 dark:border-gray-700 dark:bg-gray-950" />
-        <input required value={newTitle} onChange={(event) => setNewTitle(event.target.value)} placeholder="English title" className="rounded-lg border p-2 dark:border-gray-700 dark:bg-gray-950" />
-        <button className="rounded-lg bg-brand-500 px-4 py-2 text-white">Create draft</button>
-      </form>}
-      {showAddItem && <form onSubmit={(event) => addItem(event).catch((reason) => setError(reason?.response?.data?.detail || "Could not add item"))} className="space-y-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h3 className="font-semibold">Add item to {selected}</h3>
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
-          <label className="text-sm">Stable concept key<input required pattern="[a-z0-9][a-z0-9_.-]+" value={newConceptKey} onChange={(event) => setNewConceptKey(event.target.value)} placeholder="animal.lion" className="mt-1 w-full rounded-lg border p-2 dark:border-gray-700 dark:bg-gray-950" /></label>
-          <label className="text-sm">{learningLanguage} term<input required value={newLearningTerm} onChange={(event) => setNewLearningTerm(event.target.value)} className="mt-1 w-full rounded-lg border p-2 dark:border-gray-700 dark:bg-gray-950" /></label>
-          <label className="text-sm">{translationLanguage} translation<input required value={newTranslation} onChange={(event) => setNewTranslation(event.target.value)} className="mt-1 w-full rounded-lg border p-2 dark:border-gray-700 dark:bg-gray-950" /></label>
-          <label className="text-sm">Category key<input value={newCategoryKey} onChange={(event) => setNewCategoryKey(event.target.value)} placeholder="mammal" className="mt-1 w-full rounded-lg border p-2 dark:border-gray-700 dark:bg-gray-950" /></label>
-          <label className="text-sm">Primary image URL<input value={newImageUrl} onChange={(event) => setNewImageUrl(event.target.value)} className="mt-1 w-full rounded-lg border p-2 dark:border-gray-700 dark:bg-gray-950" /></label>
-        </div>
-        <button className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white">Add and publish terms</button>
-      </form>}
+
       <div className="grid gap-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 md:grid-cols-3">
         <label className="text-sm text-gray-600 dark:text-gray-300">Collection
           <select value={selected} onChange={(event) => setSelected(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
@@ -276,6 +317,13 @@ export default function CollectionsPage() {
           ))}
         </div>
       )}
+
+      <div className="flex flex-wrap justify-end gap-2">
+        {selectedCollection && <button onClick={startEditingCollection} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-white">Edit collection</button>}
+        {selectedCollection && <button onClick={() => toggleCollectionPublished().catch((reason) => setError(reason?.response?.data?.detail || "Could not update collection"))} className="rounded-lg border border-brand-500 px-4 py-2 text-sm font-medium text-brand-600 dark:text-brand-300">{selectedCollection.status === "published" ? "Return to draft" : "Publish collection"}</button>}
+        {selected && <button onClick={() => setShowAddItem(true)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-white">New item</button>}
+        <button onClick={() => setShowCreateCollection(true)} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white">New collection</button>
+      </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-white">
         <div className="overflow-x-auto">
@@ -310,6 +358,67 @@ export default function CollectionsPage() {
           </table>
         </div>
       </div>
+
+      <FormModal
+        isOpen={showCreateCollection}
+        onClose={() => !isCreatingCollection && setShowCreateCollection(false)}
+        onSubmit={createCollection}
+        title="New collection"
+        submitLabel="Create draft"
+        isSubmitting={isCreatingCollection}
+      >
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Collection key
+          <input required pattern="[a-z0-9][a-z0-9_-]+" value={newKey} onChange={(event) => setNewKey(event.target.value)} placeholder="e.g. foods" className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+        </label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">English title
+          <input required value={newTitle} onChange={(event) => setNewTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+        </label>
+      </FormModal>
+
+      <FormModal
+        isOpen={editingCollection}
+        onClose={() => !isSavingCollection && setEditingCollection(false)}
+        onSubmit={saveCollection}
+        title={`Edit ${selectedCollection?.title || "collection"}`}
+        submitLabel="Save"
+        isSubmitting={isSavingCollection}
+      >
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Title
+          <input required value={editCollectionTitle} onChange={(event) => setEditCollectionTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+        </label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description
+          <textarea value={editCollectionDescription} onChange={(event) => setEditCollectionDescription(event.target.value)} rows={3} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+        </label>
+      </FormModal>
+
+      <FormModal
+        isOpen={showAddItem}
+        onClose={() => !isAddingItem && setShowAddItem(false)}
+        onSubmit={addItem}
+        title={`Add item to ${selected}`}
+        submitLabel="Add and publish terms"
+        size="lg"
+        isSubmitting={isAddingItem}
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Stable concept key
+            <input required pattern="[a-z0-9][a-z0-9_.-]+" value={newConceptKey} onChange={(event) => setNewConceptKey(event.target.value)} placeholder="animal.lion" className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+          </label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category key
+            <input value={newCategoryKey} onChange={(event) => setNewCategoryKey(event.target.value)} placeholder="mammal" className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+          </label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{learningLanguage} term
+            <input required value={newLearningTerm} onChange={(event) => setNewLearningTerm(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+          </label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{translationLanguage} translation
+            <input required value={newTranslation} onChange={(event) => setNewTranslation(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+          </label>
+        </div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Primary image URL
+          <input value={newImageUrl} onChange={(event) => setNewImageUrl(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+        </label>
+      </FormModal>
+
       <FormModal
         isOpen={Boolean(editing)}
         onClose={() => !isSaving && setEditing(null)}
