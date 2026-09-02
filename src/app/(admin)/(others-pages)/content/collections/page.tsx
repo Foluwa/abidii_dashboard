@@ -28,6 +28,8 @@ type Item = {
   image_url?: string;
   audio_url?: string;
   translation_audio_url?: string;
+  aliases?: string[];
+  alias_audio?: Record<string, string>;
 };
 type Coverage = { iso_639_3: string; name: string; translated_items: number; total_items: number };
 
@@ -56,6 +58,9 @@ export default function CollectionsPage() {
   const [editLearningTerm, setEditLearningTerm] = useState("");
   const [editTranslation, setEditTranslation] = useState("");
   const [editImageUrl, setEditImageUrl] = useState("");
+  // Comma-separated in the input, matching how the mobile app already
+  // stores/splits alternate names - split into an array only on save.
+  const [editAliases, setEditAliases] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const [showAddItem, setShowAddItem] = useState(false);
@@ -165,6 +170,7 @@ export default function CollectionsPage() {
     setEditLearningTerm(item.learning_term || "");
     setEditTranslation(item.translation || "");
     setEditImageUrl(item.image_url || "");
+    setEditAliases((item.aliases || []).join(", "));
   }
 
   async function saveItem(event: React.FormEvent) {
@@ -172,11 +178,16 @@ export default function CollectionsPage() {
     if (!editing) return;
     setIsSaving(true);
     setError("");
+    const aliases = editAliases
+      .split(",")
+      .map((alias) => alias.trim())
+      .filter((alias) => alias.length > 0);
     try {
       await Promise.all([
         apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${editing.concept_key}/terms`, {
           language: learningLanguage,
           term: editLearningTerm,
+          aliases,
           audio_url: editing.audio_url || null,
           status: "published",
         }),
@@ -454,6 +465,25 @@ export default function CollectionsPage() {
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{translationLanguage} translation<input required value={editTranslation} onChange={(event) => setEditTranslation(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
             </div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Primary image URL<input value={editImageUrl} onChange={(event) => setEditImageUrl(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Alternate names ({learningLanguage}), comma-separated
+              <input
+                value={editAliases}
+                onChange={(event) => setEditAliases(event.target.value)}
+                placeholder="e.g. Egbin, Olúbe, Èsúró"
+                className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+              />
+            </label>
+            {(editing.aliases || []).length > 0 && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Audio: {(editing.aliases || []).map((alias) => (
+                  <span key={alias} className="mr-2">
+                    {alias} {editing.alias_audio?.[alias] ? "✓" : "(none yet)"}
+                  </span>
+                ))}
+                {" "}— renamed or new names need the audio backfill script re-run.
+              </p>
+            )}
           </>
         )}
       </FormModal>
