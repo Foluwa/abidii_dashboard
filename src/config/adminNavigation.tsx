@@ -150,6 +150,7 @@ export const mainNavigationItems: AdminNavItem[] = [
           },
           { name: "Idempotency", path: "/system/idempotency", permission: "system:read" },
           { name: "Enforcement", path: "/enforcement", permission: "system:read" },
+          { name: "Security Exceptions", path: "/system/security-exceptions", permission: "system:read" },
         ],
       },
       {
