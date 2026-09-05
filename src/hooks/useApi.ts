@@ -24,7 +24,12 @@ import type {
   PublicLessonBlueprintResponse,
 } from '@/types/curriculum';
 import type { AdminAuditLogListResponse } from '@/types/audit-log';
-import type { CurriculumOpsMetricsResponse } from '@/types/admin-analytics';
+import type {
+  CurriculumOpsMetricsResponse,
+  RoomAnalyticsResponse,
+  RoomTypeFilterValue,
+  RoomStatusFilterValue,
+} from '@/types/admin-analytics';
 import type {
   OrphanAssetCandidateListResponse,
   OrphanAssetScanListResponse,
@@ -1465,6 +1470,44 @@ export function useAdminCurriculumOpsMetrics(days: number = 7) {
 
   return {
     metrics: data,
+    isLoading: isAuthLoading || (enabled && !error && !data),
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/**
+ * Admin Room Analytics Hook
+ * GET /api/v1/admin/analytics/rooms
+ */
+export interface RoomAnalyticsFiltersInput {
+  days?: number;
+  roomType?: RoomTypeFilterValue;
+  status?: RoomStatusFilterValue;
+  languageId?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export function useAdminRoomsAnalytics(filters?: RoomAnalyticsFiltersInput) {
+  const params = new URLSearchParams();
+  params.append('days', (filters?.days ?? 30).toString());
+  if (filters?.roomType) params.append('room_type', filters.roomType);
+  if (filters?.status) params.append('status', filters.status);
+  if (filters?.languageId) params.append('language_id', filters.languageId);
+  params.append('page', (filters?.page ?? 1).toString());
+  params.append('page_size', (filters?.pageSize ?? 20).toString());
+
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const url = enabled ? `/api/v1/admin/analytics/rooms?${params.toString()}` : null;
+  const { data, error, mutate } = useSWR<RoomAnalyticsResponse>(url, fetcher, {
+    revalidateOnFocus: false,
+    refreshInterval: 0,
+    shouldRetryOnError: false,
+  });
+
+  return {
+    analytics: data,
     isLoading: isAuthLoading || (enabled && !error && !data),
     isError: error,
     refresh: mutate,
