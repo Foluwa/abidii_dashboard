@@ -509,7 +509,7 @@ export default function UserDetailPage() {
               Fluency
             </label>
             <p className="text-base capitalize text-gray-900 dark:text-white">
-              {user.proficiency_level?.replace(/_/g, " ") || "Not reported"}
+              {user.proficiency_level?.replace(/_/g, " ") || "Not available"}
             </p>
           </div>
 
