@@ -22,7 +22,7 @@ import { RegenerateAudioModal } from "@/components/modals/RegenerateAudioModal";
 import { scheduleQueuedAudioRefresh } from "@/lib/audioRegeneration";
 import { GoogleSheetsBulkImport } from "@/components/admin/GoogleSheetsBulkImport";
 import Pagination from "@/components/tables/Pagination";
-import { FiGlobe, FiBarChart2, FiVolume2, FiCheckCircle, FiGitMerge } from "react-icons/fi";
+import { FiGlobe, FiBarChart2, FiVolume2, FiCheckCircle, FiGitMerge, FiLock } from "react-icons/fi";
 
 interface Phrase {
   id: string;
@@ -38,6 +38,7 @@ interface Phrase {
   cultural_notes?: string;
   is_published: boolean;
   audio_url?: string;
+  human_recorded?: boolean;
   last_regeneration_status?: string | null;
   last_regeneration_error?: string | null;
   alignment_status?: AlignmentStatus | null;
@@ -273,6 +274,18 @@ function renderAlignmentJobBadge(phrase: Phrase) {
 
 function isRegenerationPending(status?: string | null) {
   return status === "queued" || status === "processing";
+}
+
+function isRegenerationBlocked(phrase: Pick<Phrase, "last_regeneration_status" | "human_recorded">) {
+  return isRegenerationPending(phrase.last_regeneration_status) || !!phrase.human_recorded;
+}
+
+function regenerateAudioTitle(phrase: Pick<Phrase, "last_regeneration_status" | "human_recorded">) {
+  return phrase.human_recorded
+    ? "Locked - audio is human-recorded and reviewed"
+    : isRegenerationPending(phrase.last_regeneration_status)
+      ? "Audio regeneration in progress"
+      : "Regenerate Audio";
 }
 
 function mapIso6393ToVoicePrefix(languageCode?: string | null) {
@@ -1063,7 +1076,7 @@ export default function PhrasesPage() {
   };
 
   const handleRegenerateAudio = (phrase: Phrase) => {
-    if (isRegenerationPending(phrase.last_regeneration_status)) {
+    if (isRegenerationBlocked(phrase)) {
       return;
     }
 
@@ -1081,7 +1094,7 @@ export default function PhrasesPage() {
 
   const togglePhraseSelection = (phraseId: string) => {
     const phrase = phrases.find((item) => item.id === phraseId);
-    if (phrase && isRegenerationPending(phrase.last_regeneration_status)) {
+    if (phrase && isRegenerationBlocked(phrase)) {
       return;
     }
 
@@ -1094,7 +1107,7 @@ export default function PhrasesPage() {
 
   const toggleSelectAllVisiblePhrases = () => {
     const selectablePhraseIds = phrases
-      .filter((phrase) => !isRegenerationPending(phrase.last_regeneration_status))
+      .filter((phrase) => !isRegenerationBlocked(phrase))
       .map((phrase) => phrase.id);
     if (selectablePhraseIds.length === 0) {
       return;
@@ -1144,7 +1157,7 @@ export default function PhrasesPage() {
 
     const queueablePhraseIds = selectedPhrases.filter((phraseId) => {
       const phrase = phrases.find((item) => item.id === phraseId);
-      return phrase && !isRegenerationPending(phrase.last_regeneration_status);
+      return phrase && !isRegenerationBlocked(phrase);
     });
 
     if (queueablePhraseIds.length === 0) {
@@ -1208,7 +1221,7 @@ export default function PhrasesPage() {
   };
 
   const selectableVisiblePhraseIds = phrases
-    .filter((phrase) => !isRegenerationPending(phrase.last_regeneration_status))
+    .filter((phrase) => !isRegenerationBlocked(phrase))
     .map((phrase) => phrase.id);
   const allVisiblePhrasesSelected = selectableVisiblePhraseIds.length > 0
     && selectableVisiblePhraseIds.every((phraseId) => selectedPhrases.includes(phraseId));
@@ -1465,7 +1478,7 @@ export default function PhrasesPage() {
                           <input
                             type="checkbox"
                             checked={selectedPhrases.includes(phrase.id)}
-                            disabled={isRegenerationPending(phrase.last_regeneration_status)}
+                            disabled={isRegenerationBlocked(phrase)}
                             onChange={() => togglePhraseSelection(phrase.id)}
                             className="h-4 w-4 rounded border-gray-300 text-brand-600 disabled:opacity-40"
                             aria-label={`Select phrase ${phrase.phrase}`}
@@ -1523,14 +1536,12 @@ export default function PhrasesPage() {
                         <td className="px-6 py-4 text-right space-x-2">
                           <button
                             onClick={() => handleRegenerateAudio(phrase)}
-                            disabled={isRegenerationPending(phrase.last_regeneration_status)}
-                            className="text-brand-600 hover:text-brand-800 dark:text-brand-400 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isRegenerationBlocked(phrase)}
+                            className="inline-flex align-middle p-1 text-brand-600 hover:text-brand-800 dark:text-brand-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={regenerateAudioTitle(phrase)}
+                            aria-label={regenerateAudioTitle(phrase)}
                           >
-                            {phrase.last_regeneration_status === "queued"
-                              ? "Queued"
-                              : phrase.last_regeneration_status === "processing"
-                                ? "Processing..."
-                                : "Regenerate Audio"}
+                            {phrase.human_recorded ? <FiLock className="w-4 h-4" /> : <FiVolume2 className="w-4 h-4" />}
                           </button>
                           <button
                             onClick={() => openEditModal(phrase)}
@@ -1579,7 +1590,7 @@ export default function PhrasesPage() {
                     <input
                       type="checkbox"
                       checked={selectedPhrases.includes(phrase.id)}
-                      disabled={isRegenerationPending(phrase.last_regeneration_status)}
+                      disabled={isRegenerationBlocked(phrase)}
                       onChange={() => togglePhraseSelection(phrase.id)}
                       className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-600 disabled:opacity-40"
                       aria-label={`Select phrase ${phrase.phrase}`}
@@ -1638,14 +1649,12 @@ export default function PhrasesPage() {
                   <div className="flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
                     <button
                       onClick={() => handleRegenerateAudio(phrase)}
-                      disabled={isRegenerationPending(phrase.last_regeneration_status)}
-                      className="flex-1 px-4 py-2 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/20 dark:text-brand-400 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isRegenerationBlocked(phrase)}
+                      className="flex-1 inline-flex items-center justify-center px-4 py-2 text-brand-600 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/20 dark:text-brand-400 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={regenerateAudioTitle(phrase)}
+                      aria-label={regenerateAudioTitle(phrase)}
                     >
-                      {phrase.last_regeneration_status === "queued"
-                        ? "Queued"
-                        : phrase.last_regeneration_status === "processing"
-                          ? "Processing..."
-                          : "Regenerate Audio"}
+                      {phrase.human_recorded ? <FiLock className="w-4 h-4" /> : <FiVolume2 className="w-4 h-4" />}
                     </button>
                     <button
                       onClick={() => openEditModal(phrase)}
