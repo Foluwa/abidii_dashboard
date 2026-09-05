@@ -100,7 +100,7 @@ describe('CurriculumOpsPage', () => {
   it('renders table rows and totals', () => {
     render(<CurriculumOpsPage />);
 
-    expect(screen.getByText('Curriculum Ops')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Curriculum Ops' })).toBeInTheDocument();
     expect(screen.getByText(/Total:/i)).toBeInTheDocument();
 
     const tables = screen.getAllByRole('table');
