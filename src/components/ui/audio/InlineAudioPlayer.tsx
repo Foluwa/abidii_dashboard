@@ -59,7 +59,10 @@ export default function InlineAudioPlayer({ src, size = 'sm' }: InlineAudioPlaye
           <FiPlay className={`${iconSize} ml-0.5`} />
         )}
       </button>
-      <audio ref={audioRef} src={src} preload="none" className="hidden" />
+      {/* key={src} forces a remount when the URL changes (e.g. after a
+          re-recording), instead of React patching the src attribute on
+          the same <audio> element and risking a stale buffered source. */}
+      <audio key={src} ref={audioRef} src={src} preload="none" className="hidden" />
     </div>
   );
 }
