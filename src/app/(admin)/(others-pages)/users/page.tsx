@@ -710,7 +710,7 @@ export default function UsersPage() {
                               <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
                             )}
                             <div className="text-xs text-gray-500 dark:text-gray-400">
-                              Fluency: <span className="capitalize text-gray-700 dark:text-gray-200">{(user.proficiency_level ?? fluencyByUser[user.id])?.replace(/_/g, " ") || "Not Set"}</span>
+                              Fluency: <span className="capitalize text-gray-700 dark:text-gray-200">{(user.proficiency_level ?? fluencyByUser[user.id])?.replace(/_/g, " ") || "Not available"}</span>
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-400">
                               {(user.total_xp ?? 0).toLocaleString()} XP
