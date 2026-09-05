@@ -410,10 +410,11 @@ export default function LettersPage() {
                 <div className="flex space-x-2 mt-3 justify-center">
                   <button
                     onClick={() => handleRegenerateAudio(letter)}
-                    className="px-2 py-1 text-xs bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400 rounded hover:bg-green-100 dark:hover:bg-green-900/30"
+                    className="p-1.5 bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400 rounded hover:bg-green-100 dark:hover:bg-green-900/30"
                     title="Regenerate Audio"
+                    aria-label="Regenerate Audio"
                   >
-                    Regenerate Audio
+                    <FiVolume2 className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => openEditModal(letter)}
@@ -522,11 +523,11 @@ export default function LettersPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleRegenerateAudio(letter)}
-                            className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                            className="inline-flex items-center p-1 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
                             title="Regenerate Audio"
+                            aria-label="Regenerate Audio"
                           >
-                            <FiVolume2 className="h-3.5 w-3.5" />
-                            Regenerate Audio
+                            <FiVolume2 className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => openEditModal(letter)}
