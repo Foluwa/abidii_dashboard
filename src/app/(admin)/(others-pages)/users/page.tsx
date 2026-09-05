@@ -12,7 +12,7 @@ import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import Pagination from "@/components/tables/Pagination";
 import Link from "next/link";
 import { FaApple, FaGoogle, FaGlobe, FaMobileAlt } from "react-icons/fa";
-import { FiEye, FiTrash2, FiUserCheck, FiUserX } from "react-icons/fi";
+import { FiEye, FiTrash2, FiUserCheck, FiUserX, FiAlertOctagon } from "react-icons/fi";
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
 import DatePicker from "@/components/form/date-picker";
 
@@ -202,9 +202,9 @@ export default function UsersPage() {
       case "reactivate":
         return `Are you sure you want to reactivate "${userName}"? They will be able to log in again.`;
       case "delete":
-        return `Are you sure you want to delete "${userName}"? This action cannot be undone.`;
+        return `Soft delete "${userName}"? They'll be logged out and unable to log back in, but their data (progress, sessions, etc.) is kept - this can be reversed at the database level if needed. For a permanent, irreversible wipe, use Purge instead.`;
       case "purge":
-        return `⚠️ DANGER: Are you sure you want to PURGE "${userName}"? This will delete the user AND all their learning data, progress, and sessions. This action is IRREVERSIBLE.`;
+        return `⚠️ DANGER: PERMANENTLY purge "${userName}"? This deletes the account AND all their data (progress, sessions, streaks, subscriptions, everything) with no way to recover it. This cannot be undone.`;
     }
   };
 
@@ -762,10 +762,18 @@ export default function UsersPage() {
                             <button
                               onClick={() => setActionConfirm({ userId: user.id, action: "delete", userName: user.display_name || user.email })}
                               aria-label={`Delete ${user.display_name || user.email || "user"}`}
-                              title="Delete user"
+                              title="Soft delete (deactivates account, data kept, reversible in the DB)"
                               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-600 hover:bg-red-50 hover:text-red-900 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                             >
                               <FiTrash2 className="h-5 w-5" aria-hidden="true" />
+                            </button>
+                            <button
+                              onClick={() => setActionConfirm({ userId: user.id, action: "purge", userName: user.display_name || user.email })}
+                              aria-label={`Permanently purge ${user.display_name || user.email || "user"}`}
+                              title="Hard delete (permanently erases the account and all data - irreversible)"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-800 hover:bg-red-100 hover:text-red-950 dark:text-red-500 dark:hover:bg-red-900/50 dark:hover:text-red-300"
+                            >
+                              <FiAlertOctagon className="h-5 w-5" aria-hidden="true" />
                             </button>
                           </div>
                         </td>
