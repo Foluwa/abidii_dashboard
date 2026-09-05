@@ -160,6 +160,7 @@ export interface UserListItem {
   total_xp?: number;
   current_level?: number;
   current_streak?: number;
+  proficiency_level?: string | null;
 
   // Learning language (content being studied) - distinct from ui_locale below.
   current_language_code?: string | null;
@@ -186,6 +187,10 @@ export interface UserDetail extends UserListItem {
   total_xp: number;
   current_level: number;
   current_streak: number;
+  longest_streak?: number;
+  total_sessions?: number;
+  languages_learning?: number;
+  is_premium?: boolean;
   languages?: Array<{
     language_id: string;
     language_name: string;

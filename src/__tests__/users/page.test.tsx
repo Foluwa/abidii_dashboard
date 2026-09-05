@@ -56,6 +56,7 @@ const sampleUsers = {
       provider: 'google',
       is_active: true,
       total_xp: 1000,
+      proficiency_level: 'basic',
       ui_locale: 'yo',
       ui_locale_name: 'Yorùbá',
     },
@@ -67,6 +68,7 @@ const sampleUsers = {
       provider: 'apple',
       is_active: false,
       total_xp: 500,
+      proficiency_level: null,
       ui_locale: null,
       ui_locale_name: null,
     },
@@ -78,6 +80,7 @@ const sampleUsers = {
       provider: 'device',
       is_active: true,
       total_xp: 5000,
+      proficiency_level: 'fluent',
     },
   ],
 };
@@ -104,10 +107,10 @@ describe('UsersPage', () => {
       expect(tableQueries.getByText('User', { selector: 'th' })).toBeInTheDocument();
       expect(tableQueries.getByText('Device', { selector: 'th' })).toBeInTheDocument();
       expect(tableQueries.getByText('Learning', { selector: 'th' })).toBeInTheDocument();
-      expect(tableQueries.getByText('App Language', { selector: 'th' })).toBeInTheDocument();
+      expect(tableQueries.getByText('Language', { selector: 'th' })).toBeInTheDocument();
       expect(tableQueries.getByText('Last Request', { selector: 'th' })).toBeInTheDocument();
-      expect(tableQueries.getByText('XP', { selector: 'th' })).toBeInTheDocument();
-      expect(tableQueries.getByText('Role', { selector: 'th' })).toBeInTheDocument();
+      expect(tableQueries.queryByText('XP', { selector: 'th' })).not.toBeInTheDocument();
+      expect(tableQueries.queryByText('Role', { selector: 'th' })).not.toBeInTheDocument();
       expect(tableQueries.getByText('Status', { selector: 'th' })).toBeInTheDocument();
       expect(tableQueries.getByText('Actions', { selector: 'th' })).toBeInTheDocument();
 
@@ -124,9 +127,9 @@ describe('UsersPage', () => {
       expect(screen.getByText('Admin User')).toBeInTheDocument();
 
       // Check XP values (formatted with toLocaleString)
-      expect(screen.getByText('1,000')).toBeInTheDocument();
-      expect(screen.getByText('500')).toBeInTheDocument();
-      expect(screen.getByText('5,000')).toBeInTheDocument();
+      expect(screen.getByText('1,000 XP')).toBeInTheDocument();
+      expect(screen.getByText('500 XP')).toBeInTheDocument();
+      expect(screen.getByText('5,000 XP')).toBeInTheDocument();
     });
 
     it('shows provider badges', () => {

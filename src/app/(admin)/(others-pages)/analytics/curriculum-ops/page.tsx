@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Alert from '@/components/ui/alert/SimpleAlert';
@@ -10,6 +8,7 @@ import StatusBadge from '@/components/admin/StatusBadge';
 import Pagination from '@/components/tables/Pagination';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { useAdminAuditLogList, useAdminCurriculumOpsMetrics } from '@/hooks/useApi';
+import AnalyticsTabs from '@/components/analytics/AnalyticsTabs';
 
 function getResult(details: unknown): string {
   const d = details as any;
@@ -38,7 +37,6 @@ function resultBadge(result: string) {
 }
 
 export default function CurriculumOpsPage() {
-  const pathname = usePathname();
   const [days, setDays] = useState(7);
   const [recentResultFilter, setRecentResultFilter] = useState<'all' | 'blocked' | 'failed'>('all');
   const [recentTargetFilter, setRecentTargetFilter] = useState<'all' | 'course' | 'lesson_blueprint'>('all');
@@ -235,30 +233,7 @@ export default function CurriculumOpsPage() {
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex -mb-px space-x-8">
-          {[
-            { name: 'Overview', href: '/analytics' },
-            { name: 'Players', href: '/analytics/players' },
-            { name: 'Curriculum Ops', href: '/analytics/curriculum-ops' },
-          ].map((tab) => (
-            <Link
-              key={tab.name}
-              href={tab.href}
-              className={`
-                py-4 px-1 border-b-2 font-medium text-sm
-                ${pathname === tab.href
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }
-              `}
-            >
-              {tab.name}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      <AnalyticsTabs />
 
       <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">

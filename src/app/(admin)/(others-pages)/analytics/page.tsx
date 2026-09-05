@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useGameAnalytics, useLanguages, useAvailableGames } from '@/hooks/useApi';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Alert from '@/components/ui/alert/SimpleAlert';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
+import AnalyticsTabs from '@/components/analytics/AnalyticsTabs';
 
 // Game key to friendly name mapping
 const GAME_NAMES: Record<string, string> = {
@@ -25,7 +24,6 @@ export default function GameAnalyticsPage() {
   const [days, setDays] = useState(30);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
   const [selectedGame, setSelectedGame] = useState<string>('');
-  const pathname = usePathname();
   
   const { analytics, isLoading, isError, refresh } = useGameAnalytics(
     days, 
@@ -35,11 +33,6 @@ export default function GameAnalyticsPage() {
   const { languages } = useLanguages();
   const { games } = useAvailableGames();
 
-  const tabs = [
-    { name: 'Overview', href: '/analytics' },
-    { name: 'Players', href: '/analytics/players' },
-    { name: 'Curriculum Ops', href: '/analytics/curriculum-ops' },
-  ];
 
   if (isError) {
     const errMsg = isError?.response?.data?.detail || isError?.message || 'Failed to load game analytics.';
@@ -78,26 +71,7 @@ export default function GameAnalyticsPage() {
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex -mb-px space-x-8">
-          {tabs.map((tab) => (
-            <Link
-              key={tab.name}
-              href={tab.href}
-              className={`
-                py-4 px-1 border-b-2 font-medium text-sm
-                ${pathname === tab.href
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }
-              `}
-            >
-              {tab.name}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      <AnalyticsTabs />
 
       {/* Filters */}
       <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">

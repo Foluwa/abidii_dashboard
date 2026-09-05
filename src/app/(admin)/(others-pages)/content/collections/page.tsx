@@ -33,6 +33,44 @@ type Item = {
 };
 type Coverage = { iso_639_3: string; name: string; translated_items: number; total_items: number };
 
+const slugifyKey = (value: string) => value
+  .normalize("NFKD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase()
+  .trim()
+  .replace(/[^a-z0-9]+/g, "_")
+  .replace(/^_+|_+$/g, "");
+
+const parseCsv = (text: string): string[][] => {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let quoted = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    if (character === '"') {
+      if (quoted && text[index + 1] === '"') { field += '"'; index += 1; }
+      else quoted = !quoted;
+    } else if (character === "," && !quoted) {
+      row.push(field.trim()); field = "";
+    } else if ((character === "\n" || character === "\r") && !quoted) {
+      if (character === "\r" && text[index + 1] === "\n") index += 1;
+      row.push(field.trim());
+      if (row.some(Boolean)) rows.push(row);
+      row = []; field = "";
+    } else field += character;
+  }
+  row.push(field.trim());
+  if (row.some(Boolean)) rows.push(row);
+  return rows;
+};
+
+const googleSheetCsvUrl = (reference: string, worksheet: string) => {
+  const match = reference.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  const spreadsheetId = match?.[1] || reference.trim();
+  return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(worksheet)}`;
+};
+
 export default function CollectionsPage() {
   const [languages, setLanguages] = useState<Language[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -70,6 +108,19 @@ export default function CollectionsPage() {
   const [newCategoryKey, setNewCategoryKey] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [newEntityKey, setNewEntityKey] = useState("");
+
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [sheetReference, setSheetReference] = useState("");
+  const [worksheetTitle, setWorksheetTitle] = useState("collections");
+  const [isImporting, setIsImporting] = useState(false);
+  const [importSummary, setImportSummary] = useState("");
 
   const [showRegenerateModal, setShowRegenerateModal] = useState(false);
   const [regeneratingTarget, setRegeneratingTarget] = useState<RegenerateAudioTarget | null>(null);
@@ -79,8 +130,8 @@ export default function CollectionsPage() {
       apiClient.get<{ languages: Language[] }>("/api/v1/languages"),
       apiClient.get<{ collections: Collection[] }>("/api/v1/admin/content-collections"),
     ]);
-    setLanguages(languageResponse.data.languages ?? []);
-    const next = collectionResponse.data.collections ?? [];
+    setLanguages([...(languageResponse.data.languages ?? [])].sort((a, b) => a.name.localeCompare(b.name)));
+    const next = [...(collectionResponse.data.collections ?? [])].sort((a, b) => a.title.localeCompare(b.title));
     setCollections(next);
     setSelected((current) => current || next[0]?.collection_key || "");
   }, []);
@@ -115,6 +166,31 @@ export default function CollectionsPage() {
     [collections, selected],
   );
 
+  const categories = useMemo(
+    () => [...new Set(items.map((item) => item.category_key).filter((value): value is string => Boolean(value)))].sort((a, b) => a.localeCompare(b)),
+    [items],
+  );
+  const entityKeys = useMemo(
+    () => [...new Set(items.map((item) => item.concept_key.split(".")[0]).filter(Boolean).concat(selected ? [selected.replace(/s$/, "")] : []))].sort((a, b) => a.localeCompare(b)),
+    [items, selected],
+  );
+  const filteredItems = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase();
+    return items.filter((item) => {
+      if (categoryFilter !== "all" && item.category_key !== categoryFilter) return false;
+      if (statusFilter !== "all" && item.learning_status !== statusFilter && item.translation_status !== statusFilter) return false;
+      if (!query) return true;
+      return [item.concept_key, item.learning_term, item.translation, item.category_key]
+        .some((value) => value?.toLocaleLowerCase().includes(query));
+    });
+  }, [items, search, categoryFilter, statusFilter]);
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+  const visibleItems = filteredItems.slice((page - 1) * pageSize, page * pageSize);
+
+  useEffect(() => { setPage(1); }, [search, categoryFilter, statusFilter, selected, pageSize]);
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
+  useEffect(() => { if (!newEntityKey && entityKeys.length) setNewEntityKey(entityKeys[0]); }, [entityKeys, newEntityKey]);
+
   async function createCollection(event: React.FormEvent) {
     event.preventDefault();
     setError("");
@@ -134,6 +210,49 @@ export default function CollectionsPage() {
       setError(reason?.response?.data?.detail || "Could not create collection");
     } finally {
       setIsCreatingCollection(false);
+    }
+  }
+
+  async function importFromGoogleSheet(event: React.FormEvent) {
+    event.preventDefault();
+    if (!selected || !sheetReference.trim() || !worksheetTitle.trim()) return;
+    setError("");
+    setImportSummary("");
+    setIsImporting(true);
+    try {
+      const response = await fetch(googleSheetCsvUrl(sheetReference, worksheetTitle));
+      if (!response.ok) throw new Error(`Google Sheets returned HTTP ${response.status}. Make sure the sheet is shared for viewing.`);
+      const parsed = parseCsv(await response.text());
+      const headers = (parsed.shift() || []).map((header) => header.trim().toLowerCase());
+      const required = ["concept_key", "learning_term", "translation"];
+      const missing = required.filter((column) => !headers.includes(column));
+      if (missing.length) throw new Error(`Missing required columns: ${missing.join(", ")}`);
+      let imported = 0;
+      let failed = 0;
+      for (const cells of parsed) {
+        const record = Object.fromEntries(headers.map((header, index) => [header, cells[index]?.trim() || ""]));
+        if (!record.concept_key || !record.learning_term || !record.translation) { failed += 1; continue; }
+        try {
+          await apiClient.post(`/api/v1/admin/content-collections/${selected}/items`, {
+            concept_key: record.concept_key,
+            category_key: record.category_key || null,
+          }).catch((reason) => {
+            if (reason?.response?.status !== 409) throw reason;
+          });
+          await Promise.all([
+            apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${record.concept_key}/terms`, { language: learningLanguage, term: record.learning_term, status: "published" }),
+            apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${record.concept_key}/terms`, { language: translationLanguage, term: record.translation, status: "published" }),
+            record.image_url ? apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${record.concept_key}/image`, { language: learningLanguage, asset_url: record.image_url, alt_text: record.translation }) : Promise.resolve(),
+          ]);
+          imported += 1;
+        } catch { failed += 1; }
+      }
+      setImportSummary(`${imported} row${imported === 1 ? "" : "s"} imported${failed ? `; ${failed} failed` : ""}.`);
+      await Promise.all([loadItems(), loadCollections()]);
+    } catch (reason: any) {
+      setError(reason?.message || reason?.response?.data?.detail || "Could not import Google Sheet");
+    } finally {
+      setIsImporting(false);
     }
   }
 
@@ -216,23 +335,24 @@ export default function CollectionsPage() {
     setError("");
     setIsAddingItem(true);
     try {
+      const conceptKey = newConceptKey.includes(".") ? newConceptKey : `${newEntityKey}.${slugifyKey(newConceptKey)}`;
       await apiClient.post(`/api/v1/admin/content-collections/${selected}/items`, {
-        concept_key: newConceptKey,
+        concept_key: conceptKey,
         category_key: newCategoryKey || null,
       });
       await Promise.all([
-        apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${newConceptKey}/terms`, {
+        apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${conceptKey}/terms`, {
           language: learningLanguage,
           term: newLearningTerm,
           status: "published",
         }),
-        apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${newConceptKey}/terms`, {
+        apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${conceptKey}/terms`, {
           language: translationLanguage,
           term: newTranslation,
           status: "published",
         }),
         newImageUrl
-          ? apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${newConceptKey}/image`, {
+          ? apiClient.put(`/api/v1/admin/content-collections/${selected}/items/${conceptKey}/image`, {
               language: learningLanguage,
               asset_url: newImageUrl,
               alt_text: newTranslation,
@@ -330,10 +450,29 @@ export default function CollectionsPage() {
       )}
 
       <div className="flex flex-wrap justify-end gap-2">
+        {selected && <button onClick={() => setShowBulkImport((current) => !current)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-white">Bulk Import from Google Sheets</button>}
         {selectedCollection && <button onClick={startEditingCollection} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-white">Edit collection</button>}
         {selectedCollection && <button onClick={() => toggleCollectionPublished().catch((reason) => setError(reason?.response?.data?.detail || "Could not update collection"))} className="rounded-lg border border-brand-500 px-4 py-2 text-sm font-medium text-brand-600 dark:text-brand-300">{selectedCollection.status === "published" ? "Return to draft" : "Publish collection"}</button>}
         {selected && <button onClick={() => setShowAddItem(true)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-white">New item</button>}
         <button onClick={() => setShowCreateCollection(true)} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white">New collection</button>
+      </div>
+
+      {showBulkImport && (
+        <form onSubmit={importFromGoogleSheet} className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div><h3 className="font-semibold text-gray-900 dark:text-white">Bulk Import from Google Sheets</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Required columns: concept_key, learning_term, translation. Optional: category_key, image_url. Existing concept keys are updated safely.</p></div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="text-sm text-gray-700 dark:text-gray-300">Google Sheet URL or ID<input required value={sheetReference} onChange={(event) => setSheetReference(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
+            <label className="text-sm text-gray-700 dark:text-gray-300">Worksheet name<input required value={worksheetTitle} onChange={(event) => setWorksheetTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
+          </div>
+          <div className="flex items-center gap-3"><button disabled={isImporting} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{isImporting ? "Importing…" : "Import sheet"}</button>{importSummary && <span className="text-sm text-emerald-600 dark:text-emerald-400">{importSummary}</span>}</div>
+        </form>
+      )}
+
+      <div className="grid gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 md:grid-cols-4">
+        <label className="text-sm text-gray-600 dark:text-gray-300">Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Concept, term or translation" className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
+        <label className="text-sm text-gray-600 dark:text-gray-300">Category<select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"><option value="all">All categories</option>{categories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
+        <label className="text-sm text-gray-600 dark:text-gray-300">Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"><option value="all">All statuses</option>{["draft", "published", "review", "stale"].map((status) => <option key={status} value={status}>{status}</option>)}</select></label>
+        <label className="text-sm text-gray-600 dark:text-gray-300">Rows per page<select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white">{[10, 25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}</select></label>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-white">
@@ -343,7 +482,7 @@ export default function CollectionsPage() {
               {['Order', 'Image', 'Audio', 'Concept', 'Learning term', 'Translation', 'Category', 'Status'].map((heading) => <th key={heading} className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-300">{heading}</th>)}
             </tr></thead>
             <tbody className="divide-y divide-gray-100 bg-white dark:divide-gray-800 dark:bg-gray-950">
-              {items.map((item) => <tr key={item.id} onClick={() => startEditing(item)} className="cursor-pointer text-gray-800 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-900">
+              {visibleItems.map((item) => <tr key={item.id} onClick={() => startEditing(item)} className="cursor-pointer text-gray-800 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-900">
                 <td className="px-4 py-3">{item.sort_order + 1}</td>
                 <td className="px-4 py-3">{item.image_url ? <Image src={item.image_url} alt="" width={48} height={48} unoptimized className="h-12 w-12 rounded-lg object-contain" /> : <span className="text-gray-400">Missing</span>}</td>
                 <td className="px-4 py-3">
@@ -364,11 +503,12 @@ export default function CollectionsPage() {
                 <td className="px-4 py-3">{item.category_key || '—'}</td>
                 <td className="px-4 py-3">{item.learning_status || 'missing'} / {item.translation_status || 'missing'}</td>
               </tr>)}
-              {!items.length && <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-500">No items for this language pair.</td></tr>}
+              {!visibleItems.length && <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-500">No items match these filters.</td></tr>}
             </tbody>
           </table>
         </div>
       </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-gray-500 dark:text-gray-400"><span>{filteredItems.length ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, filteredItems.length)} of ${filteredItems.length}` : "0 items"}</span><div className="flex items-center gap-2"><button type="button" disabled={page <= 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-gray-300 px-3 py-2 disabled:opacity-40 dark:border-gray-700">Previous</button><span>Page {page} of {totalPages}</span><button type="button" disabled={page >= totalPages} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-gray-300 px-3 py-2 disabled:opacity-40 dark:border-gray-700">Next</button></div></div>
 
       <FormModal
         isOpen={showCreateCollection}
@@ -378,12 +518,10 @@ export default function CollectionsPage() {
         submitLabel="Create draft"
         isSubmitting={isCreatingCollection}
       >
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Collection key
-          <input required pattern="[a-z0-9][a-z0-9_-]+" value={newKey} onChange={(event) => setNewKey(event.target.value)} placeholder="e.g. foods" className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
-        </label>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">English title
-          <input required value={newTitle} onChange={(event) => setNewTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+          <input required value={newTitle} onChange={(event) => { setNewTitle(event.target.value); setNewKey(slugifyKey(event.target.value)); }} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
         </label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Generated collection key<input readOnly value={newKey} className="mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 font-mono text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" /></label>
       </FormModal>
 
       <FormModal
@@ -412,12 +550,13 @@ export default function CollectionsPage() {
         isSubmitting={isAddingItem}
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Stable concept key
-            <input required pattern="[a-z0-9][a-z0-9_.-]+" value={newConceptKey} onChange={(event) => setNewConceptKey(event.target.value)} placeholder="animal.lion" className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Entity
+            <select required value={newEntityKey} onChange={(event) => setNewEntityKey(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white">{entityKeys.map((entity) => <option key={entity} value={entity}>{entity}</option>)}</select>
           </label>
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category key
-            <input value={newCategoryKey} onChange={(event) => setNewCategoryKey(event.target.value)} placeholder="mammal" className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+            <select value={newCategoryKey} onChange={(event) => setNewCategoryKey(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"><option value="">Uncategorised</option>{categories.map((category) => <option key={category} value={category}>{category}</option>)}</select>
           </label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Item key<input required pattern="[a-z0-9][a-z0-9_.-]+" value={newConceptKey} onChange={(event) => setNewConceptKey(slugifyKey(event.target.value))} placeholder="lion" className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{learningLanguage} term
             <input required value={newLearningTerm} onChange={(event) => setNewLearningTerm(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
           </label>

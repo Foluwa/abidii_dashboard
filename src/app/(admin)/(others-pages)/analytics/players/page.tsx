@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePlayerLeaderboard, usePlayerDetail, useLanguages, useAvailableGames } from '@/hooks/useApi';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
@@ -9,6 +8,7 @@ import Alert from '@/components/ui/alert/SimpleAlert';
 import Pagination from '@/components/tables/Pagination';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { cleanSvgForDisplay, getInitials as getSvgInitials, getAvatarColor as getSvgAvatarColor } from '@/lib/svg-utils';
+import AnalyticsTabs from '@/components/analytics/AnalyticsTabs';
 
 type TimeRange = 'week' | 'month' | 'all';
 type SortBy = 'score' | 'sessions' | 'accuracy' | 'time' | 'xp';
@@ -114,11 +114,6 @@ export default function PlayerAnalyticsPage() {
     return colors[index];
   };
 
-  const tabs = [
-    { name: 'Overview', href: '/analytics', active: false },
-    { name: 'Players', href: '/analytics/players', active: true },
-    { name: 'Curriculum Ops', href: '/analytics/curriculum-ops', active: false },
-  ];
 
   if (isError) {
     const errMsg = isError?.response?.data?.detail || isError?.message || 'Failed to load player analytics.';
@@ -157,26 +152,7 @@ export default function PlayerAnalyticsPage() {
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex -mb-px space-x-8">
-          {tabs.map((tab) => (
-            <Link
-              key={tab.name}
-              href={tab.href}
-              className={`
-                py-4 px-1 border-b-2 font-medium text-sm
-                ${tab.active
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }
-              `}
-            >
-              {tab.name}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      <AnalyticsTabs />
 
       {!selectedUserId ? (
         <>

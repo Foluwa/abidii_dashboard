@@ -10,12 +10,32 @@ import ConfirmationModal from "@/components/modals/ConfirmationModal";
 import { apiClient, handleApiError } from "@/lib/api";
 import type { UserRole } from "@/types/auth";
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
+import { FiArrowLeft, FiAward } from "react-icons/fi";
 
 type ModalType = "deactivate" | "reactivate" | "delete" | "purge" | null;
 type DailyActivity = {
   date: string;
   sessions: number;
   avg_score?: number;
+};
+type GameBreakdown = {
+  game_key: string;
+  sessions: number;
+  avg_score: number;
+  accuracy: number;
+  perfect_scores: number;
+  total_time_ms: number;
+};
+type GameSession = {
+  session_id: string;
+  date: string;
+  game_key: string;
+  language_name?: string | null;
+  score: number;
+  correct: number;
+  wrong: number;
+  duration_ms: number;
+  is_perfect: boolean;
 };
 
 const formatDateTime = (value?: string | null) => {
@@ -26,6 +46,19 @@ const formatDateTime = (value?: string | null) => {
 const formatDate = (value?: string | null) => {
   if (!value) return "Never";
   return new Date(value).toLocaleDateString();
+};
+
+const formatGameName = (value?: string | null) =>
+  value ? value.replace(/[-_]/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) : "Unknown game";
+
+const formatDuration = (milliseconds?: number | null) => {
+  const totalSeconds = Math.max(0, Math.round(Number(milliseconds || 0) / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours) return `${hours}h ${minutes}m`;
+  if (minutes) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
 };
 
 const dateKey = (date: Date) => {
@@ -278,8 +311,12 @@ export default function UserDetailPage() {
   const lastRequestAt =
     user.last_active_at ??
     (user.last_request_at === undefined ? user.last_login_at : user.last_request_at);
-  const avatarSource = cleanSvgForDisplay(user.avatar_svg) || null;
+  const avatarSource = cleanSvgForDisplay(user.avatar_svg) || cleanSvgForDisplay(user.picture_url) || null;
   const avatarLabel = user.display_name || user.email || "User";
+  const isPremium = Boolean(user.has_premium || user.is_premium);
+  const gameBreakdown = (player?.game_breakdown || []) as GameBreakdown[];
+  const recentSessions = (player?.recent_sessions || []) as GameSession[];
+  const maxGameSessions = Math.max(1, ...gameBreakdown.map((game) => Number(game.sessions || 0)));
 
   return (
     <div className="space-y-6">
@@ -306,11 +343,22 @@ export default function UserDetailPage() {
 
       {/* Header with Actions */}
       <div className="flex items-center justify-between">
-        <div>
-          <PageBreadCrumb pageTitle="User Details" />
+        <div className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            aria-label="Go back"
+            title="Go back"
+            className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <FiArrowLeft className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <div>
+            <PageBreadCrumb pageTitle="User Details" />
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Detailed information for user #{user.id.slice(0, 8)}...
           </p>
+          </div>
         </div>
         <div className="flex gap-2">
           {user.is_active ? (
@@ -347,7 +395,8 @@ export default function UserDetailPage() {
       <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-3">
-            {avatarSource && !avatarFailed ? (
+            <div className="relative inline-flex shrink-0">
+              {avatarSource && !avatarFailed ? (
               <img
                 src={avatarSource}
                 alt={`${avatarLabel} avatar`}
@@ -359,7 +408,13 @@ export default function UserDetailPage() {
               <div className={`h-12 w-12 rounded-full ${getAvatarColor(user.id || avatarLabel)} flex items-center justify-center`}>
                 <span className="font-semibold text-white">{getInitials(avatarLabel)}</span>
               </div>
-            )}
+              )}
+              {isPremium && (
+                <span className="absolute -bottom-1 -right-1 inline-flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-amber-400 text-amber-950 shadow-sm dark:border-gray-900" title="Premium member" aria-label="Premium member">
+                  <FiAward className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
+              )}
+            </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 User Information
@@ -424,7 +479,7 @@ export default function UserDetailPage() {
               above. See abidii_app_language.md §8.3. */}
           <div>
             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-              App Language
+              Language
             </label>
             <p className="text-base text-gray-900 dark:text-white" title={user.ui_locale || undefined}>
               {user.ui_locale_name || "Unknown"}
@@ -433,7 +488,7 @@ export default function UserDetailPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-              App Language Source
+              Language Source
             </label>
             <p className="text-base text-gray-900 dark:text-white capitalize">
               {user.ui_locale_source || "Unknown"}
@@ -442,10 +497,19 @@ export default function UserDetailPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-              App Language Last Synced
+              Language Last Synced
             </label>
             <p className="text-base text-gray-900 dark:text-white">
               {formatDateTime(user.ui_locale_updated_at)}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Fluency
+            </label>
+            <p className="text-base capitalize text-gray-900 dark:text-white">
+              {user.proficiency_level?.replace(/_/g, " ") || "Not reported"}
             </p>
           </div>
 
@@ -519,6 +583,78 @@ export default function UserDetailPage() {
         isLoading={isActivityLoading}
       />
 
+      {/* Game performance summary from the existing player-detail analytics endpoint. */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        {[
+          ["Game Sessions", player?.total_sessions ?? 0],
+          ["Rounds Played", player?.total_rounds ?? 0],
+          ["Average Score", `${Number(player?.avg_score ?? 0).toFixed(1)}%`],
+          ["Accuracy", `${Number(player?.accuracy ?? 0).toFixed(1)}%`],
+          ["Time Played", formatDuration(player?.total_time_ms)],
+        ].map(([label, value]) => (
+          <div key={String(label)} className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</p>
+            <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Games played</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Session volume and average score by game</p>
+          <div className="mt-6 space-y-5">
+            {gameBreakdown.map((game) => (
+              <div key={game.game_key}>
+                <div className="mb-2 flex items-center justify-between gap-4 text-sm">
+                  <span className="font-medium text-gray-800 dark:text-gray-100">{formatGameName(game.game_key)}</span>
+                  <span className="text-gray-500 dark:text-gray-400">{game.sessions} sessions · {Number(game.avg_score || 0).toFixed(1)}%</span>
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                  <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.max(4, (Number(game.sessions || 0) / maxGameSessions) * 100)}%` }} />
+                </div>
+              </div>
+            ))}
+            {!gameBreakdown.length && <p className="py-8 text-center text-sm text-gray-500">No game activity recorded.</p>}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Performance by game</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Accuracy, perfect scores and time invested</p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-gray-200 text-left text-xs uppercase text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                <tr><th className="py-3 pr-4">Game</th><th className="px-3 py-3 text-right">Accuracy</th><th className="px-3 py-3 text-right">Perfect</th><th className="py-3 pl-3 text-right">Time</th></tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {gameBreakdown.map((game) => (
+                  <tr key={game.game_key}><td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">{formatGameName(game.game_key)}</td><td className="px-3 py-3 text-right">{Number(game.accuracy || 0).toFixed(1)}%</td><td className="px-3 py-3 text-right">{game.perfect_scores || 0}</td><td className="py-3 pl-3 text-right">{formatDuration(game.total_time_ms)}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent game sessions</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Scores and dates for the latest recorded games</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-gray-800 dark:text-gray-400"><tr><th className="px-6 py-3">Date</th><th className="px-6 py-3">Game</th><th className="px-6 py-3">Language</th><th className="px-6 py-3 text-right">Score</th><th className="px-6 py-3 text-right">Answers</th><th className="px-6 py-3 text-right">Duration</th></tr></thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {recentSessions.map((session) => (
+                <tr key={session.session_id}><td className="whitespace-nowrap px-6 py-4 text-gray-600 dark:text-gray-300">{formatDateTime(session.date)}</td><td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{formatGameName(session.game_key)}{session.is_perfect && <span className="ml-2 text-amber-500" title="Perfect score">★</span>}</td><td className="px-6 py-4">{session.language_name || "—"}</td><td className="px-6 py-4 text-right font-semibold">{Number(session.score || 0).toFixed(1)}%</td><td className="px-6 py-4 text-right text-emerald-600">{session.correct || 0}<span className="text-gray-400"> / </span><span className="text-red-500">{session.wrong || 0}</span></td><td className="px-6 py-4 text-right">{formatDuration(session.duration_ms)}</td></tr>
+              ))}
+              {!recentSessions.length && <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-500">No game sessions recorded.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Learning Progress Card */}
       <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
         <h3 className="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
@@ -555,7 +691,7 @@ export default function UserDetailPage() {
 
           <div className="p-4 text-center border border-gray-200 rounded-lg dark:border-gray-800">
             <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">
-              {user.is_premium ? "Premium" : "Free"}
+              {isPremium ? "Premium" : "Free"}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Account Type
