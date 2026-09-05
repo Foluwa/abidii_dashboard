@@ -36,6 +36,15 @@ export const mainNavigationItems: AdminNavItem[] = [
     permission: "users:read",
   },
   {
+    name: "Community",
+    icon: <UserCircleIcon />,
+    subItems: [
+      { name: "Users", path: "/users", permission: "users:read" },
+      { name: "Admins", path: "/users/admins", permission: "users:read" },
+      { name: "Subscriptions", path: "/subscriptions", permission: "users:read" },
+    ],
+  },
+  {
     name: "Content",
     icon: <ListIcon />,
     permission: "content:read",
@@ -122,15 +131,6 @@ export const mainNavigationItems: AdminNavItem[] = [
       { name: "Compose", path: "/notifications" },
       { name: "History", path: "/notifications/history" },
       { name: "Daily Content", path: "/notifications/daily" },
-    ],
-  },
-  {
-    name: "Community",
-    icon: <UserCircleIcon />,
-    subItems: [
-      { name: "Users", path: "/users", permission: "users:read" },
-      { name: "Admins", path: "/users/admins", permission: "users:read" },
-      { name: "Subscriptions", path: "/subscriptions", permission: "users:read" },
     ],
   },
   {

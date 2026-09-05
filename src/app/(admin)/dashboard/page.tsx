@@ -175,34 +175,32 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Monthly User Growth Chart */}
+        {/* Monthly user and subscriber growth are intentionally grouped for direct comparison. */}
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
           <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
               Monthly User Growth
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              New user registrations per month
+              Track how your user base is growing month by month
             </p>
           </div>
           <div className="p-5">
             <MonthlySalesChart />
           </div>
-        </div>
-      </div>
-
-      {/* Subscriber Growth Chart */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-        <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-            Monthly Subscriber Growth
-          </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            New premium subscribers per month (first-time only)
-          </p>
-        </div>
-        <div className="p-5">
-          <MonthlySubscriberGrowthChart />
+          <div className="border-t border-gray-100 dark:border-white/[0.05]">
+            <div className="bg-gray-50/50 px-5 py-3 dark:bg-white/[0.02]">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                Monthly Subscriber Growth
+              </h4>
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                New premium subscribers per month (first-time only)
+              </p>
+            </div>
+            <div className="p-5">
+              <MonthlySubscriberGrowthChart />
+            </div>
+          </div>
         </div>
       </div>
 

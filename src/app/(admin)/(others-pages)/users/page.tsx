@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useUsers, useLanguages, useUserCountries } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api";
 import type { UserRole } from "@/types/auth";
+import type { UserListItem } from "@/types/api";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
 import StatusBadge from "@/components/admin/StatusBadge";
@@ -12,7 +13,7 @@ import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import Pagination from "@/components/tables/Pagination";
 import Link from "next/link";
 import { FaApple, FaGoogle, FaGlobe, FaMobileAlt } from "react-icons/fa";
-import { FiEye, FiTrash2, FiUserCheck, FiUserX, FiAlertOctagon } from "react-icons/fi";
+import { FiAward, FiEye, FiTrash2, FiUserCheck, FiUserX, FiAlertOctagon } from "react-icons/fi";
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
 import DatePicker from "@/components/form/date-picker";
 
@@ -66,11 +67,12 @@ const countryName = (code: string) => {
 
 function UserAvatar({ user, size = "w-10 h-10" }: { user: any; size?: string }) {
   const [failed, setFailed] = useState(false);
-  const source = cleanSvgForDisplay(user.avatar_svg) || null;
+  const source = cleanSvgForDisplay(user.avatar_svg) || cleanSvgForDisplay(user.picture_url) || null;
   const label = user.display_name || user.email || "User";
 
-  if (source && !failed) {
-    return (
+  return (
+    <div className="relative inline-flex shrink-0">
+      {source && !failed ? (
       <img
         src={source}
         alt={`${label} avatar`}
@@ -78,12 +80,20 @@ function UserAvatar({ user, size = "w-10 h-10" }: { user: any; size?: string }) 
         referrerPolicy="no-referrer"
         onError={() => setFailed(true)}
       />
-    );
-  }
-
-  return (
-    <div className={`${size} rounded-full ${getAvatarColor(user.id || label)} flex items-center justify-center`}>
-      <span className="font-semibold text-sm text-white">{getInitials(label)}</span>
+      ) : (
+        <div className={`${size} rounded-full ${getAvatarColor(user.id || label)} flex items-center justify-center`}>
+          <span className="font-semibold text-sm text-white">{getInitials(label)}</span>
+        </div>
+      )}
+      {user.has_premium && (
+        <span
+          className="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-amber-400 text-amber-950 shadow-sm dark:border-gray-900"
+          title="Premium member"
+          aria-label="Premium member"
+        >
+          <FiAward className="h-3 w-3" aria-hidden="true" />
+        </span>
+      )}
     </div>
   );
 }
@@ -112,6 +122,7 @@ export default function UsersPage() {
   // Action confirmation modal
   const [actionConfirm, setActionConfirm] = useState<ActionConfirm | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [fluencyByUser, setFluencyByUser] = useState<Record<string, string | null>>({});
 
   const role = activeTab === "all" ? undefined : activeTab;
   const isActive = statusFilter === "all" ? undefined : statusFilter === "active";
@@ -145,6 +156,34 @@ export default function UsersPage() {
   });
 
   const totalPages = users ? Math.max(1, Math.ceil(users.total / limit)) : 1;
+
+  // The existing list API predates proficiency_level, while the existing detail
+  // API already returns it. Hydrate only the visible page without requiring a
+  // backend change; settled requests ensure one unavailable profile cannot hide
+  // the rest of the table.
+  useEffect(() => {
+    const visibleUsers = (users?.users ?? []).filter(
+      (user: UserListItem) => user.proficiency_level === undefined && !(user.id in fluencyByUser),
+    );
+    let cancelled = false;
+    if (!visibleUsers.length) return;
+    Promise.allSettled(
+      visibleUsers.map(async (user: UserListItem) => {
+        const response = await apiClient.get(`/api/v1/admin/users/${user.id}`);
+        return [user.id, response.data?.proficiency_level ?? null] as const;
+      }),
+    ).then((results) => {
+      if (cancelled) return;
+      const next: Record<string, string | null> = {};
+      results.forEach((result, index) => {
+        const userId = visibleUsers[index]?.id;
+        if (!userId) return;
+        next[userId] = result.status === "fulfilled" ? result.value[1] : null;
+      });
+      setFluencyByUser((current) => ({ ...current, ...next }));
+    });
+    return () => { cancelled = true; };
+  }, [users?.users, fluencyByUser]);
 
   const tabs: { label: string; value: TabRole; count?: number }[] = [
     { label: "All Users", value: "all" },
@@ -224,19 +263,6 @@ export default function UsersPage() {
       case "apple": return "success" as const;
       case "device": return "warning" as const;
       default: return "info" as const;
-    }
-  };
-
-  const getRoleBadgeStatus = (userRole: UserRole) => {
-    switch (userRole) {
-      case "admin":
-        return "error" as const;
-      case "manager":
-        return "warning" as const;
-      case "user":
-        return "info" as const;
-      default:
-        return "info" as const;
     }
   };
 
@@ -592,20 +618,11 @@ export default function UsersPage() {
                       Learning
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      App Language
+                      Language
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Last Request
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      XP
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Role
-                    </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Premium
-                      </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
@@ -625,11 +642,11 @@ export default function UsersPage() {
                               <UserAvatar user={user} />
                             </div>
                             {/* Name and Email */}
-                            <div>
+                            <div className="min-w-0 max-w-[220px]">
                               <div className="text-sm font-medium text-gray-900 dark:text-white">
                                 {user.display_name || user.name || "N/A"}
                               </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                              <div className="break-all text-xs leading-4 text-gray-500 dark:text-gray-400" title={user.email || undefined}>
                                 {user.email || "No email"}
                               </div>
                               <div className="flex items-center gap-1 mt-0.5">
@@ -685,12 +702,20 @@ export default function UsersPage() {
                             <span>{user.country_code ? user.country_code.toUpperCase() : "—"}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {user.current_language_name ? (
-                            <StatusBadge status="info" label={user.current_language_name} />
-                          ) : (
-                            <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
-                          )}
+                        <td className="px-6 py-4">
+                          <div className="space-y-1.5">
+                            {user.current_language_name ? (
+                              <StatusBadge status="info" label={user.current_language_name} />
+                            ) : (
+                              <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
+                            )}
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              Fluency: <span className="capitalize text-gray-700 dark:text-gray-200">{(user.proficiency_level ?? fluencyByUser[user.id])?.replace(/_/g, " ") || "Not reported"}</span>
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {(user.total_xp ?? 0).toLocaleString()} XP
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {user.ui_locale_name ? (
@@ -710,21 +735,6 @@ export default function UsersPage() {
                           <div className="text-sm text-gray-600 dark:text-gray-400" title={getLastRequestAt(user) ? new Date(getLastRequestAt(user)!).toLocaleString() : "Never"}>
                             {formatLastRequest(getLastRequestAt(user))}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            {(user.total_xp ?? 0).toLocaleString()}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={getRoleBadgeStatus(user.role)} label={user.role} />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {user.has_premium ? (
-                            <StatusBadge status="success" label="Premium" />
-                          ) : (
-                            <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
-                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <StatusBadge status={user.is_active ? "success" : "error"} 
