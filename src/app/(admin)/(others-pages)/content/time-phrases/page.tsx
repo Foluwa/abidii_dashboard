@@ -1663,11 +1663,11 @@ export default function TimePhrasesPage() {
                               {phrase.audio_url ? (
                                 <button
                                   onClick={() => openRegenerateModal(phrase)}
-                                  className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                  className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                                   title="Regenerate Audio"
+                                  aria-label="Regenerate Audio"
                                 >
                                   <FiVolume2 className="w-4 h-4" />
-                                  <span>Regenerate Audio</span>
                                 </button>
                               ) : (
                                 <button

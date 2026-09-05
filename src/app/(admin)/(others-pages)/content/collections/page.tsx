@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { FiVolume2 } from "react-icons/fi";
 import { apiClient } from "@/lib/api";
 import FormModal from "@/components/admin/FormModal";
 import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
@@ -491,9 +492,11 @@ export default function CollectionsPage() {
                     <button
                       type="button"
                       onClick={() => handleRegenerateAudio(item)}
-                      className="text-xs font-medium text-brand-600 hover:text-brand-800 dark:text-brand-400"
+                      className="p-1 text-brand-600 hover:text-brand-800 dark:text-brand-400"
+                      title="Regenerate Audio"
+                      aria-label="Regenerate Audio"
                     >
-                      Regenerate Audio
+                      <FiVolume2 className="w-4 h-4" />
                     </button>
                   </div>
                 </td>
@@ -592,9 +595,11 @@ export default function CollectionsPage() {
                   <button
                     type="button"
                     onClick={() => editing && handleRegenerateAudio(editing)}
-                    className="rounded-lg border border-brand-500 px-2.5 py-1 text-xs font-medium text-brand-600 dark:text-brand-300"
+                    className="rounded-lg border border-brand-500 p-1.5 text-brand-600 dark:text-brand-300"
+                    title="Regenerate Audio"
+                    aria-label="Regenerate Audio"
                   >
-                    Regenerate Audio
+                    <FiVolume2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>

@@ -44,6 +44,7 @@ interface Number {
   display_order: number;
   is_active: boolean;
   audio?: any[];
+  human_recorded?: boolean;
   last_regeneration_status?: string | null;
   last_regeneration_error?: string | null;
   last_regeneration_updated_at?: string | null;
@@ -66,6 +67,10 @@ interface NumbersResponse {
 
 function isRegenerationPending(status?: string | null) {
   return status === "queued" || status === "processing";
+}
+
+function isRegenerationBlocked(number: Pick<Number, "last_regeneration_status" | "human_recorded">) {
+  return isRegenerationPending(number.last_regeneration_status) || !!number.human_recorded;
 }
 
 function mapIso6393ToVoicePrefix(languageCode?: string | null) {
@@ -300,6 +305,10 @@ export default function NumbersPage() {
   };
 
   const handleRegenerateAudio = (number: Number) => {
+    if (number.human_recorded) {
+      setErrorMessage("This number's audio is human-recorded and locked against regeneration");
+      return;
+    }
     if (isRegenerationPending(number.last_regeneration_status)) {
       setErrorMessage("Audio regeneration is already in progress for this number");
       return;
@@ -319,7 +328,7 @@ export default function NumbersPage() {
 
   const toggleNumberSelection = (numberId: string) => {
     const number = numbers.find((item) => item.id === numberId);
-    if (number && isRegenerationPending(number.last_regeneration_status)) {
+    if (number && isRegenerationBlocked(number)) {
       return;
     }
     setSelectedNumbers((current) => (
@@ -331,7 +340,7 @@ export default function NumbersPage() {
 
   const toggleSelectAllVisibleNumbers = () => {
     const selectableIds = numbers
-      .filter((number) => !isRegenerationPending(number.last_regeneration_status))
+      .filter((number) => !isRegenerationBlocked(number))
       .map((number) => number.id);
     if (selectableIds.length === 0) {
       return;
@@ -347,7 +356,7 @@ export default function NumbersPage() {
   const handleBulkRegenerateAudio = async () => {
     const queueableIds = selectedNumbers.filter((id) => {
       const number = numbers.find((item) => item.id === id);
-      return number && !isRegenerationPending(number.last_regeneration_status);
+      return number && !isRegenerationBlocked(number);
     });
     if (queueableIds.length === 0) {
       setErrorMessage("Select one or more numbers that are not already queued/processing");
@@ -507,7 +516,7 @@ export default function NumbersPage() {
   };
 
   const selectableVisibleIds = numbers
-    .filter((number) => !isRegenerationPending(number.last_regeneration_status))
+    .filter((number) => !isRegenerationBlocked(number))
     .map((number) => number.id);
   const allVisibleNumbersSelected = selectableVisibleIds.length > 0
     && selectableVisibleIds.every((id) => selectedNumbers.includes(id));

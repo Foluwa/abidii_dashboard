@@ -1,5 +1,5 @@
 import React from "react";
-import { FiEdit, FiTrash2, FiHash, FiVolume2, FiRefreshCw } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiHash, FiVolume2, FiRefreshCw, FiLock } from "react-icons/fi";
 import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
 
 interface Number {
@@ -17,6 +17,7 @@ interface Number {
   // Backend returns these fields from number_audio join
   has_audio?: boolean;
   audio_url?: string; // This is s3_bucket_key
+  human_recorded?: boolean;
   last_regeneration_status?: string | null;
   last_regeneration_error?: string | null;
   alignment_status?: "draft" | "reviewed" | "approved" | "stale" | null;
@@ -63,6 +64,12 @@ const NumbersDataTable: React.FC<Props> = ({
   languages 
 }) => {
   const isRegenerationPending = (status?: string | null) => status === "queued" || status === "processing";
+  const regenerateAudioTitle = (number: Number) =>
+    number.human_recorded
+      ? "Locked - audio is human-recorded and reviewed"
+      : isRegenerationPending(number.last_regeneration_status)
+        ? "Audio regeneration in progress"
+        : "Regenerate Audio";
 
   const renderAlignmentBadge = (status?: Number["alignment_status"]) => {
     if (!status) return null;
@@ -291,12 +298,12 @@ const NumbersDataTable: React.FC<Props> = ({
                   </button>
                   <button
                     onClick={() => onRegenerateAudio?.(number)}
-                    disabled={isRegenerationPending(number.last_regeneration_status)}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed dark:text-emerald-400 dark:hover:bg-emerald-900/20"
-                    title={isRegenerationPending(number.last_regeneration_status) ? "Audio regeneration in progress" : "Regenerate Audio"}
+                    disabled={isRegenerationPending(number.last_regeneration_status) || number.human_recorded}
+                    className="p-2 text-emerald-600 hover:text-emerald-900 disabled:opacity-40 disabled:cursor-not-allowed dark:text-emerald-400 dark:hover:text-emerald-300"
+                    title={regenerateAudioTitle(number)}
+                    aria-label={regenerateAudioTitle(number)}
                   >
-                    <FiVolume2 className="w-4 h-4" />
-                    Regenerate Audio
+                    {number.human_recorded ? <FiLock className="w-4 h-4" /> : <FiVolume2 className="w-4 h-4" />}
                   </button>
                   <button
                     onClick={() => onEdit(number)}
@@ -417,11 +424,12 @@ const NumbersDataTable: React.FC<Props> = ({
             </button>
             <button
               onClick={() => onRegenerateAudio?.(number)}
-              disabled={isRegenerationPending(number.last_regeneration_status)}
-              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-40 disabled:cursor-not-allowed dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"
+              disabled={isRegenerationPending(number.last_regeneration_status) || number.human_recorded}
+              className="flex-1 inline-flex items-center justify-center px-4 py-2 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-40 disabled:cursor-not-allowed dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"
+              title={regenerateAudioTitle(number)}
+              aria-label={regenerateAudioTitle(number)}
             >
-              <FiVolume2 className="w-4 h-4" />
-              Regenerate
+              {number.human_recorded ? <FiLock className="w-4 h-4" /> : <FiVolume2 className="w-4 h-4" />}
             </button>
             <button
               onClick={() => onEdit(number)}
