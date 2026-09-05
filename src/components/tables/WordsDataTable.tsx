@@ -373,11 +373,10 @@ export default function WordsDataTable({
                               setTimeout(() => setRegeneratingAudio(null), 2000);
                             }}
                             disabled={regeneratingAudio === word.id}
-                            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-purple-600 transition-colors hover:bg-purple-50 hover:text-purple-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-purple-400 dark:hover:bg-purple-900/20"
-                            title="Regenerate Audio"
+                            className="inline-flex items-center rounded-lg p-2 text-purple-600 transition-colors hover:bg-purple-50 hover:text-purple-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-purple-400 dark:hover:bg-purple-900/20"
+                            title={regeneratingAudio === word.id ? 'Regenerating...' : 'Regenerate Audio'}
                           >
-                            <FiVolume2 className={`h-3.5 w-3.5 ${regeneratingAudio === word.id ? 'animate-pulse' : ''}`} />
-                            {regeneratingAudio === word.id ? 'Regenerating...' : 'Regenerate Audio'}
+                            <FiVolume2 className={`h-4 w-4 ${regeneratingAudio === word.id ? 'animate-pulse' : ''}`} />
                           </button>
                         )}
                         <button
@@ -542,10 +541,10 @@ export default function WordsDataTable({
                       setTimeout(() => setRegeneratingAudio(null), 2000);
                     }}
                     disabled={regeneratingAudio === word.id}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-purple-600 transition-colors hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed dark:text-purple-400 dark:hover:bg-purple-900/20"
+                    className="flex-1 inline-flex items-center justify-center rounded-lg px-3 py-2 text-purple-600 transition-colors hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed dark:text-purple-400 dark:hover:bg-purple-900/20"
+                    title={regeneratingAudio === word.id ? 'Regenerating...' : 'Regenerate Audio'}
                   >
-                    <FiVolume2 className={`h-3.5 w-3.5 ${regeneratingAudio === word.id ? 'animate-pulse' : ''}`} />
-                    {regeneratingAudio === word.id ? 'Regenerating...' : 'Regenerate Audio'}
+                    <FiVolume2 className={`h-4 w-4 ${regeneratingAudio === word.id ? 'animate-pulse' : ''}`} />
                   </button>
                 )}
                 <button
