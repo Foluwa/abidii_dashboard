@@ -2,19 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Admin API proxy route.
- * 
+ *
  * Forwards requests from /api/admin/* to the backend FastAPI server at
- * NEXT_PUBLIC_API_BASE_URL/api/v1/admin/*, attaching the admin monitoring
- * token from the server-side environment variable (NOT exposed to the client).
- * 
- * This prevents the ADMIN_MONITORING_TOKEN from being embedded in browser
- * JavaScript bundles via NEXT_PUBLIC_ prefix.
+ * NEXT_PUBLIC_API_BASE_URL/api/v1/admin/*. The caller's own session (the
+ * httpOnly access_token cookie, set by the backend and attached by the
+ * browser automatically since this is a same-origin request) rides through
+ * untouched via the forwarded headers below — the backend's own
+ * authentication/RBAC decides what that session is allowed to do.
+ *
+ * This route must never attach any credential of its own (e.g. a shared
+ * service/admin token) on behalf of the caller — doing so would grant
+ * admin authority to every request through this proxy regardless of
+ * whether the caller has a valid (or any) session. See
+ * security-audit/REPORT.md finding #1.
  */
 
 const BACKEND_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.abidii.app';
-// Server-only var — never fall back to a NEXT_PUBLIC_-prefixed copy here,
-// or the token would ship in the client bundle the moment one is set.
-const ADMIN_TOKEN = process.env.ADMIN_MONITORING_TOKEN || '';
 
 async function handleRequest(request: NextRequest, method: string) {
   try {
@@ -30,11 +33,6 @@ async function handleRequest(request: NextRequest, method: string) {
     headers.delete('host');
     headers.delete('connection');
     headers.delete('content-length');
-
-    // Attach admin token (server-side only)
-    if (ADMIN_TOKEN) {
-      headers.set('x-admin-token', ADMIN_TOKEN);
-    }
 
     const requestBody = method !== 'GET' && method !== 'HEAD'
       ? Buffer.from(await request.arrayBuffer())
