@@ -84,7 +84,13 @@ export interface RecentRoomItem {
   room_type: string;
   status: string;
   language: { id: string | null; code: string | null; name: string | null };
-  host: { id: string | null; display_name: string | null };
+  host: {
+    id: string | null;
+    display_name: string | null;
+    email: string | null;
+    avatar_svg: string | null;
+    picture_url: string | null;
+  };
   participant_count: number;
   game_count: number;
   average_score: number;
