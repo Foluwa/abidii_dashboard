@@ -1651,9 +1651,9 @@ export function useFluencyDistribution(timeRange: string) {
   };
 }
 
-export function useMostActiveUsers(timeRange: string, sortBy: 'xp' | 'sessions' | 'time') {
+export function useMostActiveUsers(timeRange: string, sortBy: 'xp' | 'sessions' | 'time', limit: number = 20) {
   const { data, error, mutate } = useSWR(
-    `/api/v1/admin/analytics/detailed/most-active-users?time_range=${timeRange}&sort_by=${sortBy}`,
+    `/api/v1/admin/analytics/detailed/most-active-users?time_range=${timeRange}&sort_by=${sortBy}&limit=${limit}`,
     fetcher,
     { revalidateOnFocus: false }
   );
