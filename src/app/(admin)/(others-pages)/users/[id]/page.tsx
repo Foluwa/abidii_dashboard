@@ -10,6 +10,7 @@ import ConfirmationModal from "@/components/modals/ConfirmationModal";
 import { apiClient, handleApiError } from "@/lib/api";
 import type { UserRole } from "@/types/auth";
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
+import { countryName, countryFlagEmoji } from "@/lib/country-utils";
 import { FiArrowLeft, FiAward } from "react-icons/fi";
 
 type ModalType = "deactivate" | "reactivate" | "delete" | "purge" | null;
@@ -318,6 +319,18 @@ export default function UserDetailPage() {
   const recentSessions = (player?.recent_sessions || []) as GameSession[];
   const maxGameSessions = Math.max(1, ...gameBreakdown.map((game) => Number(game.sessions || 0)));
 
+  // Average time per session - the closest honest metric available today.
+  // A true cross-app "most visited feature" (Dictionary vs Games vs Lessons)
+  // isn't tracked anywhere yet, only game sessions - "Most Played Game"
+  // below is the nearest real proxy, not a claim about the whole app.
+  const totalSessionsForAvg = Number(player?.total_sessions || 0);
+  const avgSessionTimeMs = totalSessionsForAvg > 0
+    ? Number(player?.total_time_ms || 0) / totalSessionsForAvg
+    : 0;
+  const topGame = gameBreakdown.length > 0
+    ? [...gameBreakdown].sort((a, b) => Number(b.sessions || 0) - Number(a.sessions || 0))[0]
+    : null;
+
   return (
     <div className="space-y-6">
       {/* Confirmation Modal */}
@@ -470,8 +483,15 @@ export default function UserDetailPage() {
             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
               Country
             </label>
-            <p className="text-base text-gray-900 dark:text-white uppercase">
-              {user.country_code || "Unknown"}
+            <p className="text-base text-gray-900 dark:text-white">
+              {user.country_code ? (
+                <>
+                  <span className="mr-1.5">{countryFlagEmoji(user.country_code)}</span>
+                  {countryName(user.country_code)}
+                </>
+              ) : (
+                "Unknown"
+              )}
             </p>
           </div>
 
@@ -575,13 +595,94 @@ export default function UserDetailPage() {
               {formatDate(user.last_activity_date)}
             </p>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Avg. Session Time
+            </label>
+            <p className="text-base text-gray-900 dark:text-white">
+              {isActivityLoading
+                ? "Loading…"
+                : avgSessionTimeMs > 0
+                  ? formatDuration(avgSessionTimeMs)
+                  : "Not available"}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Leaderboard Rank
+            </label>
+            <p className="text-base text-gray-900 dark:text-white">
+              {user.global_alltime_rank ? `#${user.global_alltime_rank} globally` : "Unranked"}
+            </p>
+            {user.language_alltime_rank != null && user.rank_language_name && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                #{user.language_alltime_rank} in {user.rank_language_name}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Most Played Game
+            </label>
+            <p className="text-base text-gray-900 dark:text-white">
+              {isActivityLoading
+                ? "Loading…"
+                : topGame
+                  ? `${formatGameName(topGame.game_key)} (${topGame.sessions} sessions)`
+                  : "No games played yet"}
+            </p>
+          </div>
         </div>
       </div>
 
-      <ActivityHeatMap
-        dailyActivity={player?.daily_activity}
-        isLoading={isActivityLoading}
-      />
+      {/* Learning Progress Card - moved directly below User Information per
+          explicit request. */}
+      <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
+        <h3 className="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
+          Learning Progress
+        </h3>
+
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="p-4 text-center border border-gray-200 rounded-lg dark:border-gray-800">
+            <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">
+              {(user.total_sessions ?? 0).toLocaleString()}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Total Sessions
+            </p>
+          </div>
+
+          <div className="p-4 text-center border border-gray-200 rounded-lg dark:border-gray-800">
+            <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">
+              {user.languages_learning ?? 0}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Languages Learning
+            </p>
+          </div>
+
+          <div className="p-4 text-center border border-gray-200 rounded-lg dark:border-gray-800">
+            <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">
+              Level {user.current_level ?? 1}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Current Level
+            </p>
+          </div>
+
+          <div className="p-4 text-center border border-gray-200 rounded-lg dark:border-gray-800">
+            <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">
+              {isPremium ? "Premium" : "Free"}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Account Type
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Game performance summary from the existing player-detail analytics endpoint. */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
@@ -655,50 +756,12 @@ export default function UserDetailPage() {
         </div>
       </div>
 
-      {/* Learning Progress Card */}
-      <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-        <h3 className="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
-          Learning Progress
-        </h3>
-
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div className="p-4 text-center border border-gray-200 rounded-lg dark:border-gray-800">
-            <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">
-              {(user.total_sessions ?? 0).toLocaleString()}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Total Sessions
-            </p>
-          </div>
-
-          <div className="p-4 text-center border border-gray-200 rounded-lg dark:border-gray-800">
-            <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">
-              {user.languages_learning ?? 0}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Languages Learning
-            </p>
-          </div>
-
-          <div className="p-4 text-center border border-gray-200 rounded-lg dark:border-gray-800">
-            <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">
-              Level {user.current_level ?? 1}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Current Level
-            </p>
-          </div>
-
-          <div className="p-4 text-center border border-gray-200 rounded-lg dark:border-gray-800">
-            <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">
-              {isPremium ? "Premium" : "Free"}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Account Type
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Activity Heat Map - last on the page per explicit request, so the
+          detailed stats/tables above are seen first. */}
+      <ActivityHeatMap
+        dailyActivity={player?.daily_activity}
+        isLoading={isActivityLoading}
+      />
     </div>
   );
 }
