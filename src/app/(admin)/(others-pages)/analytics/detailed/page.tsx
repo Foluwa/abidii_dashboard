@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import AnalyticsTabs from "@/components/analytics/AnalyticsTabs";
+import Pagination from "@/components/tables/Pagination";
 import { countryName, countryFlagEmoji } from "@/lib/country-utils";
 import {
   useFluencyDistribution,
@@ -161,9 +162,27 @@ function TopCountriesCard({ timeRange }: { timeRange: TimeRange }) {
   );
 }
 
+const MOST_ACTIVE_USERS_LIMIT = 15;
+const MOST_ACTIVE_USERS_PER_PAGE = 5;
+
 function MostActiveUsersCard({ timeRange }: { timeRange: TimeRange }) {
   const [sortBy, setSortBy] = useState<"xp" | "sessions" | "time">("xp");
-  const { data, isLoading } = useMostActiveUsers(timeRange, sortBy);
+  const { data, isLoading } = useMostActiveUsers(timeRange, sortBy, MOST_ACTIVE_USERS_LIMIT);
+  const [page, setPage] = useState(1);
+
+  // Reset to page 1 when the underlying list changes shape (new range or
+  // sort) - adjusted during render, not in an effect, per this codebase's
+  // react-hooks/set-state-in-effect convention (see notifications/daily).
+  const [prevKey, setPrevKey] = useState(`${timeRange}:${sortBy}`);
+  const currentKey = `${timeRange}:${sortBy}`;
+  if (currentKey !== prevKey) {
+    setPrevKey(currentKey);
+    setPage(1);
+  }
+
+  const totalPages = Math.max(1, Math.ceil(data.length / MOST_ACTIVE_USERS_PER_PAGE));
+  const pageStart = (page - 1) * MOST_ACTIVE_USERS_PER_PAGE;
+  const pageData = data.slice(pageStart, pageStart + MOST_ACTIVE_USERS_PER_PAGE);
 
   return (
     <Card title="Most Active Users">
@@ -187,31 +206,38 @@ function MostActiveUsersCard({ timeRange }: { timeRange: TimeRange }) {
       ) : !data.length ? (
         <EmptyBlock />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
-                <th className="pb-2">User</th>
-                <th className="pb-2 text-right">Sessions</th>
-                <th className="pb-2 text-right">Time</th>
-                <th className="pb-2 text-right">Total XP</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {data.map((u: {
-                user_id: string; display_name: string | null;
-                total_sessions: number; total_time_ms: number; total_xp: number;
-              }) => (
-                <tr key={u.user_id}>
-                  <td className="py-2 text-gray-900 dark:text-white">{u.display_name || "Anonymous"}</td>
-                  <td className="py-2 text-right text-gray-600 dark:text-gray-300">{u.total_sessions}</td>
-                  <td className="py-2 text-right text-gray-600 dark:text-gray-300">{formatMs(u.total_time_ms)}</td>
-                  <td className="py-2 text-right font-medium text-purple-600 dark:text-purple-400">{u.total_xp.toLocaleString()}</td>
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+                  <th className="pb-2">User</th>
+                  <th className="pb-2 text-right">Sessions</th>
+                  <th className="pb-2 text-right">Time</th>
+                  <th className="pb-2 text-right">Total XP</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {pageData.map((u: {
+                  user_id: string; display_name: string | null;
+                  total_sessions: number; total_time_ms: number; total_xp: number;
+                }) => (
+                  <tr key={u.user_id}>
+                    <td className="py-2 text-gray-900 dark:text-white">{u.display_name || "Anonymous"}</td>
+                    <td className="py-2 text-right text-gray-600 dark:text-gray-300">{u.total_sessions}</td>
+                    <td className="py-2 text-right text-gray-600 dark:text-gray-300">{formatMs(u.total_time_ms)}</td>
+                    <td className="py-2 text-right font-medium text-purple-600 dark:text-purple-400">{u.total_xp.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {totalPages > 1 && (
+            <div className="mt-4 flex justify-end">
+              <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            </div>
+          )}
+        </>
       )}
     </Card>
   );
