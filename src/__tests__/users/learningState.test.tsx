@@ -22,12 +22,15 @@ const mockRefresh = jest.fn();
 const mockUseAdminUserLearningState = jest.fn();
 const mockAdminResetCourseProgress = jest.fn();
 const mockAdminSetLearningPointer = jest.fn();
+const mockUseAdminUserCourseLessonProgress = jest.fn();
 
 jest.mock('@/hooks/useApi', () => ({
   useAdminUserLearningState: (userId: string | null) =>
     mockUseAdminUserLearningState(userId),
   adminResetCourseProgress: (...args: unknown[]) => mockAdminResetCourseProgress(...args),
   adminSetLearningPointer: (...args: unknown[]) => mockAdminSetLearningPointer(...args),
+  useAdminUserCourseLessonProgress: (userId: string | null, courseId: string | null) =>
+    mockUseAdminUserCourseLessonProgress(userId, courseId),
 }));
 
 // next/navigation
@@ -83,6 +86,12 @@ const completedCourse = {
 describe('UserLearningStatePage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAdminUserCourseLessonProgress.mockReturnValue({
+      progress: undefined,
+      isLoading: false,
+      isError: false,
+      refresh: mockRefresh,
+    });
   });
 
   it('renders course card with title and progress', () => {
@@ -307,5 +316,119 @@ describe('UserLearningStatePage', () => {
     await waitFor(() => {
       expect(screen.getByText(/Progress reset successfully/i)).toBeInTheDocument();
     });
+  });
+
+  // ===== Per-lesson progress panel =====
+
+  const sampleUnits = [
+    {
+      unit_id: 'unit-uuid-1',
+      unit_key: 'u01',
+      unit_title: 'Unit 1: Yoruba Sounds',
+      sections: [
+        {
+          section_id: 'section-uuid-1',
+          section_key: 'u01_s01',
+          section_title: 'First Yoruba Phrase',
+          status: 'completed',
+          started_at: '2026-08-01T09:00:00Z',
+          completed_at: '2026-08-01T09:10:00Z',
+          last_activity_at: '2026-08-01T09:10:00Z',
+          progress_percentage: 100,
+          attempt_count: 1,
+          last_score: 90,
+          active_session: null,
+        },
+        {
+          section_id: 'section-uuid-2',
+          section_key: 'u01_s02',
+          section_title: 'Hear the Difference',
+          status: 'in_progress',
+          started_at: '2026-09-06T18:00:00Z',
+          completed_at: null,
+          last_activity_at: '2026-09-06T18:05:00Z',
+          progress_percentage: 40,
+          attempt_count: 1,
+          last_score: null,
+          active_session: {
+            current_step_index: 4,
+            total_steps: 11,
+            started_at: '2026-09-06T18:00:00Z',
+            last_active_at: '2026-09-06T18:05:00Z',
+            abandoned_at: null,
+          },
+        },
+        {
+          section_id: 'section-uuid-3',
+          section_key: 'u01_s03',
+          section_title: 'Tone Changes Meaning',
+          status: 'not_started',
+          started_at: null,
+          completed_at: null,
+          last_activity_at: null,
+          progress_percentage: 0,
+          attempt_count: 0,
+          last_score: null,
+          active_session: null,
+        },
+      ],
+    },
+  ];
+
+  it('View Lesson Progress button toggles the per-lesson panel', async () => {
+    mockUseAdminUserLearningState.mockReturnValue({
+      state: { user_id: 'test-user-uuid-1234', courses: [sampleCourse] },
+      isLoading: false,
+      isError: false,
+      refresh: mockRefresh,
+    });
+    mockUseAdminUserCourseLessonProgress.mockReturnValue({
+      progress: { user_id: 'test-user-uuid-1234', course_id: sampleCourse.course_id, units: sampleUnits },
+      isLoading: false,
+      isError: false,
+      refresh: mockRefresh,
+    });
+
+    render(<UserLearningStatePage />);
+
+    expect(screen.queryByText('First Yoruba Phrase')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('View Lesson Progress'));
+
+    expect(screen.getByText('Unit 1: Yoruba Sounds')).toBeInTheDocument();
+    expect(screen.getByText('First Yoruba Phrase')).toBeInTheDocument();
+    expect(screen.getByText('Hear the Difference')).toBeInTheDocument();
+    expect(screen.getByText('Tone Changes Meaning')).toBeInTheDocument();
+    // Status badges
+    expect(screen.getAllByText('Completed').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('In progress').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Not started')).toBeInTheDocument();
+    // Live checkpoint detail for the in-progress lesson
+    expect(screen.getByText(/Step 4\/11/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Hide Lesson Progress'));
+    expect(screen.queryByText('First Yoruba Phrase')).not.toBeInTheDocument();
+  });
+
+  it('shows an error state in the lesson-progress panel with a working retry', () => {
+    mockUseAdminUserLearningState.mockReturnValue({
+      state: { user_id: 'test-user-uuid-1234', courses: [sampleCourse] },
+      isLoading: false,
+      isError: false,
+      refresh: mockRefresh,
+    });
+    mockUseAdminUserCourseLessonProgress.mockReturnValue({
+      progress: undefined,
+      isLoading: false,
+      isError: true,
+      refresh: mockRefresh,
+    });
+
+    render(<UserLearningStatePage />);
+    fireEvent.click(screen.getByText('View Lesson Progress'));
+
+    expect(screen.getByText(/Failed to load lesson progress/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Retry'));
+    expect(mockRefresh).toHaveBeenCalled();
   });
 });

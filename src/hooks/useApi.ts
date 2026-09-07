@@ -1546,6 +1546,64 @@ export function useAdminUserLearningState(userId: string | null) {
   };
 }
 
+export interface AdminLessonCheckpoint {
+  current_step_index: number;
+  total_steps: number | null;
+  started_at: string | null;
+  last_active_at: string | null;
+  abandoned_at: string | null;
+}
+
+export interface AdminLessonProgress {
+  section_id: string;
+  section_key: string | null;
+  section_title: string | null;
+  status: 'not_started' | 'in_progress' | 'completed' | 'locked';
+  started_at: string | null;
+  completed_at: string | null;
+  last_activity_at: string | null;
+  progress_percentage: number;
+  attempt_count: number;
+  last_score: number | null;
+  active_session: AdminLessonCheckpoint | null;
+}
+
+export interface AdminUnitLessonProgress {
+  unit_id: string;
+  unit_key: string | null;
+  unit_title: string | null;
+  sections: AdminLessonProgress[];
+}
+
+/**
+ * Admin: per-lesson progression for a user within one course - every unit's
+ * lessons in curriculum order, with started/completed/still-in-progress
+ * status per lesson, plus live step position for whichever lesson is
+ * currently active.
+ * GET /api/v1/admin/learning-state/users/{userId}/courses/{courseId}/lessons
+ */
+export function useAdminUserCourseLessonProgress(
+  userId: string | null,
+  courseId: string | null,
+) {
+  const url =
+    userId && courseId
+      ? `/api/v1/admin/learning-state/users/${encodeURIComponent(userId)}/courses/${encodeURIComponent(courseId)}/lessons`
+      : null;
+  const { data, error, mutate } = useSWR(url, fetcher, {
+    revalidateOnFocus: false,
+    refreshInterval: 0,
+    shouldRetryOnError: false,
+  });
+
+  return {
+    progress: data as { user_id: string; course_id: string; units: AdminUnitLessonProgress[] } | undefined,
+    isLoading: !error && !data && !!userId && !!courseId,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
 /**
  * Admin: reset a user's course progress.
  * POST /api/v1/admin/learning-state/users/{userId}/courses/{courseId}/reset
