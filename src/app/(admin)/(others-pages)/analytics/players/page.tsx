@@ -9,6 +9,7 @@ import Pagination from '@/components/tables/Pagination';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { cleanSvgForDisplay, getInitials as getSvgInitials, getAvatarColor as getSvgAvatarColor } from '@/lib/svg-utils';
 import AnalyticsTabs from '@/components/analytics/AnalyticsTabs';
+import { FiAward } from 'react-icons/fi';
 
 type TimeRange = 'week' | 'month' | 'all';
 type SortBy = 'score' | 'sessions' | 'accuracy' | 'time' | 'xp';
@@ -308,13 +309,20 @@ export default function PlayerAnalyticsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            {player.avatar_url && cleanSvgForDisplay(player.avatar_url) ? (
-                              <img src={cleanSvgForDisplay(player.avatar_url)!} alt="" className="h-10 w-10 rounded-full" />
-                            ) : (
-                              <div className={`h-10 w-10 rounded-full ${getAvatarColor(player.user_id)} flex items-center justify-center text-white font-semibold`}>
-                                {getInitials(player.display_name)}
-                              </div>
-                            )}
+                            <div className="relative flex-shrink-0">
+                              {player.avatar_url && cleanSvgForDisplay(player.avatar_url) ? (
+                                <img src={cleanSvgForDisplay(player.avatar_url)!} alt="" className="h-10 w-10 rounded-full" />
+                              ) : (
+                                <div className={`h-10 w-10 rounded-full ${getAvatarColor(player.user_id)} flex items-center justify-center text-white font-semibold`}>
+                                  {getInitials(player.display_name)}
+                                </div>
+                              )}
+                              {player.has_premium && (
+                                <span className="absolute -bottom-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-amber-400 text-amber-950 shadow-sm dark:border-gray-900" title="Premium member" aria-label="Premium member">
+                                  <FiAward className="h-2.5 w-2.5" aria-hidden="true" />
+                                </span>
+                              )}
+                            </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900 dark:text-white">
                                 {player.display_name || 'Anonymous'}
@@ -394,13 +402,20 @@ export default function PlayerAnalyticsPage() {
               <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    {player.avatar_url && cleanSvgForDisplay(player.avatar_url) ? (
-                      <img src={cleanSvgForDisplay(player.avatar_url)!} alt="" className="h-20 w-20 rounded-full" />
-                    ) : (
-                      <div className={`h-20 w-20 rounded-full ${getAvatarColor(player.user_id)} flex items-center justify-center text-white text-2xl font-semibold`}>
-                        {getInitials(player.display_name)}
-                      </div>
-                    )}
+                    <div className="relative flex-shrink-0">
+                      {player.avatar_url && cleanSvgForDisplay(player.avatar_url) ? (
+                        <img src={cleanSvgForDisplay(player.avatar_url)!} alt="" className="h-20 w-20 rounded-full" />
+                      ) : (
+                        <div className={`h-20 w-20 rounded-full ${getAvatarColor(player.user_id)} flex items-center justify-center text-white text-2xl font-semibold`}>
+                          {getInitials(player.display_name)}
+                        </div>
+                      )}
+                      {player.has_premium && (
+                        <span className="absolute -bottom-1 -right-1 inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-amber-400 text-amber-950 shadow-sm dark:border-gray-900" title="Premium member" aria-label="Premium member">
+                          <FiAward className="h-4 w-4" aria-hidden="true" />
+                        </span>
+                      )}
+                    </div>
                     <div>
                       <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                         {player.display_name || 'Anonymous Player'}
