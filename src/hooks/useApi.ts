@@ -1631,6 +1631,100 @@ export async function adminResetCourseProgress(
  * Admin: set a user's current unit/section pointer.
  * POST /api/v1/admin/learning-state/users/{userId}/courses/{courseId}/set-pointer
  */
+/**
+ * Detailed Analytics tab hooks - all share the same time_range convention
+ * (24h|7d|30d|6m|all) as the backend's admin_analytics.py "Detailed
+ * Analytics" section. Built entirely on existing tables, no migration.
+ */
+export function useFluencyDistribution(timeRange: string) {
+  const { data, error, mutate } = useSWR(
+    `/api/v1/admin/analytics/detailed/fluency-distribution?time_range=${timeRange}`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+  return {
+    data: data?.data || [],
+    total: data?.total || 0,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+export function useMostActiveUsers(timeRange: string, sortBy: 'xp' | 'sessions' | 'time') {
+  const { data, error, mutate } = useSWR(
+    `/api/v1/admin/analytics/detailed/most-active-users?time_range=${timeRange}&sort_by=${sortBy}`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+  return {
+    data: data?.data || [],
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+export function useActivityByHour(timeRange: string) {
+  const { data, error, mutate } = useSWR(
+    `/api/v1/admin/analytics/detailed/activity-by-hour?time_range=${timeRange}`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+  return {
+    data: data?.data || [],
+    basis: data?.basis || '',
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+export function useFeatureUsage(timeRange: string) {
+  const { data, error, mutate } = useSWR(
+    `/api/v1/admin/analytics/detailed/feature-usage?time_range=${timeRange}`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+  return {
+    data: data?.data || [],
+    basis: data?.basis || '',
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+export function useFavoritedWords(timeRange: string) {
+  const { data, error, mutate } = useSWR(
+    `/api/v1/admin/analytics/detailed/favorited-words?time_range=${timeRange}`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+  return {
+    data: data?.data || [],
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+export function useSubscriptionChurn(timeRange: string) {
+  const { data, error, mutate } = useSWR(
+    `/api/v1/admin/analytics/detailed/subscription-churn?time_range=${timeRange}`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+  return {
+    items: data?.items || [],
+    churnedCount: data?.churned_count || 0,
+    scheduledToLapseCount: data?.scheduled_to_lapse_count || 0,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
 export async function adminSetLearningPointer(
   userId: string,
   courseId: string,
