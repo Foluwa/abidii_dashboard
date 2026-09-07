@@ -8,6 +8,7 @@ const tabs = [
   { name: "Players", href: "/analytics/players" },
   { name: "Rooms", href: "/analytics/rooms" },
   { name: "Curriculum Ops", href: "/analytics/curriculum-ops" },
+  { name: "Detailed", href: "/analytics/detailed" },
 ];
 
 export default function AnalyticsTabs() {
