@@ -27,6 +27,134 @@ function ProgressBar({ pct }: { pct: number }) {
   );
 }
 
+type LessonCheckpoint = {
+  current_step_index: number;
+  total_steps: number | null;
+  started_at: string | null;
+  last_active_at: string | null;
+  abandoned_at: string | null;
+};
+
+type LessonProgress = {
+  section_id: string;
+  section_key: string | null;
+  section_title: string | null;
+  status: 'not_started' | 'in_progress' | 'completed' | 'locked';
+  started_at: string | null;
+  completed_at: string | null;
+  last_activity_at: string | null;
+  progress_percentage: number;
+  attempt_count: number;
+  last_score: number | null;
+  active_session: LessonCheckpoint | null;
+};
+
+type UnitLessonProgress = {
+  unit_id: string;
+  unit_key: string | null;
+  unit_title: string | null;
+  sections: LessonProgress[];
+};
+
+function LessonStatusBadge({ status }: { status: LessonProgress['status'] }) {
+  const styles: Record<LessonProgress['status'], string> = {
+    completed: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+    in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+    not_started: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+    locked: 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500',
+  };
+  const labels: Record<LessonProgress['status'], string> = {
+    completed: 'Completed',
+    in_progress: 'In progress',
+    not_started: 'Not started',
+    locked: 'Locked',
+  };
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${styles[status]}`}>
+      {labels[status]}
+    </span>
+  );
+}
+
+function LessonRow({ lesson }: { lesson: LessonProgress }) {
+  return (
+    <div className="flex flex-col gap-1 border-b border-gray-100 py-2 last:border-b-0 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-sm text-gray-800 dark:text-gray-200">
+            {lesson.section_title ?? lesson.section_key ?? lesson.section_id}
+          </span>
+          <LessonStatusBadge status={lesson.status} />
+        </div>
+        <div className="mt-0.5 flex flex-wrap gap-x-3 text-[11px] text-gray-500 dark:text-gray-400">
+          {lesson.started_at && <span>Started {formatDate(lesson.started_at)}</span>}
+          {lesson.completed_at && <span>Completed {formatDate(lesson.completed_at)}</span>}
+          {!lesson.completed_at && lesson.last_activity_at && (
+            <span>Last active {formatDate(lesson.last_activity_at)}</span>
+          )}
+          {lesson.active_session && (
+            <span className="font-medium text-blue-600 dark:text-blue-400">
+              Step {lesson.active_session.current_step_index}
+              {lesson.active_session.total_steps ? `/${lesson.active_session.total_steps}` : ''}
+              {lesson.active_session.last_active_at &&
+                ` · active ${formatDate(lesson.active_session.last_active_at)}`}
+              {lesson.active_session.abandoned_at && ' · abandoned'}
+            </span>
+          )}
+          {lesson.attempt_count > 1 && <span>{lesson.attempt_count} attempts</span>}
+          {lesson.last_score !== null && <span>Score {lesson.last_score}</span>}
+        </div>
+      </div>
+      {lesson.status !== 'not_started' && lesson.status !== 'locked' && (
+        <div className="shrink-0">
+          <ProgressBar pct={lesson.progress_percentage} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LessonProgressPanel({ userId, courseId }: { userId: string; courseId: string }) {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useAdminUserCourseLessonProgress } = require('@/hooks/useApi');
+  const { progress, isLoading, isError, refresh } = useAdminUserCourseLessonProgress(userId, courseId);
+  const units: UnitLessonProgress[] = progress?.units ?? [];
+
+  if (isLoading) {
+    return <p className="text-xs text-gray-500 dark:text-gray-400">Loading lesson progress…</p>;
+  }
+  if (isError) {
+    return (
+      <p className="text-xs text-red-600 dark:text-red-400">
+        Failed to load lesson progress.{' '}
+        <button onClick={() => refresh()} className="underline">
+          Retry
+        </button>
+      </p>
+    );
+  }
+  if (units.length === 0) {
+    return <p className="text-xs text-gray-500 dark:text-gray-400">No units found for this course.</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {units.map((unit) => (
+        <div key={unit.unit_id}>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            {unit.unit_title ?? unit.unit_key ?? unit.unit_id}
+          </p>
+          <div className="rounded-lg border border-gray-100 px-3 dark:border-gray-800">
+            {unit.sections.map((lesson) => (
+              <LessonRow key={lesson.section_id} lesson={lesson} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 type CourseState = {
   course_id: string;
   course_key: string | null;
@@ -57,6 +185,7 @@ function CourseCard({
   const [resetState, setResetState] = useState<ActionState>('idle');
   const [resetError, setResetError] = useState<string | null>(null);
 
+  const [showLessons, setShowLessons] = useState(false);
   const [showPointerForm, setShowPointerForm] = useState(false);
   const [pointerUnit, setPointerUnit] = useState(course.current_unit_id ?? '');
   const [pointerSection, setPointerSection] = useState(course.current_section_id ?? '');
@@ -177,7 +306,19 @@ function CourseCard({
           >
             Set Pointer
           </button>
+          <button
+            onClick={() => setShowLessons((v) => !v)}
+            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            {showLessons ? 'Hide Lesson Progress' : 'View Lesson Progress'}
+          </button>
         </div>
+
+        {showLessons && (
+          <div className="mt-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+            <LessonProgressPanel userId={userId} courseId={course.course_id} />
+          </div>
+        )}
         {resetError && (
           <p className="mt-1 text-xs text-red-600 dark:text-red-400">{resetError}</p>
         )}
