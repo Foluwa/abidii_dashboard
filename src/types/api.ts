@@ -191,6 +191,9 @@ export interface UserDetail extends UserListItem {
   total_sessions?: number;
   languages_learning?: number;
   is_premium?: boolean;
+  global_alltime_rank?: number | null;
+  language_alltime_rank?: number | null;
+  rank_language_name?: string | null;
   languages?: Array<{
     language_id: string;
     language_name: string;
