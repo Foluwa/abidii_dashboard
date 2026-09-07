@@ -28,6 +28,10 @@ export interface RegenerateAudioTarget {
   /** Total translation variants this entry has, if more than one — shown as a
    * warning since this action only ever targets the primary one. */
   totalVariants?: number;
+  /** The audio currently live for this content, if any - shown side by side
+   * with the new take in the preview step so an admin can actually A/B them
+   * instead of only hearing the new one and having to trust it's different. */
+  currentAudioUrl?: string | null;
 }
 
 interface RegenerateAudioModalProps {
@@ -296,7 +300,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
         {target.totalVariants && target.totalVariants > 1 && (
           <div className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
             This entry has {target.totalVariants} translation variants. This action only
-            regenerates audio for the primary one shown below — use "View" on this word
+            regenerates audio for the primary one shown below — use &ldquo;View&rdquo; on this word
             and the audio icon next to each definition to target a specific variant.
           </div>
         )}
@@ -374,12 +378,25 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
         <div className="space-y-6">
           <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800/60">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Preview: "{job?.text_to_speak ?? target.displayText}"
+              Preview: &ldquo;{job?.text_to_speak ?? target.displayText}&rdquo;
             </p>
-            <InlineAudioPlayer src={audioUrl} size="md" />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Current (live)
+                </p>
+                <InlineAudioPlayer src={target.currentAudioUrl} size="md" />
+              </div>
+              <div>
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+                  New take
+                </p>
+                <InlineAudioPlayer src={audioUrl} size="md" />
+              </div>
+            </div>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Listen to the new take before it replaces the live audio. Accept to publish it,
+            Play both and compare before deciding. Accept to publish the new take,
             regenerate again to try a different voice or text, or discard to leave the
             current live audio untouched.
           </p>

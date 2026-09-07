@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { useUsers, useLanguages, useUserCountries } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api";
@@ -12,9 +13,11 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import Pagination from "@/components/tables/Pagination";
 import Link from "next/link";
-import { FaApple, FaGoogle, FaGlobe, FaMobileAlt } from "react-icons/fa";
+import { FaApple, FaGoogle, FaGlobe, FaMobileAlt, FaEnvelope } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 import { FiAward, FiEye, FiTrash2, FiUserCheck, FiUserX, FiAlertOctagon } from "react-icons/fi";
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
+import { countryName, countryFlagEmoji } from "@/lib/country-utils";
 import DatePicker from "@/components/form/date-picker";
 
 type TabRole = "all" | UserRole;
@@ -57,14 +60,6 @@ const isPlausibleDateString = (value: string) => {
   return !!match && Number(match[1]) >= 2000;
 };
 
-const countryName = (code: string) => {
-  try {
-    return new Intl.DisplayNames(["en"], { type: "region" }).of(code) || code;
-  } catch {
-    return code;
-  }
-};
-
 function UserAvatar({ user, size = "w-10 h-10" }: { user: any; size?: string }) {
   const [failed, setFailed] = useState(false);
   const source = cleanSvgForDisplay(user.avatar_svg) || cleanSvgForDisplay(user.picture_url) || null;
@@ -73,9 +68,12 @@ function UserAvatar({ user, size = "w-10 h-10" }: { user: any; size?: string }) 
   return (
     <div className="relative inline-flex shrink-0">
       {source && !failed ? (
-      <img
+      <Image
         src={source}
         alt={`${label} avatar`}
+        width={40}
+        height={40}
+        unoptimized
         className={`${size} rounded-full object-cover bg-gray-100 dark:bg-gray-700`}
         referrerPolicy="no-referrer"
         onError={() => setFailed(true)}
@@ -257,19 +255,27 @@ export default function UsersPage() {
     }
   };
 
-  const getProviderBadgeStatus = (provider: string) => {
-    switch (provider) {
-      case "google": return "info" as const;
-      case "apple": return "success" as const;
-      case "device": return "warning" as const;
-      default: return "info" as const;
-    }
-  };
+  const countryFlag = (code?: string | null) => countryFlagEmoji(code) || null;
 
-  const countryFlag = (code?: string | null) => {
-    if (!code || code.trim().length !== 2) return null;
-    const cc = code.trim().toUpperCase();
-    return String.fromCodePoint(...[...cc].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+  /** Real brand logo instead of a generic text pill, per explicit request -
+   * FcGoogle is the actual multicolor Google "G", FaApple is Apple's own
+   * (monochrome) mark. Providers without a recognizable brand logo
+   * (device/email) keep a plain icon + label instead of a pill too, for
+   * visual consistency with the ones that do have a logo. */
+  const getProviderIcon = (provider: string) => {
+    const commonClassName = "h-4 w-4";
+    switch (provider) {
+      case "google":
+        return <FcGoogle className={commonClassName} aria-label="Google" />;
+      case "apple":
+        return <FaApple className={`${commonClassName} text-gray-900 dark:text-white`} aria-label="Apple" />;
+      case "device":
+        return <FaMobileAlt className={`${commonClassName} text-gray-400 dark:text-gray-500`} aria-label="Device" />;
+      case "email":
+        return <FaEnvelope className={`${commonClassName} text-gray-400 dark:text-gray-500`} aria-label="Email" />;
+      default:
+        return null;
+    }
   };
 
   const getDeviceIcon = (platform: string | null) => {
@@ -649,11 +655,9 @@ export default function UsersPage() {
                               <div className="break-all text-xs leading-4 text-gray-500 dark:text-gray-400" title={user.email || undefined}>
                                 {user.email || "No email"}
                               </div>
-                              <div className="flex items-center gap-1 mt-0.5">
-                                <StatusBadge 
-                                  status={getProviderBadgeStatus(user.provider)} 
-                                  label={getProviderLabel(user.provider)} 
-                                />
+                              <div className="flex items-center gap-1.5 mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                {getProviderIcon(user.provider)}
+                                <span>{getProviderLabel(user.provider)}</span>
                               </div>
                             </div>
                           </div>

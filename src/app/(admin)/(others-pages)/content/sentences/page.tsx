@@ -272,6 +272,7 @@ export default function SentencesPage() {
       defaultText: sentence.text,
       languageCode,
       submitEndpoint: `/api/v1/admin/content/sentences/${sentence.id}/regenerate-audio`,
+      currentAudioUrl: sentence.audio_url || null,
     });
     setShowRegenerateModal(true);
   };

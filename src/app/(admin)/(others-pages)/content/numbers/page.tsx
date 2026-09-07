@@ -44,6 +44,8 @@ interface Number {
   display_order: number;
   is_active: boolean;
   audio?: any[];
+  has_audio?: boolean;
+  audio_url?: string;
   human_recorded?: boolean;
   last_regeneration_status?: string | null;
   last_regeneration_error?: string | null;
@@ -322,6 +324,7 @@ export default function NumbersPage() {
       defaultText: number.word || `${number.number_value}`,
       languageCode,
       submitEndpoint: `/api/v1/admin/numbers/${number.id}/regenerate-audio`,
+      currentAudioUrl: number.audio_url || number.audio?.[0]?.s3_bucket_key || null,
     });
     setShowRegenerateModal(true);
   };
