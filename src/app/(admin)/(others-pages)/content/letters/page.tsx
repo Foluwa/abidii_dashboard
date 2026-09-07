@@ -242,6 +242,7 @@ export default function LettersPage() {
       defaultText: letter.display_name,
       languageCode,
       submitEndpoint: `/api/v1/admin/content/letters/${letter.id}/regenerate-audio`,
+      currentAudioUrl: letter.audio_url || null,
     });
     setShowRegenerateModal(true);
   };

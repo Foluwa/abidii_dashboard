@@ -1226,6 +1226,7 @@ export default function ProverbsPage() {
       defaultText: proverb.proverb,
       languageCode,
       submitEndpoint: `/api/v1/admin/content/proverbs/${proverb.id}/regenerate-audio`,
+      currentAudioUrl: proverb.audio_url || null,
     });
     setShowRegenerateModal(true);
   };
