@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import type { ApexOptions } from 'apexcharts';
 
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
@@ -16,11 +17,13 @@ import {
   getAudienceTrend,
   listTeaserQuizFeed,
   getTeaserQuizStats,
+  getDailyContentOpenRateBreakdown,
   overrideDailyWord,
   getNotificationSchedule,
   updateNotificationSchedule,
   searchDictionary,
 } from '@/lib/notificationsApi';
+import { apiClient } from '@/lib/api';
 import type {
   DailyContentFeedItem,
   AudienceSnapshotItem,
@@ -28,6 +31,8 @@ import type {
   TeaserQuizStats,
   NotificationSchedule,
   DictionarySearchResult,
+  OpenRateBreakdownItem,
+  OpenRateDimension,
 } from '@/types/notifications';
 
 const ReactApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });
@@ -67,17 +72,466 @@ function isUpcoming(item: DailyContentFeedItem): boolean {
   return item.content_date >= todayIso() && item.sent_count === 0;
 }
 
+// ---------------------------------------------------------------------------
+// Granular open-rate breakdown charts (country / fluency / device / premium)
+// ---------------------------------------------------------------------------
+
+const BREAKDOWN_DIMENSIONS: { key: OpenRateDimension; label: string }[] = [
+  { key: 'country', label: 'By Country' },
+  { key: 'fluency', label: 'By Fluency' },
+  { key: 'device', label: 'By Device' },
+  { key: 'premium', label: 'Premium vs Free' },
+];
+
+function BreakdownChart({ dimension, label }: { dimension: OpenRateDimension; label: string }) {
+  const [items, setItems] = useState<OpenRateBreakdownItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    // `dimension` is fixed for the lifetime of a given BreakdownChart
+    // instance (the parent renders one per dimension with a stable `key`,
+    // so a change would unmount/remount rather than update in place) - the
+    // initial `loading: true` / `error: false` state values already cover
+    // the one real run, so state is only ever touched from the async
+    // callbacks below, not synchronously in the effect body.
+    let cancelled = false;
+    getDailyContentOpenRateBreakdown({ dimension, days: 30 })
+      .then((data) => {
+        if (!cancelled) {
+          setItems(data);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError(true);
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dimension]);
+
+  // Top 8 groups by volume keeps a "by country" chart legible instead of
+  // rendering a bar for every country that's ever received one notification.
+  const topItems = useMemo(() => items.slice(0, 8), [items]);
+
+  const options: ApexOptions = {
+    chart: { type: 'bar', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+    plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '55%' } },
+    colors: ['#465FFF'],
+    dataLabels: { enabled: true, formatter: (val) => `${val}%`, style: { colors: ['#fff'] } },
+    xaxis: {
+      categories: topItems.map((i) => i.group_label),
+      max: 100,
+      labels: { formatter: (val) => `${val}%` },
+    },
+    grid: { xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } } },
+    tooltip: {
+      y: {
+        formatter: (val, opts) => {
+          const item = topItems[opts.dataPointIndex];
+          return item ? `${val}% (${item.open_count}/${item.sent_count})` : `${val}%`;
+        },
+      },
+    },
+  };
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">{label}</h3>
+      {loading ? (
+        <div className="flex h-48 items-center justify-center text-sm text-gray-400">Loading…</div>
+      ) : error ? (
+        <div className="flex h-48 items-center justify-center text-sm text-red-500">Failed to load.</div>
+      ) : topItems.length === 0 ? (
+        <div className="flex h-48 items-center justify-center text-sm text-gray-400">No data yet.</div>
+      ) : (
+        <ReactApexChart
+          options={options}
+          series={[{ name: 'Open rate', data: topItems.map((i) => i.open_rate) }]}
+          type="bar"
+          height={Math.max(180, topItems.length * 36)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Users-without-a-push-token stat card
+// ---------------------------------------------------------------------------
+
+function NoPushTokenStat() {
+  const [count, setCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiClient
+      .get('/api/v1/admin/users', { params: { has_push_token: false, limit: 1 } })
+      .then((res) => {
+        if (!cancelled) setCount(res.data?.total ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setCount(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        No Push Token
+      </div>
+      <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
+        {count === null ? '—' : count.toLocaleString()}
+      </div>
+      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        Proxy for &quot;never granted / revoked notification permission&quot; — the app doesn&apos;t
+        report real OS permission state, this is just &quot;no active token on file.&quot;{' '}
+        <Link href="/users?has_push_token=false" className="text-brand-600 hover:underline dark:text-brand-400">
+          View users
+        </Link>
+      </p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Daily Content tab
+// ---------------------------------------------------------------------------
+
+function DailyContentTab({
+  feed,
+  loading,
+  onRefresh,
+}: {
+  feed: DailyContentFeedItem[];
+  loading: boolean;
+  onRefresh: () => void;
+}) {
+  const [page, setPage] = useState(1);
+  const [languageFilter, setLanguageFilter] = useState('all');
+  const limit = 25;
+
+  const languageOptions = useMemo(() => {
+    const codes = Array.from(new Set(feed.map((f) => f.language_code))).sort();
+    return ['all', ...codes];
+  }, [feed]);
+
+  const filtered = useMemo(
+    () => (languageFilter === 'all' ? feed : feed.filter((f) => f.language_code === languageFilter)),
+    [feed, languageFilter]
+  );
+
+  // Reset to page 1 when the filter changes - adjusted during render (React's
+  // documented pattern for this) rather than in an effect, so there's no
+  // extra render showing page 2 of a now-different filtered list first.
+  const [prevLanguageFilter, setPrevLanguageFilter] = useState(languageFilter);
+  if (languageFilter !== prevLanguageFilter) {
+    setPrevLanguageFilter(languageFilter);
+    setPage(1);
+  }
+
+  const totalDays = filtered.length;
+  const totalSent = filtered.reduce((sum, item) => sum + item.sent_count, 0);
+  const totalOpens = filtered.reduce((sum, item) => sum + item.open_count, 0);
+  const overallOpenRate = totalSent > 0 ? Math.round((totalOpens / totalSent) * 100) : 0;
+
+  const totalPages = Math.max(1, Math.ceil(totalDays / limit));
+  const pageItems = useMemo(() => filtered.slice((page - 1) * limit, page * limit), [filtered, page]);
+  const pageStart = totalDays === 0 ? 0 : (page - 1) * limit + 1;
+  const pageEnd = totalDays === 0 ? 0 : Math.min(page * limit, totalDays);
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Days Sent</div>
+          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalDays.toLocaleString()}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Recipients</div>
+          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalSent.toLocaleString()}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Opens</div>
+          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalOpens.toLocaleString()}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Open Rate</div>
+          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{overallOpenRate}%</div>
+        </div>
+      </div>
+
+      {/* Granular open-rate breakdowns — last 30 days, existing tables only */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {BREAKDOWN_DIMENSIONS.map((d) => (
+          <BreakdownChart key={d.key} dimension={d.key} label={d.label} />
+        ))}
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Daily Content Feed</h2>
+          <div className="flex items-center gap-2">
+            <div className="w-40">
+              <StyledSelect
+                value={languageFilter}
+                onChange={(e) => setLanguageFilter(e.target.value)}
+                options={languageOptions.map((code) => ({
+                  value: code,
+                  label: code === 'all' ? 'All languages' : code,
+                }))}
+                fullWidth
+              />
+            </div>
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={loading}
+              className="rounded-lg bg-gray-200 px-4 py-2 text-sm text-gray-800 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            >
+              {loading ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
+                <th className="px-3 py-3">Status</th>
+                <th className="px-3 py-3">Date</th>
+                <th className="px-3 py-3">Type</th>
+                <th className="px-3 py-3">Content</th>
+                <th className="px-3 py-3">Language</th>
+                <th className="px-3 py-3 text-right">Recipients</th>
+                <th className="px-3 py-3 text-right">Android</th>
+                <th className="px-3 py-3 text-right">iOS</th>
+                <th className="px-3 py-3 text-right">Failed</th>
+                <th className="px-3 py-3 text-right">Opens</th>
+                <th className="px-3 py-3 text-right">Open Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={11} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                    Loading...
+                  </td>
+                </tr>
+              ) : pageItems.length === 0 ? (
+                <tr>
+                  <td colSpan={11} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                    No daily content sent yet.
+                  </td>
+                </tr>
+              ) : (
+                pageItems.map((item) => (
+                  <tr key={item.content_log_id} className="border-b border-gray-100 align-top dark:border-gray-800">
+                    <td className="px-3 py-3">
+                      {isUpcoming(item) ? (
+                        <StatusBadge status="pending" label="Scheduled" />
+                      ) : (
+                        <StatusBadge status="success" label="Sent" />
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatDate(item.content_date)}</td>
+                    <td className="px-3 py-3 capitalize text-gray-700 dark:text-gray-300">{item.content_type}</td>
+                    <td className="px-3 py-3 font-medium text-gray-900 dark:text-white">{item.content_text || '—'}</td>
+                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.language_code}</td>
+                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.sent_count.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.android_sent.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.ios_sent.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.failed_count.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.open_count.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{openRate(item)}%</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {pageStart} to {pageEnd} of {totalDays} entries
+          </p>
+          <div className="ml-auto">
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Teaser Quiz tab
+// ---------------------------------------------------------------------------
+
+function TeaserQuizTab({ stats }: { stats: TeaserQuizStats | null }) {
+  const [feedItems, setFeedItems] = useState<TeaserQuizFeedItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [languageFilter, setLanguageFilter] = useState('all');
+  const { languages } = useLanguages();
+  const limit = 25;
+
+  const loadFeed = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await listTeaserQuizFeed({
+        limit,
+        offset: (page - 1) * limit,
+        language_code: languageFilter === 'all' ? undefined : languageFilter,
+      });
+      setFeedItems(res.items);
+      setTotal(res.total);
+    } catch {
+      setFeedItems([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, languageFilter]);
+
+  useEffect(() => {
+    void loadFeed();
+  }, [loadFeed]);
+
+  // Same render-time reset pattern as DailyContentTab above.
+  const [prevLanguageFilter, setPrevLanguageFilter] = useState(languageFilter);
+  if (languageFilter !== prevLanguageFilter) {
+    setPrevLanguageFilter(languageFilter);
+    setPage(1);
+  }
+
+  const teaserCorrectRate =
+    stats && stats.total_answered > 0 ? Math.round((stats.total_correct / stats.total_answered) * 100) : 0;
+  const teaserOpenRate =
+    stats && stats.total_sent > 0 ? Math.round((stats.total_opened / stats.total_sent) * 100) : 0;
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Quizzes Sent (30d)</div>
+          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{(stats?.total_sent ?? 0).toLocaleString()}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Open Rate</div>
+          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{teaserOpenRate}%</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Answered</div>
+          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{(stats?.total_answered ?? 0).toLocaleString()}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Correct Rate</div>
+          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{teaserCorrectRate}%</div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Teaser Quiz Feed</h2>
+          <div className="w-40">
+            <StyledSelect
+              value={languageFilter}
+              onChange={(e) => setLanguageFilter(e.target.value)}
+              options={[
+                { value: 'all', label: 'All languages' },
+                ...(languages ?? []).map((lang: { iso_639_3: string; name: string }) => ({
+                  value: lang.iso_639_3,
+                  label: lang.name,
+                })),
+              ]}
+              fullWidth
+            />
+          </div>
+        </div>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+          Most recent first. A low correct rate or a confusing prompt here is worth investigating before more users see it.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
+                <th className="px-3 py-3">Sent</th>
+                <th className="px-3 py-3">Word</th>
+                <th className="px-3 py-3">Question</th>
+                <th className="px-3 py-3">Language</th>
+                <th className="px-3 py-3">Opened</th>
+                <th className="px-3 py-3">Answered</th>
+                <th className="px-3 py-3 text-right">XP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                    Loading...
+                  </td>
+                </tr>
+              ) : feedItems.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                    No teaser quizzes sent yet.
+                  </td>
+                </tr>
+              ) : (
+                feedItems.map((item) => (
+                  <tr key={item.quiz_log_id} className="border-b border-gray-100 align-top dark:border-gray-800">
+                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatDateTime(item.sent_at)}</td>
+                    <td className="px-3 py-3 font-medium text-gray-900 dark:text-white">{item.word_text}</td>
+                    <td className="max-w-[280px] truncate px-3 py-2 text-gray-700 dark:text-gray-300">{item.prompt_text}</td>
+                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.language_code}</td>
+                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.opened_at ? '✅' : '—'}</td>
+                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">
+                      {item.was_correct === null ? '—' : item.was_correct ? '✅ Correct' : '❌ Incorrect'}
+                    </td>
+                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.xp_awarded}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {total === 0 ? 0 : (page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} entries
+          </p>
+          <div className="ml-auto">
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
 export default function DailyContentNotificationsPage() {
   const toast = useToast();
   const { languages } = useLanguages();
   const [feed, setFeed] = useState<DailyContentFeedItem[]>([]);
   const [trend, setTrend] = useState<AudienceSnapshotItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [limit] = useState(25);
+  const [activeTab, setActiveTab] = useState<'daily' | 'teaser'>('daily');
 
-  // Teaser quiz section
-  const [teaserFeed, setTeaserFeed] = useState<TeaserQuizFeedItem[]>([]);
   const [teaserStats, setTeaserStats] = useState<TeaserQuizStats | null>(null);
 
   // Schedule settings section
@@ -98,17 +552,15 @@ export default function DailyContentNotificationsPage() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [feedItems, trendItems, teaserItems, teaserStatsItem, scheduleItem] = await Promise.all([
+      const [feedItems, trendItems, teaserStatsItem, scheduleItem] = await Promise.all([
         listDailyContentFeed({ limit: 200, offset: 0 }),
         getAudienceTrend({ days: 30 }),
-        listTeaserQuizFeed({ limit: 100, offset: 0 }),
         getTeaserQuizStats({ days: 30 }),
         getNotificationSchedule(),
       ]);
       setFeed(feedItems);
       // Trend comes back most-recent-first; charts read left-to-right.
       setTrend([...trendItems].reverse());
-      setTeaserFeed(teaserItems);
       setTeaserStats(teaserStatsItem);
       setSchedule(scheduleItem);
       setDailyWordTime(scheduleItem.daily_word_time);
@@ -184,28 +636,6 @@ export default function DailyContentNotificationsPage() {
       setSavingOverride(false);
     }
   }, [selectedWord, overrideDate, overrideLanguage, toast, refresh]);
-
-  const totalDays = feed.length;
-  const totalSent = feed.reduce((sum, item) => sum + item.sent_count, 0);
-  const totalOpens = feed.reduce((sum, item) => sum + item.open_count, 0);
-  const overallOpenRate = totalSent > 0 ? Math.round((totalOpens / totalSent) * 100) : 0;
-
-  const totalPages = Math.max(1, Math.ceil(totalDays / limit));
-  const pageItems = useMemo(
-    () => feed.slice((page - 1) * limit, page * limit),
-    [feed, page, limit]
-  );
-  const pageStart = totalDays === 0 ? 0 : (page - 1) * limit + 1;
-  const pageEnd = totalDays === 0 ? 0 : Math.min(page * limit, totalDays);
-
-  const teaserCorrectRate =
-    teaserStats && teaserStats.total_answered > 0
-      ? Math.round((teaserStats.total_correct / teaserStats.total_answered) * 100)
-      : 0;
-  const teaserOpenRate =
-    teaserStats && teaserStats.total_sent > 0
-      ? Math.round((teaserStats.total_opened / teaserStats.total_sent) * 100)
-      : 0;
 
   const chartOptions: ApexOptions = {
     chart: { fontFamily: 'Outfit, sans-serif', height: 280, type: 'area', toolbar: { show: false } },
@@ -356,191 +786,54 @@ export default function DailyContentNotificationsPage() {
         </button>
       </div>
 
-      {/* Daily word stats + audience trend + feed */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Days Sent</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalDays.toLocaleString()}</div>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Recipients</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalSent.toLocaleString()}</div>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Opens</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalOpens.toLocaleString()}</div>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Open Rate</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{overallOpenRate}%</div>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Push-Eligible Audience (30 days)</h2>
-        {trend.length === 0 ? (
-          <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            No audience snapshots yet — the daily snapshot job populates this over time.
-          </p>
-        ) : (
-          <div className="max-w-full overflow-x-auto custom-scrollbar">
-            <div className="min-w-[600px]">
-              <ReactApexChart options={chartOptions} series={chartSeries} type="area" height={280} />
+      {/* Audience trend + permission-proxy stat */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Push-Eligible Audience (30 days)</h2>
+          {trend.length === 0 ? (
+            <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+              No audience snapshots yet — the daily snapshot job populates this over time.
+            </p>
+          ) : (
+            <div className="max-w-full overflow-x-auto custom-scrollbar">
+              <div className="min-w-[600px]">
+                <ReactApexChart options={chartOptions} series={chartSeries} type="area" height={280} />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+        <NoPushTokenStat />
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Daily Content Feed</h2>
-          <button
-            type="button"
-            onClick={() => void refresh()}
-            disabled={loading}
-            className="rounded-lg bg-gray-200 px-4 py-2 text-sm text-gray-800 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-          >
-            {loading ? 'Refreshing...' : 'Refresh'}
-          </button>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3">Date</th>
-                <th className="px-3 py-3">Type</th>
-                <th className="px-3 py-3">Content</th>
-                <th className="px-3 py-3">Language</th>
-                <th className="px-3 py-3 text-right">Recipients</th>
-                <th className="px-3 py-3 text-right">Android</th>
-                <th className="px-3 py-3 text-right">iOS</th>
-                <th className="px-3 py-3 text-right">Failed</th>
-                <th className="px-3 py-3 text-right">Opens</th>
-                <th className="px-3 py-3 text-right">Open Rate</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={11} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
-                    Loading...
-                  </td>
-                </tr>
-              ) : pageItems.length === 0 ? (
-                <tr>
-                  <td colSpan={11} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
-                    No daily content sent yet.
-                  </td>
-                </tr>
-              ) : (
-                pageItems.map((item) => (
-                  <tr key={item.content_log_id} className="border-b border-gray-100 align-top dark:border-gray-800">
-                    <td className="px-3 py-3">
-                      {isUpcoming(item) ? (
-                        <StatusBadge status="pending" label="Scheduled" />
-                      ) : (
-                        <StatusBadge status="success" label="Sent" />
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatDate(item.content_date)}</td>
-                    <td className="px-3 py-3 capitalize text-gray-700 dark:text-gray-300">{item.content_type}</td>
-                    <td className="px-3 py-3 font-medium text-gray-900 dark:text-white">{item.content_text || '—'}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.language_code}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.sent_count.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.android_sent.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.ios_sent.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.failed_count.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.open_count.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{openRate(item)}%</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {pageStart} to {pageEnd} of {totalDays} entries
-          </p>
-          <div className="ml-auto">
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-          </div>
-        </div>
+      {/* Daily Content / Teaser Quiz tabs */}
+      <div className="flex items-center gap-0.5 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-900 w-fit">
+        <button
+          onClick={() => setActiveTab('daily')}
+          className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === 'daily'
+              ? 'bg-white text-gray-900 shadow-theme-xs dark:bg-gray-800 dark:text-white'
+              : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+          }`}
+        >
+          Daily Content Feed
+        </button>
+        <button
+          onClick={() => setActiveTab('teaser')}
+          className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === 'teaser'
+              ? 'bg-white text-gray-900 shadow-theme-xs dark:bg-gray-800 dark:text-white'
+              : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+          }`}
+        >
+          Teaser Quiz Feed
+        </button>
       </div>
 
-      {/* Teaser quiz */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Quizzes Sent (30d)</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{(teaserStats?.total_sent ?? 0).toLocaleString()}</div>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Open Rate</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{teaserOpenRate}%</div>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Answered</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{(teaserStats?.total_answered ?? 0).toLocaleString()}</div>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Correct Rate</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{teaserCorrectRate}%</div>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">Teaser Quiz Feed</h2>
-        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-          Most recent first. A low correct rate or a confusing prompt here is worth investigating before more users see it.
-        </p>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                <th className="px-3 py-3">Sent</th>
-                <th className="px-3 py-3">Word</th>
-                <th className="px-3 py-3">Question</th>
-                <th className="px-3 py-3">Language</th>
-                <th className="px-3 py-3">Opened</th>
-                <th className="px-3 py-3">Answered</th>
-                <th className="px-3 py-3 text-right">XP</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
-                    Loading...
-                  </td>
-                </tr>
-              ) : teaserFeed.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
-                    No teaser quizzes sent yet.
-                  </td>
-                </tr>
-              ) : (
-                teaserFeed.map((item) => (
-                  <tr key={item.quiz_log_id} className="border-b border-gray-100 align-top dark:border-gray-800">
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatDateTime(item.sent_at)}</td>
-                    <td className="px-3 py-3 font-medium text-gray-900 dark:text-white">{item.word_text}</td>
-                    <td className="max-w-[280px] truncate px-3 py-2 text-gray-700 dark:text-gray-300">{item.prompt_text}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.language_code}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.opened_at ? '✅' : '—'}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">
-                      {item.was_correct === null ? '—' : item.was_correct ? '✅ Correct' : '❌ Incorrect'}
-                    </td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.xp_awarded}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {activeTab === 'daily' ? (
+        <DailyContentTab feed={feed} loading={loading} onRefresh={refresh} />
+      ) : (
+        <TeaserQuizTab stats={teaserStats} />
+      )}
     </div>
   );
 }

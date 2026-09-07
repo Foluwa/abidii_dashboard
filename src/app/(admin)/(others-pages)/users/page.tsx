@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { useUsers, useLanguages, useUserCountries } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api";
@@ -96,7 +97,19 @@ function UserAvatar({ user, size = "w-10 h-10" }: { user: any; size?: string }) 
   );
 }
 
+type TriStateFilter = "all" | "yes" | "no";
+
 export default function UsersPage() {
+  // Deep-link support for these two only (e.g. the notifications page's
+  // "Users without a push token" stat links here with ?has_push_token=false)
+  // - the rest of this page's filters are local-only state with no URL sync,
+  // matching how it already worked before this.
+  const searchParams = useSearchParams();
+  const initialPremiumFilter: TriStateFilter =
+    searchParams.get("has_premium") === "true" ? "yes" : searchParams.get("has_premium") === "false" ? "no" : "all";
+  const initialPushTokenFilter: TriStateFilter =
+    searchParams.get("has_push_token") === "true" ? "yes" : searchParams.get("has_push_token") === "false" ? "no" : "all";
+
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<TabRole>("all");
   const [page, setPage] = useState(1);
@@ -114,6 +127,8 @@ export default function UsersPage() {
   const [maxXp, setMaxXp] = useState<string>("");
   const [lastLoginAfter, setLastLoginAfter] = useState<string>("");
   const [lastLoginBefore, setLastLoginBefore] = useState<string>("");
+  const [premiumFilter, setPremiumFilter] = useState<TriStateFilter>(initialPremiumFilter);
+  const [pushTokenFilter, setPushTokenFilter] = useState<TriStateFilter>(initialPushTokenFilter);
   const [sortOption, setSortOption] = useState<SortOption>("created_desc");
   const [showFilters, setShowFilters] = useState(false);
   
@@ -128,6 +143,8 @@ export default function UsersPage() {
   const countryCode = countryFilter === "all" ? undefined : countryFilter;
   const languageCode = languageFilter === "all" ? undefined : languageFilter;
   const uiLocale = appLanguageFilter === "all" ? undefined : appLanguageFilter;
+  const hasPremium = premiumFilter === "all" ? undefined : premiumFilter === "yes";
+  const hasPushToken = pushTokenFilter === "all" ? undefined : pushTokenFilter === "yes";
   const debouncedSearch = useDebounce(search, 300);
   const { languages } = useLanguages();
   const { countries } = useUserCountries();
@@ -151,6 +168,8 @@ export default function UsersPage() {
     last_login_before: toDateBoundary(lastLoginBefore, true),
     sort_by: sortBy,
     sort_order: sortOrder,
+    has_premium: hasPremium,
+    has_push_token: hasPushToken,
   });
 
   const totalPages = users ? Math.max(1, Math.ceil(users.total / limit)) : 1;
@@ -467,6 +486,34 @@ export default function UsersPage() {
               options={[
                 { value: "all", label: "All App Languages" },
                 ...APP_LANGUAGE_OPTIONS,
+              ]}
+            />
+
+            <StyledSelect
+              label="Account Type"
+              value={premiumFilter}
+              onChange={(e) => {
+                setPremiumFilter(e.target.value as TriStateFilter);
+                setPage(1);
+              }}
+              options={[
+                { value: "all", label: "All Accounts" },
+                { value: "yes", label: "Premium" },
+                { value: "no", label: "Free" },
+              ]}
+            />
+
+            <StyledSelect
+              label="Push Token"
+              value={pushTokenFilter}
+              onChange={(e) => {
+                setPushTokenFilter(e.target.value as TriStateFilter);
+                setPage(1);
+              }}
+              options={[
+                { value: "all", label: "Any" },
+                { value: "yes", label: "Has token" },
+                { value: "no", label: "No token" },
               ]}
             />
 

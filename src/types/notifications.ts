@@ -19,6 +19,11 @@ export interface NotificationResponse {
   failed: number;
 }
 
+// {"android": {"unregistered": 2}, "ios": {"error": 1}, "other": {"no_push_token": 1}}
+// - per-platform failure category counts. Only populated for notifications
+// sent after this was added; older rows have nothing to recover it from.
+export type NotificationFailureReasons = Record<string, Record<string, number>>;
+
 export interface NotificationLogItem {
   id: string;
   notification_type: string;
@@ -31,6 +36,7 @@ export interface NotificationLogItem {
   failed_count: number;
   sent_by: string;
   created_at: string;
+  failure_reasons: NotificationFailureReasons | null;
 }
 
 export interface DailyContentFeedItem {
@@ -65,6 +71,20 @@ export interface TeaserQuizFeedItem {
   was_correct: boolean | null;
   xp_awarded: number;
 }
+
+export interface TeaserQuizFeedResponse {
+  total: number;
+  items: TeaserQuizFeedItem[];
+}
+
+export interface OpenRateBreakdownItem {
+  group_label: string;
+  sent_count: number;
+  open_count: number;
+  open_rate: number;
+}
+
+export type OpenRateDimension = 'country' | 'fluency' | 'device' | 'premium';
 
 export interface TeaserQuizStats {
   total_sent: number;
