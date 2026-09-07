@@ -6,9 +6,69 @@ import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 import Pagination from '@/components/tables/Pagination';
 import StatusBadge from '@/components/admin/StatusBadge';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
+import { Modal } from '@/components/ui/modal';
 import { useToast } from '@/contexts/ToastContext';
 import { listNotificationHistory } from '@/lib/notificationsApi';
 import type { NotificationLogItem } from '@/types/notifications';
+
+const FAILURE_REASON_LABELS: Record<string, string> = {
+  unregistered: 'Dead token (uninstalled, permission revoked, or sender mismatch)',
+  error: 'Send error (transient or unknown cause)',
+  user_not_found: 'User not found',
+  no_push_token: 'User has no push token on file',
+};
+
+function FailureReasonsModal({
+  item,
+  onClose,
+}: {
+  item: NotificationLogItem;
+  onClose: () => void;
+}) {
+  const reasons = item.failure_reasons;
+  const hasReasons = reasons && Object.keys(reasons).length > 0;
+
+  return (
+    <Modal isOpen onClose={onClose} title="Why did this fail?" maxWidth="md">
+      <div className="space-y-4">
+        <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600 dark:bg-gray-800/60 dark:text-gray-300">
+          <p className="font-medium text-gray-900 dark:text-white">{item.title}</p>
+          <p className="mt-1">{item.failed_count} of {item.target_count} recipients failed.</p>
+        </div>
+
+        {!hasReasons ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No failure reason was captured for this notification — either it predates failure-reason
+            tracking, or the failures came from a path that doesn&apos;t report a specific reason.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {Object.entries(reasons!).map(([platform, byReason]) => (
+              <div key={platform}>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {platform}
+                </p>
+                <ul className="space-y-1">
+                  {Object.entries(byReason).map(([reason, count]) => (
+                    <li
+                      key={reason}
+                      className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700"
+                    >
+                      <span className="text-gray-700 dark:text-gray-300">
+                        {FAILURE_REASON_LABELS[reason] ?? reason}
+                      </span>
+                      <span className="font-semibold text-gray-900 dark:text-white">{count}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
 
 function formatDate(value?: string | null) {
   if (!value) return '—';
@@ -28,6 +88,7 @@ export default function NotificationHistoryPage() {
   const [search, setSearch] = useState('');
   const [targetType, setTargetType] = useState('');
   const [status, setStatus] = useState('');
+  const [failureDetailItem, setFailureDetailItem] = useState<NotificationLogItem | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -219,7 +280,22 @@ export default function NotificationHistoryPage() {
                     <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.target_type}</td>
                     <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.android_sent.toLocaleString()}</td>
                     <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.ios_sent.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.failed_count.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {item.failed_count.toLocaleString()}
+                        {item.failed_count > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setFailureDetailItem(item)}
+                            className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 text-[10px] font-semibold text-gray-500 hover:border-gray-400 hover:text-gray-700 dark:border-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
+                            title="Why did this fail?"
+                            aria-label="Why did this fail?"
+                          >
+                            ?
+                          </button>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.sent_by}</td>
                     <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatDate(item.created_at)}</td>
                   </tr>
@@ -238,6 +314,10 @@ export default function NotificationHistoryPage() {
           </div>
         </div>
       </div>
+
+      {failureDetailItem && (
+        <FailureReasonsModal item={failureDetailItem} onClose={() => setFailureDetailItem(null)} />
+      )}
     </div>
   );
 }

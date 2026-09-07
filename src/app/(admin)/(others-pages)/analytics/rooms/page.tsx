@@ -1,14 +1,52 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { useAdminRoomsAnalytics, useLanguages } from "@/hooks/useApi";
-import type { RoomTypeFilterValue, RoomStatusFilterValue } from "@/types/admin-analytics";
+import type { RoomTypeFilterValue, RoomStatusFilterValue, RecentRoomItem } from "@/types/admin-analytics";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
 import Pagination from "@/components/tables/Pagination";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import AnalyticsTabs from "@/components/analytics/AnalyticsTabs";
 import RoomsTimeSeriesChart from "@/components/charts/RoomsTimeSeriesChart";
+import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
+
+/** Tiny avatar + name cell for a room's host - previously just showed a bare
+ * "—" whenever display_name was empty, with no way to identify who the
+ * host actually was. Falls back to email, then a generic label, matching
+ * the same fallback chain the users pages already use. */
+function HostCell({ host }: { host: RecentRoomItem["host"] }) {
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  if (!host.id) {
+    return <span className="text-gray-400 dark:text-gray-500">—</span>;
+  }
+
+  const label = host.display_name || host.email || "Unknown user";
+  const avatarSource = cleanSvgForDisplay(host.avatar_svg) || cleanSvgForDisplay(host.picture_url) || null;
+
+  return (
+    <div className="flex items-center gap-2">
+      {avatarSource && !avatarFailed ? (
+        <Image
+          src={avatarSource}
+          alt={`${label} avatar`}
+          width={20}
+          height={20}
+          unoptimized
+          className="h-5 w-5 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
+          referrerPolicy="no-referrer"
+          onError={() => setAvatarFailed(true)}
+        />
+      ) : (
+        <div className={`flex h-5 w-5 items-center justify-center rounded-full ${getAvatarColor(host.id || label)}`}>
+          <span className="text-[9px] font-semibold text-white">{getInitials(label)}</span>
+        </div>
+      )}
+      <span className="truncate text-xs text-gray-700 dark:text-gray-300">{label}</span>
+    </div>
+  );
+}
 
 const formatDateShort = (dateStr: string) =>
   new Date(`${dateStr}T00:00:00Z`).toLocaleDateString("default", {
@@ -339,7 +377,7 @@ export default function RoomsAnalyticsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {room.host.display_name || <span className="text-gray-400 dark:text-gray-500">—</span>}
+                      <HostCell host={room.host} />
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                       {room.language.name || <span className="text-gray-400 dark:text-gray-500">—</span>}

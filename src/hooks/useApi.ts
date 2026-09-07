@@ -222,6 +222,8 @@ export function useUsers(filters?: {
   last_login_before?: string;
   sort_by?: "created_at" | "last_active_at";
   sort_order?: "asc" | "desc";
+  has_premium?: boolean;
+  has_push_token?: boolean;
 }) {
   const params = new URLSearchParams();
   if (filters?.page) params.append('page', filters.page.toString());
@@ -241,6 +243,8 @@ export function useUsers(filters?: {
   if (filters?.last_login_before) params.append('last_login_before', filters.last_login_before);
   if (filters?.sort_by) params.append('sort_by', filters.sort_by);
   if (filters?.sort_order) params.append('sort_order', filters.sort_order);
+  if (filters?.has_premium !== undefined) params.append('has_premium', filters.has_premium.toString());
+  if (filters?.has_push_token !== undefined) params.append('has_push_token', filters.has_push_token.toString());
 
   const url = `/api/v1/admin/users?${params.toString()}`;
 

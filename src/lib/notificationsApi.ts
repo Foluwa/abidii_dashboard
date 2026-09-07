@@ -6,8 +6,10 @@ import type {
   NotificationLogItem,
   DailyContentFeedItem,
   AudienceSnapshotItem,
-  TeaserQuizFeedItem,
+  TeaserQuizFeedResponse,
   TeaserQuizStats,
+  OpenRateBreakdownItem,
+  OpenRateDimension,
   DailyWordOverrideRequest,
   DailyWordOverrideResponse,
   NotificationSchedule,
@@ -84,13 +86,30 @@ export async function getAudienceTrend(params?: { days?: number }) {
   return res.data;
 }
 
-export async function listTeaserQuizFeed(params?: { limit?: number; offset?: number }) {
+export async function listTeaserQuizFeed(params?: {
+  limit?: number;
+  offset?: number;
+  language_code?: string;
+}) {
   const usp = new URLSearchParams();
   if (params?.limit) usp.set('limit', String(params.limit));
   if (params?.offset) usp.set('offset', String(params.offset));
+  if (params?.language_code) usp.set('language_code', params.language_code);
   const suffix = usp.toString() ? `?${usp.toString()}` : '';
-  const res = await apiClient.get<TeaserQuizFeedItem[]>(
+  const res = await apiClient.get<TeaserQuizFeedResponse>(
     `/api/v1/notifications/teaser-quiz/feed${suffix}`
+  );
+  return res.data;
+}
+
+export async function getDailyContentOpenRateBreakdown(params: {
+  dimension: OpenRateDimension;
+  days?: number;
+}) {
+  const usp = new URLSearchParams({ dimension: params.dimension });
+  if (params.days) usp.set('days', String(params.days));
+  const res = await apiClient.get<OpenRateBreakdownItem[]>(
+    `/api/v1/notifications/daily-content/open-rate-breakdown?${usp.toString()}`
   );
   return res.data;
 }
