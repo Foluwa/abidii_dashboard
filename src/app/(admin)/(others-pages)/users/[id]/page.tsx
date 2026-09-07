@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { usePlayerDetail, useUserDetail } from "@/hooks/useApi";
 import { useParams, useRouter } from "next/navigation";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
@@ -410,9 +411,12 @@ export default function UserDetailPage() {
           <div className="flex items-center gap-3">
             <div className="relative inline-flex shrink-0">
               {avatarSource && !avatarFailed ? (
-              <img
+              <Image
                 src={avatarSource}
                 alt={`${avatarLabel} avatar`}
+                width={48}
+                height={48}
+                unoptimized
                 className="h-12 w-12 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
                 referrerPolicy="no-referrer"
                 onError={() => setAvatarFailed(true)}

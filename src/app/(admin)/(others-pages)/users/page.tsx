@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { useUsers, useLanguages, useUserCountries } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api";
@@ -67,9 +68,12 @@ function UserAvatar({ user, size = "w-10 h-10" }: { user: any; size?: string }) 
   return (
     <div className="relative inline-flex shrink-0">
       {source && !failed ? (
-      <img
+      <Image
         src={source}
         alt={`${label} avatar`}
+        width={40}
+        height={40}
+        unoptimized
         className={`${size} rounded-full object-cover bg-gray-100 dark:bg-gray-700`}
         referrerPolicy="no-referrer"
         onError={() => setFailed(true)}

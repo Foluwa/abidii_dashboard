@@ -506,6 +506,7 @@ export default function WordsPage() {
       languageCode: targetLang,
       submitEndpoint: `/api/v1/admin/content/words/single/${word.id}/regenerate-audio`,
       totalVariants: word.translation_count,
+      currentAudioUrl: word.audio_url || null,
     });
     setShowRegenerateModal(true);
   };

@@ -392,6 +392,7 @@ export default function CollectionsPage() {
       defaultText: displayText,
       languageCode: learningLanguage,
       submitEndpoint: `/api/v1/admin/content-collections/${selected}/items/${item.concept_key}/terms/${learningLanguage}/regenerate-audio`,
+      currentAudioUrl: item.audio_url || null,
     });
     setShowRegenerateModal(true);
   }

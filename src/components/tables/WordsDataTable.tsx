@@ -342,7 +342,7 @@ export default function WordsDataTable({
                     {/* Audio */}
                     <TableCell className="px-4 py-3 text-start">
                       {word.audio_url ? (
-                        <div className="min-w-[280px] max-w-md">
+                        <div className="max-w-md">
                           <InlineAudioPlayer src={word.audio_url} size="md" />
                         </div>
                       ) : (

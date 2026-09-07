@@ -256,7 +256,7 @@ const NumbersDataTable: React.FC<Props> = ({
               {/* Audio */}
               <td className="px-4 py-3">
                 {(number.has_audio && number.audio_url) || (number.audio && number.audio.length > 0) ? (
-                  <div className="min-w-[280px] max-w-md space-y-1.5">
+                  <div className="max-w-md space-y-1.5">
                     <InlineAudioPlayer src={number.audio_url || number.audio![0].s3_bucket_key} size="md" />
                     {number.last_regeneration_status === "processing" && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
