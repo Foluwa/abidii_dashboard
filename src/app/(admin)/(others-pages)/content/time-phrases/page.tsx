@@ -2192,6 +2192,7 @@ export default function TimePhrasesPage() {
             defaultText: regeneratingPhrase.phrase,
             languageCode: languages?.find((l: any) => l.id === regeneratingPhrase.language_id)?.iso_639_3 || "yor",
             submitEndpoint: `/api/v1/admin/content/phrases/${regeneratingPhrase.id}/regenerate-audio`,
+            currentAudioUrl: regeneratingPhrase.audio_url || null,
           }}
           onSuccess={() => {
             toast.success("Audio regeneration queued successfully");

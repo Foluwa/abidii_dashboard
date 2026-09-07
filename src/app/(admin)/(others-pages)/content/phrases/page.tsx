@@ -1088,6 +1088,7 @@ export default function PhrasesPage() {
       defaultText: phrase.phrase,
       languageCode,
       submitEndpoint: `/api/v1/admin/content/phrases/${phrase.id}/regenerate-audio`,
+      currentAudioUrl: phrase.audio_url || null,
     });
     setShowRegenerateModal(true);
   };
