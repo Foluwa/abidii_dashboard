@@ -331,6 +331,15 @@ export default function UsersPage() {
     return date.toLocaleDateString();
   };
 
+  const formatDateJoined = (createdAt: string | null | undefined) => {
+    if (!createdAt) return "Unknown";
+    return new Date(createdAt).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   // Prefer last_active_at (devices.last_seen_at, touched on every app
   // startup/foreground report) over last_request_at/last_login_at, which
   // only update on explicit sign-in and go stale under offline-first
@@ -677,6 +686,9 @@ export default function UsersPage() {
                       Last Request
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Date Joined
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -788,7 +800,12 @@ export default function UsersPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={user.is_active ? "success" : "error"} 
+                          <div className="text-sm text-gray-600 dark:text-gray-400" title={user.created_at ? new Date(user.created_at).toLocaleString() : undefined}>
+                            {formatDateJoined(user.created_at)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <StatusBadge status={user.is_active ? "success" : "error"}
                             label={user.is_active ? "Active" : "Inactive"} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
