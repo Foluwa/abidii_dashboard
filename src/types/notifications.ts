@@ -107,6 +107,20 @@ export interface DailyWordOverrideResponse {
   word_text: string;
 }
 
+export interface DailyContentPreviewItem {
+  content_date: string;
+  language_code: string;
+  word_id: string;
+  word_text: string;
+  english_lemma: string;
+  // "locked": already in daily_content_log (an override, or the scheduler
+  // already ran for that date) - this is what will actually be sent.
+  // "computed": no row yet, this is a preview of what the auto-picker
+  // would choose today - not guaranteed if the eligible word pool
+  // changes before that date arrives.
+  source: 'locked' | 'computed';
+}
+
 export interface NotificationSchedule {
   daily_word_time: string; // HH:MM, 24h UTC
   teaser_quiz_time: string;
