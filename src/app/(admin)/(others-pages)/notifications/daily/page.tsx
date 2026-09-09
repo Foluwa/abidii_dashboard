@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import type { ApexOptions } from 'apexcharts';
@@ -22,6 +22,7 @@ import {
   getNotificationSchedule,
   updateNotificationSchedule,
   searchDictionary,
+  getDailyContentPreview,
 } from '@/lib/notificationsApi';
 import { apiClient } from '@/lib/api';
 import type {
@@ -33,6 +34,7 @@ import type {
   DictionarySearchResult,
   OpenRateBreakdownItem,
   OpenRateDimension,
+  DailyContentPreviewItem,
 } from '@/types/notifications';
 
 const ReactApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });
@@ -529,8 +531,11 @@ export default function DailyContentNotificationsPage() {
   const { languages } = useLanguages();
   const [feed, setFeed] = useState<DailyContentFeedItem[]>([]);
   const [trend, setTrend] = useState<AudienceSnapshotItem[]>([]);
+  const [preview, setPreview] = useState<DailyContentPreviewItem[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'daily' | 'teaser'>('daily');
+  const overrideSectionRef = useRef<HTMLDivElement | null>(null);
 
   const [teaserStats, setTeaserStats] = useState<TeaserQuizStats | null>(null);
 
@@ -575,6 +580,30 @@ export default function DailyContentNotificationsPage() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  const refreshPreview = useCallback(async () => {
+    setPreviewLoading(true);
+    try {
+      const items = await getDailyContentPreview({ days: 7, language_code: overrideLanguage });
+      setPreview(items);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail ?? error?.message ?? 'Failed to load upcoming daily words');
+    } finally {
+      setPreviewLoading(false);
+    }
+  }, [overrideLanguage, toast]);
+
+  useEffect(() => {
+    void refreshPreview();
+  }, [refreshPreview]);
+
+  const handleEditPreviewRow = useCallback((item: DailyContentPreviewItem) => {
+    setOverrideDate(item.content_date);
+    setOverrideLanguage(item.language_code);
+    setSelectedWord(null);
+    setWordQuery('');
+    overrideSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   // Debounced dictionary search for the override form.
   useEffect(() => {
@@ -630,12 +659,13 @@ export default function DailyContentNotificationsPage() {
       setSelectedWord(null);
       setWordQuery('');
       void refresh();
+      void refreshPreview();
     } catch (error: any) {
       toast.error(error?.response?.data?.detail ?? error?.message ?? 'Failed to set override');
     } finally {
       setSavingOverride(false);
     }
-  }, [selectedWord, overrideDate, overrideLanguage, toast, refresh]);
+  }, [selectedWord, overrideDate, overrideLanguage, toast, refresh, refreshPreview]);
 
   const chartOptions: ApexOptions = {
     chart: { fontFamily: 'Outfit, sans-serif', height: 280, type: 'area', toolbar: { show: false } },
@@ -704,7 +734,10 @@ export default function DailyContentNotificationsPage() {
       </div>
 
       {/* Manual daily word override */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div
+        ref={overrideSectionRef}
+        className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+      >
         <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">Override Daily Word</h2>
         <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
           Force a specific word from the dictionary for today or a future date. Past dates aren&apos;t allowed.
@@ -784,6 +817,59 @@ export default function DailyContentNotificationsPage() {
         >
           {savingOverride ? 'Saving...' : 'Set Word'}
         </button>
+      </div>
+
+      {/* Upcoming daily words preview */}
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">Upcoming Daily Words (next 7 days)</h2>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+          The auto-picker only chooses a day&apos;s word when it actually runs that day — everything below
+          &quot;Locked&quot; is a preview of what it would pick right now, and can still shift if the dictionary
+          changes before that date arrives. Click Edit to force a different word for any day.
+        </p>
+        {previewLoading ? (
+          <p className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">Loading preview...</p>
+        ) : preview.length === 0 ? (
+          <p className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">No eligible words found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-800">
+                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Date</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Word</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">English</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
+                  <th className="px-3 py-2 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {preview.map((item) => (
+                  <tr key={item.content_date}>
+                    <td className="px-3 py-3 text-sm text-gray-900 dark:text-white">{formatDate(item.content_date)}</td>
+                    <td className="px-3 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.word_text}</td>
+                    <td className="px-3 py-3 text-sm text-gray-500 dark:text-gray-400">{item.english_lemma}</td>
+                    <td className="px-3 py-3">
+                      <StatusBadge
+                        status={item.source === 'locked' ? 'success' : 'info'}
+                        label={item.source === 'locked' ? 'Locked' : 'Preview'}
+                      />
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => handleEditPreviewRow(item)}
+                        className="rounded-lg px-3 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-900/30"
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Audience trend + permission-proxy stat */}
