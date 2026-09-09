@@ -12,6 +12,7 @@ import type {
   OpenRateDimension,
   DailyWordOverrideRequest,
   DailyWordOverrideResponse,
+  DailyContentPreviewItem,
   NotificationSchedule,
   NotificationScheduleUpdate,
   DictionarySearchResult,
@@ -128,6 +129,17 @@ export async function overrideDailyWord(payload: DailyWordOverrideRequest) {
   const res = await apiClient.post<DailyWordOverrideResponse>(
     '/api/v1/notifications/daily-content/override',
     payload
+  );
+  return res.data;
+}
+
+export async function getDailyContentPreview(params?: { days?: number; language_code?: string }) {
+  const usp = new URLSearchParams();
+  if (params?.days) usp.set('days', String(params.days));
+  if (params?.language_code) usp.set('language_code', params.language_code);
+  const suffix = usp.toString() ? `?${usp.toString()}` : '';
+  const res = await apiClient.get<DailyContentPreviewItem[]>(
+    `/api/v1/notifications/daily-content/preview${suffix}`
   );
   return res.data;
 }
