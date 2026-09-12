@@ -15,6 +15,7 @@ import DailyActiveUsersChart from "@/components/charts/DailyActiveUsersChart";
 import CountryMap from "@/components/ecommerce/CountryMap";
 import RecentActivityFeed from "@/components/dashboard/RecentActivityFeed";
 import BillingPlansCard from "@/components/billing/BillingPlansCard";
+import UserRetentionCard from "@/components/analytics/UserRetentionCard";
 
 export default function Dashboard() {
   const { status, isLoading: statusLoading, isError: statusError } = useSystemStatus();
@@ -155,8 +156,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Billing Plans */}
-      <BillingPlansCard />
+      {/* Billing Plans + User Retention - equal-width columns on desktop, stacked on mobile */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
+        <BillingPlansCard />
+        <UserRetentionCard />
+      </div>
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
