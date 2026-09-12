@@ -132,3 +132,41 @@ export interface RoomAnalyticsResponse {
   recent_rooms: RecentRoomsPage;
   limitations: RoomAnalyticsLimitations;
 }
+
+// --- User Retention (GET /admin/analytics/retention) ---------------------
+
+export interface RetentionDayStat {
+  /** null (not 0) when there are no eligible users yet for this cohort day. */
+  rate: number | null;
+  retained_users: number;
+  eligible_users: number;
+}
+
+export interface RetentionBreakdown {
+  day_1: RetentionDayStat;
+  day_7: RetentionDayStat;
+  day_30: RetentionDayStat;
+}
+
+export interface WeeklyReturningUsersItem {
+  week_start: string;
+  week_end: string;
+  returning_users: number;
+  active_users: number;
+}
+
+export interface RetentionMonthlySummary {
+  period_label: string;
+  returning_users: number;
+  eligible_users: number;
+  previous_comparable_returning_users: number;
+  absolute_change: number;
+}
+
+export interface RetentionResponse {
+  generated_at: string;
+  timezone: string;
+  retention: RetentionBreakdown;
+  weekly_returning_users: WeeklyReturningUsersItem[];
+  monthly_summary: RetentionMonthlySummary;
+}
