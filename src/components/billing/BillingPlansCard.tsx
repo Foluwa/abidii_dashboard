@@ -76,7 +76,7 @@ export default function BillingPlansCard() {
   const [expandedPlanId, setExpandedPlanId] = React.useState<string | null>(null);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -112,7 +112,7 @@ export default function BillingPlansCard() {
         </div>
       </div>
 
-      <div className="p-5">
+      <div className="flex-1 overflow-x-hidden p-5">
         {isLoading ? (
           <div className="flex items-center justify-center h-[160px]">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>

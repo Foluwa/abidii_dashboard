@@ -29,6 +29,7 @@ import type {
   RoomAnalyticsResponse,
   RoomTypeFilterValue,
   RoomStatusFilterValue,
+  RetentionResponse,
 } from '@/types/admin-analytics';
 import type {
   OrphanAssetCandidateListResponse,
@@ -1109,6 +1110,26 @@ export function useDailyActiveUsers(days: number = 30) {
   return {
     data: series,
     average,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/**
+ * User Retention Hook
+ * Cohort-based Day 1/7/30 retention, a weekly returning-users series, and
+ * a month-to-date returning-users summary.
+ */
+export function useUserRetention(weeks: number = 4) {
+  const { data, error, mutate } = useSWR<RetentionResponse>(
+    `/api/v1/admin/analytics/retention?weeks=${weeks}`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  return {
+    data,
     isLoading: !error && !data,
     isError: error,
     refresh: mutate,
