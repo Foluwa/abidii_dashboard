@@ -24,6 +24,7 @@ import type {
   PublicLessonBlueprintResponse,
 } from '@/types/curriculum';
 import type { AdminAuditLogListResponse } from '@/types/audit-log';
+import type { DictionaryReportListResponse } from '@/types/dictionary-reports';
 import type {
   CurriculumOpsMetricsResponse,
   RoomAnalyticsResponse,
@@ -683,6 +684,40 @@ export function useAdminAuditLogList(filters?: AdminAuditLogListFilters) {
   const url = `/api/v1/admin/audit-log${suffix}`;
 
   const { data, error, mutate } = useSWR<AdminAuditLogListResponse>(url, fetcher, {
+    refreshInterval: 0,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    shouldRetryOnError: false,
+  });
+
+  return {
+    data,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+    mutate,
+  };
+}
+
+
+export interface AdminDictionaryReportListFilters {
+  page?: number;
+  limit?: number;
+  status?: string;
+  reason?: string;
+}
+
+export function useAdminDictionaryReportsList(filters?: AdminDictionaryReportListFilters) {
+  const params = new URLSearchParams();
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.limit) params.set('limit', String(filters.limit));
+  if (filters?.status) params.set('status', filters.status);
+  if (filters?.reason) params.set('reason', filters.reason);
+
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  const url = `/api/v1/admin/dictionary-reports${suffix}`;
+
+  const { data, error, mutate } = useSWR<DictionaryReportListResponse>(url, fetcher, {
     refreshInterval: 0,
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
