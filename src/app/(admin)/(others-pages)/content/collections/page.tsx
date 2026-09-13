@@ -2,11 +2,14 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { FiVolume2 } from "react-icons/fi";
+import { FiVolume2, FiLock } from "react-icons/fi";
 import { apiClient } from "@/lib/api";
 import FormModal from "@/components/admin/FormModal";
 import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
 import { RegenerateAudioModal, RegenerateAudioTarget } from "@/components/modals/RegenerateAudioModal";
+import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
+import { StickyBulkActionBar } from "@/components/admin/layout";
+import { useToast } from "@/contexts/ToastContext";
 
 type Language = { id: string; iso_639_3: string; name: string; native_name?: string };
 type Collection = {
@@ -28,6 +31,7 @@ type Item = {
   translation_status?: string;
   image_url?: string;
   audio_url?: string;
+  human_recorded?: boolean;
   translation_audio_url?: string;
   aliases?: string[];
   alias_audio?: Record<string, string>;
@@ -73,6 +77,7 @@ const googleSheetCsvUrl = (reference: string, worksheet: string) => {
 };
 
 export default function CollectionsPage() {
+  const toast = useToast();
   const [languages, setLanguages] = useState<Language[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [selected, setSelected] = useState<string>("");
@@ -126,6 +131,10 @@ export default function CollectionsPage() {
   const [showRegenerateModal, setShowRegenerateModal] = useState(false);
   const [regeneratingTarget, setRegeneratingTarget] = useState<RegenerateAudioTarget | null>(null);
 
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [showBulkRegenerateConfirm, setShowBulkRegenerateConfirm] = useState(false);
+  const [isBulkRegenerating, setIsBulkRegenerating] = useState(false);
+
   const loadCollections = useCallback(async () => {
     const [languageResponse, collectionResponse] = await Promise.all([
       apiClient.get<{ languages: Language[] }>("/api/v1/languages"),
@@ -161,6 +170,13 @@ export default function CollectionsPage() {
     // after its awaited requests resolve.
     loadItems().catch((reason) => setError(reason?.response?.data?.detail || "Could not load collection items"));
   }, [loadItems]);
+
+  useEffect(() => {
+    // Selections are concept_keys scoped to the current collection/language -
+    // stale once either changes, so a leftover selection can't silently
+    // bulk-regenerate the wrong collection's items.
+    setSelectedItems([]);
+  }, [selected, learningLanguage]);
 
   const selectedCollection = useMemo(
     () => collections.find((collection) => collection.collection_key === selected),
@@ -374,6 +390,43 @@ export default function CollectionsPage() {
     }
   }
 
+  function toggleSelectItem(conceptKey: string) {
+    setSelectedItems((current) =>
+      current.includes(conceptKey) ? current.filter((key) => key !== conceptKey) : [...current, conceptKey]
+    );
+  }
+
+  function toggleSelectAllVisible() {
+    setSelectedItems((current) =>
+      visibleItems.every((item) => current.includes(item.concept_key))
+        ? current.filter((key) => !visibleItems.some((item) => item.concept_key === key))
+        : [...new Set([...current, ...visibleItems.map((item) => item.concept_key)])]
+    );
+  }
+
+  async function confirmBulkRegenerateAudio() {
+    if (!selected || selectedItems.length === 0) return;
+    setIsBulkRegenerating(true);
+    try {
+      const response = await apiClient.post<{ jobs_created: number; skipped: { concept_key: string }[]; failed: { concept_key: string; error: string }[] }>(
+        `/api/v1/admin/content-collections/${selected}/items/bulk/regenerate-audio`,
+        { concept_keys: selectedItems, language: learningLanguage }
+      );
+      const { jobs_created, skipped, failed } = response.data;
+      const parts = [`${jobs_created} job(s) queued`];
+      if (skipped?.length) parts.push(`${skipped.length} skipped (human-recorded)`);
+      if (failed?.length) parts.push(`${failed.length} failed`);
+      toast.success(parts.join(", "));
+      setSelectedItems([]);
+      setShowBulkRegenerateConfirm(false);
+      await loadItems();
+    } catch (reason: any) {
+      toast.error(reason?.response?.data?.detail || "Could not queue bulk audio regeneration");
+    } finally {
+      setIsBulkRegenerating(false);
+    }
+  }
+
   function handleRegenerateAudio(item: Item) {
     if (!selected) return;
     // Editing the term text and regenerating are independent actions - if the
@@ -477,14 +530,45 @@ export default function CollectionsPage() {
         <label className="text-sm text-gray-600 dark:text-gray-300">Rows per page<select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white">{[10, 25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}</select></label>
       </div>
 
+      <StickyBulkActionBar
+        selectedCount={selectedItems.length}
+        onClear={() => setSelectedItems([])}
+        itemName="item"
+        actions={[
+          {
+            label: isBulkRegenerating ? "Regenerating..." : "Regenerate Audio",
+            onClick: () => setShowBulkRegenerateConfirm(true),
+            disabled: isBulkRegenerating,
+            loading: isBulkRegenerating,
+            icon: <FiVolume2 className="h-4 w-4" />,
+          },
+        ]}
+      />
+
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-white">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-900"><tr>
+              <th className="px-4 py-3 text-left">
+                <input
+                  type="checkbox"
+                  checked={visibleItems.length > 0 && visibleItems.every((item) => selectedItems.includes(item.concept_key))}
+                  onChange={toggleSelectAllVisible}
+                  aria-label="Select all visible items"
+                />
+              </th>
               {['Order', 'Image', 'Audio', 'Concept', 'Learning term', 'Translation', 'Category', 'Status'].map((heading) => <th key={heading} className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-300">{heading}</th>)}
             </tr></thead>
             <tbody className="divide-y divide-gray-100 bg-white dark:divide-gray-800 dark:bg-gray-950">
               {visibleItems.map((item) => <tr key={item.id} onClick={() => startEditing(item)} className="cursor-pointer text-gray-800 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-900">
+                <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={selectedItems.includes(item.concept_key)}
+                    onChange={() => toggleSelectItem(item.concept_key)}
+                    aria-label={`Select ${item.concept_key}`}
+                  />
+                </td>
                 <td className="px-4 py-3">{item.sort_order + 1}</td>
                 <td className="px-4 py-3">{item.image_url ? <Image src={item.image_url} alt="" width={48} height={48} unoptimized className="h-12 w-12 rounded-lg object-contain" /> : <span className="text-gray-400">Missing</span>}</td>
                 <td className="px-4 py-3">
@@ -499,6 +583,11 @@ export default function CollectionsPage() {
                     >
                       <FiVolume2 className="w-4 h-4" />
                     </button>
+                    {item.human_recorded && (
+                      <span title="Human-recorded - locked against regeneration" className="text-emerald-600 dark:text-emerald-400">
+                        <FiLock className="w-3.5 h-3.5" />
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-300">{item.concept_key}</td>
@@ -507,7 +596,7 @@ export default function CollectionsPage() {
                 <td className="px-4 py-3">{item.category_key || '—'}</td>
                 <td className="px-4 py-3">{item.learning_status || 'missing'} / {item.translation_status || 'missing'}</td>
               </tr>)}
-              {!visibleItems.length && <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-500">No items match these filters.</td></tr>}
+              {!visibleItems.length && <tr><td colSpan={9} className="px-4 py-10 text-center text-gray-500">No items match these filters.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -644,6 +733,18 @@ export default function CollectionsPage() {
           setEditing(null);
           loadItems().catch((reason) => setError(reason?.response?.data?.detail || "Could not refresh collection items"));
         }}
+      />
+
+      <ConfirmationModal
+        isOpen={showBulkRegenerateConfirm}
+        onClose={() => setShowBulkRegenerateConfirm(false)}
+        onConfirm={confirmBulkRegenerateAudio}
+        title="Regenerate Audio"
+        message={`Regenerate audio for ${selectedItems.length} item(s) in ${learningLanguage.toUpperCase()}? This will replace existing audio files for anything not marked human-recorded (those are skipped automatically).`}
+        confirmText="Regenerate"
+        cancelText="Cancel"
+        variant="warning"
+        isLoading={isBulkRegenerating}
       />
     </div>
   );
