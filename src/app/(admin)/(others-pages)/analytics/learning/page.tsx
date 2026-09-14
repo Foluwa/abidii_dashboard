@@ -156,7 +156,7 @@ export default function LearningAnalyticsOverviewPage() {
           <MetricCard
             label="Repeat-Session Rate"
             value={formatRate(summary?.repeat_user_rate)}
-            tooltip="Share of learners who started 2 or more sessions for the same section - may reflect deliberate practice, not failure."
+            tooltip="Share of learners who started 2 or more structured-lesson sessions in total across any lesson in this scope - may reflect deliberate practice, not failure. See the per-lesson repeat rate on a lesson's detail page for same-lesson repeats specifically."
           />
           <MetricCard
             label="Median Wall-Clock Duration"
