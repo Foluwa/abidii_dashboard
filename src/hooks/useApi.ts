@@ -36,6 +36,13 @@ import type {
   OrphanAssetScanListResponse,
   OrphanAssetSummaryResponse,
 } from '@/types/orphan-assets';
+import type {
+  AnalyticsFunnelVersionRow,
+  AnalyticsOverviewResponse,
+  AnalyticsSectionSummary,
+  AnalyticsUserJourneySession,
+  LearningAnalyticsFilters,
+} from '@/types/learning-analytics';
 import {
   SystemStatus,
   ServicesStatusResponse,
@@ -1741,6 +1748,106 @@ export function useSubscriptionChurn(timeRange: string) {
     churnedCount: data?.churned_count || 0,
     scheduledToLapseCount: data?.scheduled_to_lapse_count || 0,
     isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/**
+ * Learning Analytics (Phase 1C) - GET /admin/learning-analytics/*.
+ * All three hooks share the same filter shape and build the same kind of
+ * querystring, so the URL-building is factored into one helper rather than
+ * repeated three times.
+ */
+function buildLearningAnalyticsParams(filters?: LearningAnalyticsFilters): string {
+  const params = new URLSearchParams();
+  if (filters?.dateFrom) params.set('date_from', filters.dateFrom);
+  if (filters?.dateTo) params.set('date_to', filters.dateTo);
+  if (filters?.courseId) params.set('course_id', filters.courseId);
+  if (filters?.languageId) params.set('language_id', filters.languageId);
+  if (filters?.blueprintContentHash) params.set('blueprint_content_hash', filters.blueprintContentHash);
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
+export function useLearningAnalyticsOverview(filters?: LearningAnalyticsFilters) {
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const suffix = buildLearningAnalyticsParams(filters);
+  const url = enabled ? `/api/v1/admin/learning-analytics/overview${suffix}` : null;
+  const { data, error, mutate } = useSWR<AnalyticsOverviewResponse>(url, fetcher, {
+    revalidateOnFocus: false,
+    refreshInterval: 0,
+  });
+
+  return {
+    overview: data,
+    isLoading: isAuthLoading || (enabled && !error && !data),
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+export function useLessonAnalyticsSummary(
+  sectionId: string | undefined,
+  filters?: LearningAnalyticsFilters,
+) {
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const suffix = buildLearningAnalyticsParams(filters);
+  const url = enabled && sectionId
+    ? `/api/v1/admin/learning-analytics/lessons/${encodeURIComponent(sectionId)}/summary${suffix}`
+    : null;
+  const { data, error, mutate } = useSWR<AnalyticsSectionSummary>(url, fetcher, {
+    revalidateOnFocus: false,
+    refreshInterval: 0,
+  });
+
+  return {
+    summary: data,
+    isLoading: isAuthLoading || (enabled && !!sectionId && !error && !data),
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+export function useLessonAnalyticsVersions(
+  sectionId: string | undefined,
+  filters?: Pick<LearningAnalyticsFilters, 'dateFrom' | 'dateTo'>,
+) {
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const suffix = buildLearningAnalyticsParams(filters);
+  const url = enabled && sectionId
+    ? `/api/v1/admin/learning-analytics/lessons/${encodeURIComponent(sectionId)}/versions${suffix}`
+    : null;
+  const { data, error, mutate } = useSWR<AnalyticsFunnelVersionRow[]>(url, fetcher, {
+    revalidateOnFocus: false,
+    refreshInterval: 0,
+  });
+
+  return {
+    versions: data,
+    isLoading: isAuthLoading || (enabled && !!sectionId && !error && !data),
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+export function useLearnerJourney(
+  userId: string | undefined,
+  filters?: Pick<LearningAnalyticsFilters, 'dateFrom' | 'dateTo' | 'courseId'>,
+) {
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const suffix = buildLearningAnalyticsParams(filters);
+  const url = enabled && userId
+    ? `/api/v1/admin/learning-analytics/users/${encodeURIComponent(userId)}/journey${suffix}`
+    : null;
+  const { data, error, mutate } = useSWR<AnalyticsUserJourneySession[]>(url, fetcher, {
+    revalidateOnFocus: false,
+    refreshInterval: 0,
+  });
+
+  return {
+    journey: data,
+    isLoading: isAuthLoading || (enabled && !!userId && !error && !data),
     isError: error,
     refresh: mutate,
   };
