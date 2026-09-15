@@ -7,13 +7,15 @@ import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import PlatformConfigPage from "@/app/(admin)/(others-pages)/system/config/page";
 import AppConfigPage from "@/app/(admin)/(others-pages)/settings/app-config/page";
 import LanguageSettingsPage from "@/app/(admin)/(others-pages)/settings/language-settings/page";
+import ForceUpdateConfigPage from "@/app/(admin)/(others-pages)/settings/force-update/page";
 
-type ConfigTab = "platform" | "application" | "language";
+type ConfigTab = "platform" | "application" | "language" | "force-update";
 
 const TABS: { key: ConfigTab; label: string }[] = [
   { key: "platform", label: "Feature Flags" },
   { key: "application", label: "App Settings" },
   { key: "language", label: "Language" },
+  { key: "force-update", label: "Force Update" },
 ];
 
 export default function ConfigurationPage() {
@@ -53,6 +55,7 @@ export default function ConfigurationPage() {
       {activeTab === "platform" && <PlatformConfigPage />}
       {activeTab === "application" && <AppConfigPage />}
       {activeTab === "language" && <LanguageSettingsPage />}
+      {activeTab === "force-update" && <ForceUpdateConfigPage />}
     </div>
   );
 }
