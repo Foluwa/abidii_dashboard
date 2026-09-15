@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
 
 function formatDate(iso: string | null | undefined): string {
@@ -458,6 +459,14 @@ export default function UserLearningStatePage() {
               />
               Active only
             </label>
+            {userId && (
+              <Link
+                href={`/analytics/learning/users/${userId}`}
+                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                View Learning Journey
+              </Link>
+            )}
             <button
               onClick={handleCopyJson}
               disabled={isLoading || !state}
