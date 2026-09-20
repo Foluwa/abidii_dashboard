@@ -20,6 +20,13 @@ import { FiAward, FiEye, FiTrash2, FiUserCheck, FiUserX, FiAlertOctagon } from "
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
 import { countryName, countryFlagEmoji } from "@/lib/country-utils";
 import DatePicker from "@/components/form/date-picker";
+import type { CourseCurriculumResponse } from "@/types/curriculum";
+import {
+  resolveUserLearningPosition,
+  selectCurrentCourse,
+  type AdminCourseLearningState,
+  type UserLearningPosition,
+} from "@/lib/user-learning-position";
 
 type TabRole = "all" | UserRole;
 type ActionType = "deactivate" | "reactivate" | "delete" | "purge";
@@ -136,6 +143,9 @@ export default function UsersPage() {
   const [actionConfirm, setActionConfirm] = useState<ActionConfirm | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [fluencyByUser, setFluencyByUser] = useState<Record<string, string | null>>({});
+  const [learningPositionByUser, setLearningPositionByUser] = useState<
+    Record<string, UserLearningPosition | null>
+  >({});
 
   const role = activeTab === "all" ? undefined : activeTab;
   const isActive = statusFilter === "all" ? undefined : statusFilter === "active";
@@ -201,6 +211,65 @@ export default function UsersPage() {
     });
     return () => { cancelled = true; };
   }, [users?.users, fluencyByUser]);
+
+  // The list response does not include the learning pointer, but the existing
+  // admin learning-state endpoint does. Resolve only users on the visible page,
+  // and share curriculum requests when several learners are on the same course.
+  useEffect(() => {
+    const visibleUsers = (users?.users ?? []).filter(
+      (user: UserListItem) => !(user.id in learningPositionByUser),
+    );
+    let cancelled = false;
+    if (!visibleUsers.length) return;
+
+    const curriculumRequests = new Map<
+      string,
+      Promise<CourseCurriculumResponse>
+    >();
+    const getCurriculum = (courseId: string) => {
+      const existing = curriculumRequests.get(courseId);
+      if (existing) return existing;
+      const request = apiClient
+        .get(`/api/v1/courses/${encodeURIComponent(courseId)}/curriculum`)
+        .then((response) => response.data as CourseCurriculumResponse);
+      curriculumRequests.set(courseId, request);
+      return request;
+    };
+
+    Promise.allSettled(
+      visibleUsers.map(async (user: UserListItem) => {
+        const response = await apiClient.get(
+          `/api/v1/admin/learning-state/users/${encodeURIComponent(user.id)}`,
+        );
+        const courses = Array.isArray(response.data?.courses)
+          ? (response.data.courses as AdminCourseLearningState[])
+          : [];
+        const course = selectCurrentCourse(courses);
+        if (!course) return [user.id, null] as const;
+
+        const curriculum = await getCurriculum(course.course_id).catch(
+          () => null,
+        );
+        return [
+          user.id,
+          resolveUserLearningPosition(course, curriculum),
+        ] as const;
+      }),
+    ).then((results) => {
+      if (cancelled) return;
+      const next: Record<string, UserLearningPosition | null> = {};
+      results.forEach((result, index) => {
+        const userId = visibleUsers[index]?.id;
+        if (!userId) return;
+        next[userId] = result.status === "fulfilled" ? result.value[1] : null;
+      });
+      setLearningPositionByUser((current) => ({ ...current, ...next }));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [users?.users, learningPositionByUser]);
 
   const tabs: { label: string; value: TabRole; count?: number }[] = [
     { label: "All Users", value: "all" },
@@ -778,6 +847,35 @@ export default function UsersPage() {
                             <div className="text-xs text-gray-500 dark:text-gray-400">
                               {(user.total_xp ?? 0).toLocaleString()} XP
                             </div>
+                            {user.id in learningPositionByUser ? (
+                              learningPositionByUser[user.id]?.status === "current" ? (
+                                <div
+                                  className="space-y-0.5 border-t border-gray-100 pt-1.5 text-xs dark:border-gray-700"
+                                  title={learningPositionByUser[user.id]?.courseTitle ?? undefined}
+                                >
+                                  <div className="text-gray-500 dark:text-gray-400">
+                                    Unit: <span className="font-medium text-gray-700 dark:text-gray-200">
+                                      {learningPositionByUser[user.id]?.unitTitle ?? "Unknown unit"}
+                                    </span>
+                                  </div>
+                                  <div className="text-gray-500 dark:text-gray-400">
+                                    Lesson: <span className="font-medium text-gray-700 dark:text-gray-200">
+                                      {learningPositionByUser[user.id]?.lessonTitle ?? "Unknown lesson"}
+                                    </span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="border-t border-gray-100 pt-1.5 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
+                                  {learningPositionByUser[user.id]?.status === "completed"
+                                    ? "Course completed"
+                                    : "No active lesson"}
+                                </div>
+                              )
+                            ) : (
+                              <div className="border-t border-gray-100 pt-1.5 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
+                                Loading current lesson…
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
