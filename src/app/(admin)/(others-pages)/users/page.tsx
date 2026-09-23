@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useUsers, useLanguages, useUserCountries } from "@/hooks/useApi";
+import { useUsers, useLanguages, useUserCountries, useUserAppVersions } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api";
 import type { UserRole } from "@/types/auth";
@@ -128,6 +128,7 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [providerFilter, setProviderFilter] = useState<string>("all");
   const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [appVersionFilter, setAppVersionFilter] = useState<string>("all");
   const [languageFilter, setLanguageFilter] = useState<string>("all");
   const [appLanguageFilter, setAppLanguageFilter] = useState<string>("all");
   const [minXp, setMinXp] = useState<string>("");
@@ -151,6 +152,7 @@ export default function UsersPage() {
   const isActive = statusFilter === "all" ? undefined : statusFilter === "active";
   const provider = providerFilter === "all" ? undefined : providerFilter;
   const countryCode = countryFilter === "all" ? undefined : countryFilter;
+  const appVersion = appVersionFilter === "all" ? undefined : appVersionFilter;
   const languageCode = languageFilter === "all" ? undefined : languageFilter;
   const uiLocale = appLanguageFilter === "all" ? undefined : appLanguageFilter;
   const hasPremium = premiumFilter === "all" ? undefined : premiumFilter === "yes";
@@ -158,6 +160,7 @@ export default function UsersPage() {
   const debouncedSearch = useDebounce(search, 300);
   const { languages } = useLanguages();
   const { countries } = useUserCountries();
+  const { appVersions } = useUserAppVersions();
   const [sortBy, sortOrder] = sortOption.startsWith("active")
     ? (["last_active_at", sortOption.endsWith("asc") ? "asc" : "desc"] as const)
     : (["created_at", sortOption.endsWith("asc") ? "asc" : "desc"] as const);
@@ -170,6 +173,7 @@ export default function UsersPage() {
     is_active: isActive,
     provider,
     country_code: countryCode,
+    app_version: appVersion,
     language_code: languageCode,
     ui_locale: uiLocale,
     min_xp: minXp ? parseInt(minXp) : undefined,
@@ -539,6 +543,23 @@ export default function UsersPage() {
             />
 
             <StyledSelect
+              label="App Version"
+              value={appVersionFilter}
+              onChange={(e) => {
+                setAppVersionFilter(e.target.value);
+                setPage(1);
+              }}
+              options={[
+                { value: "all", label: "All Versions" },
+                // Already newest-first from the API (numeric, not lexical).
+                ...(appVersions || []).map((item: { app_version: string; count: number }) => ({
+                  value: item.app_version,
+                  label: `v${item.app_version} (${item.count})`,
+                })),
+              ]}
+            />
+
+            <StyledSelect
               label="Language"
               value={languageFilter}
               onChange={(e) => {
@@ -704,6 +725,7 @@ export default function UsersPage() {
                     setStatusFilter("all");
                     setProviderFilter("all");
                     setCountryFilter("all");
+                    setAppVersionFilter("all");
                     setLanguageFilter("all");
                     setAppLanguageFilter("all");
                     setMinXp("");
