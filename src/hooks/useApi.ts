@@ -223,6 +223,7 @@ export function useUsers(filters?: {
   is_active?: boolean;
   provider?: string;
   country_code?: string;
+  app_version?: string;
   language_code?: string;
   ui_locale?: string;
   min_xp?: number;
@@ -242,6 +243,7 @@ export function useUsers(filters?: {
   if (filters?.is_active !== undefined) params.append('is_active', filters.is_active.toString());
   if (filters?.provider) params.append('provider', filters.provider);
   if (filters?.country_code) params.append('country_code', filters.country_code);
+  if (filters?.app_version) params.append('app_version', filters.app_version);
   if (filters?.language_code) params.append('language_code', filters.language_code);
   // App/interface language filter - independent of language_code (the
   // learning language) - both are usable together, see abidii_app_language.md.
@@ -275,6 +277,20 @@ export function useUserCountries() {
 
   return {
     countries: data?.countries || [],
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/** App versions in use across non-deleted accounts (newest first, with user counts). */
+export function useUserAppVersions() {
+  const { data, error, mutate } = useSWR('/api/v1/admin/users/app-versions', fetcher, {
+    revalidateOnFocus: false,
+  });
+
+  return {
+    appVersions: data?.app_versions || [],
     isLoading: !error && !data,
     isError: error,
     refresh: mutate,
