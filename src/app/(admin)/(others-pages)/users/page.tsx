@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useUsers, useLanguages, useUserCountries, useUserAppVersions } from "@/hooks/useApi";
+import { useUsers, useLanguages, useUserCountries, useUserAppVersions, useUserProgressOptions } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api";
 import type { UserRole } from "@/types/auth";
@@ -129,6 +129,11 @@ export default function UsersPage() {
   const [providerFilter, setProviderFilter] = useState<string>("all");
   const [countryFilter, setCountryFilter] = useState<string>("all");
   const [appVersionFilter, setAppVersionFilter] = useState<string>("all");
+  // Course progress: pick a unit, optionally narrow to one of its lessons, and
+  // choose whether to find learners currently on it or who have completed it.
+  const [progressUnitFilter, setProgressUnitFilter] = useState<string>("all");
+  const [progressLessonFilter, setProgressLessonFilter] = useState<string>("all");
+  const [progressModeFilter, setProgressModeFilter] = useState<"current" | "completed">("current");
   const [languageFilter, setLanguageFilter] = useState<string>("all");
   const [appLanguageFilter, setAppLanguageFilter] = useState<string>("all");
   const [minXp, setMinXp] = useState<string>("");
@@ -153,6 +158,8 @@ export default function UsersPage() {
   const provider = providerFilter === "all" ? undefined : providerFilter;
   const countryCode = countryFilter === "all" ? undefined : countryFilter;
   const appVersion = appVersionFilter === "all" ? undefined : appVersionFilter;
+  const progressUnitId = progressUnitFilter === "all" ? undefined : progressUnitFilter;
+  const progressSectionId = progressLessonFilter === "all" ? undefined : progressLessonFilter;
   const languageCode = languageFilter === "all" ? undefined : languageFilter;
   const uiLocale = appLanguageFilter === "all" ? undefined : appLanguageFilter;
   const hasPremium = premiumFilter === "all" ? undefined : premiumFilter === "yes";
@@ -161,6 +168,9 @@ export default function UsersPage() {
   const { languages } = useLanguages();
   const { countries } = useUserCountries();
   const { appVersions } = useUserAppVersions();
+  const { progressUnits } = useUserProgressOptions();
+  const selectedProgressUnit = progressUnits.find((unit) => unit.unit_id === progressUnitFilter);
+  const progressCountKey = progressModeFilter === "completed" ? "completed_count" : "current_count";
   const [sortBy, sortOrder] = sortOption.startsWith("active")
     ? (["last_active_at", sortOption.endsWith("asc") ? "asc" : "desc"] as const)
     : (["created_at", sortOption.endsWith("asc") ? "asc" : "desc"] as const);
@@ -174,6 +184,9 @@ export default function UsersPage() {
     provider,
     country_code: countryCode,
     app_version: appVersion,
+    progress_unit_id: progressUnitId,
+    progress_section_id: progressSectionId,
+    progress_mode: progressModeFilter,
     language_code: languageCode,
     ui_locale: uiLocale,
     min_xp: minXp ? parseInt(minXp) : undefined,
@@ -560,6 +573,55 @@ export default function UsersPage() {
             />
 
             <StyledSelect
+              label="Course Unit"
+              value={progressUnitFilter}
+              onChange={(e) => {
+                setProgressUnitFilter(e.target.value);
+                // A lesson only makes sense within its own unit.
+                setProgressLessonFilter("all");
+                setPage(1);
+              }}
+              options={[
+                { value: "all", label: "All Units" },
+                ...progressUnits.map((unit) => ({
+                  value: unit.unit_id,
+                  label: `${unit.title}${unit.enabled ? "" : " (disabled)"} (${unit[progressCountKey]})`,
+                })),
+              ]}
+            />
+
+            <StyledSelect
+              label="Lesson"
+              value={progressLessonFilter}
+              disabled={!selectedProgressUnit}
+              onChange={(e) => {
+                setProgressLessonFilter(e.target.value);
+                setPage(1);
+              }}
+              options={[
+                { value: "all", label: "All Lessons" },
+                ...(selectedProgressUnit?.sections ?? []).map((section) => ({
+                  value: section.section_id,
+                  label: `${section.title} (${section[progressCountKey]})`,
+                })),
+              ]}
+            />
+
+            <StyledSelect
+              label="Progress"
+              value={progressModeFilter}
+              disabled={!selectedProgressUnit}
+              onChange={(e) => {
+                setProgressModeFilter(e.target.value as "current" | "completed");
+                setPage(1);
+              }}
+              options={[
+                { value: "current", label: "Currently on" },
+                { value: "completed", label: "Completed" },
+              ]}
+            />
+
+            <StyledSelect
               label="Language"
               value={languageFilter}
               onChange={(e) => {
@@ -726,6 +788,9 @@ export default function UsersPage() {
                     setProviderFilter("all");
                     setCountryFilter("all");
                     setAppVersionFilter("all");
+                    setProgressUnitFilter("all");
+                    setProgressLessonFilter("all");
+                    setProgressModeFilter("current");
                     setLanguageFilter("all");
                     setAppLanguageFilter("all");
                     setMinXp("");
