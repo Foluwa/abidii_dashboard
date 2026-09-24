@@ -224,6 +224,9 @@ export function useUsers(filters?: {
   provider?: string;
   country_code?: string;
   app_version?: string;
+  progress_unit_id?: string;
+  progress_section_id?: string;
+  progress_mode?: "current" | "completed";
   language_code?: string;
   ui_locale?: string;
   min_xp?: number;
@@ -244,6 +247,11 @@ export function useUsers(filters?: {
   if (filters?.provider) params.append('provider', filters.provider);
   if (filters?.country_code) params.append('country_code', filters.country_code);
   if (filters?.app_version) params.append('app_version', filters.app_version);
+  if (filters?.progress_section_id) params.append('progress_section_id', filters.progress_section_id);
+  else if (filters?.progress_unit_id) params.append('progress_unit_id', filters.progress_unit_id);
+  if ((filters?.progress_section_id || filters?.progress_unit_id) && filters?.progress_mode) {
+    params.append('progress_mode', filters.progress_mode);
+  }
   if (filters?.language_code) params.append('language_code', filters.language_code);
   // App/interface language filter - independent of language_code (the
   // learning language) - both are usable together, see abidii_app_language.md.
@@ -291,6 +299,37 @@ export function useUserAppVersions() {
 
   return {
     appVersions: data?.app_versions || [],
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/** Units and lessons for the Users page progress filter, with per-mode user counts. */
+export interface UserProgressSection {
+  section_id: string;
+  section_key: string;
+  title: string;
+  current_count: number;
+  completed_count: number;
+}
+export interface UserProgressUnit {
+  unit_id: string;
+  unit_key: string;
+  title: string;
+  enabled: boolean;
+  current_count: number;
+  completed_count: number;
+  sections: UserProgressSection[];
+}
+
+export function useUserProgressOptions() {
+  const { data, error, mutate } = useSWR('/api/v1/admin/users/progress-options', fetcher, {
+    revalidateOnFocus: false,
+  });
+
+  return {
+    progressUnits: (data?.units || []) as UserProgressUnit[],
     isLoading: !error && !data,
     isError: error,
     refresh: mutate,
