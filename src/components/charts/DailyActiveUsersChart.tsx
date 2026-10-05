@@ -13,11 +13,14 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
 interface DailyActiveUsersItem {
   date: string;
   count: number;
+  new_users?: number;
+  returning_users?: number;
 }
 
 /**
  * Daily Active Users Chart
- * Shows the count of distinct users with at least one session per day
+ * Stacked per day: returning users (account created on an earlier day) and
+ * new users (signed up that day). The stack height is the day's total.
  */
 export default function DailyActiveUsersChart({ days = 30 }: { days?: number }) {
   const { data: dauData, average, isLoading, isError } = useDailyActiveUsers(days);
@@ -29,14 +32,18 @@ export default function DailyActiveUsersChart({ days = 30 }: { days?: number }) 
       timeZone: "UTC",
     })
   );
-  const seriesData = dauData.map((item: DailyActiveUsersItem) => item.count);
+  // Older backends only return `count`; fall back to a single total series.
+  const hasSplit = dauData.some(
+    (item: DailyActiveUsersItem) => typeof item.new_users === "number"
+  );
 
   const options: ApexOptions = {
-    colors: ["#465FFF"],
+    colors: hasSplit ? ["#465FFF", "#12B76A"] : ["#465FFF"],
     chart: {
       fontFamily: "Outfit, sans-serif",
       type: "area",
       height: 220,
+      stacked: hasSplit,
       toolbar: {
         show: false,
       },
@@ -75,10 +82,17 @@ export default function DailyActiveUsersChart({ days = 30 }: { days?: number }) 
         text: undefined,
       },
     },
+    legend: {
+      show: hasSplit,
+      position: "top",
+      horizontalAlign: "left",
+      fontFamily: "Outfit",
+    },
     tooltip: {
+      shared: true,
       y: {
         formatter: function (val: number) {
-          return val.toLocaleString() + " active users";
+          return val.toLocaleString();
         },
       },
     },
@@ -93,12 +107,23 @@ export default function DailyActiveUsersChart({ days = 30 }: { days?: number }) 
     },
   };
 
-  const series = [
-    {
-      name: "Daily Active Users",
-      data: seriesData,
-    },
-  ];
+  const series = hasSplit
+    ? [
+        {
+          name: "Returning users",
+          data: dauData.map((item: DailyActiveUsersItem) => item.returning_users ?? 0),
+        },
+        {
+          name: "New users",
+          data: dauData.map((item: DailyActiveUsersItem) => item.new_users ?? 0),
+        },
+      ]
+    : [
+        {
+          name: "Daily Active Users",
+          data: dauData.map((item: DailyActiveUsersItem) => item.count),
+        },
+      ];
 
   if (isLoading) {
     return (
