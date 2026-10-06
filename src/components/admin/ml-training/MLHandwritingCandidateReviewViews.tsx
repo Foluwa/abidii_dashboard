@@ -527,7 +527,7 @@ export function MLHandwritingCandidateManifestDetailPage() {
         </div>
         <div className="space-y-3">
           {candidates.map((candidate) => (
-            <div key={candidate.id} className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+            <div key={candidate.id} className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
               <div className="flex flex-col gap-4 md:flex-row">
                 <CandidateImagePreview candidate={candidate} />
                 <div className="min-w-0 flex-1">

@@ -161,7 +161,7 @@ export function CourseEditorModal({
           <button
             type="submit"
             disabled={submitDisabled}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSaving ? 'Saving…' : mode === 'create' ? 'Create Course' : 'Save Course'}
           </button>

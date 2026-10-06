@@ -88,7 +88,7 @@ export default function RecentActivityFeed() {
           return (
             <div
               key={`${item.source}:${item.id}`}
-              className="rounded-lg border border-gray-200 bg-gray-50/50 px-4 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]"
+              className="rounded-lg border border-gray-200 bg-gray-50/50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/40"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">

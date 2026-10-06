@@ -6,6 +6,8 @@ import { ApexOptions } from "apexcharts";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import AnalyticsTabs from "@/components/analytics/AnalyticsTabs";
 import Pagination from "@/components/tables/Pagination";
+import { chartTheme } from "@/components/charts/chartTheme";
+import { useTheme } from "@/context/ThemeContext";
 import { countryName, countryFlagEmoji } from "@/lib/country-utils";
 import {
   useFluencyDistribution,
@@ -67,8 +69,8 @@ function formatMs(ms: number): string {
 
 function Card({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">{title}</h3>
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:p-6">
+      <h3 className="text-base font-semibold text-gray-900 dark:text-white/90">{title}</h3>
       {subtitle && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>}
       <div className="mt-4">{children}</div>
     </div>
@@ -93,6 +95,8 @@ function EmptyBlock({ label = "No data available for this range" }: { label?: st
 
 function FluencyPieChart({ timeRange }: { timeRange: TimeRange }) {
   const { data, total, isLoading } = useFluencyDistribution(timeRange);
+  const { theme } = useTheme();
+  const c = chartTheme(theme);
 
   if (isLoading) return <Card title="Fluency Distribution"><LoadingBlock /></Card>;
   if (!data.length) return <Card title="Fluency Distribution"><EmptyBlock /></Card>;
@@ -103,16 +107,16 @@ function FluencyPieChart({ timeRange }: { timeRange: TimeRange }) {
 
   const options: ApexOptions = {
     colors,
-    chart: { fontFamily: "Outfit, sans-serif", type: "donut", height: 280 },
+    chart: { fontFamily: c.fontFamily, type: "donut", height: 280 },
     labels,
-    legend: { position: "bottom", labels: { colors: "#64748b" } },
+    legend: { position: "bottom", labels: { colors: c.text } },
     plotOptions: {
       pie: {
         donut: {
           size: "65%",
           labels: {
             show: true,
-            total: { show: true, label: "Users", fontSize: "14px", color: "#64748b", formatter: () => String(total) },
+            total: { show: true, label: "Users", fontSize: "14px", color: c.text, formatter: () => String(total) },
           },
         },
       },
@@ -193,7 +197,7 @@ function MostActiveUsersCard({ timeRange }: { timeRange: TimeRange }) {
             onClick={() => setSortBy(option)}
             className={`rounded-lg px-3 py-1 text-xs font-medium ${
               sortBy === option
-                ? "bg-brand-500 text-white"
+                ? "bg-brand-500 text-white dark:text-gray-900"
                 : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
             }`}
           >
@@ -245,6 +249,8 @@ function MostActiveUsersCard({ timeRange }: { timeRange: TimeRange }) {
 
 function ActivityByHourChart({ timeRange }: { timeRange: TimeRange }) {
   const { data, basis, isLoading } = useActivityByHour(timeRange);
+  const { theme } = useTheme();
+  const c = chartTheme(theme);
 
   if (isLoading) return <Card title="Activity by Hour of Day"><LoadingBlock /></Card>;
 
@@ -252,13 +258,13 @@ function ActivityByHourChart({ timeRange }: { timeRange: TimeRange }) {
   const series = [{ name: "Sessions", data: data.map((d: { session_count: number }) => d.session_count) }];
 
   const options: ApexOptions = {
-    chart: { fontFamily: "Outfit, sans-serif", type: "bar", height: 260, toolbar: { show: false } },
+    chart: { fontFamily: c.fontFamily, type: "bar", height: 260, toolbar: { show: false } },
     colors: ["#465FFF"],
     plotOptions: { bar: { borderRadius: 3, columnWidth: "60%" } },
     dataLabels: { enabled: false },
-    xaxis: { categories, labels: { style: { colors: "#64748b" }, rotate: -45 } },
-    yaxis: { labels: { style: { colors: "#64748b" } } },
-    grid: { borderColor: "#e5e7eb" },
+    xaxis: { categories, labels: { style: { colors: c.text }, rotate: -45 } },
+    yaxis: { labels: { style: { colors: c.text } } },
+    grid: { borderColor: c.grid },
     tooltip: { y: { formatter: (val: number) => `${val} sessions` } },
   };
 
@@ -271,6 +277,8 @@ function ActivityByHourChart({ timeRange }: { timeRange: TimeRange }) {
 
 function FeatureUsageChart({ timeRange }: { timeRange: TimeRange }) {
   const { data, basis, isLoading } = useFeatureUsage(timeRange);
+  const { theme } = useTheme();
+  const c = chartTheme(theme);
 
   if (isLoading) return <Card title="Most-Used Features"><LoadingBlock /></Card>;
   if (!data.length) return <Card title="Most-Used Features"><EmptyBlock /></Card>;
@@ -279,12 +287,12 @@ function FeatureUsageChart({ timeRange }: { timeRange: TimeRange }) {
   const series = [{ name: "Uses", data: data.map((d: { count: number }) => d.count) }];
 
   const options: ApexOptions = {
-    chart: { fontFamily: "Outfit, sans-serif", type: "bar", height: 280, toolbar: { show: false } },
+    chart: { fontFamily: c.fontFamily, type: "bar", height: 280, toolbar: { show: false } },
     colors: ["#12B76A"],
     plotOptions: { bar: { borderRadius: 3, horizontal: true } },
     dataLabels: { enabled: false },
-    xaxis: { categories, labels: { style: { colors: "#64748b" } } },
-    grid: { borderColor: "#e5e7eb" },
+    xaxis: { categories, labels: { style: { colors: c.text } } },
+    grid: { borderColor: c.grid },
   };
 
   return (
@@ -401,7 +409,7 @@ export default function DetailedAnalyticsPage() {
             onClick={() => setTimeRange(r.key)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               timeRange === r.key
-                ? "bg-brand-500 text-white"
+                ? "bg-brand-500 text-white dark:text-gray-900"
                 : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-800 dark:hover:bg-gray-800"
             }`}
           >

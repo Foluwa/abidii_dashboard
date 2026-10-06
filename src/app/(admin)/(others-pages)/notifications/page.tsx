@@ -24,7 +24,7 @@ const TargetOption: React.FC<{
     onClick={onClick}
     className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
       active
-        ? 'bg-brand-500 text-white shadow-sm'
+        ? 'bg-brand-500 text-white dark:text-gray-900 shadow-sm'
         : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
     }`}
   >
@@ -348,7 +348,7 @@ export default function NotificationsPage() {
                 type="button"
                 onClick={() => doSend(false)}
                 disabled={sending}
-                className="rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                className="rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
               >
                 {sending ? 'Sending...' : 'Send Notification'}
               </button>
@@ -404,7 +404,7 @@ export default function NotificationsPage() {
                 {/* Notification card */}
                 <div className="rounded-xl bg-white p-3 shadow-sm dark:bg-gray-800">
                   <div className="mb-1 flex items-start gap-2">
-                    <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-md bg-brand-500 text-[10px] text-white">
+                    <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-md bg-brand-500 text-[10px] text-white dark:text-gray-900">
                       A
                     </div>
                     <div className="flex-1">

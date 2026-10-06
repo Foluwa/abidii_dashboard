@@ -726,7 +726,7 @@ export default function DailyContentNotificationsPage() {
             type="button"
             onClick={() => void handleSaveSchedule()}
             disabled={savingSchedule}
-            className="h-11 rounded-lg bg-brand-500 px-6 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-11 rounded-lg bg-brand-500 px-6 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {savingSchedule ? 'Saving...' : 'Save'}
           </button>
@@ -813,7 +813,7 @@ export default function DailyContentNotificationsPage() {
           type="button"
           onClick={() => void handleSaveOverride()}
           disabled={savingOverride || !selectedWord}
-          className="mt-4 h-11 rounded-lg bg-brand-500 px-6 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-4 h-11 rounded-lg bg-brand-500 px-6 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {savingOverride ? 'Saving...' : 'Set Word'}
         </button>

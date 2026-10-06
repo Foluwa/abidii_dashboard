@@ -6,6 +6,8 @@ import { useState } from "react";
 import { MoreDotIcon } from "@/icons";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
+import { chartTheme } from "@/components/charts/chartTheme";
+import { useTheme } from "@/context/ThemeContext";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -14,6 +16,8 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
 export default function SubscriptionDistributionChart() {
   const { users, isLoading, isError } = useUsers({ limit: 1000 });
   const [isOpen, setIsOpen] = useState(false);
+  const { theme } = useTheme();
+  const c = chartTheme(theme);
 
   // Count users by subscription type (assuming users have a subscription_type or is_premium field)
   const subscriptionCounts = users?.users?.reduce((acc: any, user: any) => {
@@ -30,7 +34,7 @@ export default function SubscriptionDistributionChart() {
   const options: ApexOptions = {
     colors: ["#94a3b8", "#fbbf24"],
     chart: {
-      fontFamily: "Outfit, sans-serif",
+      fontFamily: c.fontFamily,
       type: "donut",
       height: 300,
     },
@@ -39,7 +43,7 @@ export default function SubscriptionDistributionChart() {
       position: "bottom",
       horizontalAlign: "center",
       labels: {
-        colors: "#64748b",
+        colors: c.text,
       },
     },
     plotOptions: {
@@ -52,13 +56,13 @@ export default function SubscriptionDistributionChart() {
               show: true,
               label: "Total Users",
               fontSize: "14px",
-              color: "#64748b",
+              color: c.text,
               formatter: () => total.toString(),
             },
             value: {
               fontSize: "22px",
               fontWeight: 600,
-              color: "#1e293b",
+              color: c.heading,
             },
           },
         },
@@ -102,7 +106,7 @@ export default function SubscriptionDistributionChart() {
 
   if (isError) {
     return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Subscription Distribution
         </h3>
@@ -112,7 +116,7 @@ export default function SubscriptionDistributionChart() {
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:p-6">
       <div className="flex justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">

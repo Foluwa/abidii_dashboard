@@ -383,7 +383,7 @@ export default function CurriculumAssetLibraryPage() {
                 type="button"
                 onClick={() => void handleRenameSubmit()}
                 disabled={pendingKey === `${renameDraft.blueprintId}:${renameDraft.fieldPath}:rename`}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:opacity-60"
               >
                 {pendingKey === `${renameDraft.blueprintId}:${renameDraft.fieldPath}:rename` ? 'Saving…' : 'Save'}
               </button>

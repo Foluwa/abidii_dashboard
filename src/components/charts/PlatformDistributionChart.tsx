@@ -6,6 +6,8 @@ import { useState } from "react";
 import { MoreDotIcon } from "@/icons";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
+import { chartTheme } from "@/components/charts/chartTheme";
+import { useTheme } from "@/context/ThemeContext";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -18,6 +20,8 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
 export default function PlatformDistributionChart() {
   const { distribution, total, isLoading, isError } = usePlatformDistribution();
   const [isOpen, setIsOpen] = useState(false);
+  const { theme } = useTheme();
+  const c = chartTheme(theme);
 
   // Map platform names to display labels and colors
   const platformConfig: Record<string, { label: string; color: string }> = {
@@ -46,7 +50,7 @@ export default function PlatformDistributionChart() {
   const options: ApexOptions = {
     colors: colors.length > 0 ? colors : ["#94a3b8"],
     chart: {
-      fontFamily: "Outfit, sans-serif",
+      fontFamily: c.fontFamily,
       type: "donut",
       height: 300,
     },
@@ -55,7 +59,7 @@ export default function PlatformDistributionChart() {
       position: "bottom",
       horizontalAlign: "center",
       labels: {
-        colors: "#64748b",
+        colors: c.text,
       },
     },
     plotOptions: {
@@ -68,13 +72,13 @@ export default function PlatformDistributionChart() {
               show: true,
               label: "Total Users",
               fontSize: "14px",
-              color: "#64748b",
+              color: c.text,
               formatter: () => resolvedTotal.toString(),
             },
             value: {
               fontSize: "22px",
               fontWeight: 600,
-              color: "#1e293b",
+              color: c.heading,
             },
           },
         },
@@ -116,7 +120,7 @@ export default function PlatformDistributionChart() {
 
   if (isError) {
     return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Platform Distribution
         </h3>
@@ -134,7 +138,7 @@ export default function PlatformDistributionChart() {
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:p-6">
       <div className="flex justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">

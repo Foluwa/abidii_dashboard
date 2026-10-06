@@ -166,7 +166,7 @@ export default function ConfigPage() {
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700"
+            className="px-4 py-2 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700"
           >
             + Create Config
           </button>
@@ -180,7 +180,7 @@ export default function ConfigPage() {
             <button
               onClick={() => setFilterCategory("all")}
               className={`px-3 py-1 text-sm rounded-full ${
-                filterCategory === "all" ? "bg-brand-600 text-white" : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                filterCategory === "all" ? "bg-brand-600 text-white dark:text-gray-900" : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
               }`}
             >
               All ({config?.length || 0})
@@ -190,7 +190,7 @@ export default function ConfigPage() {
                 key={cat}
                 onClick={() => setFilterCategory(cat)}
                 className={`px-3 py-1 text-sm rounded-full ${
-                  filterCategory === cat ? "bg-brand-600 text-white" : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                  filterCategory === cat ? "bg-brand-600 text-white dark:text-gray-900" : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
                 }`}
               >
                 {cat} ({config?.filter((c: any) => c.category === cat).length || 0})
@@ -511,7 +511,7 @@ function CreateConfigModal({ onClose, onSuccess }: { onClose: () => void; onSucc
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded hover:bg-brand-700 disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded hover:bg-brand-700 disabled:opacity-50"
             >
               {isSubmitting ? "Creating..." : "Create"}
             </button>

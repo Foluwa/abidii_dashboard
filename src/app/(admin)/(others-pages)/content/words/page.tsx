@@ -653,7 +653,7 @@ export default function WordsPage() {
 
         {/* Advanced Filters Panel */}
         {showAdvancedFilters && (
-          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-gray-800">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {/* Boolean Filters Column */}
               <div className="space-y-4">
@@ -892,7 +892,7 @@ export default function WordsPage() {
                       onClick={() => togglePosFilter(pos.value)}
                       className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                         posFilter.includes(pos.value)
-                          ? 'bg-brand-600 text-white'
+                          ? 'bg-brand-600 text-white dark:text-gray-900'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                       }`}
                     >
@@ -958,7 +958,7 @@ export default function WordsPage() {
 
       {/* Pagination */}
       {total > limit && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center justify-between gap-3 px-5 py-4">
             <p className="text-sm text-gray-700 dark:text-gray-300">
               Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} words
@@ -1173,7 +1173,7 @@ export default function WordsPage() {
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-300 dark:bg-brand-600 dark:hover:bg-brand-700 dark:focus:ring-brand-800"
+                className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-5 py-2.5 text-center text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-300 dark:bg-brand-600 dark:hover:bg-brand-700 dark:focus:ring-brand-800"
               >
                 {editingWord ? "Update Entry" : "Create Entry"}
               </button>

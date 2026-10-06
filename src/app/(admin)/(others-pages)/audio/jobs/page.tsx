@@ -106,7 +106,7 @@ function AudioPlayer({ src }: { src: string }) {
       <button
         type="button"
         onClick={toggle}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-white hover:bg-brand-700"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-white dark:text-gray-900 hover:bg-brand-700"
         title={playing ? 'Pause' : 'Play'}
       >
         {playing ? <FaPause className="text-xs" /> : <FaPlay className="text-xs" />}
@@ -278,7 +278,7 @@ export default function AudioJobsPage() {
               type="button"
               onClick={() => void fetchJobs()}
               disabled={loading}
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:opacity-50"
             >
               <FaSync className={loading ? 'animate-spin' : ''} /> Refresh
             </button>

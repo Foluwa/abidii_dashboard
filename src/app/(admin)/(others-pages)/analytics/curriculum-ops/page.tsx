@@ -306,8 +306,8 @@ export default function CurriculumOpsPage() {
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.05]" role="table" aria-label="Recent blocked/failed">
-            <thead className="bg-gray-50 dark:bg-white/[0.02]">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table" aria-label="Recent blocked/failed">
+            <thead className="bg-gray-50 dark:bg-gray-800/40">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Time</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Action</th>
@@ -315,7 +315,7 @@ export default function CurriculumOpsPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Target</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
               {(courseAudit.isLoading || blueprintAudit.isLoading) && (
                 <tr>
                   <td className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400" colSpan={4}>
@@ -419,8 +419,8 @@ export default function CurriculumOpsPage() {
 
       <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.05]" role="table">
-            <thead className="bg-gray-50 dark:bg-white/[0.02]">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table">
+            <thead className="bg-gray-50 dark:bg-gray-800/40">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Day</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Action</th>
@@ -428,7 +428,7 @@ export default function CurriculumOpsPage() {
                 <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300">Count</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
               {isLoading && (
                 <tr>
                   <td className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400" colSpan={4}>

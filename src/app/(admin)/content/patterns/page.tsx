@@ -226,7 +226,7 @@ export default function PatternsPage() {
           <button
             onClick={handleCreate}
             disabled={!selectedLanguage}
-            className="flex items-center justify-center gap-2 px-4 py-2 text-white bg-brand-500 rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center gap-2 px-4 py-2 text-white dark:text-gray-900 bg-brand-500 rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FiPlus />
             Add Pattern
@@ -493,7 +493,7 @@ export default function PatternsPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 text-white bg-brand-500 rounded-lg hover:bg-brand-600 disabled:opacity-50"
+                  className="px-4 py-2 text-white dark:text-gray-900 bg-brand-500 rounded-lg hover:bg-brand-600 disabled:opacity-50"
                 >
                   {isSubmitting ? 'Saving...' : editingPattern ? 'Update' : 'Create'}
                 </button>

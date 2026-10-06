@@ -261,7 +261,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
             hasError || !src
               ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
-              : 'bg-brand-600 hover:bg-brand-700 text-white'
+              : 'bg-brand-600 hover:bg-brand-700 text-white dark:text-gray-900'
           }`}
           disabled={!src || hasError}
           title={hasError ? 'Audio unavailable' : src ? 'Play/Pause' : 'No audio source'}

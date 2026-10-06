@@ -1061,7 +1061,7 @@ export default function CurriculumEditorPage() {
           <button
             onClick={saveChanges}
             disabled={isSaving || isStructureMutating}
-            className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50"
           >
             {isSaving ? 'Saving…' : 'Save'}
           </button>
@@ -1335,7 +1335,7 @@ export default function CurriculumEditorPage() {
               <button
                 type="submit"
                 disabled={isStructureMutating}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:opacity-50"
               >
                 {isStructureMutating ? 'Saving…' : unitEditor.mode === 'edit' ? 'Save changes' : 'Create unit'}
               </button>
@@ -1415,7 +1415,7 @@ export default function CurriculumEditorPage() {
               <button
                 type="submit"
                 disabled={isStructureMutating}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:opacity-50"
               >
                 {isStructureMutating ? 'Saving…' : sectionEditor.mode === 'edit' ? 'Save changes' : 'Create section'}
               </button>

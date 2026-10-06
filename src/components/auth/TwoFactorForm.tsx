@@ -178,7 +178,7 @@ export default function TwoFactorForm({
         <button
           type="submit"
           disabled={isLoading || secondsLeft === 0 || code.length !== 6}
-          className="w-full rounded-lg bg-brand-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-brand-700 disabled:opacity-50 dark:bg-brand-500 dark:hover:bg-brand-600"
+          className="w-full rounded-lg bg-brand-600 px-5 py-3 text-sm font-medium text-white dark:text-gray-900 transition hover:bg-brand-700 disabled:opacity-50 dark:bg-brand-500 dark:hover:bg-brand-600"
         >
           {isLoading ? "Verifying..." : "Verify and sign in"}
         </button>

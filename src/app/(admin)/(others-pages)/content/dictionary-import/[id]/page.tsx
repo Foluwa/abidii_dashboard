@@ -88,13 +88,13 @@ export default function DictionaryImportBatchDetailPage() {
       </div>
 
       {loading ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-300">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
           Loading batch...
         </div>
       ) : detail ? (
         <>
           <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-            <section className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+            <section className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
               <div className="flex items-center gap-3">
                 {renderStatus(detail.status)}
                 <span className="font-mono text-xs text-gray-500 dark:text-gray-400">{detail.id}</span>
@@ -133,7 +133,7 @@ export default function DictionaryImportBatchDetailPage() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+            <section className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Summary</h2>
               <pre className="mt-4 overflow-x-auto rounded-xl bg-gray-950 p-4 text-xs text-gray-100">
                 {JSON.stringify(detail.summary_json ?? {}, null, 2)}
@@ -141,7 +141,7 @@ export default function DictionaryImportBatchDetailPage() {
             </section>
           </div>
 
-          <section className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+          <section className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Issues</h2>
             {detail.issues.length === 0 ? (
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-100">

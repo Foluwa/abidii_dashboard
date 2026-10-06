@@ -434,7 +434,7 @@ export default function UserLearningStatePage() {
         </div>
       )}
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+      <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
         {/* Header row */}
         <div className="mb-4 flex items-center justify-between">
           <div>

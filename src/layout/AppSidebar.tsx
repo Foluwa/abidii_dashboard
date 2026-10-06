@@ -140,7 +140,7 @@ const AppSidebar: React.FC = () => {
   };
 
   const renderMenuItems = (items: AdminNavItem[], menuType: MenuType) => (
-    <ul className="flex flex-col gap-4">
+    <ul className="flex flex-col gap-1">
       {items.map((nav, index) => (
         <li key={nav.name}>
           {nav.subItems && nav.subItems.length > 0 ? (
@@ -188,7 +188,7 @@ const AppSidebar: React.FC = () => {
                   openSubmenu?.type === menuType && openSubmenu?.index === index ? "1000px" : "0px",
               }}
             >
-              <ul className="mt-2 space-y-1 ml-9">
+              <ul className="mt-1 space-y-0 ml-3 border-l border-sidebar-border pl-2">
                 {nav.subItems.map((subItem) => (
                   <li key={subItem.name}>
                     {subItem.subItems && subItem.subItems.length > 0 ? (
@@ -215,7 +215,7 @@ const AppSidebar: React.FC = () => {
                           </span>
                         </button>
                         {openNestedSubmenuKey === `${menuType}-${index}-${subItem.name}` && (
-                          <ul className="mt-1 space-y-1 ml-4">
+                          <ul className="mt-1 space-y-0 ml-3 border-l border-sidebar-border pl-2">
                             {subItem.subItems.map((child) => (
                               <li key={child.name}>
                                 {child.path && (
@@ -257,16 +257,16 @@ const AppSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
+      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-2 left-0 bg-sidebar text-sidebar-foreground h-screen transition-all duration-300 ease-in-out z-50 border-r border-sidebar-border 
         ${
-          isExpanded || isMobileOpen ? "w-[290px]" : isHovered ? "w-[290px]" : "w-[90px]"
+          isExpanded || isMobileOpen ? "w-64" : isHovered ? "w-64" : "w-12"
         }
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
+      <div className={`py-4 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
         <Link href="/dashboard">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
@@ -302,7 +302,7 @@ const AppSidebar: React.FC = () => {
             {filteredNavItems.length > 0 && (
               <div>
                 <h2
-                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                  className={`h-8 px-2 flex items-center text-xs font-medium text-sidebar-foreground/70 ${
                     !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
                   }`}
                 >
@@ -315,7 +315,7 @@ const AppSidebar: React.FC = () => {
             {filteredOthersItems.length > 0 && (
               <div>
                 <h2
-                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                  className={`h-8 px-2 flex items-center text-xs font-medium text-sidebar-foreground/70 ${
                     !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
                   }`}
                 >

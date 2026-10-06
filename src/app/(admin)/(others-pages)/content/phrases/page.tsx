@@ -1381,7 +1381,7 @@ export default function PhrasesPage() {
 
         {/* Advanced Filters Panel */}
         {showAdvancedFilters && (
-          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-gray-800">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <StyledSelect
                 label="Alignment Filter"
@@ -2325,7 +2325,7 @@ export default function PhrasesPage() {
               type="button"
               onClick={confirmBulkRegenerateAudio}
               disabled={isBulkRegenerating || isLoadingVoices || !bulkRegenerateProvider || !bulkRegenerateVoiceId}
-              className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 text-sm font-semibold text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isBulkRegenerating ? "Regenerating..." : "Regenerate"}
             </button>

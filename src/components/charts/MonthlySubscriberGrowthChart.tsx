@@ -4,6 +4,8 @@ import React from "react";
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
 import { useMonthlySubscriberGrowth } from "@/hooks/useApi";
+import { chartTheme } from "@/components/charts/chartTheme";
+import { useTheme } from "@/context/ThemeContext";
 
 // Dynamically import ApexCharts with no SSR (browser-only)
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
@@ -26,6 +28,8 @@ interface ChartPoint {
  */
 export default function MonthlySubscriberGrowthChart() {
   const { data: growthData, isLoading, isError } = useMonthlySubscriberGrowth(12);
+  const { theme } = useTheme();
+  const c = chartTheme(theme);
 
   // Transform API data to chart format
   const chartPoints: ChartPoint[] = growthData
@@ -47,7 +51,7 @@ export default function MonthlySubscriberGrowthChart() {
   const options: ApexOptions = {
     colors: ["#10B981"], // Green for subscriber growth
     chart: {
-      fontFamily: "Outfit, sans-serif",
+      fontFamily: c.fontFamily,
       type: "bar",
       height: 180,
       toolbar: {
@@ -74,7 +78,7 @@ export default function MonthlySubscriberGrowthChart() {
       show: true,
       position: "top",
       horizontalAlign: "left",
-      fontFamily: "Outfit",
+      fontFamily: c.fontFamily,
     },
     xaxis: {
       categories: categories,
@@ -101,7 +105,7 @@ export default function MonthlySubscriberGrowthChart() {
       },
     },
     grid: {
-      borderColor: "#e5e7eb",
+      borderColor: c.grid,
       strokeDashArray: 4,
       yaxis: {
         lines: {

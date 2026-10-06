@@ -370,7 +370,7 @@ export default function LettersPage() {
           <p className="text-gray-500 dark:text-gray-400">No letters found for this language</p>
           <button
             onClick={openCreateModal}
-            className="mt-4 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+            className="mt-4 px-4 py-2 bg-brand-600 text-white dark:text-gray-900 rounded-lg hover:bg-brand-700 transition-colors"
           >
             Add Your First Letter
           </button>

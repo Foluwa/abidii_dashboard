@@ -658,7 +658,7 @@ export default function NumbersPage() {
 
         {/* Advanced Filters */}
         {showAdvancedFilters && (
-          <div className="mt-4 flex flex-wrap gap-4 border-t border-gray-100 pt-4 dark:border-white/[0.05]">
+          <div className="mt-4 flex flex-wrap gap-4 border-t border-gray-100 pt-4 dark:border-gray-800">
             <div className="min-w-[160px]">
               <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">Compound</label>
               <StyledSelect
@@ -825,7 +825,7 @@ export default function NumbersPage() {
               type="button"
               onClick={confirmBulkRegenerateAudio}
               disabled={isBulkRegenerating || !bulkRegenerateProvider || !bulkRegenerateVoiceId}
-              className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 text-sm font-semibold text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isBulkRegenerating ? "Regenerating..." : "Regenerate"}
             </button>
@@ -997,7 +997,7 @@ export default function NumbersPage() {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-300 dark:focus:ring-brand-800 transition-colors"
+                className="px-6 py-2.5 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-300 dark:focus:ring-brand-800 transition-colors"
               >
                 {editingNumber ? "Update Number" : "Create Number"}
               </button>

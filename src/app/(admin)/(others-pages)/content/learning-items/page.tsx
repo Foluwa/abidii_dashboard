@@ -835,7 +835,7 @@ export default function LearningItemsPage() {
 
         {/* Advanced Filters Panel */}
         {showAdvancedFilters && (
-          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-gray-800">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {!isGamesRoute && (
                 <div>

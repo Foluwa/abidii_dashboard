@@ -55,7 +55,7 @@ export default function AudioReconciliationPage() {
     <div>
       <PageBreadCrumb pageTitle="Audio Reconciliation" />
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+      <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -72,7 +72,7 @@ export default function AudioReconciliationPage() {
             type="button"
             onClick={startCheck}
             disabled={starting || isActive}
-            className="inline-flex shrink-0 items-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex shrink-0 items-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isActive ? "Checking..." : "Check for orphaned audio"}
           </button>
@@ -130,7 +130,7 @@ export default function AudioReconciliationPage() {
                 {result.broken.length > 0 && (
                   <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                      <thead className="bg-gray-50 dark:bg-white/[0.02]">
+                      <thead className="bg-gray-50 dark:bg-gray-800/40">
                         <tr>
                           <th className="px-4 py-2.5 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
                             Content

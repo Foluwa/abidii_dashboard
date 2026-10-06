@@ -57,7 +57,7 @@ function SummaryCard({
   hint: string;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-white/[0.05] dark:bg-white/[0.03]">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
       <div className="text-sm text-gray-500 dark:text-gray-400">{label}</div>
       <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{value}</div>
       <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">{hint}</div>
@@ -67,7 +67,7 @@ function SummaryCard({
 
 function CourseCard({ course }: { course: CurriculumReadinessCourse }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-white/[0.05] dark:bg-white/[0.03]">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -210,7 +210,7 @@ export default function CurriculumReadinessPage() {
           <button
             type="button"
             onClick={() => refresh()}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700"
           >
             Refresh
           </button>
@@ -220,7 +220,7 @@ export default function CurriculumReadinessPage() {
       {isError && <Alert variant="error">{getErrorMessage(isError)}</Alert>}
 
       {isLoading && (
-        <div className="rounded-xl border border-gray-200 bg-white p-5 text-sm text-gray-500 dark:border-white/[0.05] dark:bg-white/[0.03] dark:text-gray-400">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
           Loading readiness matrix...
         </div>
       )}
@@ -259,7 +259,7 @@ export default function CurriculumReadinessPage() {
             {data.languages.map((language) => (
               <section
                 key={language.target_language_id || language.target_language_code || 'unknown'}
-                className="rounded-xl border border-gray-200 bg-white p-5 dark:border-white/[0.05] dark:bg-white/[0.03]"
+                className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>

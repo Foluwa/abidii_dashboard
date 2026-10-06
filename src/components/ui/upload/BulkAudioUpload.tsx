@@ -320,7 +320,7 @@ export const BulkAudioUpload: React.FC<BulkAudioUploadProps> = ({
         <button
           onClick={uploadFiles}
           disabled={isUploading}
-          className="w-full px-4 py-3 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full px-4 py-3 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isUploading
             ? `Uploading ${statusCounts.uploading} of ${files.length}...`

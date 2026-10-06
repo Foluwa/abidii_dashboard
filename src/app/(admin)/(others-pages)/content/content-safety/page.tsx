@@ -83,7 +83,7 @@ export default function ContentSafetyPage() {
           ].map(([label, value]) => (
             <div
               key={label as string}
-              className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/[0.05] dark:bg-white/[0.03]"
+              className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
             >
               <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
               <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
@@ -93,7 +93,7 @@ export default function ContentSafetyPage() {
           ))}
         </div>
 
-        <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-gray-200 bg-white p-5 dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="w-60">
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">Category</label>
             <div className="mt-1">
@@ -112,16 +112,16 @@ export default function ContentSafetyPage() {
               type="button"
               onClick={runClassification}
               disabled={s?.classification_running}
-              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
+              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-600 disabled:opacity-50"
             >
               {s?.classification_running ? 'Classification running…' : 'Classify unchecked words'}
             </button>
           )}
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.05]" role="table">
-            <thead className="bg-gray-50 dark:bg-white/[0.02]">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table">
+            <thead className="bg-gray-50 dark:bg-gray-800/40">
               <tr>
                 <th className={th}>Word</th>
                 <th className={th}>Meaning</th>
@@ -131,7 +131,7 @@ export default function ContentSafetyPage() {
                 {isAdmin && <th className={th}>Action</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
               {isLoading && (
                 <tr><td className={td} colSpan={6}>Loading…</td></tr>
               )}

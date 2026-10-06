@@ -1333,7 +1333,7 @@ export default function TimePhrasesPage() {
 
           {/* Advanced Filters Panel */}
           {showAdvancedFilters && (
-            <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+            <div className="mt-5 border-t border-gray-100 pt-5 dark:border-gray-800">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
@@ -1478,7 +1478,7 @@ export default function TimePhrasesPage() {
 
       {/* Time Phrase Jobs Accordion */}
       {selectedLanguage && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <button
             type="button"
             onClick={() => setShowJobsAccordion(!showJobsAccordion)}
@@ -1488,7 +1488,7 @@ export default function TimePhrasesPage() {
             {showJobsAccordion ? <FiChevronUp className="h-4 w-4 text-gray-500" /> : <FiChevronDown className="h-4 w-4 text-gray-500" />}
           </button>
           {showJobsAccordion && (
-            <div className="border-t border-gray-100 px-5 py-4 dark:border-white/[0.05]">
+            <div className="border-t border-gray-100 px-5 py-4 dark:border-gray-800">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-200">
@@ -1518,7 +1518,7 @@ export default function TimePhrasesPage() {
                           type="button"
                           onClick={() => setTimePhraseApplyConfirm(jobType)}
                           disabled={timePhraseJobLoading}
-                          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+                          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white dark:text-gray-900 disabled:opacity-60"
                         >
                           Apply
                         </button>

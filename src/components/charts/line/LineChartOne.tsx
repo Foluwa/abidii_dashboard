@@ -4,12 +4,17 @@ import React from "react";
 import { ApexOptions } from "apexcharts";
 
 import dynamic from "next/dynamic";
+import { chartTheme } from "@/components/charts/chartTheme";
+import { useTheme } from "@/context/ThemeContext";
 // Dynamically import the ReactApexChart component
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
 export default function LineChartOne() {
+  const { theme } = useTheme();
+  const c = chartTheme(theme);
+
   const options: ApexOptions = {
     legend: {
       show: false, // Hide legend
@@ -18,7 +23,7 @@ export default function LineChartOne() {
     },
     colors: ["#465FFF", "#9CB9FF"], // Define line colors
     chart: {
-      fontFamily: "Outfit, sans-serif",
+      fontFamily: c.fontFamily,
       height: 310,
       type: "line", // Set the chart type to 'line'
       toolbar: {
@@ -96,7 +101,7 @@ export default function LineChartOne() {
       labels: {
         style: {
           fontSize: "12px", // Adjust font size for y-axis labels
-          colors: ["#6B7280"], // Color of the labels
+          colors: [c.text], // Color of the labels
         },
       },
       title: {

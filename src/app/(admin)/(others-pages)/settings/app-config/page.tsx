@@ -153,7 +153,7 @@ export default function AppConfigPage() {
             onClick={() => setFilterCategory("all")}
             className={`px-3 py-1 text-sm rounded-full transition-colors ${
               filterCategory === "all"
-                ? "bg-brand-600 text-white"
+                ? "bg-brand-600 text-white dark:text-gray-900"
                 : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
             }`}
           >
@@ -165,7 +165,7 @@ export default function AppConfigPage() {
               onClick={() => setFilterCategory(cat!)}
               className={`px-3 py-1 text-sm rounded-full transition-colors ${
                 filterCategory === cat
-                  ? "bg-brand-600 text-white"
+                  ? "bg-brand-600 text-white dark:text-gray-900"
                   : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
               }`}
             >
@@ -257,7 +257,7 @@ export default function AppConfigPage() {
                       <button
                         onClick={() => saveEdit(setting.key)}
                         disabled={isSaving}
-                        className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isSaving ? "Saving..." : "Save Changes"}
                       </button>

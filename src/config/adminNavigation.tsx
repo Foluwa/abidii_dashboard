@@ -2,15 +2,16 @@
 
 import React from "react";
 import {
-  BellIcon,
-  BoxCubeIcon,
-  GridIcon,
-  ListIcon,
-  PageIcon,
-  PieChartIcon,
-  TableIcon,
-  UserCircleIcon,
-} from "@/icons";
+  AudioLines,
+  Bell,
+  GraduationCap,
+  Layers,
+  LayoutDashboard,
+  PieChart,
+  Server,
+  Settings,
+  Users,
+} from "lucide-react";
 
 export type AdminNavItem = {
   name: string;
@@ -26,18 +27,18 @@ export type AdminNavItem = {
 export const mainNavigationItems: AdminNavItem[] = [
   {
     name: "Dashboard",
-    icon: <GridIcon />,
+    icon: <LayoutDashboard className="size-5" />,
     path: "/dashboard",
   },
   {
     name: "Analytics",
-    icon: <PieChartIcon />,
+    icon: <PieChart className="size-5" />,
     path: "/analytics",
     permission: "users:read",
   },
   {
     name: "Community",
-    icon: <UserCircleIcon />,
+    icon: <Users className="size-5" />,
     subItems: [
       { name: "Users", path: "/users", permission: "users:read" },
       { name: "Admins", path: "/users/admins", permission: "users:read" },
@@ -46,7 +47,7 @@ export const mainNavigationItems: AdminNavItem[] = [
   },
   {
     name: "Content",
-    icon: <ListIcon />,
+    icon: <Layers className="size-5" />,
     permission: "content:read",
     subItems: [
       {
@@ -91,7 +92,7 @@ export const mainNavigationItems: AdminNavItem[] = [
   },
   {
     name: "Curriculum",
-    icon: <PageIcon />,
+    icon: <GraduationCap className="size-5" />,
     permission: "content:read",
     subItems: [
       {
@@ -116,7 +117,7 @@ export const mainNavigationItems: AdminNavItem[] = [
   },
   {
     name: "Media",
-    icon: <BoxCubeIcon />,
+    icon: <AudioLines className="size-5" />,
     subItems: [
       { name: "Voices", path: "/audio/voices", permission: "audio:read" },
       { name: "Audio Jobs", path: "/audio/jobs", permission: "audio:read" },
@@ -125,7 +126,7 @@ export const mainNavigationItems: AdminNavItem[] = [
   },
   {
     name: "Notifications",
-    icon: <BellIcon />,
+    icon: <Bell className="size-5" />,
     permission: "users:read",
     subItems: [
       { name: "Compose", path: "/notifications" },
@@ -135,7 +136,7 @@ export const mainNavigationItems: AdminNavItem[] = [
   },
   {
     name: "System",
-    icon: <TableIcon />,
+    icon: <Server className="size-5" />,
     subItems: [
       {
         name: "Infrastructure",
@@ -185,7 +186,7 @@ export const mainNavigationItems: AdminNavItem[] = [
 export const personalNavigationItems: AdminNavItem[] = [
   {
     name: "Settings",
-    icon: <BoxCubeIcon />,
+    icon: <Settings className="size-5" />,
     path: "/settings",
     activePaths: ["/profile", "/settings/change-password"],
   },

@@ -6,6 +6,8 @@ import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useMonthlyUserGrowth } from "@/hooks/useApi";
+import { chartTheme } from "@/components/charts/chartTheme";
+import { useTheme } from "@/context/ThemeContext";
 
 interface ChartPoint {
   label: string;
@@ -20,6 +22,8 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
 export default function MonthlySalesChart() {
   const { data: growthData, isLoading, isError } = useMonthlyUserGrowth(12);
   const [isOpen, setIsOpen] = useState(false);
+  const { theme } = useTheme();
+  const c = chartTheme(theme);
 
   // Transform API data into chart format
   const chartPoints: ChartPoint[] = growthData
@@ -41,7 +45,7 @@ export default function MonthlySalesChart() {
   const options: ApexOptions = {
     colors: ["#465fff"],
     chart: {
-      fontFamily: "Outfit, sans-serif",
+      fontFamily: c.fontFamily,
       type: "bar",
       height: 180,
       toolbar: {
@@ -77,7 +81,7 @@ export default function MonthlySalesChart() {
       show: true,
       position: "top",
       horizontalAlign: "left",
-      fontFamily: "Outfit",
+      fontFamily: c.fontFamily,
     },
     yaxis: {
       title: {
@@ -121,7 +125,7 @@ export default function MonthlySalesChart() {
 
   if (isError) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white px-5 pt-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:px-6 sm:pt-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Monthly User Growth
         </h3>
@@ -140,7 +144,7 @@ export default function MonthlySalesChart() {
 
   if (!isLoading && chartPoints.length === 0) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white px-5 pt-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:px-6 sm:pt-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Monthly User Growth</h3>
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">No monthly user growth data available</p>
       </div>
@@ -148,7 +152,7 @@ export default function MonthlySalesChart() {
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white px-5 pt-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:px-6 sm:pt-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Monthly User Growth

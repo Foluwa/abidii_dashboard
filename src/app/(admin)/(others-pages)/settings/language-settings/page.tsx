@@ -237,7 +237,7 @@ export default function LanguageSettingsPage() {
                         <button
                           onClick={() => handleSave(lang.id)}
                           disabled={saving === lang.id}
-                          className="px-3 py-1 text-xs font-medium text-white bg-brand-500 hover:bg-brand-600 
+                          className="px-3 py-1 text-xs font-medium text-white dark:text-gray-900 bg-brand-500 hover:bg-brand-600 
                                      rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {saving === lang.id ? "Saving..." : "Save"}

@@ -1468,7 +1468,7 @@ export default function ProverbsPage() {
 
         {/* Advanced Filters Panel */}
         {showAdvancedFilters && (
-          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-gray-800">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
@@ -2214,7 +2214,7 @@ export default function ProverbsPage() {
                 <button
                   type="submit"
                   disabled={uploadingAudio}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploadingAudio ? "Uploading..." : editingProverb ? "Update" : "Create"}
                 </button>

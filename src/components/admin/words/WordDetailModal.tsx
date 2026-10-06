@@ -387,7 +387,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                         className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4"
                       >
                         <div className="flex items-start gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 bg-brand-600 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                          <span className="flex-shrink-0 w-6 h-6 bg-brand-600 text-white dark:text-gray-900 rounded-full flex items-center justify-center text-xs font-medium">
                             {idx + 1}
                           </span>
                           <div className="flex-1 space-y-2">
@@ -640,7 +640,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                   <button
                     onClick={handleGenerateExamples}
                     disabled={isGenerating}
-                    className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-gray-400 text-white rounded-lg flex items-center gap-2 text-sm"
+                    className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-gray-400 text-white dark:text-gray-900 rounded-lg flex items-center gap-2 text-sm"
                   >
                     {isGenerating ? (
                       <>
@@ -868,7 +868,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                     <button
                       onClick={handleRegenerateAudio}
                       disabled={isRegeneratingAudio}
-                      className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-gray-400 text-white rounded-lg flex items-center gap-2 text-sm"
+                      className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-gray-400 text-white dark:text-gray-900 rounded-lg flex items-center gap-2 text-sm"
                     >
                       {isRegeneratingAudio ? (
                         <>
@@ -910,7 +910,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                       {audio.audio_url ? (
                         <button
                           onClick={() => playAudio(audio.audio_url!, `audio-${audio.id}`)}
-                          className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg flex items-center gap-2 text-sm"
+                          className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white dark:text-gray-900 rounded-lg flex items-center gap-2 text-sm"
                         >
                           <FiVolume2 />
                           {playingAudio === `audio-${audio.id}` ? 'Playing...' : 'Play'}

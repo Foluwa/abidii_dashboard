@@ -509,7 +509,7 @@ export default function CollectionsPage() {
         {selectedCollection && <button onClick={startEditingCollection} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-white">Edit collection</button>}
         {selectedCollection && <button onClick={() => toggleCollectionPublished().catch((reason) => setError(reason?.response?.data?.detail || "Could not update collection"))} className="rounded-lg border border-brand-500 px-4 py-2 text-sm font-medium text-brand-600 dark:text-brand-300">{selectedCollection.status === "published" ? "Return to draft" : "Publish collection"}</button>}
         {selected && <button onClick={() => setShowAddItem(true)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-white">New item</button>}
-        <button onClick={() => setShowCreateCollection(true)} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white">New collection</button>
+        <button onClick={() => setShowCreateCollection(true)} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white dark:text-gray-900">New collection</button>
       </div>
 
       {showBulkImport && (
@@ -519,7 +519,7 @@ export default function CollectionsPage() {
             <label className="text-sm text-gray-700 dark:text-gray-300">Google Sheet URL or ID<input required value={sheetReference} onChange={(event) => setSheetReference(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
             <label className="text-sm text-gray-700 dark:text-gray-300">Worksheet name<input required value={worksheetTitle} onChange={(event) => setWorksheetTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
           </div>
-          <div className="flex items-center gap-3"><button disabled={isImporting} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{isImporting ? "Importing…" : "Import sheet"}</button>{importSummary && <span className="text-sm text-emerald-600 dark:text-emerald-400">{importSummary}</span>}</div>
+          <div className="flex items-center gap-3"><button disabled={isImporting} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 disabled:opacity-50">{isImporting ? "Importing…" : "Import sheet"}</button>{importSummary && <span className="text-sm text-emerald-600 dark:text-emerald-400">{importSummary}</span>}</div>
         </form>
       )}
 

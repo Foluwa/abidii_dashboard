@@ -6,6 +6,8 @@ import { useState } from "react";
 import { MoreDotIcon } from "@/icons";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
+import { chartTheme } from "@/components/charts/chartTheme";
+import { useTheme } from "@/context/ThemeContext";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -14,6 +16,8 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
 export default function UserActivityGaugeChart() {
   const { stats, isLoading, isError } = useSystemStats();
   const [isOpen, setIsOpen] = useState(false);
+  const { theme } = useTheme();
+  const c = chartTheme(theme);
 
   const totalUsers = stats?.total_users || 0;
   const activeUsers = stats?.active_users_today || 0;
@@ -23,7 +27,7 @@ export default function UserActivityGaugeChart() {
   const options: ApexOptions = {
     colors: ["#10b981"],
     chart: {
-      fontFamily: "Outfit, sans-serif",
+      fontFamily: c.fontFamily,
       type: "radialBar",
       height: 320,
     },
@@ -36,19 +40,19 @@ export default function UserActivityGaugeChart() {
           background: "transparent",
         },
         track: {
-          background: "#e2e8f0",
+          background: c.grid,
           strokeWidth: "100%",
         },
         dataLabels: {
           name: {
             offsetY: -10,
-            color: "#64748b",
+            color: c.text,
             fontSize: "14px",
             fontWeight: 500,
           },
           value: {
             offsetY: 5,
-            color: "#1e293b",
+            color: c.heading,
             fontSize: "32px",
             fontWeight: 700,
             formatter: (val: number) => `${val.toFixed(1)}%`,
@@ -87,7 +91,7 @@ export default function UserActivityGaugeChart() {
 
   if (isError) {
     return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           User Activity
         </h3>
@@ -97,7 +101,7 @@ export default function UserActivityGaugeChart() {
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:p-6">
       <div className="flex justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">

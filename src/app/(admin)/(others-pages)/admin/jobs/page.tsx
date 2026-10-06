@@ -146,7 +146,7 @@ function JobDetailModal({
                   <button
                     type="button"
                     onClick={() => setConfirmAction("retry")}
-                    className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+                    className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700"
                   >
                     Retry
                   </button>
@@ -289,7 +289,7 @@ export default function AdminJobsPage() {
         </button>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div className="grid gap-4 md:grid-cols-4">
           <div>
             <StyledSelect
@@ -428,7 +428,7 @@ export default function AdminJobsPage() {
         )}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-900/50">

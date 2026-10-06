@@ -49,7 +49,7 @@ export default function InlineAudioPlayer({ src, size = 'sm' }: InlineAudioPlaye
       <button
         type="button"
         onClick={toggle}
-        className={`inline-flex ${btnSize} items-center justify-center rounded-full bg-brand-600 text-white hover:bg-brand-700 transition-colors`}
+        className={`inline-flex ${btnSize} items-center justify-center rounded-full bg-brand-600 text-white dark:text-gray-900 hover:bg-brand-700 transition-colors`}
         title={playing ? 'Pause' : 'Play'}
         aria-label={playing ? 'Pause' : 'Play'}
       >

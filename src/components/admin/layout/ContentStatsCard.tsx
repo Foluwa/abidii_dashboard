@@ -22,7 +22,7 @@ export function ContentStatsCard({
   iconTextClass = 'text-brand-600 dark:text-brand-400',
 }: ContentStatsCardProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
       <div className="p-5">
         <div className="flex items-center justify-between">
           <div>

@@ -2,6 +2,8 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
+import { chartTheme } from "@/components/charts/chartTheme";
+import { useTheme } from "@/context/ThemeContext";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -27,10 +29,13 @@ export default function RoomsTimeSeriesChart({
   colors = ["#465FFF", "#12B76A", "#F79009"],
   height = 220,
 }: RoomsTimeSeriesChartProps) {
+  const { theme } = useTheme();
+  const c = chartTheme(theme);
+
   const options: ApexOptions = {
     colors,
     chart: {
-      fontFamily: "Outfit, sans-serif",
+      fontFamily: c.fontFamily,
       type: "bar",
       height,
       toolbar: { show: false },
@@ -56,10 +61,10 @@ export default function RoomsTimeSeriesChart({
       show: true,
       position: "top",
       horizontalAlign: "left",
-      fontFamily: "Outfit",
+      fontFamily: c.fontFamily,
     },
     grid: {
-      borderColor: "#e5e7eb",
+      borderColor: c.grid,
       strokeDashArray: 4,
       yaxis: { lines: { show: true } },
     },

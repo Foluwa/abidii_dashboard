@@ -50,7 +50,7 @@ export default function ContentReportsPage() {
       <PageBreadCrumb pageTitle="Content Reports" />
 
       <div className="space-y-6">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">Status</label>
@@ -68,10 +68,10 @@ export default function ContentReportsPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.05]" role="table">
-              <thead className="bg-gray-50 dark:bg-white/[0.02]">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table">
+              <thead className="bg-gray-50 dark:bg-gray-800/40">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Reported at</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Word</th>
@@ -81,7 +81,7 @@ export default function ContentReportsPage() {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                 {isLoading && (
                   <tr>
                     <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={6}>
@@ -137,7 +137,7 @@ export default function ContentReportsPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Showing {pageStart} to {pageEnd} of {total} content reports
           </p>

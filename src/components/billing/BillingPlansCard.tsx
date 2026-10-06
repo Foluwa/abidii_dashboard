@@ -76,8 +76,8 @@ export default function BillingPlansCard() {
   const [expandedPlanId, setExpandedPlanId] = React.useState<string | null>(null);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-      <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-gray-800 dark:bg-gray-800/40">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -150,7 +150,7 @@ export default function BillingPlansCard() {
               return (
                 <div
                   key={plan.plan_id}
-                  className="rounded-lg border border-gray-200 bg-gray-50/50 px-4 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]"
+                  className="rounded-lg border border-gray-200 bg-gray-50/50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/40"
                 >
                   <button
                     type="button"

@@ -236,7 +236,7 @@ export default function OrphanAssetsPage() {
             type="button"
             onClick={() => void handleRunScan('active')}
             disabled={isSubmittingScan || isScanRunning}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:opacity-50"
           >
             {isSubmittingScan && !isScanRunning ? 'Queueing…' : isScanRunning ? 'Scan Running…' : 'Run Active Scan'}
           </button>

@@ -13,7 +13,6 @@ import Alert from "@/components/ui/alert/SimpleAlert";
 import StatusBadge from "@/components/admin/StatusBadge";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import Pagination from "@/components/tables/Pagination";
-import Link from "next/link";
 import { FaApple, FaGoogle, FaGlobe, FaMobileAlt, FaEnvelope } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { FiAward, FiEye, FiTrash2, FiUserCheck, FiUserX, FiAlertOctagon } from "react-icons/fi";
@@ -27,6 +26,8 @@ import {
   type AdminCourseLearningState,
   type UserLearningPosition,
 } from "@/lib/user-learning-position";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { UserDetailPanel } from "@/components/admin/users/UserDetailPanel";
 
 type TabRole = "all" | UserRole;
 type ActionType = "deactivate" | "reactivate" | "delete" | "purge";
@@ -148,6 +149,7 @@ export default function UsersPage() {
   // Action confirmation modal
   const [actionConfirm, setActionConfirm] = useState<ActionConfirm | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [fluencyByUser, setFluencyByUser] = useState<Record<string, string | null>>({});
   const [learningPositionByUser, setLearningPositionByUser] = useState<
     Record<string, UserLearningPosition | null>
@@ -453,9 +455,11 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <PageBreadCrumb pageTitle="Users" />
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      <div className="space-y-1">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          Users
+        </h1>
+        <p className="text-sm text-muted-foreground">
           Manage all platform users
         </p>
       </div>
@@ -821,33 +825,33 @@ export default function UsersPage() {
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-800">
+                <thead>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Device
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Country
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Learning
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Language
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Last Request
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Date Joined
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-right text-sm font-medium text-foreground">
                       Actions
                     </th>
                   </tr>
@@ -855,8 +859,12 @@ export default function UsersPage() {
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                   {users && users.users && users.users.length > 0 ? (
                     users.users.map((user: any) => (
-                      <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                      <tr
+                        key={user.id}
+                        onClick={() => setSelectedUserId(user.id)}
+                        className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                      >
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             {/* Avatar */}
                             <div className="flex-shrink-0">
@@ -877,43 +885,15 @@ export default function UsersPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <span className="flex items-center">{getDeviceIcon(user.device_platform)}</span>
-                            <div>
-                              <div className="text-sm text-gray-900 dark:text-white">
-                                {user.device_platform ? user.device_platform.charAt(0).toUpperCase() + user.device_platform.slice(1) : "Unknown"}
-                              </div>
-                              {user.device_name && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]" title={user.device_name}>
-                                  {user.device_name}
-                                </div>
-                              )}
-                              {user.device_app_version && (
-                                <div className="text-xs text-gray-400 dark:text-gray-500">
-                                  v{user.device_app_version}{user.device_build_number ? `(${user.device_build_number})` : ''}
-                                </div>
-                              )}
-                              {user.device_id && (
-                                <div
-                                  className="text-xs font-mono text-gray-400 dark:text-gray-500 truncate max-w-[140px]"
-                                  title={`Device ID: ${user.device_id}`}
-                                >
-                                  ID: {user.device_id}
-                                </div>
-                              )}
-                              {user.last_ip_address && (
-                                <div
-                                  className="text-xs font-mono text-gray-400 dark:text-gray-500 truncate max-w-[140px]"
-                                  title={`Last IP: ${user.last_ip_address}`}
-                                >
-                                  IP: {user.last_ip_address}
-                                </div>
-                              )}
-                            </div>
+                            <span className="text-sm text-foreground">
+                              {user.device_platform ? user.device_platform.charAt(0).toUpperCase() + user.device_platform.slice(1) : "Unknown"}
+                            </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
                             {countryFlag(user.country_code) && (
                               <span className="text-base leading-none">{countryFlag(user.country_code)}</span>
@@ -921,7 +901,7 @@ export default function UsersPage() {
                             <span>{user.country_code ? user.country_code.toUpperCase() : "—"}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-2">
                           <div className="space-y-1.5">
                             {user.current_language_name ? (
                               <StatusBadge status="info" label={user.current_language_name} />
@@ -965,7 +945,7 @@ export default function UsersPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           {user.ui_locale_name ? (
                             <span title={user.ui_locale}>
                               <StatusBadge status="info" label={user.ui_locale_name} />
@@ -979,30 +959,33 @@ export default function UsersPage() {
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <div className="text-sm text-gray-600 dark:text-gray-400" title={getLastRequestAt(user) ? new Date(getLastRequestAt(user)!).toLocaleString() : "Never"}>
                             {formatLastRequest(getLastRequestAt(user))}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <div className="text-sm text-gray-600 dark:text-gray-400" title={user.created_at ? new Date(user.created_at).toLocaleString() : undefined}>
                             {formatDateJoined(user.created_at)}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <StatusBadge status={user.is_active ? "success" : "error"}
                             label={user.is_active ? "Active" : "Inactive"} />
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end gap-2">
-                            <Link
-                              href={`/users/${user.id}`}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedUserId(user.id);
+                              }}
                               aria-label={`View ${user.display_name || user.email || "user"}`}
                               title="View user"
                               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-600 hover:bg-brand-50 hover:text-brand-900 dark:text-brand-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-300"
                             >
                               <FiEye className="h-5 w-5" aria-hidden="true" />
-                            </Link>
+                            </button>
                             {user.is_active ? (
                               <button
                                 onClick={() => setActionConfirm({ userId: user.id, action: "deactivate", userName: user.display_name || user.email })}
@@ -1112,6 +1095,26 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+
+      {/* User detail side panel */}
+      <Sheet open={!!selectedUserId} onOpenChange={(open) => !open && setSelectedUserId(null)}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+          <SheetHeader>
+            <SheetTitle>User Details</SheetTitle>
+          </SheetHeader>
+          {selectedUserId && (
+            <UserDetailPanel
+              userId={selectedUserId}
+              onActionComplete={(action) => {
+                if (action === "delete" || action === "purge") {
+                  setSelectedUserId(null);
+                }
+                refresh();
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

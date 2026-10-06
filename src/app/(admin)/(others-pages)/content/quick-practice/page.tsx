@@ -95,16 +95,16 @@ export default function QuickPracticePage() {
           <PageBreadCrumb pageTitle="Quick Practice" />
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage Quick Practice carousel items on the home screen</p>
         </div>
-        <button onClick={handleNew} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700">
+        <button onClick={handleNew} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700">
           <FiPlus className="w-4 h-4" /> Add Item
         </button>
       </div>
 
       {error && <Alert variant="error">{error}</Alert>}
 
-      <div className="rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] overflow-hidden">
+      <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="border-b border-gray-200 dark:border-white/[0.05] bg-gray-50 dark:bg-white/[0.02]">
+          <thead className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40">
             <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Order</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">ID</th>
@@ -115,7 +115,7 @@ export default function QuickPracticePage() {
               <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-white/[0.03]">
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {items.map((item, index) => (
               <tr key={item.item_id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
                 <td className="px-4 py-3">
@@ -184,7 +184,7 @@ export default function QuickPracticePage() {
               <button onClick={() => { setShowForm(false); setEditing(null); }}
                 className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
               <button onClick={handleSave} disabled={isSaving}
-                className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50">
+                className="px-4 py-2 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50">
                 {isSaving ? "Saving..." : "Save"}
               </button>
             </div>

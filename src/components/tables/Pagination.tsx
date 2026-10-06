@@ -77,7 +77,7 @@ const Pagination: React.FC<PaginationProps> = ({
               aria-current={safeCurrentPage === page ? "page" : undefined}
               className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium ${
                 safeCurrentPage === page
-                  ? "bg-brand-600 text-white"
+                  ? "bg-brand-600 text-white dark:text-gray-900"
                   : "text-gray-700 hover:bg-blue-500/[0.08] hover:text-brand-500 dark:text-gray-300 dark:hover:text-brand-500"
               }`}
             >

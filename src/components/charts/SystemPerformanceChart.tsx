@@ -6,6 +6,8 @@ import { useState } from "react";
 import { MoreDotIcon } from "@/icons";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
+import { chartTheme } from "@/components/charts/chartTheme";
+import { useTheme } from "@/context/ThemeContext";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -14,11 +16,13 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
 export default function SystemPerformanceChart() {
   const { metrics, isLoading, isError } = useSystemMetrics();
   const [isOpen, setIsOpen] = useState(false);
+  const { theme } = useTheme();
+  const c = chartTheme(theme);
 
   const options: ApexOptions = {
     colors: ["#465fff", "#10b981", "#f59e0b"],
     chart: {
-      fontFamily: "Outfit, sans-serif",
+      fontFamily: c.fontFamily,
       type: "line",
       height: 250,
       toolbar: {
@@ -42,7 +46,7 @@ export default function SystemPerformanceChart() {
       },
       labels: {
         style: {
-          colors: "#94a3b8",
+          colors: c.text,
           fontSize: "12px",
         },
       },
@@ -52,21 +56,21 @@ export default function SystemPerformanceChart() {
       max: 100,
       labels: {
         style: {
-          colors: "#94a3b8",
+          colors: c.text,
           fontSize: "12px",
         },
         formatter: (val: number) => `${val.toFixed(0)}%`,
       },
     },
     grid: {
-      borderColor: "#e2e8f0",
+      borderColor: c.grid,
       strokeDashArray: 5,
     },
     legend: {
       position: "top",
       horizontalAlign: "right",
       labels: {
-        colors: "#64748b",
+        colors: c.text,
       },
     },
     tooltip: {
@@ -101,7 +105,7 @@ export default function SystemPerformanceChart() {
 
   if (isError) {
     return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           System Performance
         </h3>
@@ -111,7 +115,7 @@ export default function SystemPerformanceChart() {
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 sm:p-6">
       <div className="flex justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">

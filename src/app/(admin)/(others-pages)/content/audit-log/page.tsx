@@ -172,7 +172,7 @@ export default function AdminAuditLogPage() {
       <PageBreadCrumb pageTitle="Audit Log" />
 
       <div className="space-y-6">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           {/* Ops Mode bar */}
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <button
@@ -181,7 +181,7 @@ export default function AdminAuditLogPage() {
               onClick={() => setOpsMode((m) => !m)}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                 opsMode
-                  ? 'bg-brand-600 text-white hover:bg-brand-700'
+                  ? 'bg-brand-600 text-white dark:text-gray-900 hover:bg-brand-700'
                   : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-white/[0.05]'
               }`}
             >
@@ -358,10 +358,10 @@ export default function AdminAuditLogPage() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.05]" role="table">
-              <thead className="bg-gray-50 dark:bg-white/[0.02]">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table">
+              <thead className="bg-gray-50 dark:bg-gray-800/40">
                 {opsMode ? (
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Time</th>
@@ -382,7 +382,7 @@ export default function AdminAuditLogPage() {
                   </tr>
                 )}
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                 {isLoading && (
                   <tr>
                     <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={6}>
@@ -483,7 +483,7 @@ export default function AdminAuditLogPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Showing {pageStart} to {pageEnd} of {total} audit log entries
           </p>

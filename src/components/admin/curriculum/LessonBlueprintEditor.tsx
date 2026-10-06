@@ -3368,7 +3368,7 @@ export function LessonBlueprintEditor({
                       aria-pressed={assetLibraryTab === 'local'}
                       className={`rounded-full px-3 py-2 text-xs font-medium transition ${
                         assetLibraryTab === 'local'
-                          ? 'bg-brand-600 text-white'
+                          ? 'bg-brand-600 text-white dark:text-gray-900'
                           : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800'
                       }`}
                     >
@@ -3380,7 +3380,7 @@ export function LessonBlueprintEditor({
                       aria-pressed={assetLibraryTab === 'global'}
                       className={`rounded-full px-3 py-2 text-xs font-medium transition ${
                         assetLibraryTab === 'global'
-                          ? 'bg-brand-600 text-white'
+                          ? 'bg-brand-600 text-white dark:text-gray-900'
                           : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800'
                       }`}
                     >
@@ -4546,7 +4546,7 @@ export function LessonBlueprintEditor({
           type="button"
           onClick={handleSave}
           disabled={isSaving || isPreviewing}
-          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSaving ? 'Saving…' : mode === 'create' ? 'Create Draft' : 'Save Draft'}
         </button>

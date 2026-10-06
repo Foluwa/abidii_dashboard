@@ -153,7 +153,7 @@ export default function WordsDataTable({
 
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-center justify-center p-12">
           <div className="flex flex-col items-center gap-3">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-brand-600 dark:border-gray-700 dark:border-t-brand-500"></div>
@@ -167,9 +167,9 @@ export default function WordsDataTable({
   return (
     <>
     {/* Desktop Table View */}
-    <div className="hidden lg:block overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+    <div className="hidden lg:block overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       {/* Search Bar */}
-      <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-4 dark:border-white/[0.05] dark:bg-white/[0.02]">
+      <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/40">
         <div className="flex items-center gap-3">
           <div className="relative flex-1">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -195,12 +195,12 @@ export default function WordsDataTable({
         <div className="min-w-[1000px]">
           <Table>
             {/* Table Header */}
-            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+            <TableHeader className="border-b border-gray-100 dark:border-gray-800">
               <TableRow>
                 {onSelectAll && (
                   <TableCell
                     isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 w-12"
+                    className="px-3 py-2 text-start w-12"
                   >
                     <input
                       type="checkbox"
@@ -212,43 +212,43 @@ export default function WordsDataTable({
                 )}
                 <TableCell
                   isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  className="px-3 py-2 text-start"
                 >
                   Word
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  className="px-3 py-2 text-start"
                 >
                   Part of Speech
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  className="px-3 py-2 text-start"
                 >
                   Translations
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  className="px-3 py-2 text-start"
                 >
                   Difficulty
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  className="px-3 py-2 text-start"
                 >
                   Status
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  className="px-3 py-2 text-start"
                 >
                   Audio
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-end text-theme-xs dark:text-gray-400"
+                  className="px-3 py-2 text-end"
                 >
                   Actions
                 </TableCell>
@@ -256,12 +256,12 @@ export default function WordsDataTable({
             </TableHeader>
 
             {/* Table Body */}
-            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
               {words && words.length > 0 ? (
                 words.map((word) => (
                   <TableRow
                     key={word.id}
-                    className="transition-colors hover:bg-gray-50/50 dark:hover:bg-white/[0.02]"
+                    className="transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-800/40"
                   >
                     {/* Checkbox Column */}
                     {onSelectWord && (
@@ -432,7 +432,7 @@ export default function WordsDataTable({
     {/* Mobile Grid View */}
     <div className="lg:hidden">
       {/* Search Bar */}
-      <div className="mb-4 rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] px-4 py-3">
+      <div className="mb-4 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 px-4 py-3">
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <FiSearch className="h-4 w-4 text-gray-400" />
@@ -449,7 +449,7 @@ export default function WordsDataTable({
 
       {/* Grid Cards */}
       {isLoading ? (
-        <div className="flex items-center justify-center p-12 rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="flex items-center justify-center p-12 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <div className="flex flex-col items-center gap-3">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-brand-600 dark:border-gray-700 dark:border-t-brand-500"></div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Loading lexicon entries...</p>
@@ -460,7 +460,7 @@ export default function WordsDataTable({
           {words.map((word) => (
             <div
               key={word.id}
-              className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/[0.05] dark:bg-white/[0.03]"
+              className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
             >
               {/* Word Header — Yoruba headline, English lemma as caption */}
               <div className="mb-3 flex items-start justify-between">
@@ -559,7 +559,7 @@ export default function WordsDataTable({
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-white p-12 dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-white p-12 dark:border-gray-800 dark:bg-gray-900">
           <FiSearch className="h-12 w-12 text-gray-300 dark:text-gray-700" />
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No lexicon entries found</p>
           <p className="text-xs text-gray-400 dark:text-gray-500">

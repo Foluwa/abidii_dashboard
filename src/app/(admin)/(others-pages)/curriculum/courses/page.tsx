@@ -368,7 +368,7 @@ export default function CurriculumCoursesListPage() {
           <button
             type="button"
             onClick={openCreateCourseModal}
-            className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700"
           >
             New Course
           </button>
@@ -382,7 +382,7 @@ export default function CurriculumCoursesListPage() {
       </div>
 
       {/* Filters + Actions */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="p-5">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div>
@@ -437,7 +437,7 @@ export default function CurriculumCoursesListPage() {
                 type="button"
                 disabled={selectedIds.length === 0 || isBulkRunning}
                 onClick={onBulkValidate}
-                className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Validate Selected
               </button>
@@ -474,7 +474,7 @@ export default function CurriculumCoursesListPage() {
 
       {/* Results summary */}
       {lastBulkOutcomes && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <div className="p-5">
             <div className="text-sm font-medium text-gray-900 dark:text-white">Last bulk run</div>
             <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
@@ -505,8 +505,8 @@ export default function CurriculumCoursesListPage() {
 
             {lastBulkOutcomes.some((o) => o.outcome !== 'success') && (
               <div className="mt-4 overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.05]" role="table">
-                  <thead className="bg-gray-50 dark:bg-white/[0.02]">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table">
+                  <thead className="bg-gray-50 dark:bg-gray-800/40">
                     <tr>
                       <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Course</th>
                       <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Outcome</th>
@@ -514,7 +514,7 @@ export default function CurriculumCoursesListPage() {
                       <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                     {lastBulkOutcomes
                       .filter((o) => o.outcome !== 'success')
                       .map((o) => (
@@ -563,10 +563,10 @@ export default function CurriculumCoursesListPage() {
       </Modal>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.05]" role="table">
-            <thead className="bg-gray-50 dark:bg-white/[0.02]">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table">
+            <thead className="bg-gray-50 dark:bg-gray-800/40">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">
                   <input
@@ -583,7 +583,7 @@ export default function CurriculumCoursesListPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
               {isLoading && (
                 <tr>
                   <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={6}>

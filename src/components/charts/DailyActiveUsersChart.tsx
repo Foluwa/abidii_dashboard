@@ -4,6 +4,8 @@ import React from "react";
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
 import { useDailyActiveUsers } from "@/hooks/useApi";
+import { chartTheme } from "@/components/charts/chartTheme";
+import { useTheme } from "@/context/ThemeContext";
 
 // Dynamically import ApexCharts with no SSR (browser-only)
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
@@ -24,6 +26,8 @@ interface DailyActiveUsersItem {
  */
 export default function DailyActiveUsersChart({ days = 30 }: { days?: number }) {
   const { data: dauData, average, isLoading, isError } = useDailyActiveUsers(days);
+  const { theme } = useTheme();
+  const c = chartTheme(theme);
 
   const categories = dauData.map((item: DailyActiveUsersItem) =>
     new Date(`${item.date}T00:00:00Z`).toLocaleDateString("default", {
@@ -40,7 +44,7 @@ export default function DailyActiveUsersChart({ days = 30 }: { days?: number }) 
   const options: ApexOptions = {
     colors: hasSplit ? ["#465FFF", "#12B76A"] : ["#465FFF"],
     chart: {
-      fontFamily: "Outfit, sans-serif",
+      fontFamily: c.fontFamily,
       type: "area",
       height: 220,
       stacked: hasSplit,
@@ -86,7 +90,7 @@ export default function DailyActiveUsersChart({ days = 30 }: { days?: number }) 
       show: hasSplit,
       position: "top",
       horizontalAlign: "left",
-      fontFamily: "Outfit",
+      fontFamily: c.fontFamily,
     },
     tooltip: {
       shared: true,
@@ -97,7 +101,7 @@ export default function DailyActiveUsersChart({ days = 30 }: { days?: number }) 
       },
     },
     grid: {
-      borderColor: "#e5e7eb",
+      borderColor: c.grid,
       strokeDashArray: 4,
       yaxis: {
         lines: {

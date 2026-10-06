@@ -67,7 +67,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   const contentClasses = isFullscreen
     ? "w-full h-full"
-    : `relative w-full ${maxWidthClasses[maxWidth]} mx-4 my-8 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl`;
+    : `relative w-full ${maxWidthClasses[maxWidth]} mx-4 my-8 rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900`;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999 p-4">
@@ -106,8 +106,8 @@ export const Modal: React.FC<ModalProps> = ({
         )}
         <div className="relative">
           {title && (
-            <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-800">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {title}
               </h3>
             </div>

@@ -2,259 +2,265 @@
 
 import React from "react";
 import Link from "next/link";
+import { BookOpen, Grid3x3, Users, UserRound } from "lucide-react";
+
 import { useSystemStatus, useSystemStats } from "@/hooks/useApi";
-import StatCard from "@/components/admin/StatCard";
-import StatusBadge from "@/components/admin/StatusBadge";
-import { GridIcon, UserCircleIcon, ListIcon } from "@/icons";
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
-import Alert from "@/components/ui/alert/SimpleAlert";
-import PlatformDistributionChart from "@/components/charts/PlatformDistributionChart";
-import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
-import MonthlySubscriberGrowthChart from "@/components/charts/MonthlySubscriberGrowthChart";
-import DailyActiveUsersChart from "@/components/charts/DailyActiveUsersChart";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MonthlyUserGrowthChart } from "@/components/charts/recharts/MonthlyUserGrowthChart";
+import { DailyActiveUsersChart } from "@/components/charts/recharts/DailyActiveUsersChart";
+import { PlatformDistributionChart } from "@/components/charts/recharts/PlatformDistributionChart";
+import { MonthlySubscriberGrowthChart } from "@/components/charts/recharts/MonthlySubscriberGrowthChart";
 import CountryMap from "@/components/ecommerce/CountryMap";
 import RecentActivityFeed from "@/components/dashboard/RecentActivityFeed";
 import BillingPlansCard from "@/components/billing/BillingPlansCard";
 import UserRetentionCard from "@/components/analytics/UserRetentionCard";
 
 export default function Dashboard() {
-  const { status, isLoading: statusLoading, isError: statusError } = useSystemStatus();
-  const { stats, isLoading: statsLoading, isError: statsError } = useSystemStats();
+  const { status, isError: statusError } = useSystemStatus();
+  const { stats, isLoading: statsLoading } = useSystemStats();
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <PageBreadCrumb pageTitle="Dashboard" />
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Welcome to Abidii Admin Dashboard - Monitor and manage your language learning platform
+    <div className="flex flex-col gap-4 md:gap-6">
+      <section className="space-y-5">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            Dashboard
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Monitor and manage your language learning platform.
           </p>
         </div>
-      </div>
 
-      {/* System Status Alert */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Card>
+            <CardHeader>
+              <CardDescription>Total Users</CardDescription>
+              <CardAction>
+                <Users className="size-4 text-muted-foreground" />
+              </CardAction>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <span className="text-3xl leading-none tracking-tight">
+                {statsLoading
+                  ? "—"
+                  : (stats?.total_users ?? 0).toLocaleString()}
+              </span>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardDescription>Active Today</CardDescription>
+              <CardAction>
+                <UserRound className="size-4 text-muted-foreground" />
+              </CardAction>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl leading-none tracking-tight">
+                  {statsLoading
+                    ? "—"
+                    : (stats?.active_users_today ?? 0).toLocaleString()}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardDescription>Lesson Blueprints</CardDescription>
+              <CardAction>
+                <BookOpen className="size-4 text-muted-foreground" />
+              </CardAction>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <span className="text-3xl leading-none tracking-tight">
+                {statsLoading
+                  ? "—"
+                  : (stats?.total_lessons ?? 0).toLocaleString()}
+              </span>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardDescription>Total Words</CardDescription>
+              <CardAction>
+                <Grid3x3 className="size-4 text-muted-foreground" />
+              </CardAction>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <span className="text-3xl leading-none tracking-tight">
+                {statsLoading
+                  ? "—"
+                  : (stats?.total_words ?? 0).toLocaleString()}
+              </span>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       {statusError && (
-        <Alert variant="error">
-          Failed to load system status. Please check your API connection.
-        </Alert>
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardContent className="py-4 text-sm text-destructive">
+            Failed to load system status. Please check your API connection.
+          </CardContent>
+        </Card>
       )}
 
-      {/* System Health Status */}
       {status && (
-        <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              System Health
-            </h3>
-            <button
-              onClick={() => window.location.reload()}
-              className="text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400"
-            >
-              Refresh
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Monitoring</p>
-              <StatusBadge status={status.monitoring_enabled ? 'online' : 'offline'} />
+        <Card>
+          <CardHeader>
+            <CardDescription>System Health</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Monitoring</div>
+                <Badge
+                  variant="outline"
+                  className={
+                    status.monitoring_enabled
+                      ? "border-green-200 bg-green-500/10 text-green-700 dark:border-green-900/40 dark:bg-green-500/15 dark:text-green-300"
+                      : "border-destructive/20 bg-destructive/10 text-destructive"
+                  }
+                >
+                  {status.monitoring_enabled ? "Online" : "Offline"}
+                </Badge>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Telegram</div>
+                <Badge
+                  variant="outline"
+                  className={
+                    status.telegram_connected
+                      ? "border-green-200 bg-green-500/10 text-green-700 dark:border-green-900/40 dark:bg-green-500/15 dark:text-green-300"
+                      : "border-destructive/20 bg-destructive/10 text-destructive"
+                  }
+                >
+                  {status.telegram_connected ? "Connected" : "Disconnected"}
+                </Badge>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Circuit Breaker</div>
+                <Badge
+                  variant="outline"
+                  className={
+                    status.circuit_breaker_open
+                      ? "border-destructive/20 bg-destructive/10 text-destructive"
+                      : "border-green-200 bg-green-500/10 text-green-700 dark:border-green-900/40 dark:bg-green-500/15 dark:text-green-300"
+                  }
+                >
+                  {status.circuit_breaker_open ? "Open" : "Closed"}
+                </Badge>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Alert Queue</div>
+                <div className="text-lg font-medium tabular-nums">
+                  {status.alert_queue_size}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Uptime</div>
+                <div className="text-lg font-medium tabular-nums">
+                  {Math.floor(status.uptime_seconds / 3600)}h
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Config Cache</div>
+                <div className="text-lg font-medium tabular-nums">
+                  {Math.floor(status.config_cache_age_seconds)}s
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Telegram</p>
-              <StatusBadge status={status.telegram_connected ? 'success' : 'error'} />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Circuit Breaker</p>
-              <StatusBadge status={status.circuit_breaker_open ? 'error' : 'success'} 
-                label={status.circuit_breaker_open ? 'Open' : 'Closed'} />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Alert Queue</p>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {status.alert_queue_size}
-              </span>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Uptime</p>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {Math.floor(status.uptime_seconds / 3600)}h
-              </span>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Config Cache</p>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {Math.floor(status.config_cache_age_seconds)}s
-              </span>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Total Users"
-          value={stats?.total_users?.toLocaleString() ?? '0'}
-          icon={<UserCircleIcon />}
-          isLoading={statsLoading}
-        />
-        <StatCard
-          label="Active Today"
-          value={stats?.active_users_today?.toLocaleString() ?? '0'}
-          icon={<UserCircleIcon />}
-          isLoading={statsLoading}
-        />
-        <StatCard
-          label="Lesson Blueprints"
-          value={stats?.total_lessons?.toLocaleString() ?? '0'}
-          icon={<ListIcon />}
-          isLoading={statsLoading}
-        />
-        <StatCard
-          label="Total Words"
-          value={stats?.total_words?.toLocaleString() ?? '0'}
-          icon={<GridIcon />}
-          isLoading={statsLoading}
-        />
-      </div>
-
-      {/* Quick Actions */}
-      <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-          Quick Actions
-        </h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Link
-            href="/content/words"
-            className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
-          >
-            <GridIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Words Import</p>
-          </Link>
-          <Link
-            href="/curriculum/lesson-blueprints"
-            className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
-          >
-            <ListIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Lesson Blueprints</p>
-          </Link>
-          <Link
-            href="/audio/jobs"
-            className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
-          >
-            <GridIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Audio Jobs</p>
-          </Link>
-          <Link
-            href="/content/audit-log/orphan-assets"
-            className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
-          >
-            <GridIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Orphan Assets</p>
-          </Link>
-        </div>
-      </div>
-
-      {/* Billing Plans + User Retention - equal-width columns on desktop, stacked on mobile */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
         <BillingPlansCard />
         <UserRetentionCard />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Platform Distribution Chart */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Platform Distribution
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Users grouped by latest device platform (iOS/Android/unknown)
-            </p>
-          </div>
-          <div className="p-5">
-            <PlatformDistributionChart />
-          </div>
-        </div>
-
-        {/* Monthly user and subscriber growth are intentionally grouped for direct comparison. */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Monthly User Growth
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Track how your user base is growing month by month
-            </p>
-          </div>
-          <div className="p-5">
-            <MonthlySalesChart />
-          </div>
-          <div className="border-t border-gray-100 dark:border-white/[0.05]">
-            <div className="bg-gray-50/50 px-5 py-3 dark:bg-white/[0.02]">
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Monthly Subscriber Growth
-              </h4>
-              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                New premium subscribers per month (first-time only)
-              </p>
-            </div>
-            <div className="p-5">
-              <MonthlySubscriberGrowthChart />
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        <MonthlyUserGrowthChart />
+        <PlatformDistributionChart />
       </div>
 
-      {/* Daily Active Users Chart */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-        <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-            Daily Active Users
-          </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            Distinct users with at least one session per day, last 30 days
-          </p>
-        </div>
-        <div className="p-5">
-          <DailyActiveUsersChart />
-        </div>
-      </div>
-
-      {/* Demographics + Recent Activity Row (70/30 on desktop) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-10">
-        {/* Customer Demographics Map (70%) */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white lg:col-span-7 dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Customer Demographics
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <MonthlySubscriberGrowthChart />
+        <Card>
+          <CardHeader>
+            <CardDescription>Customer Demographics</CardDescription>
+            <span className="text-xs text-muted-foreground">
               Geographic distribution of users worldwide
-            </p>
-          </div>
-          <div className="p-5">
+            </span>
+          </CardHeader>
+          <CardContent>
             <CountryMap />
-          </div>
-        </div>
-
-        {/* Recent Activity (30%) */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white lg:col-span-3 dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Recent Activity
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Latest admin and subscription events
-            </p>
-          </div>
-          <div className="p-5">
-            <RecentActivityFeed />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        <DailyActiveUsersChart />
+        <Card>
+          <CardHeader>
+            <CardDescription>Recent Activity</CardDescription>
+            <span className="text-xs text-muted-foreground">
+              Latest admin and subscription events
+            </span>
+          </CardHeader>
+          <CardContent>
+            <RecentActivityFeed />
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardDescription>Quick Actions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Link
+              href="/content/words"
+              className="flex flex-col items-center gap-2 rounded-lg border border-border p-4 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <Grid3x3 className="size-5 text-muted-foreground" />
+              Words Import
+            </Link>
+            <Link
+              href="/curriculum/lesson-blueprints"
+              className="flex flex-col items-center gap-2 rounded-lg border border-border p-4 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <BookOpen className="size-5 text-muted-foreground" />
+              Lesson Blueprints
+            </Link>
+            <Link
+              href="/audio/jobs"
+              className="flex flex-col items-center gap-2 rounded-lg border border-border p-4 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <Grid3x3 className="size-5 text-muted-foreground" />
+              Audio Jobs
+            </Link>
+            <Link
+              href="/content/audit-log/orphan-assets"
+              className="flex flex-col items-center gap-2 rounded-lg border border-border p-4 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <Grid3x3 className="size-5 text-muted-foreground" />
+              Orphan Assets
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

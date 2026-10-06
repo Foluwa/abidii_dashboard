@@ -273,14 +273,14 @@ export default function LessonBlueprintsListPage() {
           </Link>
           <Link
             href="/curriculum/lesson-blueprints/new"
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700"
           >
             New Blueprint
           </Link>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="p-5">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
             <div>
@@ -347,7 +347,7 @@ export default function LessonBlueprintsListPage() {
                 type="button"
                 disabled={selectedIds.length === 0 || isBulkRunning}
                 onClick={onBulkValidate}
-                className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Validate Selected
               </button>
@@ -383,7 +383,7 @@ export default function LessonBlueprintsListPage() {
       </div>
 
       {lastBulkOutcomes && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <div className="p-5">
             <div className="text-sm font-medium text-gray-900 dark:text-white">Last bulk run</div>
             <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
@@ -403,8 +403,8 @@ export default function LessonBlueprintsListPage() {
 
             {lastBulkOutcomes.some((o) => o.outcome !== 'success') && (
               <div className="mt-4 overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.05]" role="table">
-                  <thead className="bg-gray-50 dark:bg-white/[0.02]">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table">
+                  <thead className="bg-gray-50 dark:bg-gray-800/40">
                     <tr>
                       <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Blueprint</th>
                       <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Outcome</th>
@@ -412,7 +412,7 @@ export default function LessonBlueprintsListPage() {
                       <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                     {lastBulkOutcomes
                       .filter((o) => o.outcome !== 'success')
                       .map((o) => (
@@ -460,10 +460,10 @@ export default function LessonBlueprintsListPage() {
         <ValidationResultViewer validation={blockedValidation} />
       </Modal>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.05]" role="table">
-            <thead className="bg-gray-50 dark:bg-white/[0.02]">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table">
+            <thead className="bg-gray-50 dark:bg-gray-800/40">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">
                   <input
@@ -480,7 +480,7 @@ export default function LessonBlueprintsListPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Counts</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
               {isLoading && (
                 <tr>
                   <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={6}>
