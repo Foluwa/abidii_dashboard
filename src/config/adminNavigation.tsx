@@ -175,6 +175,7 @@ export const mainNavigationItems: AdminNavItem[] = [
           { name: "Audit Log", path: "/content/audit-log", permission: "content:read" },
           { name: "Orphan Assets", path: "/content/audit-log/orphan-assets", permission: "content:read" },
           { name: "Content Reports", path: "/content/reports", permission: "content:read" },
+          { name: "Content Safety", path: "/content/content-safety", permission: "content:read" },
         ],
       },
     ],
