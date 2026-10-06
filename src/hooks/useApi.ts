@@ -1962,3 +1962,51 @@ export async function adminSetLearningPointer(
   }
   return res.json();
 }
+
+// ---- Content safety (not-kid-safe word flags, backend migration 195) ----
+
+export interface ContentSafetySummary {
+  total: number;
+  checked: number;
+  unchecked: number;
+  flagged: number;
+  by_category: Record<string, number>;
+  classification_running: boolean;
+}
+
+export interface FlaggedWord {
+  id: string;
+  lemma: string;
+  meanings: string;
+  category: string | null;
+  reason: string | null;
+  source: 'openai' | 'admin' | null;
+  checked_at: string | null;
+}
+
+export interface FlaggedWordList {
+  items: FlaggedWord[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export function useContentSafetySummary() {
+  const { data, error, mutate } = useSWR<ContentSafetySummary>(
+    '/api/v1/admin/content-safety/summary',
+    fetcher,
+    { revalidateOnFocus: false, shouldRetryOnError: false },
+  );
+  return { data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
+
+export function useFlaggedWords(filters: { page: number; limit: number; category?: string }) {
+  const params = new URLSearchParams({ page: String(filters.page), limit: String(filters.limit) });
+  if (filters.category) params.set('category', filters.category);
+  const { data, error, mutate } = useSWR<FlaggedWordList>(
+    `/api/v1/admin/content-safety/flagged?${params.toString()}`,
+    fetcher,
+    { revalidateOnFocus: false, shouldRetryOnError: false },
+  );
+  return { data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
