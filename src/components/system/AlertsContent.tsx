@@ -53,17 +53,16 @@ export function AlertsContent({ showHeader = true }: { showHeader?: boolean }) {
   const limit = 50;
 
   const { alerts, isLoading, isError } = useAlertHistory({ level, category, page, limit });
-  const items = alerts?.items ?? [];
   const total = alerts?.total ?? 0;
   const totalPages = Math.max(1, alerts?.pages ?? (Math.ceil(total / limit) || 1));
 
   const sortedItems = useMemo(() => {
-    return [...items].sort((a: AlertHistoryItem, b: AlertHistoryItem) => {
+    return [...(alerts?.items ?? [])].sort((a: AlertHistoryItem, b: AlertHistoryItem) => {
       const left = parseApiTimestamp(a.sent_at)?.getTime() ?? 0;
       const right = parseApiTimestamp(b.sent_at)?.getTime() ?? 0;
       return right - left;
     });
-  }, [items]);
+  }, [alerts?.items]);
 
   return (
     <div className="space-y-6">
