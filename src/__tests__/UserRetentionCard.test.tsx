@@ -6,16 +6,6 @@ import UserRetentionCard from "@/components/analytics/UserRetentionCard";
 import { renderWithProviders as render } from "@/test-utils";
 import type { RetentionResponse } from "@/types/admin-analytics";
 
-// react-apexcharts needs a real browser canvas/SVG environment it doesn't
-// get in jsdom - stub out the next/dynamic import UserRetentionCard uses
-// for it, same idea as other Next.js mocks in jest.setup.ts.
-jest.mock("next/dynamic", () => () => {
-  function MockChart() {
-    return <div data-testid="mock-apex-chart" />;
-  }
-  return MockChart;
-});
-
 jest.mock("@/lib/api", () => ({
   apiClient: { get: jest.fn() },
 }));
@@ -146,7 +136,7 @@ describe("UserRetentionCard", () => {
     render(<UserRetentionCard />);
 
     const changeSpan = screen.getByText(/vs last month/);
-    expect(changeSpan.className).toContain("text-gray-500");
+    expect(changeSpan.className).toContain("text-muted-foreground");
     expect(changeSpan.className).not.toContain("text-green-600");
     expect(changeSpan.className).not.toContain("text-red-600");
   });

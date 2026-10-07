@@ -9,6 +9,7 @@ import { RegenerateAudioModal, type RegenerateAudioTarget } from '@/components/m
 import { LessonRuntimePreview } from '@/components/admin/curriculum/LessonRuntimePreview';
 import ValidationResultViewer from '@/components/admin/curriculum/ValidationResultViewer';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
+import { Combobox } from '@/components/ui/form/Combobox';
 import { Modal } from '@/components/ui/modal';
 import { useToast } from '@/contexts/ToastContext';
 import { apiClient } from '@/lib/api';
@@ -2208,25 +2209,26 @@ export function LessonBlueprintEditor({
       )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr,0.85fr]">
-        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">Blueprint Draft</h2>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <h2 className="text-base font-semibold text-foreground">Blueprint Draft</h2>
 
           <div className="mt-4 grid grid-cols-1 gap-4">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Blueprint key</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Blueprint key</label>
               <input
                 value={managedBlueprintKey}
                 readOnly
-                className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                className="w-full rounded-lg border border-input bg-muted/50 px-3 py-2 text-sm text-foreground focus:outline-none"
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Managed by the system from the selected course and section.
               </p>
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Course</label>
-              <StyledSelect
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Course</label>
+              <Combobox
+                aria-label="Course"
                 value={selectedCourseKey}
                 onChange={(event) => setSelectedCourseKey(event.target.value)}
                 options={courses.map((course) => ({
@@ -2238,15 +2240,17 @@ export function LessonBlueprintEditor({
                     ? 'Loading courses…'
                     : courses.length === 0
                     ? 'No courses available — check permissions'
-                    : ''
+                    : 'Select course'
                 }
+                searchPlaceholder="Search courses..."
                 fullWidth
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Section</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Section</label>
               <StyledSelect
+                aria-label="Section"
                 value={form.section_id}
                 onChange={(event) => setForm((prev) => ({ ...prev, section_id: event.target.value }))}
                 options={sectionOptions.map((section) => ({
@@ -2259,8 +2263,9 @@ export function LessonBlueprintEditor({
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Lesson kind</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Lesson kind</label>
               <StyledSelect
+                aria-label="Lesson kind"
                 value={form.lesson_kind}
                 onChange={(event) => setForm((prev) => ({ ...prev, lesson_kind: event.target.value }))}
                 options={lessonKindOptions}
@@ -2268,19 +2273,19 @@ export function LessonBlueprintEditor({
                 fullWidth
               />
               {selectedLessonCapability?.description && (
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{selectedLessonCapability.description}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{selectedLessonCapability.description}</p>
               )}
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Schema version</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Schema version</label>
               <input
                 type="number"
                 value={capabilitiesData?.schema_compatibility?.schema_version ?? form.schema_version}
                 readOnly
-                className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-200"
+                className="w-full rounded-lg border border-input bg-muted/50 px-3 py-2 text-sm text-foreground focus:outline-none"
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Managed by the backend schema compatibility contract.
               </p>
             </div>
@@ -2289,11 +2294,11 @@ export function LessonBlueprintEditor({
 
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(460px,0.9fr)]">
-          <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Learner Content</h2>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <h2 className="text-base font-semibold text-foreground">Learner Content</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
                   Edit the lesson content, bindings, and generated flow inputs without hand-writing the whole payload.
                 </p>
               </div>
@@ -2301,7 +2306,7 @@ export function LessonBlueprintEditor({
                 <button
                   type="button"
                   onClick={() => replacePayload(selectedLessonCapability.default_payload ?? {})}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+                  className="rounded-lg border border-input bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/50"
                 >
                   Use Backend Template
                 </button>
@@ -2323,34 +2328,34 @@ export function LessonBlueprintEditor({
                     </div>
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">Title</label>
                         <input
                           {...getFieldPathAttributes('presentation.title')}
                           value={getString(readingPresentation.title)}
                           onChange={(event) => updateReadingPresentationField('title', event.target.value)}
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                          className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Subtitle</label>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">Subtitle</label>
                         <input
                           {...getFieldPathAttributes('presentation.subtitle')}
                           value={getString(readingPresentation.subtitle)}
                           onChange={(event) => updateReadingPresentationField('subtitle', event.target.value)}
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                          className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Unit label</label>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">Unit label</label>
                         <input
                           {...getFieldPathAttributes('presentation.unitLabel')}
                           value={getString(readingPresentation.unitLabel)}
                           onChange={(event) => updateReadingPresentationField('unitLabel', event.target.value)}
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                          className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Estimated minutes</label>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">Estimated minutes</label>
                         <input
                           {...getFieldPathAttributes('presentation.estimatedMinutes')}
                           type="number"
@@ -2359,11 +2364,11 @@ export function LessonBlueprintEditor({
                           onChange={(event) =>
                             updateReadingPresentationField('estimatedMinutes', Number(event.target.value || 0) || null)
                           }
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                          className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Exercise order version</label>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">Exercise order version</label>
                         <input
                           {...getFieldPathAttributes('presentation.exerciseOrderVersion')}
                           type="number"
@@ -2372,20 +2377,20 @@ export function LessonBlueprintEditor({
                           onChange={(event) =>
                             updateReadingPresentationField('exerciseOrderVersion', Number(event.target.value || 1))
                           }
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                          className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Level tag</label>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">Level tag</label>
                         <input
                           {...getFieldPathAttributes('presentation.levelTag')}
                           value={getString(readingPresentation.levelTag)}
                           onChange={(event) => updateReadingPresentationField('levelTag', event.target.value)}
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                          className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                         />
                       </div>
                       <div className="lg:col-span-2">
-                        <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Learning objectives</label>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">Learning objectives</label>
                         <textarea
                           {...getFieldPathAttributes('presentation.learningObjectives')}
                           rows={3}
@@ -2394,33 +2399,33 @@ export function LessonBlueprintEditor({
                             updateReadingPresentationField('learningObjectives', parseTokenList(event.target.value))
                           }
                           placeholder="One objective per line"
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                          className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                         />
                       </div>
                     </div>
 
-                    <div className="rounded-lg border border-emerald-300 bg-white p-3 dark:border-emerald-900 dark:bg-gray-900">
-                      <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Target phrases</div>
+                    <div className="rounded-lg border border-emerald-300 bg-card p-3 dark:border-emerald-900">
+                      <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Target phrases</div>
                       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                         {[0, 1].map((targetIndex) => {
                           const target = readingTargets[targetIndex];
                           const contentRef = getContentRef(target?.contentRef);
                           const phraseId = getString(contentRef?.contentId);
                           return (
-                            <div key={targetIndex} className="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
-                              <div className="text-xs font-medium text-gray-500 dark:text-gray-400">Target {targetIndex + 1}</div>
-                              <div className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                            <div key={targetIndex} className="rounded-lg border border-border p-3">
+                              <div className="text-xs font-medium text-muted-foreground">Target {targetIndex + 1}</div>
+                              <div className="mt-2 text-sm font-medium text-foreground">
                                 {phraseId || 'No phrase selected'}
                               </div>
                               {phraseId ? (
-                                <div className="mt-1 text-xs font-mono text-gray-500 dark:text-gray-400">{phraseId}</div>
+                                <div className="mt-1 text-xs font-mono text-muted-foreground">{phraseId}</div>
                               ) : null}
                               <div className="mt-3 flex flex-wrap gap-2">
                                 <button
                                   type="button"
                                   onClick={() => openPhrasePicker({ mode: 'readingTarget', targetIndex })}
                                   disabled={!selectedCourse?.target_language_id}
-                                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                  className="rounded-lg border border-input bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-gray-50 disabled:opacity-50"
                                 >
                                   {phraseId ? 'Replace phrase' : 'Choose phrase'}
                                 </button>
@@ -2440,12 +2445,12 @@ export function LessonBlueprintEditor({
                       </div>
                     </div>
 
-                    <div className="rounded-lg border border-emerald-300 bg-white p-3 dark:border-emerald-900 dark:bg-gray-900">
-                      <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Supporting context</div>
+                    <div className="rounded-lg border border-emerald-300 bg-card p-3 dark:border-emerald-900">
+                      <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Supporting context</div>
                       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                         <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Context type</label>
-                          <select
+                          <StyledSelect
+                            label="Context type"
                             {...getFieldPathAttributes('supportingContext.contextRef.contentType')}
                             value={getString(getContentRef(readingSupportingContext.contextRef)?.contentType) || 'phrase'}
                             onChange={(event) =>
@@ -2454,14 +2459,15 @@ export function LessonBlueprintEditor({
                                 getString(getContentRef(readingSupportingContext.contextRef)?.contentId)
                               )
                             }
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                          >
-                            <option value="phrase">Phrase</option>
-                            <option value="phrase_set">Phrase set (transitional)</option>
-                          </select>
+                            options={[
+                              { value: 'phrase', label: 'Phrase' },
+                              { value: 'phrase_set', label: 'Phrase set (transitional)' },
+                            ]}
+                            fullWidth
+                          />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Context id</label>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">Context id</label>
                           <input
                             {...getFieldPathAttributes('supportingContext.contextRef.contentId')}
                             value={getString(getContentRef(readingSupportingContext.contextRef)?.contentId)}
@@ -2471,25 +2477,25 @@ export function LessonBlueprintEditor({
                                 event.target.value
                               )
                             }
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                            className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                           />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Prompt text</label>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">Prompt text</label>
                           <input
                             {...getFieldPathAttributes('supportingContext.promptText')}
                             value={getString(readingSupportingContext.promptText)}
                             onChange={(event) => updateReadingSupportingContextField('promptText', event.target.value)}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                            className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                           />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Translation hint</label>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">Translation hint</label>
                           <input
                             {...getFieldPathAttributes('supportingContext.translationHint')}
                             value={getString(readingSupportingContext.translationHint)}
                             onChange={(event) => updateReadingSupportingContextField('translationHint', event.target.value)}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                            className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                           />
                         </div>
                         <div className="lg:col-span-2 flex flex-wrap gap-2">
@@ -2500,7 +2506,7 @@ export function LessonBlueprintEditor({
                               !selectedCourse?.target_language_id ||
                               (getString(getContentRef(readingSupportingContext.contextRef)?.contentType) || 'phrase') !== 'phrase'
                             }
-                            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                            className="rounded-lg border border-input bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-gray-50 disabled:opacity-50"
                           >
                             Choose phrase context
                           </button>
@@ -2517,8 +2523,8 @@ export function LessonBlueprintEditor({
                       </div>
                     </div>
 
-                    <div className="rounded-lg border border-emerald-300 bg-white p-3 dark:border-emerald-900 dark:bg-gray-900">
-                      <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Managed media refs</div>
+                    <div className="rounded-lg border border-emerald-300 bg-card p-3 dark:border-emerald-900">
+                      <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Managed media refs</div>
                       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                         {[
                           { key: 'thumbnail', label: 'Thumbnail', suggestedFieldPath: 'thumbnailUrl' },
@@ -2528,22 +2534,23 @@ export function LessonBlueprintEditor({
                         ].map((item) => {
                           const currentFieldPath = getReadingMediaRefFieldPath(readingMediaRefs[item.key]);
                           return (
-                            <div key={item.key} className="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
-                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">{item.label}</label>
-                              <select
+                            <div key={item.key} className="rounded-lg border border-border p-3">
+                              <StyledSelect
+                                label={item.label}
                                 {...getFieldPathAttributes(`mediaRefs.${item.key}.fieldPath`)}
                                 value={currentFieldPath}
                                 onChange={(event) => updateReadingMediaRef(item.key, event.target.value)}
-                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                              >
-                                <option value="">No managed asset</option>
-                                <option value={item.suggestedFieldPath}>{item.suggestedFieldPath}</option>
-                              </select>
+                                options={[
+                                  { value: '', label: 'No managed asset' },
+                                  { value: item.suggestedFieldPath, label: item.suggestedFieldPath },
+                                ]}
+                                fullWidth
+                              />
                               <div className="mt-3 flex flex-wrap gap-2">
                                 <button
                                   type="button"
                                   onClick={() => openAssetLibrary(currentFieldPath || item.suggestedFieldPath)}
-                                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                  className="rounded-lg border border-input bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-gray-50"
                                 >
                                   Open asset bindings
                                 </button>
@@ -2576,41 +2583,41 @@ export function LessonBlueprintEditor({
                 </div>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Subtitle</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Subtitle</label>
                     <input
                       id="payload-subtitle"
                       value={getString(editablePayload.subtitle)}
                       onChange={(event) => updateTopLevelField('subtitle', event.target.value)}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Unit label</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Unit label</label>
                     <input
                       id="payload-unit-label"
                       value={getString(editablePayload.unitLabel)}
                       onChange={(event) => updateTopLevelField('unitLabel', event.target.value)}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Exercise order version</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Exercise order version</label>
                     <input
                       type="number"
                       min={1}
                       value={(editablePayload.exerciseOrderVersion as number | undefined) ?? ''}
                       onChange={(event) => updateTopLevelField('exerciseOrderVersion', Number(event.target.value || 1))}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div className="lg:col-span-2">
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Vocabulary bindings</label>
-                    <div className="rounded-lg border border-gray-300 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Vocabulary bindings</label>
+                    <div className="rounded-lg border border-input bg-card p-3">
                       <input
                         value={vocabSearch}
                         onChange={(event) => setVocabSearch(event.target.value)}
                         placeholder="Search vocab external IDs"
-                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                        className="w-full rounded-lg border border-input bg-card px-3 py-2 text-xs text-foreground focus:border-brand-500 focus:outline-none"
                       />
                       <div className="mt-3 flex flex-wrap gap-2">
                         {getStringArray(editablePayload.targetVocabIds).map((externalId) => (
@@ -2627,9 +2634,9 @@ export function LessonBlueprintEditor({
                       </div>
                       <div className="mt-3 max-h-56 space-y-2 overflow-auto">
                         {isVocabLibraryLoading ? (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">Loading vocab…</div>
+                          <div className="text-xs text-muted-foreground">Loading vocab…</div>
                         ) : vocabLibraryItems.length === 0 ? (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">No vocab matches the current search.</div>
+                          <div className="text-xs text-muted-foreground">No vocab matches the current search.</div>
                         ) : (
                           vocabLibraryItems.map((item) => (
                             <button
@@ -2637,12 +2644,12 @@ export function LessonBlueprintEditor({
                               type="button"
                               onClick={() => addVocabBinding(item.external_id)}
                               disabled={getStringArray(editablePayload.targetVocabIds).includes(item.external_id)}
-                              className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-left text-xs hover:bg-gray-50 disabled:opacity-50 dark:border-gray-800 dark:hover:bg-gray-900"
+                              className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-left text-xs hover:bg-muted/50 disabled:opacity-50"
                             >
-                              <span className="font-medium text-gray-900 dark:text-white">
+                              <span className="font-medium text-foreground">
                                 {getVocabDisplayLabel(item.external_id, item.lemma)}
                               </span>
-                              <span className="text-gray-500 dark:text-gray-400">{item.external_id}</span>
+                              <span className="text-muted-foreground">{item.external_id}</span>
                             </button>
                           ))
                         )}
@@ -2650,24 +2657,24 @@ export function LessonBlueprintEditor({
                     </div>
                   </div>
                   <div className="lg:col-span-2">
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Learning objectives</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Learning objectives</label>
                     <textarea
                       id="payload-learning-objectives"
                       rows={3}
                       value={toTextList(getStringArray(editablePayload.learningObjectives))}
                       onChange={(event) => updateTopLevelField('learningObjectives', parseTokenList(event.target.value))}
                       placeholder="One objective per line"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Thumbnail</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Thumbnail</label>
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={() => openAssetPicker('thumbnailUrl', 'image/*', 'Image')}
                         disabled={uploadingFieldPath === 'thumbnailUrl'}
-                        className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                        className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                       >
                         {uploadingFieldPath === 'thumbnailUrl' ? `Uploading ${uploadProgressByField.thumbnailUrl ?? 0}%` : 'Upload Thumbnail'}
                       </button>
@@ -2677,7 +2684,7 @@ export function LessonBlueprintEditor({
                         className={`rounded-lg border px-3 py-2 text-xs font-medium ${
                           assetLibraryTargetFieldPath === 'thumbnailUrl'
                             ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
-                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                            : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
                         }`}
                       >
                         Library
@@ -2688,17 +2695,17 @@ export function LessonBlueprintEditor({
                         <MediaLinkPreview url={getString(editablePayload.thumbnailUrl)} label="Thumbnail" kind="image" compact onRemove={() => void handleRemoveAsset('thumbnailUrl')} />
                       </div>
                     ) : (
-                      <div className="mt-2 rounded-lg border border-dashed border-gray-300 px-3 py-3 text-center text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">No thumbnail</div>
+                      <div className="mt-2 rounded-lg border border-dashed border-input px-3 py-3 text-center text-xs text-muted-foreground">No thumbnail</div>
                     )}
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Character image</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Character image</label>
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={() => openAssetPicker('characterImageUrl', 'image/*', 'Image')}
                         disabled={uploadingFieldPath === 'characterImageUrl'}
-                        className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                        className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                       >
                         {uploadingFieldPath === 'characterImageUrl' ? `Uploading ${uploadProgressByField.characterImageUrl ?? 0}%` : 'Upload Character'}
                       </button>
@@ -2708,7 +2715,7 @@ export function LessonBlueprintEditor({
                         className={`rounded-lg border px-3 py-2 text-xs font-medium ${
                           assetLibraryTargetFieldPath === 'characterImageUrl'
                             ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
-                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                            : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
                         }`}
                       >
                         Library
@@ -2719,7 +2726,7 @@ export function LessonBlueprintEditor({
                         <MediaLinkPreview url={getString(editablePayload.characterImageUrl)} label="Character" kind="image" compact onRemove={() => void handleRemoveAsset('characterImageUrl')} />
                       </div>
                     ) : (
-                      <div className="mt-2 rounded-lg border border-dashed border-gray-300 px-3 py-3 text-center text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">No character image</div>
+                      <div className="mt-2 rounded-lg border border-dashed border-input px-3 py-3 text-center text-xs text-muted-foreground">No character image</div>
                     )}
                   </div>
                 </div>
@@ -2736,7 +2743,7 @@ export function LessonBlueprintEditor({
                 </div>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Range start</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Range start</label>
                     <input
                       id="payload-range-start"
                       {...getFieldPathAttributes('range[0]')}
@@ -2746,11 +2753,11 @@ export function LessonBlueprintEditor({
                         const current = getNumberArray(editablePayload.range);
                         updateTopLevelField('range', [Number(event.target.value || 1), current[1] ?? 10]);
                       }}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Range end</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Range end</label>
                     <input
                       {...getFieldPathAttributes('range[1]')}
                       type="number"
@@ -2759,27 +2766,27 @@ export function LessonBlueprintEditor({
                         const current = getNumberArray(editablePayload.range);
                         updateTopLevelField('range', [current[0] ?? 1, Number(event.target.value || 10)]);
                       }}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Unit label</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Unit label</label>
                     <input
                       id="payload-unit-label"
                       {...getFieldPathAttributes('unitLabel')}
                       value={getString(editablePayload.unitLabel)}
                       onChange={(event) => updateTopLevelField('unitLabel', event.target.value)}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Exercise order version</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Exercise order version</label>
                     <input
                       type="number"
                       min={1}
                       value={(editablePayload.exerciseOrderVersion as number | undefined) ?? ''}
                       onChange={(event) => updateTopLevelField('exerciseOrderVersion', Number(event.target.value || 1))}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -2796,43 +2803,43 @@ export function LessonBlueprintEditor({
                 </div>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Contrast id</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Contrast id</label>
                     <input
                       id="payload-contrast-id"
                       {...getFieldPathAttributes('contrast_id')}
                       value={getString(editablePayload.contrast_id)}
                       readOnly
-                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-muted/50 px-3 py-2 text-sm text-foreground focus:outline-none"
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Choose the contrast from the picker below.</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Choose the contrast from the picker below.</p>
                   </div>
-                  <div className="lg:col-span-2 rounded-lg border border-amber-300 bg-white p-3 dark:border-amber-900 dark:bg-gray-900">
+                  <div className="lg:col-span-2 rounded-lg border border-amber-300 bg-card p-3 dark:border-amber-900">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Tone contrast picker</div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tone contrast picker</div>
                       <input
                         value={toneContrastSearch}
                         onChange={(event) => setToneContrastSearch(event.target.value)}
                         placeholder="Search title, glyph, or UUID"
-                        className="w-full max-w-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        className="w-full max-w-xs rounded-lg border border-input bg-card px-3 py-2 text-xs text-foreground focus:border-brand-500 focus:outline-none"
                       />
                     </div>
                     <div className="mt-3 space-y-2">
                       {isToneContrastsLoading ? (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">Loading contrasts…</div>
+                        <div className="text-xs text-muted-foreground">Loading contrasts…</div>
                       ) : filteredToneContrasts.length === 0 ? (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">No phonics contrasts match the current search.</div>
+                        <div className="text-xs text-muted-foreground">No phonics contrasts match the current search.</div>
                       ) : (
                         filteredToneContrasts.map((item: any) => (
                           <button
                             key={String(item.id)}
                             type="button"
                             onClick={() => updateTopLevelField('contrast_id', String(item.id))}
-                            className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-left text-xs hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
+                            className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-left text-xs hover:bg-muted/50"
                           >
-                            <span className="font-medium text-gray-900 dark:text-white">
+                            <span className="font-medium text-foreground">
                               {item.title || `${item.letter_a_glyph} vs ${item.letter_b_glyph}`}
                             </span>
-                            <span className="text-gray-500 dark:text-gray-400">
+                            <span className="text-muted-foreground">
                               {item.letter_a_glyph} / {item.letter_b_glyph}
                             </span>
                           </button>
@@ -2841,37 +2848,37 @@ export function LessonBlueprintEditor({
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Unit label</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Unit label</label>
                     <input
                       id="payload-unit-label"
                       {...getFieldPathAttributes('unitLabel')}
                       value={getString(editablePayload.unitLabel)}
                       onChange={(event) => updateTopLevelField('unitLabel', event.target.value)}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Subtitle</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Subtitle</label>
                     <input
                       id="payload-subtitle"
                       {...getFieldPathAttributes('subtitle')}
                       value={getString(editablePayload.subtitle)}
                       onChange={(event) => updateTopLevelField('subtitle', event.target.value)}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Exercise order version</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Exercise order version</label>
                     <input
                       type="number"
                       min={1}
                       value={(editablePayload.exerciseOrderVersion as number | undefined) ?? ''}
                       onChange={(event) => updateTopLevelField('exerciseOrderVersion', Number(event.target.value || 1))}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div className="lg:col-span-2">
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Fallback learning objectives</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Fallback learning objectives</label>
                     <textarea
                       id="payload-learning-objectives"
                       {...getFieldPathAttributes('learningObjectives')}
@@ -2879,7 +2886,7 @@ export function LessonBlueprintEditor({
                       value={toTextList(getStringArray(editablePayload.learningObjectives))}
                       onChange={(event) => updateTopLevelField('learningObjectives', parseTokenList(event.target.value))}
                       placeholder="Used only when generated tone content needs supporting copy"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -2888,18 +2895,19 @@ export function LessonBlueprintEditor({
 
             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div>
-                <label htmlFor="payload-title" className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>
+                <label htmlFor="payload-title" className="mb-1 block text-xs font-medium text-muted-foreground">Title</label>
                 <input
                   id="payload-title"
                   {...getFieldPathAttributes('title')}
                   value={getString(editablePayload.title)}
                   onChange={(event) => updateTopLevelField('title', event.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Launch route</label>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Launch route</label>
                 <StyledSelect
+                aria-label="Launch route"
                   value={
                     getString(editablePayload.launchRoute) ||
                     getString(editablePayload.launch_route) ||
@@ -2912,49 +2920,49 @@ export function LessonBlueprintEditor({
               {(form.lesson_kind === 'reading_practice' || form.lesson_kind === 'tone_marks_drill') && (
                 <>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Mode</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Mode</label>
                     <input
                       id="payload-mode"
                       {...getFieldPathAttributes('mode')}
                       value={getString(editablePayload.mode)}
                       onChange={(event) => updateTopLevelField('mode', event.target.value)}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Flow mode</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Flow mode</label>
                     <input
                       id="payload-flow-mode"
                       {...getFieldPathAttributes('flowMode')}
                       value={getString(editablePayload.flowMode)}
                       onChange={(event) => updateTopLevelField('flowMode', event.target.value)}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                 </>
               )}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Description</label>
                 <textarea
                   id="payload-description"
                   {...getFieldPathAttributes('description')}
                   value={getString(editablePayload.description)}
                   onChange={(event) => updateTopLevelField('description', event.target.value)}
                   rows={3}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                 />
               </div>
               {form.lesson_kind !== 'reading_practice' && form.lesson_kind !== 'greetings_core' && (
                 <div>
-                  <label htmlFor="payload-target-vocab" className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <label htmlFor="payload-target-vocab" className="mb-1 block text-xs font-medium text-muted-foreground">
                     Vocabulary bindings
                   </label>
-                  <div className="rounded-lg border border-gray-300 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                  <div className="rounded-lg border border-input bg-card p-3">
                     <input
                       value={vocabSearch}
                       onChange={(event) => setVocabSearch(event.target.value)}
                       placeholder="Search vocab external IDs"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-xs text-foreground focus:border-brand-500 focus:outline-none"
                     />
                     <div className="mt-3 flex flex-wrap gap-2">
                       {getStringArray(editablePayload.targetVocabIds).map((externalId) => (
@@ -2962,7 +2970,7 @@ export function LessonBlueprintEditor({
                           key={externalId}
                           type="button"
                           onClick={() => removeVocabBinding(externalId)}
-                          className="rounded-full border border-gray-300 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                          className="rounded-full border border-input bg-muted/50 px-3 py-1 text-xs font-medium text-foreground"
                           title={externalId}
                         >
                           {selectedVocabLabels[externalId] || getVocabDisplayLabel(externalId)} ×
@@ -2971,9 +2979,9 @@ export function LessonBlueprintEditor({
                     </div>
                     <div className="mt-3 max-h-48 space-y-2 overflow-auto">
                       {isVocabLibraryLoading ? (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">Loading vocab…</div>
+                        <div className="text-xs text-muted-foreground">Loading vocab…</div>
                       ) : vocabLibraryItems.length === 0 ? (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">No vocab matches the current search.</div>
+                        <div className="text-xs text-muted-foreground">No vocab matches the current search.</div>
                       ) : (
                         vocabLibraryItems.map((item) => (
                           <button
@@ -2981,12 +2989,12 @@ export function LessonBlueprintEditor({
                             type="button"
                             onClick={() => addVocabBinding(item.external_id)}
                             disabled={getStringArray(editablePayload.targetVocabIds).includes(item.external_id)}
-                            className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-left text-xs hover:bg-gray-50 disabled:opacity-50 dark:border-gray-800 dark:hover:bg-gray-900"
+                            className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-left text-xs hover:bg-muted/50 disabled:opacity-50"
                           >
-                            <span className="font-medium text-gray-900 dark:text-white">
+                            <span className="font-medium text-foreground">
                               {getVocabDisplayLabel(item.external_id, item.lemma)}
                             </span>
-                            <span className="text-gray-500 dark:text-gray-400">{item.external_id}</span>
+                            <span className="text-muted-foreground">{item.external_id}</span>
                           </button>
                         ))
                       )}
@@ -2998,13 +3006,13 @@ export function LessonBlueprintEditor({
 
             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Hero image</label>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Hero image</label>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => openAssetPicker('heroImageUrl', 'image/*', 'Image')}
                     disabled={uploadingFieldPath === 'heroImageUrl'}
-                    className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                    className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                   >
                     {uploadingFieldPath === 'heroImageUrl' ? `Uploading ${uploadProgressByField.heroImageUrl ?? 0}%` : 'Upload Hero'}
                   </button>
@@ -3014,7 +3022,7 @@ export function LessonBlueprintEditor({
                     className={`rounded-lg border px-3 py-2 text-xs font-medium ${
                       assetLibraryTargetFieldPath === 'heroImageUrl'
                         ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
-                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                        : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
                     }`}
                   >
                     Library
@@ -3025,17 +3033,17 @@ export function LessonBlueprintEditor({
                     <MediaLinkPreview url={getString(editablePayload.heroImageUrl)} label="Hero image" kind="image" compact onRemove={() => void handleRemoveAsset('heroImageUrl')} />
                   </div>
                 ) : (
-                  <div className="mt-2 rounded-lg border border-dashed border-gray-300 px-3 py-3 text-center text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">No hero image</div>
+                  <div className="mt-2 rounded-lg border border-dashed border-input px-3 py-3 text-center text-xs text-muted-foreground">No hero image</div>
                 )}
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Cover image</label>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Cover image</label>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => openAssetPicker('coverImageUrl', 'image/*', 'Image')}
                     disabled={uploadingFieldPath === 'coverImageUrl'}
-                    className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                    className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                   >
                     {uploadingFieldPath === 'coverImageUrl'
                       ? `Uploading ${uploadProgressByField.coverImageUrl ?? 0}%`
@@ -3047,7 +3055,7 @@ export function LessonBlueprintEditor({
                     className={`rounded-lg border px-3 py-2 text-xs font-medium ${
                       assetLibraryTargetFieldPath === 'coverImageUrl'
                         ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
-                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                        : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
                     }`}
                   >
                     Library
@@ -3064,17 +3072,17 @@ export function LessonBlueprintEditor({
                     />
                   </div>
                 ) : (
-                  <div className="mt-2 rounded-lg border border-dashed border-gray-300 px-3 py-3 text-center text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">No cover image</div>
+                  <div className="mt-2 rounded-lg border border-dashed border-input px-3 py-3 text-center text-xs text-muted-foreground">No cover image</div>
                 )}
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Image</label>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Image</label>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => openAssetPicker('imageUrl', 'image/*', 'Image')}
                     disabled={uploadingFieldPath === 'imageUrl'}
-                    className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                    className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                   >
                     {uploadingFieldPath === 'imageUrl'
                       ? `Uploading ${uploadProgressByField.imageUrl ?? 0}%`
@@ -3086,7 +3094,7 @@ export function LessonBlueprintEditor({
                     className={`rounded-lg border px-3 py-2 text-xs font-medium ${
                       assetLibraryTargetFieldPath === 'imageUrl'
                         ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
-                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                        : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
                     }`}
                   >
                     Library
@@ -3103,19 +3111,19 @@ export function LessonBlueprintEditor({
                     />
                   </div>
                 ) : (
-                  <div className="mt-2 rounded-lg border border-dashed border-gray-300 px-3 py-4 text-center text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
+                  <div className="mt-2 rounded-lg border border-dashed border-input px-3 py-4 text-center text-xs text-muted-foreground">
                     No image
                   </div>
                 )}
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Audio</label>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Audio</label>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => openAssetPicker('audioUrl', 'audio/*', 'Audio')}
                     disabled={uploadingFieldPath === 'audioUrl'}
-                    className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                    className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                   >
                     {uploadingFieldPath === 'audioUrl'
                       ? `Uploading ${uploadProgressByField.audioUrl ?? 0}%`
@@ -3127,7 +3135,7 @@ export function LessonBlueprintEditor({
                     className={`rounded-lg border px-3 py-2 text-xs font-medium ${
                       assetLibraryTargetFieldPath === 'audioUrl'
                         ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
-                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                        : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
                     }`}
                   >
                     Library
@@ -3146,7 +3154,7 @@ export function LessonBlueprintEditor({
                     <MediaLinkPreview url={getString(editablePayload.audioUrl)} label="Audio" kind="audio" compact />
                   </div>
                 ) : (
-                  <div className="mt-2 rounded-lg border border-dashed border-gray-300 px-3 py-4 text-center text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
+                  <div className="mt-2 rounded-lg border border-dashed border-input px-3 py-4 text-center text-xs text-muted-foreground">
                     No audio
                   </div>
                 )}
@@ -3157,16 +3165,16 @@ export function LessonBlueprintEditor({
                   type="checkbox"
                   checked={getBoolean(editablePayload.includeCultureTip)}
                   onChange={(event) => updateTopLevelField('includeCultureTip', event.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300"
+                  className="h-4 w-4 rounded border-input"
                 />
-                <label htmlFor="include-culture-tip" className="text-sm text-gray-700 dark:text-gray-200">
+                <label htmlFor="include-culture-tip" className="text-sm text-foreground">
                   Include culture tip
                 </label>
               </div>
               {form.lesson_kind === 'numbers_1_10' && (
                 <div className="grid grid-cols-2 gap-3 lg:col-span-2">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Range start</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Range start</label>
                     <input
                       type="number"
                       value={getNumberArray(editablePayload.range)[0] ?? ''}
@@ -3175,11 +3183,11 @@ export function LessonBlueprintEditor({
                         const end = current[1] ?? 10;
                         updateTopLevelField('range', [Number(event.target.value || 1), end]);
                       }}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Range end</label>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Range end</label>
                     <input
                       type="number"
                       value={getNumberArray(editablePayload.range)[1] ?? ''}
@@ -3188,7 +3196,7 @@ export function LessonBlueprintEditor({
                         const start = current[0] ?? 1;
                         updateTopLevelField('range', [start, Number(event.target.value || 10)]);
                       }}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -3219,24 +3227,24 @@ export function LessonBlueprintEditor({
               )}
             </div>
 
-            <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
+            <div className="mt-6 rounded-lg border border-border bg-muted/50 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Media Library</h3>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <h3 className="text-sm font-semibold text-foreground">Media Library</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Use the Library button beside any media field to open a searchable picker for that exact slot.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsAssetLibraryModalOpen(true)}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  className="rounded-lg border border-input bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-gray-50"
                 >
                   Open library
                 </button>
               </div>
               {selectedAssetLibraryField ? (
-                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 font-medium text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
                     Target: {selectedAssetLibraryField.label}
                   </span>
@@ -3257,7 +3265,7 @@ export function LessonBlueprintEditor({
               <div aria-label="Media library modal content" className="max-h-[calc(92vh-8rem)] space-y-5 overflow-y-auto pr-1">
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-6">
                   <div className="lg:col-span-2">
-                    <div className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Target field</div>
+                    <div className="mb-1 text-xs font-medium text-muted-foreground">Target field</div>
                     <StyledSelect
                       value={assetLibraryTargetFieldPath || ''}
                       onChange={(event) => setAssetLibraryTargetFieldPath(event.target.value)}
@@ -3271,7 +3279,7 @@ export function LessonBlueprintEditor({
                     />
                   </div>
                   <div>
-                    <div className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Scope</div>
+                    <div className="mb-1 text-xs font-medium text-muted-foreground">Scope</div>
                     <StyledSelect
                       value={assetLibraryScope}
                       onChange={(event) => setAssetLibraryScope(event.target.value as 'same_course' | 'all_courses')}
@@ -3285,7 +3293,7 @@ export function LessonBlueprintEditor({
                     />
                   </div>
                   <div>
-                    <div className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Sort</div>
+                    <div className="mb-1 text-xs font-medium text-muted-foreground">Sort</div>
                     <StyledSelect
                       value={assetLibrarySort}
                       onChange={(event) => setAssetLibrarySort(event.target.value as 'recent' | 'name' | 'source')}
@@ -3300,7 +3308,7 @@ export function LessonBlueprintEditor({
                     />
                   </div>
                   <div>
-                    <div className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Asset type</div>
+                    <div className="mb-1 text-xs font-medium text-muted-foreground">Asset type</div>
                     <StyledSelect
                       value={assetLibraryKindFilter}
                       onChange={(event) => setAssetLibraryKindFilter(event.target.value as 'all' | 'image' | 'audio' | 'video')}
@@ -3316,7 +3324,7 @@ export function LessonBlueprintEditor({
                     />
                   </div>
                   <div>
-                    <div className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Show</div>
+                    <div className="mb-1 text-xs font-medium text-muted-foreground">Show</div>
                     <StyledSelect
                       value={assetLibraryCompatibilityFilter}
                       onChange={(event) => setAssetLibraryCompatibilityFilter(event.target.value as 'all' | 'compatible')}
@@ -3332,13 +3340,13 @@ export function LessonBlueprintEditor({
                 </div>
 
                 <div>
-                  <div className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Search</div>
+                  <div className="mb-1 text-xs font-medium text-muted-foreground">Search</div>
                   <input
                     value={globalAssetSearch}
                     onChange={(event) => setGlobalAssetSearch(event.target.value)}
                     aria-label="Search media library"
                     placeholder="Search file name, blueprint, or field path"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                   />
                 </div>
 
@@ -3352,7 +3360,7 @@ export function LessonBlueprintEditor({
                   className={`rounded-lg border-2 border-dashed px-4 py-5 text-sm transition ${
                     isAssetDropActive
                       ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/20 dark:text-brand-300'
-                      : 'border-gray-300 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400'
+                      : 'border-gray-300 bg-muted/50 text-gray-500 dark:border-gray-700 dark:text-gray-400'
                   }`}
                 >
                   {assetLibraryTargetFieldPath
@@ -3368,8 +3376,8 @@ export function LessonBlueprintEditor({
                       aria-pressed={assetLibraryTab === 'local'}
                       className={`rounded-full px-3 py-2 text-xs font-medium transition ${
                         assetLibraryTab === 'local'
-                          ? 'bg-brand-600 text-white'
-                          : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800'
+                          ? 'bg-brand-600 text-white dark:text-gray-900'
+                          : 'border border-input bg-card text-foreground hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                     >
                       Local assets ({filteredBlueprintLibraryAssets.length})
@@ -3380,8 +3388,8 @@ export function LessonBlueprintEditor({
                       aria-pressed={assetLibraryTab === 'global'}
                       className={`rounded-full px-3 py-2 text-xs font-medium transition ${
                         assetLibraryTab === 'global'
-                          ? 'bg-brand-600 text-white'
-                          : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800'
+                          ? 'bg-brand-600 text-white dark:text-gray-900'
+                          : 'border border-input bg-card text-foreground hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                     >
                       Global assets ({sortedGlobalAssetLibraryItems.length})
@@ -3389,19 +3397,19 @@ export function LessonBlueprintEditor({
                   </div>
 
                   {assetLibraryTab === 'local' ? (
-                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
+                  <div className="rounded-lg border border-border bg-muted/50 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">This blueprint</h4>
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <h4 className="text-sm font-semibold text-foreground">This blueprint</h4>
+                        <p className="mt-1 text-xs text-muted-foreground">
                           Existing uploads already attached to this draft.
                         </p>
                       </div>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">{filteredBlueprintLibraryAssets.length} items</span>
+                      <span className="text-xs text-muted-foreground">{filteredBlueprintLibraryAssets.length} items</span>
                     </div>
 
                     {filteredBlueprintLibraryAssets.length === 0 ? (
-                      <div className="mt-4 rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                      <div className="mt-4 rounded-lg border border-dashed border-input px-3 py-4 text-sm text-muted-foreground">
                         No local assets match the current search.
                       </div>
                     ) : (
@@ -3417,7 +3425,7 @@ export function LessonBlueprintEditor({
                           return (
                             <div
                               key={fieldPath}
-                              className="flex flex-col rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+                              className="flex flex-col rounded-lg border border-border bg-card"
                             >
                               <div className="p-2">
                                 <MediaLinkPreview
@@ -3427,16 +3435,16 @@ export function LessonBlueprintEditor({
                                   compact
                                 />
                               </div>
-                              <div className="border-t border-gray-100 px-2 pb-2 pt-1.5 dark:border-gray-800">
-                                <div className="truncate text-xs font-medium text-gray-700 dark:text-gray-200">
+                              <div className="border-t border-border px-2 pb-2 pt-1.5">
+                                <div className="truncate text-xs font-medium text-foreground">
                                   {binding.file_name || fieldPath}
                                 </div>
-                                <div className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                                <div className="mt-0.5 text-xs text-muted-foreground">
                                   {assetKind.toUpperCase()}
                                 </div>
                               </div>
                               {assetLibraryTargetFieldPath ? (
-                                <div className="border-t border-gray-100 px-2 py-1.5 dark:border-gray-800">
+                                <div className="border-t border-border px-2 py-1.5">
                                   <button
                                     type="button"
                                     onClick={() => reuseAssetFromLibrary(fieldPath, assetLibraryTargetFieldPath)}
@@ -3454,26 +3462,26 @@ export function LessonBlueprintEditor({
                     )}
                   </div>
                   ) : (
-                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
+                  <div className="rounded-lg border border-border bg-muted/50 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Reusable library</h4>
+                        <h4 className="text-sm font-semibold text-foreground">Reusable library</h4>
                         <Link
-                          href="/audio/voices"
+                          href="/audio?tab=voices"
                           className="mt-1 inline-flex text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200"
                         >
                           Browse audio assets
                         </Link>
                       </div>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">{sortedGlobalAssetLibraryItems.length} items</span>
+                      <span className="text-xs text-muted-foreground">{sortedGlobalAssetLibraryItems.length} items</span>
                     </div>
 
                     {isGlobalAssetLibraryLoading ? (
-                      <div className="mt-4 rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                      <div className="mt-4 rounded-lg border border-dashed border-input px-3 py-4 text-sm text-muted-foreground">
                         Loading reusable assets…
                       </div>
                     ) : sortedGlobalAssetLibraryItems.length === 0 ? (
-                      <div className="mt-4 rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                      <div className="mt-4 rounded-lg border border-dashed border-input px-3 py-4 text-sm text-muted-foreground">
                         No reusable assets found for the current filters.
                       </div>
                     ) : (
@@ -3490,7 +3498,7 @@ export function LessonBlueprintEditor({
                           return (
                             <div
                               key={`${item.blueprint_id}:${item.field_path}:${item.binding.storage_key}`}
-                              className={`flex flex-col rounded-lg border bg-white dark:bg-gray-900 ${
+                              className={`flex flex-col rounded-lg border bg-card ${
                                 isOtherCourse
                                   ? 'border-amber-200 dark:border-amber-900/50'
                                   : 'border-gray-200 dark:border-gray-800'
@@ -3504,11 +3512,11 @@ export function LessonBlueprintEditor({
                                   compact
                                 />
                               </div>
-                              <div className="border-t border-gray-100 px-2 pb-2 pt-1.5 dark:border-gray-800">
-                                <div className="truncate text-xs font-medium text-gray-700 dark:text-gray-200">
+                              <div className="border-t border-border px-2 pb-2 pt-1.5">
+                                <div className="truncate text-xs font-medium text-foreground">
                                   {item.binding.file_name || item.field_path}
                                 </div>
-                                <div className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                                <div className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                                   <span>{assetKind.toUpperCase()}</span>
                                   <span>•</span>
                                   <span className="truncate">{item.course_key || 'Unknown'}</span>
@@ -3516,7 +3524,7 @@ export function LessonBlueprintEditor({
                                 </div>
                               </div>
                               {assetLibraryTargetFieldPath ? (
-                                <div className="border-t border-gray-100 px-2 py-1.5 dark:border-gray-800">
+                                <div className="border-t border-border px-2 py-1.5">
                                   <button
                                     type="button"
                                     onClick={() => reuseGlobalLibraryAsset(item, assetLibraryTargetFieldPath)}
@@ -3538,11 +3546,11 @@ export function LessonBlueprintEditor({
               </div>
             </Modal>
 
-            <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
+            <div className="mt-6 rounded-lg border border-border bg-muted/50 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Step Authoring</h3>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <h3 className="text-sm font-semibold text-foreground">Step Authoring</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Use this for lesson families that define explicit learner steps. Generated families will still show
                     their runtime flow preview below.
                   </p>
@@ -3550,7 +3558,7 @@ export function LessonBlueprintEditor({
                 <button
                   type="button"
                   onClick={addStep}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:hover:bg-white/[0.03]"
+                  className="rounded-lg border border-input bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/50"
                 >
                   Add Step
                 </button>
@@ -3567,7 +3575,7 @@ export function LessonBlueprintEditor({
 
               <div className="mt-4 space-y-4">
                 {editableSteps.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                  <div className="rounded-lg border border-dashed border-input px-3 py-4 text-sm text-muted-foreground">
                     No explicit steps are defined in this payload yet.
                   </div>
                 ) : (
@@ -3595,7 +3603,7 @@ export function LessonBlueprintEditor({
                     <details
                       key={`${getString(step.stepId) || stepType || 'step'}-${index}`}
                       open={index === justAddedStepIndex || undefined}
-                      className={`rounded-lg border bg-white p-4 dark:bg-gray-900 ${
+                      className={`rounded-lg border bg-card p-4 ${
                         hasStepErrors
                           ? 'border-red-300 dark:border-red-800'
                           : hasStepWarnings
@@ -3605,8 +3613,8 @@ export function LessonBlueprintEditor({
                     >
                       <summary className="flex cursor-pointer items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
-                          <div className="text-sm font-semibold text-gray-900 dark:text-white">Step {index + 1}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{stepSummaryLabel}</div>
+                          <div className="text-sm font-semibold text-foreground">Step {index + 1}</div>
+                          <div className="text-xs text-muted-foreground">{stepSummaryLabel}</div>
                           {hasStepErrors && (
                             <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
                               {stepCounts.errors} error{stepCounts.errors === 1 ? '' : 's'}
@@ -3631,7 +3639,7 @@ export function LessonBlueprintEditor({
                              type="button"
                              onClick={() => moveStep(index, -1)}
                              disabled={index === 0}
-                             className="rounded-lg border border-gray-300 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                             className="rounded-lg border border-input px-2 py-2 text-xs font-medium text-foreground hover:bg-muted/50 disabled:opacity-40"
                              title="Move up"
                            >
                              ↑
@@ -3640,7 +3648,7 @@ export function LessonBlueprintEditor({
                              type="button"
                              onClick={() => moveStep(index, 1)}
                              disabled={index === editableSteps.length - 1}
-                             className="rounded-lg border border-gray-300 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                             className="rounded-lg border border-input px-2 py-2 text-xs font-medium text-foreground hover:bg-muted/50 disabled:opacity-40"
                              title="Move down"
                            >
                              ↓
@@ -3656,8 +3664,9 @@ export function LessonBlueprintEditor({
                        </summary>
                        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2">
                          <div>
-                           <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Type</label>
+                           <label className="mb-1 block text-xs font-medium text-muted-foreground">Type</label>
                            <StyledSelect
+                aria-label="Type"
                              value={stepType}
                              onChange={(event) => {
                                updateStepField(index, 'type', event.target.value);
@@ -3668,21 +3677,21 @@ export function LessonBlueprintEditor({
                              fullWidth
                            />
                            {STEP_TYPE_DESCRIPTIONS[stepType] && (
-                             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                             <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
                                {STEP_TYPE_DESCRIPTIONS[stepType]}
                              </p>
                            )}
                          </div>
                         <div className="lg:col-span-2">
-                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">Title</label>
                           <input
                             value={getString(step.title)}
                             onChange={(event) => updateStepField(index, 'title', event.target.value)}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                            className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                           />
                         </div>
                         <div className="lg:col-span-2">
-                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Prompt / body</label>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">Prompt / body</label>
                           <textarea
                             rows={3}
                             value={
@@ -3708,30 +3717,30 @@ export function LessonBlueprintEditor({
                                 return { ...prev, steps: nextSteps };
                               });
                             }}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                            className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                           />
                         </div>
                         {form.lesson_kind === 'reading_practice' && (
                           <>
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Vocab id</label>
+                              <label className="mb-1 block text-xs font-medium text-muted-foreground">Vocab id</label>
                               <input
                                 value={getString(step.vocabId)}
                                 onChange={(event) => updateStepField(index, 'vocabId', event.target.value)}
-                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                               />
                             </div>
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Expected answer</label>
+                              <label className="mb-1 block text-xs font-medium text-muted-foreground">Expected answer</label>
                               <input
                                 value={getString(step.expectedAnswer)}
                                 onChange={(event) => updateStepField(index, 'expectedAnswer', event.target.value)}
-                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                               />
                             </div>
                              <div className="lg:col-span-2">
-                               <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Choices <span className="text-gray-400">(press Enter to add)</span></label>
-                               <div className="rounded-lg border border-gray-300 bg-white p-2 dark:border-gray-700 dark:bg-gray-800">
+                               <label className="mb-1 block text-xs font-medium text-muted-foreground">Choices <span className="text-gray-400">(press Enter to add)</span></label>
+                               <div className="rounded-lg border border-input bg-card p-2">
                                  <div className="flex flex-wrap gap-2">
                                    {getStringArray(step.choices).map((choice, choiceIndex) => (
                                      <span
@@ -3754,7 +3763,7 @@ export function LessonBlueprintEditor({
                                    <input
                                      type="text"
                                      placeholder="Type and press Enter"
-                                     className="min-w-[120px] flex-1 bg-transparent px-1 py-1 text-sm text-gray-900 outline-none placeholder:text-gray-400 dark:text-white"
+                                     className="min-w-[120px] flex-1 bg-transparent px-1 py-1 text-sm text-foreground outline-none placeholder:text-gray-400"
                                      onKeyDown={(event) => {
                                        if (event.key === 'Enter') {
                                          event.preventDefault();
@@ -3778,16 +3787,16 @@ export function LessonBlueprintEditor({
                          {form.lesson_kind === 'greetings_core' && (
                            <>
                              <div>
-                               <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Vocab</label>
+                               <label className="mb-1 block text-xs font-medium text-muted-foreground">Vocab</label>
                                <div className="flex gap-2">
-                                 <div className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-200">
+                                 <div className="flex-1 rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-foreground">
                                    {getString(step.vocabId) || <span className="text-gray-400">No vocab selected</span>}
                                  </div>
                                  <button
                                    type="button"
                                    onClick={() => openVocabPicker(index)}
                                    disabled={!selectedCourse?.target_language_id}
-                                   className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                                   className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                                  >
                                    {getString(step.vocabId) ? 'Change' : 'Pick vocab'}
                                  </button>
@@ -3803,11 +3812,11 @@ export function LessonBlueprintEditor({
                                </div>
                              </div>
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Context tag</label>
+                              <label className="mb-1 block text-xs font-medium text-muted-foreground">Context tag</label>
                               <input
                                 value={getString(step.contextTag)}
                                 onChange={(event) => updateStepField(index, 'contextTag', event.target.value)}
-                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                               />
                             </div>
                           </>
@@ -3815,20 +3824,20 @@ export function LessonBlueprintEditor({
                         {form.lesson_kind === 'numbers_1_10' && (
                           <>
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Number value</label>
+                              <label className="mb-1 block text-xs font-medium text-muted-foreground">Number value</label>
                               <input
                                 type="number"
                                 value={(step.numberValue as number | undefined) ?? ''}
                                 onChange={(event) => updateStepField(index, 'numberValue', Number(event.target.value || 0) || null)}
-                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                               />
                             </div>
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Display numeral</label>
+                              <label className="mb-1 block text-xs font-medium text-muted-foreground">Display numeral</label>
                               <input
                                 value={getString(step.displayNumeral)}
                                 onChange={(event) => updateStepField(index, 'displayNumeral', event.target.value)}
-                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                               />
                             </div>
                           </>
@@ -3836,8 +3845,9 @@ export function LessonBlueprintEditor({
                         {form.lesson_kind === 'tone_marks_drill' && (
                           <>
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Contrast side</label>
+                              <label className="mb-1 block text-xs font-medium text-muted-foreground">Contrast side</label>
                               <StyledSelect
+                aria-label="Contrast side"
                                 value={getString(step.contrastSide)}
                                 onChange={(event) => updateStepField(index, 'contrastSide', event.target.value)}
                                 options={[
@@ -3850,11 +3860,11 @@ export function LessonBlueprintEditor({
                               />
                             </div>
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Token external id</label>
+                              <label className="mb-1 block text-xs font-medium text-muted-foreground">Token external id</label>
                               <input
                                 value={getString(step.tokenExternalId)}
                                 onChange={(event) => updateStepField(index, 'tokenExternalId', event.target.value)}
-                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                               />
                             </div>
                           </>
@@ -3862,16 +3872,17 @@ export function LessonBlueprintEditor({
                         {stepType === 'recognitionTask' && (
                           <>
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Yoruba text</label>
+                              <label className="mb-1 block text-xs font-medium text-muted-foreground">Yoruba text</label>
                               <input
                                 value={getString(step.yorubaText)}
                                 onChange={(event) => updateStepField(index, 'yorubaText', event.target.value)}
-                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                               />
                             </div>
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Correct option</label>
+                              <label className="mb-1 block text-xs font-medium text-muted-foreground">Correct option</label>
                               <StyledSelect
+                aria-label="Correct option"
                                 value={getString(step.correctOptionId)}
                                 onChange={(event) => updateStepField(index, 'correctOptionId', event.target.value)}
                                 options={[
@@ -3890,16 +3901,16 @@ export function LessonBlueprintEditor({
                                 type="button"
                                 onClick={() => openPhrasePicker({ mode: 'recognitionTask', stepIndex: index })}
                                 disabled={!selectedCourse?.target_language_id}
-                                className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                                className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                               >
                                 Use phrase
                               </button>
                             </div>
-                            <div className="lg:col-span-2 rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+                            <div className="lg:col-span-2 rounded-lg border border-border p-4">
                               <div className="mb-3 flex items-center justify-between gap-3">
                                 <div>
-                                  <div className="text-sm font-semibold text-gray-900 dark:text-white">Recognition options</div>
-                                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                  <div className="text-sm font-semibold text-foreground">Recognition options</div>
+                                  <div className="mt-1 text-xs text-muted-foreground">
                                     These cards already render `imageUrl` on mobile when present.
                                   </div>
                                 </div>
@@ -3912,14 +3923,14 @@ export function LessonBlueprintEditor({
                                       yorubaText: '',
                                     })
                                   }
-                                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:hover:bg-white/[0.03]"
+                                  className="rounded-lg border border-input bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/50"
                                 >
                                   Add Option
                                 </button>
                               </div>
                               <div className="space-y-4">
                                 {recognitionOptions.length === 0 ? (
-                                  <div className="rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                                  <div className="rounded-lg border border-dashed border-input px-3 py-4 text-sm text-muted-foreground">
                                     No recognition options yet.
                                   </div>
                                 ) : (
@@ -3941,7 +3952,7 @@ export function LessonBlueprintEditor({
                                       >
                                         <div className="mb-3 flex items-center justify-between gap-3">
                                           <div className="flex items-center gap-2">
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                            <div className="text-sm font-medium text-foreground">
                                               Option {optionIndex + 1}
                                             </div>
                                             {hasOptionErrors && (
@@ -3981,33 +3992,33 @@ export function LessonBlueprintEditor({
                                         </div>
                                          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                                            <div>
-                                             <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">English text</label>
+                                             <label className="mb-1 block text-xs font-medium text-muted-foreground">English text</label>
                                             <input
                                               value={getString(option.englishText)}
                                               onChange={(event) =>
                                                 updateStepCollectionItemField(index, 'options', optionIndex, 'englishText', event.target.value)
                                               }
-                                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                              className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                                             />
                                           </div>
                                           <div className="lg:col-span-2">
-                                            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Yoruba text</label>
+                                            <label className="mb-1 block text-xs font-medium text-muted-foreground">Yoruba text</label>
                                             <input
                                               value={getString(option.yorubaText)}
                                               onChange={(event) =>
                                                 updateStepCollectionItemField(index, 'options', optionIndex, 'yorubaText', event.target.value)
                                               }
-                                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                              className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                                             />
                                           </div>
                                            <div className="lg:col-span-2">
-                                             <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Image</label>
+                                             <label className="mb-1 block text-xs font-medium text-muted-foreground">Image</label>
                                              <div className="flex flex-wrap gap-2">
                                                <button
                                                  type="button"
                                                  onClick={() => openAssetPicker(imageFieldPath, 'image/*', 'Image')}
                                                  disabled={uploadingFieldPath === imageFieldPath}
-                                                 className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                                                 className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                                                >
                                                  {uploadingFieldPath === imageFieldPath
                                                    ? `Uploading ${uploadProgressByField[imageFieldPath] ?? 0}%`
@@ -4019,7 +4030,7 @@ export function LessonBlueprintEditor({
                                                  className={`rounded-lg border px-3 py-2 text-xs font-medium ${
                                                    assetLibraryTargetFieldPath === imageFieldPath
                                                      ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
-                                                     : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                                                     : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
                                                  }`}
                                                >
                                                  Library
@@ -4036,7 +4047,7 @@ export function LessonBlueprintEditor({
                                                  />
                                                </div>
                                              ) : (
-                                               <div className="mt-2 rounded-lg border border-dashed border-gray-300 px-3 py-3 text-center text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">No image</div>
+                                               <div className="mt-2 rounded-lg border border-dashed border-input px-3 py-3 text-center text-xs text-muted-foreground">No image</div>
                                              )}
                                            </div>
                                         </div>
@@ -4049,11 +4060,11 @@ export function LessonBlueprintEditor({
                           </>
                         )}
                         {stepType === 'matchingPairs' && (
-                          <div className="lg:col-span-2 rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+                          <div className="lg:col-span-2 rounded-lg border border-border p-4">
                             <div className="mb-3 flex items-center justify-between gap-3">
                               <div>
-                                <div className="text-sm font-semibold text-gray-900 dark:text-white">Matching pairs</div>
-                                <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                <div className="text-sm font-semibold text-foreground">Matching pairs</div>
+                                <div className="mt-1 text-xs text-muted-foreground">
                                   Pair audio is already used by the runtime. Pair images are stored for lesson cards and future matching visuals.
                                 </div>
                               </div>
@@ -4068,7 +4079,7 @@ export function LessonBlueprintEditor({
                                       audioUrl: '',
                                     })
                                   }
-                                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:hover:bg-white/[0.03]"
+                                  className="rounded-lg border border-input bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/50"
                                 >
                                   Add Pair
                                 </button>
@@ -4076,7 +4087,7 @@ export function LessonBlueprintEditor({
                                   type="button"
                                   onClick={() => openPhrasePicker({ mode: 'matchingPairs', stepIndex: index })}
                                   disabled={!selectedCourse?.target_language_id}
-                                  className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                                  className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                                 >
                                   Add from phrases
                                 </button>
@@ -4084,7 +4095,7 @@ export function LessonBlueprintEditor({
                             </div>
                             <div className="space-y-4">
                               {matchPairs.length === 0 ? (
-                                <div className="rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                                <div className="rounded-lg border border-dashed border-input px-3 py-4 text-sm text-muted-foreground">
                                   No matching pairs yet.
                                 </div>
                               ) : (
@@ -4116,7 +4127,7 @@ export function LessonBlueprintEditor({
                                     >
                                       <div className="mb-3 flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-2">
-                                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                          <div className="text-sm font-medium text-foreground">
                                             Pair {pairIndex + 1}
                                           </div>
                                           {hasPairErrors && (
@@ -4129,18 +4140,18 @@ export function LessonBlueprintEditor({
                                               {pairCounts.warnings} warning{pairCounts.warnings === 1 ? '' : 's'}
                                             </span>
                                           )}
-                                          <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                                             {sourceContentType ? (
                                               <span className="rounded-full bg-brand-50 px-2 py-1 text-brand-700 dark:bg-brand-950/30 dark:text-brand-300">
                                                 {sourceContentType}
                                               </span>
                                             ) : null}
                                             {sourcePhraseId ? (
-                                              <span className="rounded-full bg-gray-100 px-2 py-1 dark:bg-gray-800">
+                                              <span className="rounded-full bg-muted px-2 py-1">
                                                 phrase linked
                                               </span>
                                             ) : (
-                                              <span className="rounded-full bg-gray-100 px-2 py-1 dark:bg-gray-800">
+                                              <span className="rounded-full bg-muted px-2 py-1">
                                                 manual
                                               </span>
                                             )}
@@ -4159,7 +4170,7 @@ export function LessonBlueprintEditor({
                                                 steps[index] = step;
                                                 return { ...prev, steps };
                                               })}
-                                              className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                              className="rounded-lg border border-input px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/50"
                                             >
                                               Clear link
                                             </button>
@@ -4175,7 +4186,7 @@ export function LessonBlueprintEditor({
                                       </div>
                                        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2">
                                          <div className="relative">
-                                           <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">English</label>
+                                           <label className="mb-1 block text-xs font-medium text-muted-foreground">English</label>
                                            <div className="relative">
                                              <input
                                                value={getString(pair.englishText)}
@@ -4203,7 +4214,7 @@ export function LessonBlueprintEditor({
                                                  }, 200);
                                                }}
                                                placeholder="Type to search phrases…"
-                                               className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                               className="w-full rounded-lg border border-input bg-card py-2 pl-3 pr-8 text-sm text-foreground focus:border-brand-500 focus:outline-none"
                                              />
                                              <svg className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
@@ -4212,9 +4223,9 @@ export function LessonBlueprintEditor({
                                            {pairAutocomplete?.stepIndex === index &&
                                              pairAutocomplete?.pairIndex === pairIndex &&
                                              (pairSearchLoading || pairSearchResults.length > 0 || pairSearchError) && (
-                                             <div className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                                             <div className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-border bg-card shadow-lg">
                                                {pairSearchLoading && (
-                                                 <div className="px-3 py-2 text-xs text-gray-500">Searching…</div>
+                                                 <div className="px-3 py-2 text-xs text-muted-foreground">Searching…</div>
                                                )}
                                                {pairSearchError && (
                                                  <div className="px-3 py-2 text-xs text-red-500">{pairSearchError}</div>
@@ -4245,12 +4256,12 @@ export function LessonBlueprintEditor({
                                                       setPairAutocomplete(null);
                                                       setPairSearchResults([]);
                                                     }}
-                                                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800"
+                                                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted/50"
                                                  >
-                                                   <span className="font-medium text-gray-900 dark:text-white">
+                                                   <span className="font-medium text-foreground">
                                                      {item.translation}
                                                    </span>
-                                                   <span className="text-gray-500 dark:text-gray-400">→</span>
+                                                   <span className="text-muted-foreground">→</span>
                                                    <span className="text-brand-700 dark:text-brand-300">
                                                      {item.phrase}
                                                    </span>
@@ -4263,7 +4274,7 @@ export function LessonBlueprintEditor({
                                            )}
                                          </div>
                                           <div>
-                                            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Yoruba</label>
+                                            <label className="mb-1 block text-xs font-medium text-muted-foreground">Yoruba</label>
                                             <input
                                               value={getString(pair.yorubaText)}
                                               onChange={(event) =>
@@ -4273,25 +4284,26 @@ export function LessonBlueprintEditor({
                                               placeholder={sourcePhraseId ? 'Filled from phrase' : 'Yoruba text'}
                                               className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none ${
                                                 sourcePhraseId
-                                                  ? 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-300'
-                                                  : 'border-gray-300 bg-white text-gray-900 focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white'
+                                                  ? 'border-gray-200 bg-muted/50 text-gray-700 dark:border-gray-700 dark:text-gray-300'
+                                                  : 'border-gray-300 bg-card text-gray-900 focus:border-brand-500 dark:border-gray-700 dark:text-white'
                                               }`}
                                             />
                                           </div>
                                        </div>
-                                       <details className="mt-4 rounded-lg border border-dashed border-gray-300 px-3 py-3 dark:border-gray-700">
-                                         <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-200">
+                                       <details className="mt-4 rounded-lg border border-dashed border-input px-3 py-3">
+                                         <summary className="cursor-pointer text-sm font-medium text-foreground">
                                            Advanced fields
                                          </summary>
                                          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
                                            <div>
-                                             <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Audio</label>
+                                             <label className="mb-1 block text-xs font-medium text-muted-foreground">Audio</label>
                                              <div className="flex flex-wrap gap-2">
                                                <button
                                                  type="button"
+                                                 {...getFieldPathAttributes(pairAudioFieldPath)}
                                                  onClick={() => openAssetPicker(pairAudioFieldPath, 'audio/*', 'Audio')}
                                                  disabled={uploadingFieldPath === pairAudioFieldPath}
-                                                 className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                                                 className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                                                >
                                                  {uploadingFieldPath === pairAudioFieldPath
                                                    ? `Uploading ${uploadProgressByField[pairAudioFieldPath] ?? 0}%`
@@ -4303,7 +4315,7 @@ export function LessonBlueprintEditor({
                                                  className={`rounded-lg border px-3 py-2 text-xs font-medium ${
                                                    assetLibraryTargetFieldPath === pairAudioFieldPath
                                                      ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
-                                                     : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                                                     : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
                                                  }`}
                                                >
                                                  Library
@@ -4340,13 +4352,14 @@ export function LessonBlueprintEditor({
                                               ) : null}
                                             </div>
                                             <div>
-                                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Image</label>
+                                              <label className="mb-1 block text-xs font-medium text-muted-foreground">Image</label>
                                               <div className="flex flex-wrap gap-2">
                                                 <button
                                                   type="button"
+                                                  {...getFieldPathAttributes(pairImageFieldPath)}
                                                   onClick={() => openAssetPicker(pairImageFieldPath, 'image/*', 'Image')}
                                                   disabled={uploadingFieldPath === pairImageFieldPath}
-                                                  className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                                                  className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                                                 >
                                                   {uploadingFieldPath === pairImageFieldPath
                                                     ? `Uploading ${uploadProgressByField[pairImageFieldPath] ?? 0}%`
@@ -4358,7 +4371,7 @@ export function LessonBlueprintEditor({
                                                   className={`rounded-lg border px-3 py-2 text-xs font-medium ${
                                                     assetLibraryTargetFieldPath === pairImageFieldPath
                                                       ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
-                                                      : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                                                      : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
                                                   }`}
                                                 >
                                                   Library
@@ -4386,13 +4399,13 @@ export function LessonBlueprintEditor({
                           </div>
                         )}
                          <div>
-                           <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Image</label>
+                           <label className="mb-1 block text-xs font-medium text-muted-foreground">Image</label>
                            <div className="flex flex-wrap gap-2">
                              <button
                                type="button"
                                onClick={() => openAssetPicker(`steps[${index}].imageUrl`, 'image/*', 'Image')}
                                disabled={uploadingFieldPath === `steps[${index}].imageUrl`}
-                               className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                               className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                              >
                                {uploadingFieldPath === `steps[${index}].imageUrl`
                                  ? `Uploading ${uploadProgressByField[`steps[${index}].imageUrl`] ?? 0}%`
@@ -4403,8 +4416,9 @@ export function LessonBlueprintEditor({
                                onClick={() => openAssetLibrary(`steps[${index}].imageUrl`)}
                                className={`rounded-lg border px-3 py-2 text-xs font-medium ${
                                  assetLibraryTargetFieldPath === `steps[${index}].imageUrl`
+                                   
                                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
-                                   : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                                   : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
                                }`}
                              >
                                Library
@@ -4423,13 +4437,13 @@ export function LessonBlueprintEditor({
                            ) : null}
                          </div>
                          <div>
-                           <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Audio</label>
+                           <label className="mb-1 block text-xs font-medium text-muted-foreground">Audio</label>
                            <div className="flex flex-wrap gap-2">
                              <button
                                type="button"
                                onClick={() => openAssetPicker(`steps[${index}].audioUrl`, 'audio/*', 'Audio')}
                                disabled={uploadingFieldPath === `steps[${index}].audioUrl`}
-                               className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
+                               className="rounded-lg border border-brand-300 bg-card px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
                              >
                                {uploadingFieldPath === `steps[${index}].audioUrl`
                                  ? `Uploading ${uploadProgressByField[`steps[${index}].audioUrl`] ?? 0}%`
@@ -4440,8 +4454,9 @@ export function LessonBlueprintEditor({
                                onClick={() => openAssetLibrary(`steps[${index}].audioUrl`)}
                                className={`rounded-lg border px-3 py-2 text-xs font-medium ${
                                  assetLibraryTargetFieldPath === `steps[${index}].audioUrl`
+                                   
                                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
-                                   : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                                   : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
                                }`}
                              >
                                Library
@@ -4486,7 +4501,7 @@ export function LessonBlueprintEditor({
             </div>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 xl:sticky xl:top-6 xl:self-start">
+          <div className="rounded-lg border border-border bg-card p-4 xl:sticky xl:top-6 xl:self-start">
             <LessonRuntimePreview
               heading="Learner Preview"
               blueprint={{
@@ -4500,9 +4515,9 @@ export function LessonBlueprintEditor({
           </div>
           </div>
 
-          <details className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+          <details className="rounded-lg border border-border bg-card p-4">
             <summary className="flex cursor-pointer items-center justify-between gap-3">
-              <span className="text-base font-semibold text-gray-900 dark:text-white">Raw Payload JSON</span>
+              <span id="raw-payload-json-label" className="text-base font-semibold text-foreground">Raw Payload JSON</span>
               <div className="flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
                 <button
                   type="button"
@@ -4515,7 +4530,7 @@ export function LessonBlueprintEditor({
                       setForm((prev) => ({ ...prev, payload: parsed }));
                     }
                   }}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+                  className="rounded-lg border border-input bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/50"
                 >
                   Format JSON
                 </button>
@@ -4524,10 +4539,11 @@ export function LessonBlueprintEditor({
 
             <textarea
               id="raw-payload-json"
+              aria-labelledby="raw-payload-json-label"
               value={payloadText}
               onChange={(event) => handlePayloadTextChange(event.target.value)}
               spellCheck={false}
-              className="mt-4 h-[360px] w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-3 font-mono text-xs text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+              className="mt-4 h-[360px] w-full rounded-lg border border-input bg-muted/50 px-3 py-3 font-mono text-xs text-foreground focus:border-brand-500 focus:outline-none"
             />
           </details>
         </div>
@@ -4538,7 +4554,7 @@ export function LessonBlueprintEditor({
           type="button"
           onClick={handlePreview}
           disabled={isPreviewing || isSaving}
-          className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+          className="rounded-lg border border-input bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isPreviewing ? 'Validating…' : 'Validate'}
         </button>
@@ -4546,7 +4562,7 @@ export function LessonBlueprintEditor({
           type="button"
           onClick={handleSave}
           disabled={isSaving || isPreviewing}
-          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSaving ? 'Saving…' : mode === 'create' ? 'Create Draft' : 'Save Draft'}
         </button>
@@ -4555,7 +4571,7 @@ export function LessonBlueprintEditor({
             type="button"
             onClick={handleClone}
             disabled={isCloning || isSaving || isPreviewing}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+            className="rounded-lg border border-input bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isCloning ? 'Cloning…' : 'Clone Draft'}
           </button>
@@ -4563,7 +4579,7 @@ export function LessonBlueprintEditor({
         {autoSaveStatus === 'saved' && (
           <span className="text-xs text-green-600 dark:text-green-400">Draft auto-saved</span>
         )}
-        <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">
+        <span className="ml-auto text-xs text-muted-foreground">
           Shortcuts: Ctrl+S Save · Ctrl+P Preview · Ctrl+Enter Publish
         </span>
       </div>
@@ -4576,14 +4592,14 @@ export function LessonBlueprintEditor({
       >
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+            <label className="mb-1 block text-sm font-medium text-foreground">
               Search phrases
             </label>
             <input
               value={phraseSearch}
               onChange={(event) => setPhraseSearch(event.target.value)}
               placeholder="Search phrase or translation"
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
             />
           </div>
 
@@ -4601,11 +4617,11 @@ export function LessonBlueprintEditor({
 
           <div className="max-h-[28rem] space-y-3 overflow-y-auto pr-1">
             {isPhraseLoading ? (
-              <div className="rounded-lg border border-dashed border-gray-300 px-3 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+              <div className="rounded-lg border border-dashed border-input px-3 py-8 text-center text-sm text-muted-foreground">
                 Loading phrases…
               </div>
             ) : phraseItems.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-gray-300 px-3 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+              <div className="rounded-lg border border-dashed border-input px-3 py-8 text-center text-sm text-muted-foreground">
                 No phrases found for this language.
               </div>
             ) : (
@@ -4614,11 +4630,11 @@ export function LessonBlueprintEditor({
                   key={phrase.id}
                   type="button"
                   onClick={() => applyPhraseSelection(phrase)}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-left hover:border-brand-300 hover:bg-brand-50/40 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-brand-800 dark:hover:bg-brand-950/20"
+                  className="w-full rounded-lg border border-border bg-card px-4 py-3 text-left hover:border-brand-300 hover:bg-brand-50/40 dark:hover:border-brand-800 dark:hover:bg-brand-950/20"
                 >
-                  <div className="text-sm font-semibold text-gray-900 dark:text-white">{phrase.phrase}</div>
-                  <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">{phrase.translation}</div>
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-sm font-semibold text-foreground">{phrase.phrase}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{phrase.translation}</div>
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
                     {phrase.category ? <span>{phrase.category}</span> : null}
                     {phrase.audio_url ? <span>Has audio</span> : <span>No audio</span>}
                     {phrase.is_published ? <span>Published</span> : <span>Draft</span>}
@@ -4641,14 +4657,14 @@ export function LessonBlueprintEditor({
       >
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+            <label className="mb-1 block text-sm font-medium text-foreground">
               Search vocabulary
             </label>
             <input
               value={vocabPickerSearch}
               onChange={(event) => setVocabPickerSearch(event.target.value)}
               placeholder="Search by lemma or ID"
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
             />
           </div>
 
@@ -4666,11 +4682,11 @@ export function LessonBlueprintEditor({
 
           <div className="max-h-[28rem] space-y-3 overflow-y-auto pr-1">
             {isVocabPickerLoading ? (
-              <div className="rounded-lg border border-dashed border-gray-300 px-3 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+              <div className="rounded-lg border border-dashed border-input px-3 py-8 text-center text-sm text-muted-foreground">
                 Loading vocabulary…
               </div>
             ) : vocabPickerItems.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-gray-300 px-3 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+              <div className="rounded-lg border border-dashed border-input px-3 py-8 text-center text-sm text-muted-foreground">
                 No vocabulary found for this language.
               </div>
             ) : (
@@ -4679,12 +4695,12 @@ export function LessonBlueprintEditor({
                   key={item.external_id}
                   type="button"
                   onClick={() => applyVocabSelection(item)}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-left hover:border-brand-300 hover:bg-brand-50/40 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-brand-800 dark:hover:bg-brand-950/20"
+                  className="w-full rounded-lg border border-border bg-card px-4 py-3 text-left hover:border-brand-300 hover:bg-brand-50/40 dark:hover:border-brand-800 dark:hover:bg-brand-950/20"
                 >
-                  <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <div className="text-sm font-semibold text-foreground">
                     {item.lemma || item.external_id}
                   </div>
-                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="mt-1 text-xs text-muted-foreground">
                     ID: {item.external_id}
                     {item.part_of_speech ? ` • ${item.part_of_speech}` : ''}
                   </div>
@@ -4696,10 +4712,10 @@ export function LessonBlueprintEditor({
       </Modal>
 
       {showPreviewResult && previewResult && (
-        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-lg border border-border bg-card p-4">
           <div className="mb-4">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Preview Result</h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <h2 className="text-base font-semibold text-foreground">Preview Result</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Validation is computed against the current draft payload before publish.
             </p>
           </div>

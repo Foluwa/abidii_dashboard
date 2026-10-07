@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useProverbs, useLanguages } from "@/hooks/useApi";
+import { useProverbs, useAdminLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import type { Proverb } from "@/types/api";
 import {
@@ -12,7 +12,6 @@ import {
   ActiveFilterChips,
   StickyBulkActionBar,
 } from '@/components/admin/layout';
-import { FiVolume2, FiGlobe, FiBarChart2, FiCheckCircle, FiAlertTriangle } from "react-icons/fi";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Toast from "@/components/ui/toast/Toast";
 import Alert from "@/components/ui/alert/Alert";
@@ -27,6 +26,7 @@ import { RegenerateAudioModal } from "@/components/modals/RegenerateAudioModal";
 import { scheduleQueuedAudioRefresh } from "@/lib/audioRegeneration";
 import { createProverbCleanupJob, type AdminJob } from "@/lib/adminJobsApi";
 import { useAdminJob } from "@/hooks/useAdminJob";
+import { ChartColumn, CircleCheck, Globe, TriangleAlert, Volume2 } from "lucide-react";
 
 type AlignmentStatus = "draft" | "reviewed" | "approved" | "stale";
 
@@ -250,8 +250,8 @@ const renderAlignmentJobBadge = (proverb: Proverb) => {
     processing: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
     completed: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
     failed: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200",
-    cancelled: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-    superseded: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    cancelled: "bg-muted text-foreground",
+    superseded: "bg-muted text-foreground",
   };
 
   const providerDetail = [proverb.alignment_job_provider, proverb.alignment_job_engine].filter(Boolean).join(" / ");
@@ -367,7 +367,7 @@ export default function ProverbsPage() {
     page, 
     limit 
   });
-  const { languages } = useLanguages();
+  const { languages } = useAdminLanguages();
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   // Deduplicate proverbs to prevent duplicate key errors
@@ -1368,10 +1368,10 @@ export default function ProverbsPage() {
       {errorMessage && <Toast type="error" message={errorMessage} onClose={() => setErrorMessage("")} />}
 
       <ContentStatsGrid cols={4}>
-        <ContentStatsCard label="Total" value={total} icon={FiBarChart2} />
-        <ContentStatsCard label="With Audio" value={stats.withAudio} icon={FiVolume2} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
-        <ContentStatsCard label="Aligned" value={stats.aligned} icon={FiCheckCircle} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
-        <ContentStatsCard label="Needs Cleanup" value={stats.needsCleanup} icon={FiAlertTriangle} iconBgClass="bg-red-100 dark:bg-red-900/20" iconTextClass="text-red-600 dark:text-red-400" />
+        <ContentStatsCard label="Total" value={total} icon={ChartColumn} />
+        <ContentStatsCard label="With Audio" value={stats.withAudio} icon={Volume2} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+        <ContentStatsCard label="Aligned" value={stats.aligned} icon={CircleCheck} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
+        <ContentStatsCard label="Needs Cleanup" value={stats.needsCleanup} icon={TriangleAlert} iconBgClass="bg-red-100 dark:bg-red-900/20" iconTextClass="text-red-600 dark:text-red-400" />
       </ContentStatsGrid>
 
       {/* Bulk Import from Google Sheets (has built-in accordion) */}
@@ -1407,9 +1407,9 @@ export default function ProverbsPage() {
         {/* Primary Filters Row */}
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[200px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               <div className="flex items-center gap-1.5">
-                <FiGlobe className="h-3.5 w-3.5" />
+                <Globe className="h-3.5 w-3.5" />
                 Language
               </div>
             </label>
@@ -1431,7 +1431,7 @@ export default function ProverbsPage() {
           </div>
 
           <div className="flex-1 min-w-[240px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Search
             </label>
             <input
@@ -1442,15 +1442,16 @@ export default function ProverbsPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+              className="block w-full rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
 
           <div className="min-w-[140px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Per Page
             </label>
             <StyledSelect
+                aria-label="Per Page"
               value={limit}
               onChange={(e) => {
                 setLimit(Number(e.target.value));
@@ -1468,10 +1469,10 @@ export default function ProverbsPage() {
 
         {/* Advanced Filters Panel */}
         {showAdvancedFilters && (
-          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+          <div className="mt-5 border-t border-border pt-5">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
-                <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-2 block text-xs font-medium text-foreground">
                   Category
                 </label>
                 <input
@@ -1482,7 +1483,7 @@ export default function ProverbsPage() {
                     setPage(1);
                   }}
                   placeholder="Filter by category..."
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+                  className="block w-full rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 />
               </div>
             </div>
@@ -1518,7 +1519,7 @@ export default function ProverbsPage() {
                   type="button"
                   onClick={() => void queueProverbCleanupJob(true)}
                   disabled={proverbCleanupLoading}
-                  className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-900 disabled:opacity-60 dark:border-amber-500/30 dark:bg-gray-900 dark:text-amber-100"
+                  className="rounded-lg border border-amber-300 bg-card px-3 py-2 text-sm font-medium text-amber-900 disabled:opacity-60 dark:border-amber-500/30 dark:text-amber-100"
                 >
                   Preview
                 </button>
@@ -1533,7 +1534,7 @@ export default function ProverbsPage() {
               </div>
             </div>
             {currentProverbCleanupJob ? (
-              <div className="mt-4 rounded-lg bg-white p-3 text-sm text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              <div className="mt-4 rounded-lg bg-card p-3 text-sm text-foreground">
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="font-mono text-xs">{currentProverbCleanupJob.id.slice(0, 8)}</span>
                   <span className="font-medium">{currentProverbCleanupJob.status}</span>
@@ -1548,9 +1549,9 @@ export default function ProverbsPage() {
                       ["Deleted", currentProverbCleanupJob.result.deleted_count ?? "-"],
                       ["R2", currentProverbCleanupJob.result.r2_cleanup ?? "not_run"],
                     ] as Array<[string, unknown]>).map(([label, value]) => (
-                      <div key={label} className="rounded-lg border border-gray-200 p-2 dark:border-gray-800">
-                        <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</div>
-                        <div className="mt-1 font-semibold text-gray-900 dark:text-white">{String(value)}</div>
+                      <div key={label} className="rounded-lg border border-border p-2">
+                        <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+                        <div className="mt-1 font-semibold text-foreground">{String(value)}</div>
                       </div>
                     ))}
                   </div>
@@ -1574,7 +1575,7 @@ export default function ProverbsPage() {
             onClick: handleBulkRegenerateAudio,
             disabled: isBulkRegenerating || isLoadingVoices,
             loading: isBulkRegenerating || isLoadingVoices,
-            icon: <FiVolume2 className="h-4 w-4" />,
+            icon: <Volume2 className="h-4 w-4" />,
           },
         ]}
       />
@@ -1598,8 +1599,8 @@ export default function ProverbsPage() {
 
       {/* Pagination */}
       {total > limit && (
-        <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
-          <p className="text-sm text-gray-700 dark:text-gray-300">
+        <div className="flex items-center justify-between px-6 py-4 bg-card border-t border-border rounded-b-lg">
+          <p className="text-sm text-foreground">
             Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} proverbs
           </p>
           <div className="ml-auto">
@@ -1643,73 +1644,73 @@ export default function ProverbsPage() {
               />
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Proverb *</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Proverb *</label>
                 <textarea
                   value={formData.proverb}
                   onChange={(e) => setFormData({ ...formData, proverb: e.target.value })}
                   required
                   rows={2}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-800 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Translation *</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Translation *</label>
                 <textarea
                   value={formData.translation}
                   onChange={(e) => setFormData({ ...formData, translation: e.target.value })}
                   required
                   rows={2}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-800 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meaning/Context</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Meaning/Context</label>
                 <textarea
                   value={formData.meaning}
                   onChange={(e) => setFormData({ ...formData, meaning: e.target.value })}
                   rows={3}
                   placeholder="Explain the cultural context or deeper meaning..."
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-800 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Category</label>
                 <input
                   type="text"
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   placeholder="e.g., Wisdom, Life, Family, Nature"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-800 dark:text-white"
                 />
               </div>
 
-              <label className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-200">
+              <label className="flex items-center gap-3 rounded-lg border border-border bg-muted/50 px-3 py-3 text-sm text-foreground">
                 <input
                   type="checkbox"
                   checked={formData.is_published}
                   onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                  className="h-4 w-4 rounded border-input text-blue-600"
                 />
                 <span>Publish this proverb</span>
               </label>
 
               {/* Audio Upload */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Audio File (Optional)
                 </label>
                 <input
                   type="file"
                   accept="audio/*"
                   onChange={handleAudioChange}
-                  className="block w-full text-sm text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-white dark:bg-gray-700 focus:outline-none p-2"
+                  className="block w-full text-sm text-gray-900 dark:text-gray-300 border border-input rounded-lg cursor-pointer bg-background focus:outline-none p-2"
                 />
                 {audioPreview && (
                   <div className="mt-2">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <p className="text-xs text-muted-foreground mb-1">
                       {audioFile ? 'New audio file selected' : 'Current audio'}
                     </p>
                     <audio controls className="w-full h-10">
@@ -1717,38 +1718,38 @@ export default function ProverbsPage() {
                     </audio>
                   </div>
                 )}
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Max file size: 5MB. Supported formats: MP3, WAV, OGG
                 </p>
               </div>
 
               {editingProverb && (
-                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/30 p-4 space-y-4">
+                <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-4">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Proverb Alignment</h3>
-                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                    <h3 className="text-sm font-semibold text-foreground">Proverb Alignment</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Review the generated draft, set explicit prompt and answer timing, then optionally refine word timings for karaoke and sentence completion.
                     </p>
                   </div>
 
                   {(alignmentError || alignmentLoading) && (
                     alignmentLoading ? (
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Loading alignment...</div>
+                      <div className="text-sm text-muted-foreground">Loading alignment...</div>
                     ) : (
                       <Alert variant="error" title="Alignment" message={alignmentError} />
                     )
                   )}
 
                   {alignmentRecord && (
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       {renderModalAlignmentStatus()}
                       {(alignmentRecord.provider_used || alignmentRecord.engine_used) && (
-                        <span className="rounded-full border border-gray-300 px-2.5 py-1 dark:border-gray-700">
+                        <span className="rounded-full border border-input px-2.5 py-1">
                           Source: {[alignmentRecord.provider_used, alignmentRecord.engine_used].filter(Boolean).join(" / ")}
                         </span>
                       )}
                       {alignmentRecord.confidence != null && (
-                        <span className="rounded-full border border-gray-300 px-2.5 py-1 dark:border-gray-700">
+                        <span className="rounded-full border border-input px-2.5 py-1">
                           Confidence: {alignmentRecord.confidence.toFixed(2)}
                         </span>
                       )}
@@ -1759,7 +1760,7 @@ export default function ProverbsPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       {renderAlignmentJobBadge(editingProverb)}
                       {editingProverb.alignment_job_updated_at && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-xs text-muted-foreground">
                           Updated {new Date(editingProverb.alignment_job_updated_at).toLocaleString()}
                         </div>
                       )}
@@ -1786,19 +1787,19 @@ export default function ProverbsPage() {
                   {editingProverb.audio_url ? (
                     <AudioWaveform
                       src={editingProverb.audio_url}
-                      className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3"
+                      className="rounded-lg border border-border bg-card p-3"
                     />
                   ) : (
-                    <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="rounded-lg border border-dashed border-input p-4 text-sm text-muted-foreground">
                       Generate or upload proverb audio before saving alignment timings.
                     </div>
                   )}
 
-                  <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-4">
+                  <div className="rounded-lg border border-border bg-card p-4 space-y-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">Full Proverb Alignment</div>
-                        <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="text-sm font-medium text-foreground">Full Proverb Alignment</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
                           Review the entire proverb transcript first. Karaoke highlighting uses these full-word timings directly.
                         </div>
                       </div>
@@ -1812,20 +1813,20 @@ export default function ProverbsPage() {
                     </div>
 
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label className="mb-1 block text-sm font-medium text-foreground">
                         Proverb Text
                       </label>
                       <textarea
                         value={alignmentPrimarySegment.text}
                         onChange={(e) => updateAlignmentPrimarySegment({ text: e.target.value })}
                         rows={2}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-700 dark:text-white"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label className="mb-1 block text-sm font-medium text-foreground">
                           Start (ms)
                         </label>
                         <input
@@ -1833,11 +1834,11 @@ export default function ProverbsPage() {
                           min={0}
                           value={alignmentPrimarySegment.start_ms}
                           onChange={(e) => updateAlignmentPrimarySegment({ start_ms: Number(e.target.value || 0) })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label className="mb-1 block text-sm font-medium text-foreground">
                           End (ms)
                         </label>
                         <input
@@ -1845,12 +1846,12 @@ export default function ProverbsPage() {
                           min={0}
                           value={alignmentPrimarySegment.end_ms}
                           onChange={(e) => updateAlignmentPrimarySegment({ end_ms: Number(e.target.value || 0) })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                         />
                       </div>
                     </div>
 
-                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 text-sm text-gray-700 dark:text-gray-200">
+                    <div className="rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-foreground">
                       {alignmentPrimarySegment.text || "Full proverb transcript will appear here"}
                     </div>
 
@@ -1859,21 +1860,21 @@ export default function ProverbsPage() {
                         <button
                           type="button"
                           onClick={addAlignmentWord}
-                          className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                          className="rounded-lg border border-input px-3 py-2 text-xs font-medium text-foreground hover:bg-accent"
                         >
                           Add Word
                         </button>
                         <button
                           type="button"
                           onClick={redistributeAlignmentWords}
-                          className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                          className="rounded-lg border border-input px-3 py-2 text-xs font-medium text-foreground hover:bg-accent"
                         >
                           Redistribute Evenly
                         </button>
                       </div>
 
                       {alignmentWords.length === 0 ? (
-                        <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="rounded-lg border border-dashed border-input p-3 text-sm text-muted-foreground">
                           No word timings yet for this proverb.
                         </div>
                       ) : alignmentWords.map((word, index) => (
@@ -1882,18 +1883,18 @@ export default function ProverbsPage() {
                           className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,2fr)_120px_120px_minmax(0,220px)_auto_auto] xl:items-end"
                         >
                           <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label className="mb-1 block text-sm font-medium text-foreground">
                               Word {index + 1}
                             </label>
                             <input
                               type="text"
                               value={word.word}
                               onChange={(e) => updateAlignmentWord(index, "word", e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                             />
                           </div>
                           <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label className="mb-1 block text-sm font-medium text-foreground">
                               Start (ms)
                             </label>
                             <input
@@ -1901,11 +1902,11 @@ export default function ProverbsPage() {
                               min={0}
                               value={word.start_ms}
                               onChange={(e) => updateAlignmentWord(index, "start_ms", Number(e.target.value || 0))}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                             />
                           </div>
                           <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label className="mb-1 block text-sm font-medium text-foreground">
                               End (ms)
                             </label>
                             <input
@@ -1913,39 +1914,39 @@ export default function ProverbsPage() {
                               min={0}
                               value={word.end_ms}
                               onChange={(e) => updateAlignmentWord(index, "end_ms", Number(e.target.value || 0))}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                             />
                           </div>
                           <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label className="mb-1 block text-sm font-medium text-foreground">
                               Timing Helpers
                             </label>
                             <div className="flex flex-wrap gap-2">
                               <button
                                 type="button"
                                 onClick={() => shiftAlignmentWord(index, -wordSnapStepMs)}
-                                className="rounded-lg border border-gray-300 px-2.5 py-2 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                                className="rounded-lg border border-input px-2.5 py-2 text-xs text-foreground hover:bg-accent"
                               >
                                 Shift -{wordSnapStepMs}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => shiftAlignmentWord(index, wordSnapStepMs)}
-                                className="rounded-lg border border-gray-300 px-2.5 py-2 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                                className="rounded-lg border border-input px-2.5 py-2 text-xs text-foreground hover:bg-accent"
                               >
                                 Shift +{wordSnapStepMs}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => expandAlignmentWord(index, wordSnapStepMs, "left")}
-                                className="rounded-lg border border-gray-300 px-2.5 py-2 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                                className="rounded-lg border border-input px-2.5 py-2 text-xs text-foreground hover:bg-accent"
                               >
                                 Expand Left
                               </button>
                               <button
                                 type="button"
                                 onClick={() => expandAlignmentWord(index, wordSnapStepMs, "right")}
-                                className="rounded-lg border border-gray-300 px-2.5 py-2 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                                className="rounded-lg border border-input px-2.5 py-2 text-xs text-foreground hover:bg-accent"
                               >
                                 Expand Right
                               </button>
@@ -1995,15 +1996,15 @@ export default function ProverbsPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-4">
+                  <div className="rounded-lg border border-border bg-card p-4 space-y-4">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                       <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">Optional Game Split</div>
-                        <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="text-sm font-medium text-foreground">Optional Game Split</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
                           Only use this when you want the proverb completion game. The split is derived from the word where the answer should begin.
                         </div>
                       </div>
-                      <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                      <label className="inline-flex items-center gap-2 text-sm text-foreground">
                         <input
                           type="checkbox"
                           checked={gameSplitEnabled}
@@ -2023,58 +2024,54 @@ export default function ProverbsPage() {
                               : seedAlignmentWords(alignmentPrimarySegment.text, alignmentPrimarySegment, []);
                             setGameSplitAnswerStartIndex(nextWords.length > 1 ? 1 : null);
                           }}
-                          className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                          className="h-4 w-4 rounded border-input text-blue-600"
                         />
                         Enable completion split
                       </label>
                     </div>
 
                     {!gameSplitEnabled ? (
-                      <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="rounded-lg border border-dashed border-input p-3 text-sm text-muted-foreground">
                         Leave this off if you only need karaoke-style word highlighting.
                       </div>
                     ) : alignmentWords.length < 2 ? (
-                      <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="rounded-lg border border-dashed border-input p-3 text-sm text-muted-foreground">
                         Generate at least two word timings before choosing where the completion should begin.
                       </div>
                     ) : (
                       <>
                         <div>
-                          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Answer Starts At
-                          </label>
-                          <select
+                          <StyledSelect
+                            label="Answer Starts At"
                             value={gameSplitAnswerStartIndex ?? ""}
                             onChange={(e) => setGameSplitAnswerStartIndex(Number(e.target.value))}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
-                          >
-                            {alignmentWords.slice(1).map((word, index) => {
+                            options={alignmentWords.slice(1).map((word, index) => {
                               const answerStartIndex = index + 1;
-                              return (
-                                <option key={`${word.word}-${answerStartIndex}`} value={answerStartIndex}>
-                                  Word {answerStartIndex + 1}: {word.word}
-                                </option>
-                              );
+                              return {
+                                value: answerStartIndex,
+                                label: `Word ${answerStartIndex + 1}: ${word.word}`,
+                              };
                             })}
-                          </select>
-                          <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                            fullWidth
+                          />
+                          <p className="mt-1 text-xs text-muted-foreground">
                             Words before this point become the prompt. This word and everything after it become the completion answer.
                           </p>
                         </div>
 
                         {derivedGameSplit && (
                           <div className="grid gap-4 lg:grid-cols-2">
-                            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-4 space-y-2">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">Derived Prompt</div>
-                              <div className="text-sm text-gray-700 dark:text-gray-200">{derivedGameSplit.promptSegment.text}</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                            <div className="rounded-lg border border-border bg-muted/50 p-4 space-y-2">
+                              <div className="text-sm font-medium text-foreground">Derived Prompt</div>
+                              <div className="text-sm text-foreground">{derivedGameSplit.promptSegment.text}</div>
+                              <div className="text-xs text-muted-foreground">
                                 {derivedGameSplit.promptSegment.start_ms} ms to {derivedGameSplit.promptSegment.end_ms} ms
                               </div>
                             </div>
-                            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-4 space-y-2">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">Derived Answer</div>
-                              <div className="text-sm text-gray-700 dark:text-gray-200">{derivedGameSplit.answerSegment.text}</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                            <div className="rounded-lg border border-border bg-muted/50 p-4 space-y-2">
+                              <div className="text-sm font-medium text-foreground">Derived Answer</div>
+                              <div className="text-sm text-foreground">{derivedGameSplit.answerSegment.text}</div>
+                              <div className="text-xs text-muted-foreground">
                                 {derivedGameSplit.answerSegment.start_ms} ms to {derivedGameSplit.answerSegment.end_ms} ms
                               </div>
                             </div>
@@ -2084,15 +2081,15 @@ export default function ProverbsPage() {
                     )}
                   </div>
 
-                  <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-3">
+                  <div className="rounded-lg border border-border bg-card p-4 space-y-3">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                       <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">Optional Word Timings</div>
-                        <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="text-sm font-medium text-foreground">Optional Word Timings</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
                           Word timings are the primary review artifact for karaoke. Leave them enabled if you want reviewed word-by-word playback.
                         </div>
                       </div>
-                      <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                      <label className="inline-flex items-center gap-2 text-sm text-foreground">
                         <input
                           type="checkbox"
                           checked={wordTimingsEnabled}
@@ -2106,14 +2103,14 @@ export default function ProverbsPage() {
                               setAlignmentWords(seedAlignmentWords(alignmentPrimarySegment.text, alignmentPrimarySegment, []));
                             }
                           }}
-                          className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                          className="h-4 w-4 rounded border-input text-blue-600"
                         />
                         Enable word timings
                       </label>
                     </div>
 
                     {(wordTimingsEnabled || alignmentRecord?.word_timing_reliable || alignmentWords.length > 0) && (
-                      <div className="text-xs text-gray-600 dark:text-gray-400">
+                      <div className="text-xs text-muted-foreground">
                         {wordTimingsEnabled
                           ? alignmentConfidence >= DEFAULT_WORD_ALIGNMENT_CONFIDENCE
                             ? "Saving now will mark these word timings reliable."
@@ -2127,7 +2124,7 @@ export default function ProverbsPage() {
                     {wordTimingsEnabled && (
                       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
                         <div>
-                          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          <label className="mb-1 block text-sm font-medium text-foreground">
                             Word Timing Confidence
                           </label>
                           <div className="flex items-center gap-3">
@@ -2140,11 +2137,11 @@ export default function ProverbsPage() {
                               onChange={(e) => setAlignmentConfidence(Number(e.target.value))}
                               className="w-full"
                             />
-                            <span className="min-w-12 text-sm font-medium text-gray-900 dark:text-white">
+                            <span className="min-w-12 text-sm font-medium text-foreground">
                               {alignmentConfidence.toFixed(2)}
                             </span>
                           </div>
-                          <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                          <div className="mt-1 text-xs text-muted-foreground">
                             {alignmentConfidence >= DEFAULT_WORD_ALIGNMENT_CONFIDENCE
                               ? "Reliable threshold met for word-level playback helpers."
                               : "Below 0.85, word timings stay editable but are not marked reliable."}
@@ -2201,7 +2198,7 @@ export default function ProverbsPage() {
                       Approve
                     </button>
                     {alignmentRecord && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="text-xs text-muted-foreground">
                         Version {alignmentRecord.version} · Updated {new Date(alignmentRecord.updated_at).toLocaleString()}
                         {alignmentRecord.source ? ` · Source ${alignmentRecord.source}` : ""}
                       </div>
@@ -2214,14 +2211,14 @@ export default function ProverbsPage() {
                 <button
                   type="submit"
                   disabled={uploadingAudio}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 text-sm font-medium text-primary-foreground bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploadingAudio ? "Uploading..." : editingProverb ? "Update" : "Create"}
                 </button>
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
+                  className="flex-1 px-4 py-2 text-sm font-medium text-foreground bg-muted rounded-lg hover:bg-gray-200"
                 >
                   Cancel
                 </button>
@@ -2268,54 +2265,52 @@ export default function ProverbsPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Language
-            </label>
-            <select
+            <StyledSelect
+              label="Language"
               value={bulkRegenerateLanguage}
               onChange={(e) => {
                 setBulkRegenerateLanguage(e.target.value);
                 setBulkRegenerateVoiceId("");
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-            >
-              <option value="yoruba">Yoruba</option>
-              <option value="english">English</option>
-            </select>
+              options={[
+                { value: "yoruba", label: "Yoruba" },
+                { value: "english", label: "English" },
+              ]}
+              fullWidth
+            />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-foreground">
               Voice (Optional)
             </label>
             {isLoadingVoices ? (
-              <div className="text-sm text-gray-500 dark:text-gray-400">Loading voices...</div>
+              <div className="text-sm text-muted-foreground">Loading voices...</div>
             ) : (
-              <select
+              <StyledSelect
                 value={bulkRegenerateVoiceId}
                 onChange={(e) => setBulkRegenerateVoiceId(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              >
-                <option value="">Use default voice for language</option>
-                {availableVoices
-                  .filter((voice) => {
-                    const langCode = bulkRegenerateLanguage === "yoruba" ? "yo" : "en";
-                    return voice.language_code === langCode || voice.language_code.startsWith(langCode);
-                  })
-                  .map((voice) => (
-                    <option key={voice.id} value={voice.id}>
-                      {voice.display_name || voice.voice_name} ({voice.provider})
-                      {voice.gender ? ` - ${voice.gender}` : ""}
-                    </option>
-                  ))}
-              </select>
+                options={[
+                  { value: "", label: "Use default voice for language" },
+                  ...availableVoices
+                    .filter((voice) => {
+                      const langCode = bulkRegenerateLanguage === "yoruba" ? "yo" : "en";
+                      return voice.language_code === langCode || voice.language_code.startsWith(langCode);
+                    })
+                    .map((voice) => ({
+                      value: voice.id,
+                      label: `${voice.display_name || voice.voice_name} (${voice.provider})${voice.gender ? ` - ${voice.gender}` : ""}`,
+                    })),
+                ]}
+                fullWidth
+              />
             )}
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-muted-foreground">
               Leave empty to use the default active voice for the selected language.
             </p>
           </div>
 
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             This will queue fresh audio generation jobs. Jobs are processed in the background.
           </p>
 
@@ -2334,7 +2329,7 @@ export default function ProverbsPage() {
                 setBulkRegenerateVoiceId("");
               }}
               disabled={isBulkRegenerating}
-              className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-gray-300"
+              className="flex-1 rounded-lg bg-muted px-4 py-2 text-sm font-semibold text-foreground hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>

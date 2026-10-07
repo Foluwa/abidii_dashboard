@@ -6,13 +6,8 @@ const nextConfig: NextConfig = {
   // Enable standalone output for Docker deployment
   output: 'standalone',
 
-  // TODO: there is a backlog of pre-existing route-type errors (params/page
-  // export shape) surfaced by upgrading to Next 16's stricter build-time
-  // type-check, unrelated to whatever feature triggered this build. Ignoring
-  // for now so builds succeed; these should be fixed and this flag removed.
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // Build-time type-checking is ON: `tsc --noEmit` is clean, so the former
+  // ignoreBuildErrors escape hatch was removed.
   
   // Allow external images from OAuth providers
   images: {
@@ -67,16 +62,16 @@ const nextConfig: NextConfig = {
       { source: '/content/curriculum/lesson-blueprints', destination: '/curriculum/lesson-blueprints', permanent: true },
       { source: '/content/curriculum/lesson-blueprints/:path*', destination: '/curriculum/lesson-blueprints/:path*', permanent: true },
       { source: '/content/curriculum/readiness', destination: '/curriculum/publishing', permanent: true },
-      { source: '/content/curriculum/assets', destination: '/curriculum/assets', permanent: true },
+      { source: '/content/curriculum/assets', destination: '/curriculum/lesson-blueprints?tab=assets', permanent: true },
 
       // Legacy media routes → canonical
       { source: '/media/library', destination: '/media', permanent: true },
-      { source: '/media/audio/voices', destination: '/audio/voices', permanent: true },
-      { source: '/media/audio/jobs', destination: '/audio/jobs', permanent: true },
-      { source: '/media/audio/generate', destination: '/audio/generate', permanent: true },
-      { source: '/media/voices', destination: '/audio/voices', permanent: true },
-      { source: '/media/audio-jobs', destination: '/audio/jobs', permanent: true },
-      { source: '/media/audio-generate', destination: '/audio/generate', permanent: true },
+      { source: '/media/audio/voices', destination: '/audio?tab=voices', permanent: true },
+      { source: '/media/audio/jobs', destination: '/audio?tab=jobs', permanent: true },
+      { source: '/media/audio/generate', destination: '/audio?tab=generate', permanent: true },
+      { source: '/media/voices', destination: '/audio?tab=voices', permanent: true },
+      { source: '/media/audio-jobs', destination: '/audio?tab=jobs', permanent: true },
+      { source: '/media/audio-generate', destination: '/audio?tab=generate', permanent: true },
 
       // Legacy community/users routes → canonical /users/*
       { source: '/community/users', destination: '/users', permanent: true },
@@ -99,17 +94,47 @@ const nextConfig: NextConfig = {
       { source: '/system/ml-training/vision-jobs/:path*', destination: '/operations/ml-training/vision-jobs/:path*', permanent: true },
 
       // Legacy system/jobs/admin → canonical /admin/jobs
-      { source: '/system/jobs/admin', destination: '/admin/jobs', permanent: true },
+      { source: '/system/jobs/admin', destination: '/system/jobs?tab=admin', permanent: true },
 
       // Legacy system/audit-log → canonical /content/audit-log
-      { source: '/system/audit-log', destination: '/content/audit-log', permanent: true },
-      { source: '/operations/audit-log', destination: '/content/audit-log', permanent: true },
+      { source: '/system/audit-log', destination: '/content/ops?tab=audit', permanent: true },
+      { source: '/operations/audit-log', destination: '/content/ops?tab=audit', permanent: true },
+
+      // Temporary: System Health hub consolidation. The three standalone
+      // status/metrics/idempotency routes are retired in favour of the tabbed
+      // /system/health hub. 307 so the mapping isn't cached while these old
+      // routes still exist.
+      { source: '/system/status', destination: '/system/health?tab=status', permanent: false },
+      { source: '/system/metrics', destination: '/system/health?tab=metrics', permanent: false },
+      { source: '/system/idempotency', destination: '/system/health?tab=idempotency', permanent: false },
+
+      // Temporary: hub consolidation (307). Standalone routes are folded into
+      // tabbed hubs; keep these as compatibility entry points while the old
+      // routes still exist.
+      { source: '/audio/voices', destination: '/audio?tab=voices', permanent: false },
+      { source: '/audio/generate', destination: '/audio?tab=generate', permanent: false },
+      { source: '/audio/jobs', destination: '/audio?tab=jobs', permanent: false },
+      { source: '/notifications/history', destination: '/notifications?tab=history', permanent: false },
+      { source: '/notifications/daily', destination: '/notifications?tab=daily', permanent: false },
+      { source: '/curriculum/lesson-import', destination: '/curriculum/lesson-blueprints?tab=import', permanent: false },
+      { source: '/curriculum/assets', destination: '/curriculum/lesson-blueprints?tab=assets', permanent: false },
+      { source: '/enforcement', destination: '/system/security?tab=enforcement', permanent: false },
+      { source: '/system/security-exceptions', destination: '/system/security?tab=exceptions', permanent: false },
+      { source: '/system/cron', destination: '/system/jobs?tab=cron', permanent: false },
+      { source: '/admin/jobs', destination: '/system/jobs?tab=admin', permanent: false },
+      { source: '/system/alerts', destination: '/system/alerts-hub?tab=history', permanent: false },
+      { source: '/system/testing', destination: '/system/alerts-hub?tab=testing', permanent: false },
+      { source: '/system/email-templates', destination: '/system/configuration?tab=email', permanent: false },
+      { source: '/content/audit-log', destination: '/content/ops?tab=audit', permanent: false },
+      { source: '/content/audit-log/orphan-assets', destination: '/content/ops?tab=orphans', permanent: false },
+      { source: '/content/reports', destination: '/content/ops?tab=reports', permanent: false },
+      { source: '/content/content-safety', destination: '/content/ops?tab=safety', permanent: false },
 
       // Legacy system/observability/* → canonical /system/*
-      { source: '/system/observability/status', destination: '/system/status', permanent: true },
-      { source: '/system/observability/metrics', destination: '/system/metrics', permanent: true },
-      { source: '/system/observability/alerts', destination: '/system/alerts', permanent: true },
-      { source: '/system/observability/cron-jobs', destination: '/system/cron', permanent: true },
+      { source: '/system/observability/status', destination: '/system/health?tab=status', permanent: true },
+      { source: '/system/observability/metrics', destination: '/system/health?tab=metrics', permanent: true },
+      { source: '/system/observability/alerts', destination: '/system/alerts-hub?tab=history', permanent: true },
+      { source: '/system/observability/cron-jobs', destination: '/system/jobs?tab=cron', permanent: true },
 
       // Legacy system/configuration/* → unified /system/configuration
       { source: '/system/configuration/platform', destination: '/system/configuration', permanent: true },
@@ -122,15 +147,15 @@ const nextConfig: NextConfig = {
       { source: '/operations/configuration/language', destination: '/system/configuration', permanent: true },
 
       // Legacy testing routes
-      { source: '/testing', destination: '/system/testing', permanent: true },
-      { source: '/operations/testing', destination: '/system/testing', permanent: true },
+      { source: '/testing', destination: '/system/alerts-hub?tab=testing', permanent: true },
+      { source: '/operations/testing', destination: '/system/alerts-hub?tab=testing', permanent: true },
 
       // Legacy operations catch-alls → system
-      { source: '/operations/status', destination: '/system/status', permanent: true },
-      { source: '/operations/metrics', destination: '/system/metrics', permanent: true },
-      { source: '/operations/alerts', destination: '/system/alerts', permanent: true },
-      { source: '/operations/cron-jobs', destination: '/system/cron', permanent: true },
-      { source: '/operations/idempotency', destination: '/system/status', permanent: true },
+      { source: '/operations/status', destination: '/system/health?tab=status', permanent: true },
+      { source: '/operations/metrics', destination: '/system/health?tab=metrics', permanent: true },
+      { source: '/operations/alerts', destination: '/system/alerts-hub?tab=history', permanent: true },
+      { source: '/operations/cron-jobs', destination: '/system/jobs?tab=cron', permanent: true },
+      { source: '/operations/idempotency', destination: '/system/health?tab=idempotency', permanent: true },
     ];
   },
   

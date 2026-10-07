@@ -307,8 +307,8 @@ function DialogueCompletionPreview({ step }: { step: Record<string, unknown> }) 
   const answerSlot = asObject(step.answerSlot);
 
   return (
-    <div className="mt-3 space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+    <div className="mt-3 space-y-3 rounded-lg border border-border bg-muted/50 p-4">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         <span>Dialogue Completion</span>
         {correctId && (
           <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700 dark:bg-green-900/30 dark:text-green-400">
@@ -337,14 +337,14 @@ function DialogueCompletionPreview({ step }: { step: Record<string, unknown> }) 
                 } border ${
                   isLearner ? 'border-blue-200 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'
                 }`}>
-                  <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                     <span>{speaker}</span>
                     {hasSrc && <span className="text-green-600 dark:text-green-400">sourceRef</span>}
                     {hasAudio && <span className="text-blue-600 dark:text-blue-400">audio</span>}
                     {!hasSrc && <span className="text-red-500">missing ref</span>}
                   </div>
                   {yoruba && <div className="mt-1 font-medium">{yoruba}</div>}
-                  {english && <div className="text-xs text-gray-500 dark:text-gray-400">{english}</div>}
+                  {english && <div className="text-xs text-muted-foreground">{english}</div>}
                 </div>
               </div>
             );
@@ -355,7 +355,7 @@ function DialogueCompletionPreview({ step }: { step: Record<string, unknown> }) 
       {/* Answer slot */}
       {answerSlot && (
         <div className="flex justify-end">
-          <div className="max-w-[75%] rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-400 dark:border-gray-600 dark:text-gray-500">
+          <div className="max-w-[75%] rounded-lg border border-dashed border-input px-3 py-2 text-sm text-muted-foreground">
             {asString(answerSlot.speaker) || 'You'}: {asString(answerSlot.placeholderText) || 'Choose your reply'}
           </div>
         </div>
@@ -364,7 +364,7 @@ function DialogueCompletionPreview({ step }: { step: Record<string, unknown> }) 
       {/* Options */}
       {options.length > 0 && (
         <div className="space-y-1">
-          <div className="text-xs font-medium text-gray-500 dark:text-gray-400">Options ({options.length}):</div>
+          <div className="text-xs font-medium text-muted-foreground">Options ({options.length}):</div>
           {options.map((opt, oi) => {
             const yoruba = asString(opt.yorubaText) || asString(opt.text) || '';
             const isCorrect = asString(opt.id) === correctId;
@@ -476,7 +476,7 @@ export function LessonRuntimePreview({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        {heading && <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{heading}</h3>}
+        {heading && <h3 className="text-sm font-semibold text-foreground">{heading}</h3>}
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status="info" label={flowSummary.owner} />
           <StatusBadge status="draft" label={blueprint.lesson_kind} />
@@ -495,22 +495,22 @@ export function LessonRuntimePreview({
           ) : null}
         </div>
         <div>
-          <div className="text-base font-semibold text-gray-900 dark:text-white">{title}</div>
+          <div className="text-base font-semibold text-foreground">{title}</div>
           {subtitle ? (
-            <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">{subtitle}</div>
+            <div className="mt-1 text-sm text-muted-foreground">{subtitle}</div>
           ) : null}
-          <div className="mt-1 text-xs font-mono text-gray-500 dark:text-gray-400">
+          <div className="mt-1 text-xs font-mono text-muted-foreground">
             {blueprint.blueprint_key}
           </div>
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
-          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+        <div className="rounded-lg border border-border bg-muted/50 p-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             Lesson Config
           </div>
-          <div className="mt-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <div className="mt-3 space-y-2 text-sm text-foreground">
             {mode ? <div><span className="font-medium">Mode:</span> {mode}</div> : null}
             {flowMode ? <div><span className="font-medium">Flow mode:</span> {flowMode}</div> : null}
             {unitLabel ? <div><span className="font-medium">Unit label:</span> {unitLabel}</div> : null}
@@ -533,7 +533,7 @@ export function LessonRuntimePreview({
                   {targetVocabIds.map((item) => (
                     <span
                       key={item}
-                      className="rounded-full border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900"
+                      className="rounded-full border border-input bg-card px-2 py-1 text-xs"
                       title={item}
                     >
                       {vocabLabels[item] || getVocabDisplayLabel(item)}
@@ -553,7 +553,7 @@ export function LessonRuntimePreview({
                     return (
                       <span
                         key={`${contentId || 'target'}-${index}`}
-                        className="rounded-full border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900"
+                        className="rounded-full border border-input bg-card px-2 py-1 text-xs"
                         title={contentId || undefined}
                       >
                         {contentType || 'content'}: {resolvedLabel || contentId || 'unknown'}
@@ -575,7 +575,7 @@ export function LessonRuntimePreview({
                 <div className="font-medium">Managed media refs</div>
                 <div className="mt-1 space-y-1">
                   {readingMediaRefs.map((item) => (
-                    <div key={`${item.label}-${item.fieldPath}`} className="text-xs text-gray-500 dark:text-gray-400">
+                    <div key={`${item.label}-${item.fieldPath}`} className="text-xs text-muted-foreground">
                       {item.label}: {item.fieldPath}
                     </div>
                   ))}
@@ -585,8 +585,8 @@ export function LessonRuntimePreview({
           </div>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
-          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+        <div className="rounded-lg border border-border bg-muted/50 p-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             Runtime Flow
           </div>
           {flowSummary.generated ? (
@@ -600,7 +600,7 @@ export function LessonRuntimePreview({
               {flowSummary.flow.map((item, index) => (
                 <div
                   key={`${item}-${index}`}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                  className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground"
                 >
                   <span className="mr-2 text-xs font-mono text-gray-400">{index + 1}.</span>
                   {item}
@@ -608,7 +608,7 @@ export function LessonRuntimePreview({
               ))}
             </div>
           ) : (
-            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-3 text-sm text-muted-foreground">
               No explicit learner steps are defined yet.
             </p>
           )}
@@ -616,11 +616,11 @@ export function LessonRuntimePreview({
       </div>
 
       {media.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+        <div className="rounded-lg border border-border bg-card p-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             Top-level Media
           </div>
-          <div className="mt-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <div className="mt-3 space-y-2 text-sm text-foreground">
             {media.map((item) => (
               <MediaLinkPreview key={item.label} url={item.value} label={item.label} compact />
             ))}
@@ -641,9 +641,9 @@ export function LessonRuntimePreview({
           asString(step.runtimeType) === 'respond' &&
           asString(step.interactionType) === 'dialogueCompletion';
         return (
-          <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-lg border border-border bg-card p-3">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 Step Content
               </div>
               {steps.length > 1 ? (
@@ -652,7 +652,7 @@ export function LessonRuntimePreview({
                     type="button"
                     onClick={() => setActiveStepIndex(safeStepIndex - 1)}
                     disabled={safeStepIndex === 0}
-                    className="rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="rounded-lg border border-input px-2 py-1 text-xs font-medium text-foreground hover:bg-muted/50 disabled:opacity-40"
                     title="Previous step"
                   >
                     ←
@@ -664,7 +664,7 @@ export function LessonRuntimePreview({
                     type="button"
                     onClick={() => setActiveStepIndex(safeStepIndex + 1)}
                     disabled={safeStepIndex === steps.length - 1}
-                    className="rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="rounded-lg border border-input px-2 py-1 text-xs font-medium text-foreground hover:bg-muted/50 disabled:opacity-40"
                     title="Next step"
                   >
                     →
@@ -675,19 +675,19 @@ export function LessonRuntimePreview({
             <div className="mt-3">
               <div
                 key={`${stepType}-${safeStepIndex}`}
-                className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950"
+                className="rounded-lg border border-border bg-muted/50 p-3"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-gray-300 bg-white px-2 py-1 text-xs font-medium dark:border-gray-700 dark:bg-gray-900">
+                  <span className="rounded-full border border-input bg-card px-2 py-1 text-xs font-medium">
                     {stepType}
                   </span>
                   <span className="text-xs font-mono text-gray-400">#{safeStepIndex + 1}</span>
                 </div>
-                <div className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                <div className="mt-2 text-sm font-medium text-foreground">
                   {getStepLabel(step, safeStepIndex)}
                 </div>
                 {prompt ? (
-                  <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">{prompt}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{prompt}</div>
                 ) : null}
                 {stepMedia.length > 0 ? (
                   <div className="mt-3 space-y-2">

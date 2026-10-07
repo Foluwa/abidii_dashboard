@@ -2,259 +2,387 @@
 
 import React from "react";
 import Link from "next/link";
-import { useSystemStatus, useSystemStats } from "@/hooks/useApi";
-import StatCard from "@/components/admin/StatCard";
-import StatusBadge from "@/components/admin/StatusBadge";
-import { GridIcon, UserCircleIcon, ListIcon } from "@/icons";
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
-import Alert from "@/components/ui/alert/SimpleAlert";
-import PlatformDistributionChart from "@/components/charts/PlatformDistributionChart";
-import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
-import MonthlySubscriberGrowthChart from "@/components/charts/MonthlySubscriberGrowthChart";
-import DailyActiveUsersChart from "@/components/charts/DailyActiveUsersChart";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  BookOpen,
+  CreditCard,
+  FileAudio,
+  FileWarning,
+  Grid3x3,
+  TrendingDown,
+  TrendingUp,
+  UserPlus,
+  UserRound,
+  Users,
+} from "lucide-react";
+
+import { useRangeSummary, useSystemStatus, useSystemStats } from "@/hooks/useApi";
+import type { RangeSummaryMetric } from "@/hooks/useApi";
+import { StyledSelect } from "@/components/ui/form/StyledSelect";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { RangeGrowthChart } from "@/components/charts/recharts/RangeGrowthChart";
+import { RangeActiveUsersChart } from "@/components/charts/recharts/RangeActiveUsersChart";
+import { PlatformDistributionChart } from "@/components/charts/recharts/PlatformDistributionChart";
 import CountryMap from "@/components/ecommerce/CountryMap";
 import RecentActivityFeed from "@/components/dashboard/RecentActivityFeed";
 import BillingPlansCard from "@/components/billing/BillingPlansCard";
 import UserRetentionCard from "@/components/analytics/UserRetentionCard";
+import {
+  RANGE_OPTIONS,
+  type RangeKey,
+  DEFAULT_RANGE,
+  parseRange,
+  previousPeriodLabel,
+  rangeLabel,
+} from "@/lib/dashboardRange";
+
+const positive =
+  "border-green-200 bg-green-500/10 text-green-700 dark:border-green-900/40 dark:bg-green-500/15 dark:text-green-300";
+const negative = "border-destructive/20 bg-destructive/10 text-destructive";
+
+/** "+12%" style change vs the previous equal-length period. */
+function Delta({ metric }: { metric?: RangeSummaryMetric }) {
+  if (!metric || metric.previous === null || metric.previous === undefined) return null;
+  const { value, previous } = metric;
+  if (previous === 0) {
+    if (value === 0) return null;
+    return (
+      <Badge variant="outline" className={positive}>
+        <TrendingUp />
+        New
+      </Badge>
+    );
+  }
+  const pct = ((value - previous) / previous) * 100;
+  const up = pct >= 0;
+  return (
+    <Badge variant="outline" className={up ? positive : negative}>
+      {up ? <TrendingUp /> : <TrendingDown />}
+      {up ? "+" : ""}
+      {pct.toFixed(Math.abs(pct) < 10 ? 1 : 0)}%
+    </Badge>
+  );
+}
+
+function KpiCard({
+  label,
+  icon: Icon,
+  value,
+  loading,
+  metric,
+  footnote,
+  range,
+}: {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  value: number | undefined;
+  loading: boolean;
+  metric?: RangeSummaryMetric;
+  footnote: string;
+  range?: RangeKey;
+}) {
+  const comparison = range ? previousPeriodLabel(range) : null;
+  return (
+    <Card>
+      <CardHeader>
+        <CardDescription>{label}</CardDescription>
+        <CardAction>
+          <Icon className="size-4 text-muted-foreground" />
+        </CardAction>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl leading-none tracking-tight tabular-nums">
+            {loading ? "—" : (value ?? 0).toLocaleString()}
+          </span>
+          {!loading && <Delta metric={metric} />}
+        </div>
+        <p className="text-sm">
+          {metric && metric.previous !== null && comparison ? (
+            <>
+              <span className="font-medium text-foreground">
+                {metric.previous.toLocaleString()}
+              </span>{" "}
+              <span className="text-muted-foreground">{comparison}</span>
+            </>
+          ) : (
+            <span className="text-muted-foreground">{footnote}</span>
+          )}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Dashboard() {
-  const { status, isLoading: statusLoading, isError: statusError } = useSystemStatus();
-  const { stats, isLoading: statsLoading, isError: statsError } = useSystemStats();
+  const { status, isError: statusError } = useSystemStatus();
+  const { stats, isLoading: statsLoading } = useSystemStats();
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // The URL is the source of truth: refresh, back/forward and shared links
+  // all keep the selected range; other query params are preserved.
+  const range = parseRange(searchParams.get("range"));
+  const label = rangeLabel(range);
+  const { data: summary, isLoading: summaryLoading } = useRangeSummary(range);
+
+  const handleRangeChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === DEFAULT_RANGE) {
+      params.delete("range");
+    } else {
+      params.set("range", value);
+    }
+    const qs = params.toString();
+    router.push(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <PageBreadCrumb pageTitle="Dashboard" />
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Welcome to Abidii Admin Dashboard - Monitor and manage your language learning platform
-          </p>
+    <div className="flex flex-col gap-4 md:gap-6">
+      <section className="space-y-5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-3xl tracking-tight text-foreground">Dashboard</h1>
+            <p className="text-sm text-muted-foreground">
+              Learners, subscriptions and platform health for Abidii. Period
+              figures use UTC days.
+            </p>
+          </div>
+          <div className="w-48">
+            <StyledSelect
+              label="Date range"
+              value={range}
+              onValueChange={handleRangeChange}
+              options={RANGE_OPTIONS}
+              fullWidth
+            />
+          </div>
         </div>
-      </div>
 
-      {/* System Status Alert */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <KpiCard
+            label={`New Users · ${label}`}
+            icon={UserPlus}
+            value={summary?.new_users.value}
+            loading={summaryLoading}
+            metric={summary?.new_users}
+            footnote="Accounts created in the period"
+            range={range}
+          />
+          <KpiCard
+            label={`Active Learners · ${label}`}
+            icon={UserRound}
+            value={summary?.active_users.value}
+            loading={summaryLoading}
+            metric={summary?.active_users}
+            footnote="Distinct learners active in the period"
+            range={range}
+          />
+          <KpiCard
+            label={`New Subscribers · ${label}`}
+            icon={CreditCard}
+            value={summary?.new_subscribers.value}
+            loading={summaryLoading}
+            metric={summary?.new_subscribers}
+            footnote="First-time subscribers in the period"
+            range={range}
+          />
+          <KpiCard
+            label="Total Users · All time"
+            icon={Users}
+            value={stats?.total_users}
+            loading={statsLoading}
+            footnote="Lifetime total, not affected by the range"
+          />
+        </div>
+
+        <Card className="py-4">
+          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="flex items-center justify-between gap-3 sm:block">
+              <div className="text-xs text-muted-foreground">Active today · now</div>
+              <div className="text-xl font-medium tabular-nums">
+                {statsLoading ? "—" : (stats?.active_users_today ?? 0).toLocaleString()}
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-3 sm:block">
+              <div className="text-xs text-muted-foreground">Lesson blueprints · current</div>
+              <div className="text-xl font-medium tabular-nums">
+                {statsLoading ? "—" : (stats?.total_lessons ?? 0).toLocaleString()}
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-3 sm:block">
+              <div className="text-xs text-muted-foreground">Dictionary words · current</div>
+              <div className="text-xl font-medium tabular-nums">
+                {statsLoading ? "—" : (stats?.total_words ?? 0).toLocaleString()}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
       {statusError && (
-        <Alert variant="error">
-          Failed to load system status. Please check your API connection.
-        </Alert>
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardContent className="py-4 text-sm text-destructive">
+            Failed to load system status. Please check your API connection.
+          </CardContent>
+        </Card>
       )}
 
-      {/* System Health Status */}
       {status && (
-        <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              System Health
-            </h3>
-            <button
-              onClick={() => window.location.reload()}
-              className="text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400"
-            >
-              Refresh
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Monitoring</p>
-              <StatusBadge status={status.monitoring_enabled ? 'online' : 'offline'} />
+        <Card>
+          <CardHeader>
+            <CardDescription>System Health</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Monitoring</div>
+                <Badge
+                  variant="outline"
+                  className={
+                    status.monitoring_enabled
+                      ? "border-green-200 bg-green-500/10 text-green-700 dark:border-green-900/40 dark:bg-green-500/15 dark:text-green-300"
+                      : "border-destructive/20 bg-destructive/10 text-destructive"
+                  }
+                >
+                  {status.monitoring_enabled ? "Online" : "Offline"}
+                </Badge>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Telegram</div>
+                <Badge
+                  variant="outline"
+                  className={
+                    status.telegram_connected
+                      ? "border-green-200 bg-green-500/10 text-green-700 dark:border-green-900/40 dark:bg-green-500/15 dark:text-green-300"
+                      : "border-destructive/20 bg-destructive/10 text-destructive"
+                  }
+                >
+                  {status.telegram_connected ? "Connected" : "Disconnected"}
+                </Badge>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Circuit Breaker</div>
+                <Badge
+                  variant="outline"
+                  className={
+                    status.circuit_breaker_open
+                      ? "border-destructive/20 bg-destructive/10 text-destructive"
+                      : "border-green-200 bg-green-500/10 text-green-700 dark:border-green-900/40 dark:bg-green-500/15 dark:text-green-300"
+                  }
+                >
+                  {status.circuit_breaker_open ? "Open" : "Closed"}
+                </Badge>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Alert Queue</div>
+                <div className="text-lg font-medium tabular-nums">
+                  {status.alert_queue_size}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Uptime</div>
+                <div className="text-lg font-medium tabular-nums">
+                  {Math.floor(status.uptime_seconds / 3600)}h
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Config Cache</div>
+                <div className="text-lg font-medium tabular-nums">
+                  {Math.floor(status.config_cache_age_seconds)}s
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Telegram</p>
-              <StatusBadge status={status.telegram_connected ? 'success' : 'error'} />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Circuit Breaker</p>
-              <StatusBadge status={status.circuit_breaker_open ? 'error' : 'success'} 
-                label={status.circuit_breaker_open ? 'Open' : 'Closed'} />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Alert Queue</p>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {status.alert_queue_size}
-              </span>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Uptime</p>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {Math.floor(status.uptime_seconds / 3600)}h
-              </span>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Config Cache</p>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {Math.floor(status.config_cache_age_seconds)}s
-              </span>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Total Users"
-          value={stats?.total_users?.toLocaleString() ?? '0'}
-          icon={<UserCircleIcon />}
-          isLoading={statsLoading}
-        />
-        <StatCard
-          label="Active Today"
-          value={stats?.active_users_today?.toLocaleString() ?? '0'}
-          icon={<UserCircleIcon />}
-          isLoading={statsLoading}
-        />
-        <StatCard
-          label="Lesson Blueprints"
-          value={stats?.total_lessons?.toLocaleString() ?? '0'}
-          icon={<ListIcon />}
-          isLoading={statsLoading}
-        />
-        <StatCard
-          label="Total Words"
-          value={stats?.total_words?.toLocaleString() ?? '0'}
-          icon={<GridIcon />}
-          isLoading={statsLoading}
-        />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        <RangeGrowthChart kind="user-growth" range={range} />
+        <RangeActiveUsersChart range={range} />
       </div>
 
-      {/* Quick Actions */}
-      <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-          Quick Actions
-        </h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Link
-            href="/content/words"
-            className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
-          >
-            <GridIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Words Import</p>
-          </Link>
-          <Link
-            href="/curriculum/lesson-blueprints"
-            className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
-          >
-            <ListIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Lesson Blueprints</p>
-          </Link>
-          <Link
-            href="/audio/jobs"
-            className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
-          >
-            <GridIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Audio Jobs</p>
-          </Link>
-          <Link
-            href="/content/audit-log/orphan-assets"
-            className="p-4 text-center transition-colors border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
-          >
-            <GridIcon className="w-8 h-8 mx-auto mb-2 text-brand-600 dark:text-brand-400" />
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Orphan Assets</p>
-          </Link>
-        </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        <RangeGrowthChart kind="subscriber-growth" range={range} />
+        <UserRetentionCard range={range} rangeText={label} />
       </div>
 
-      {/* Billing Plans + User Retention - equal-width columns on desktop, stacked on mobile */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
-        <BillingPlansCard />
-        <UserRetentionCard />
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Platform Distribution Chart */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Platform Distribution
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Users grouped by latest device platform (iOS/Android/unknown)
-            </p>
-          </div>
-          <div className="p-5">
-            <PlatformDistributionChart />
-          </div>
-        </div>
-
-        {/* Monthly user and subscriber growth are intentionally grouped for direct comparison. */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Monthly User Growth
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Track how your user base is growing month by month
-            </p>
-          </div>
-          <div className="p-5">
-            <MonthlySalesChart />
-          </div>
-          <div className="border-t border-gray-100 dark:border-white/[0.05]">
-            <div className="bg-gray-50/50 px-5 py-3 dark:bg-white/[0.02]">
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Monthly Subscriber Growth
-              </h4>
-              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                New premium subscribers per month (first-time only)
-              </p>
-            </div>
-            <div className="p-5">
-              <MonthlySubscriberGrowthChart />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Daily Active Users Chart */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-        <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-            Daily Active Users
-          </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            Distinct users with at least one session per day, last 30 days
-          </p>
-        </div>
-        <div className="p-5">
-          <DailyActiveUsersChart />
-        </div>
-      </div>
-
-      {/* Demographics + Recent Activity Row (70/30 on desktop) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-10">
-        {/* Customer Demographics Map (70%) */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white lg:col-span-7 dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Customer Demographics
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Geographic distribution of users worldwide
-            </p>
-          </div>
-          <div className="p-5">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        <PlatformDistributionChart />
+        <Card>
+          <CardHeader>
+            <CardDescription>Customer Demographics</CardDescription>
+            <span className="text-xs text-muted-foreground">
+              All users by last known country · current, all time
+            </span>
+          </CardHeader>
+          <CardContent>
             <CountryMap />
-          </div>
-        </div>
-
-        {/* Recent Activity (30%) */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white lg:col-span-3 dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Recent Activity
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Latest admin and subscription events
-            </p>
-          </div>
-          <div className="p-5">
-            <RecentActivityFeed />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        <BillingPlansCard />
+        <Card>
+          <CardHeader>
+            <CardDescription>Recent Activity</CardDescription>
+            <span className="text-xs text-muted-foreground">
+              Latest admin and subscription events · {label}
+            </span>
+          </CardHeader>
+          <CardContent>
+            <RecentActivityFeed range={range} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardDescription>Quick Actions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Link
+              href="/content/words"
+              className="flex flex-col items-center gap-2 rounded-lg border border-border p-4 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <Grid3x3 className="size-5 text-muted-foreground" />
+              Words Import
+            </Link>
+            <Link
+              href="/curriculum/lesson-blueprints"
+              className="flex flex-col items-center gap-2 rounded-lg border border-border p-4 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <BookOpen className="size-5 text-muted-foreground" />
+              Lesson Blueprints
+            </Link>
+            <Link
+              href="/audio?tab=jobs"
+              className="flex flex-col items-center gap-2 rounded-lg border border-border p-4 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <FileAudio className="size-5 text-muted-foreground" />
+              Audio Jobs
+            </Link>
+            <Link
+              href="/content/ops?tab=orphans"
+              className="flex flex-col items-center gap-2 rounded-lg border border-border p-4 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <FileWarning className="size-5 text-muted-foreground" />
+              Orphan Assets
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

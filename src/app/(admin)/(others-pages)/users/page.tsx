@@ -13,10 +13,8 @@ import Alert from "@/components/ui/alert/SimpleAlert";
 import StatusBadge from "@/components/admin/StatusBadge";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import Pagination from "@/components/tables/Pagination";
-import Link from "next/link";
-import { FaApple, FaGoogle, FaGlobe, FaMobileAlt, FaEnvelope } from "react-icons/fa";
+import { FaApple } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
-import { FiAward, FiEye, FiTrash2, FiUserCheck, FiUserX, FiAlertOctagon } from "react-icons/fi";
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
 import { countryName, countryFlagEmoji } from "@/lib/country-utils";
 import DatePicker from "@/components/form/date-picker";
@@ -27,6 +25,9 @@ import {
   type AdminCourseLearningState,
   type UserLearningPosition,
 } from "@/lib/user-learning-position";
+import { UserDetailsSheet } from "@/components/admin/users/UserDetailsSheet";
+import { Award, Eye, Globe, Mail, OctagonAlert, Smartphone, Trash2, UserCheck, UserX } from "lucide-react";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 type TabRole = "all" | UserRole;
 type ActionType = "deactivate" | "reactivate" | "delete" | "purge";
@@ -82,7 +83,7 @@ function UserAvatar({ user, size = "w-10 h-10" }: { user: any; size?: string }) 
         width={40}
         height={40}
         unoptimized
-        className={`${size} rounded-full object-cover bg-gray-100 dark:bg-gray-700`}
+        className={`${size} rounded-full object-cover bg-muted`}
         referrerPolicy="no-referrer"
         onError={() => setFailed(true)}
       />
@@ -93,11 +94,11 @@ function UserAvatar({ user, size = "w-10 h-10" }: { user: any; size?: string }) 
       )}
       {user.has_premium && (
         <span
-          className="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-amber-400 text-amber-950 shadow-sm dark:border-gray-900"
+          className="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-background bg-amber-400 text-amber-950 shadow-sm"
           title="Premium member"
           aria-label="Premium member"
         >
-          <FiAward className="h-3 w-3" aria-hidden="true" />
+          <Award className="h-3 w-3" aria-hidden="true" />
         </span>
       )}
     </div>
@@ -148,6 +149,7 @@ export default function UsersPage() {
   // Action confirmation modal
   const [actionConfirm, setActionConfirm] = useState<ActionConfirm | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [fluencyByUser, setFluencyByUser] = useState<Record<string, string | null>>({});
   const [learningPositionByUser, setLearningPositionByUser] = useState<
     Record<string, UserLearningPosition | null>
@@ -373,28 +375,28 @@ export default function UsersPage() {
       case "google":
         return <FcGoogle className={commonClassName} aria-label="Google" />;
       case "apple":
-        return <FaApple className={`${commonClassName} text-gray-900 dark:text-white`} aria-label="Apple" />;
+        return <FaApple className={`${commonClassName} text-foreground`} aria-label="Apple" />;
       case "device":
-        return <FaMobileAlt className={`${commonClassName} text-gray-400 dark:text-gray-500`} aria-label="Device" />;
+        return <Smartphone className={`${commonClassName} text-muted-foreground`} aria-label="Device" />;
       case "email":
-        return <FaEnvelope className={`${commonClassName} text-gray-400 dark:text-gray-500`} aria-label="Email" />;
+        return <Mail className={`${commonClassName} text-muted-foreground`} aria-label="Email" />;
       default:
         return null;
     }
   };
 
   const getDeviceIcon = (platform: string | null) => {
-    const commonClassName = "h-5 w-5 text-gray-900 dark:text-white";
+    const commonClassName = "h-5 w-5 text-foreground";
 
     switch (platform?.toLowerCase()) {
       case "ios":
         return <FaApple className={commonClassName} aria-label="Apple (iOS)" />;
       case "android":
-        return <FaGoogle className={commonClassName} aria-label="Google (Android)" />;
+        return <FcGoogle className={commonClassName} aria-label="Google (Android)" />;
       case "web":
-        return <FaGlobe className={commonClassName} aria-label="Web" />;
+        return <Globe className={commonClassName} aria-label="Web" />;
       default:
-        return <FaMobileAlt className={commonClassName} aria-label="Device" />;
+        return <Smartphone className={commonClassName} aria-label="Device" />;
     }
   };
 
@@ -453,9 +455,11 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <PageBreadCrumb pageTitle="Users" />
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      <div className="space-y-1">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          Users
+        </h1>
+        <p className="text-sm text-muted-foreground">
           Manage all platform users
         </p>
       </div>
@@ -465,9 +469,9 @@ export default function UsersPage() {
       {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
 
       {/* Tabs and Filters */}
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
+      <div className="bg-card border border-border rounded-lg">
         {/* Role Tabs */}
-        <div className="border-b border-gray-200 dark:border-gray-800">
+        <div className="border-b border-border">
           <div className="flex overflow-x-auto">
             {tabs.map((tab) => (
               <button
@@ -492,7 +496,7 @@ export default function UsersPage() {
         <div className="p-4">
           <div className="flex flex-wrap gap-4 items-end">
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Search
               </label>
               <input
@@ -503,7 +507,7 @@ export default function UsersPage() {
                   setPage(1);
                 }}
                 placeholder="Search by name or email..."
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-800 dark:text-white"
               />
             </div>
 
@@ -709,7 +713,7 @@ export default function UsersPage() {
 
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
+              className="px-4 py-2 text-sm font-medium text-foreground bg-card border border-input rounded-lg hover:bg-accent"
             >
               {showFilters ? "Hide Filters" : "More Filters"}
             </button>
@@ -717,10 +721,10 @@ export default function UsersPage() {
 
           {/* Advanced Filters */}
           {showFilters && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="mt-4 pt-4 border-t border-border">
               <div className="flex flex-wrap gap-4 items-end">
                 <div className="min-w-[150px]">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Min XP
                   </label>
                   <input
@@ -732,12 +736,12 @@ export default function UsersPage() {
                     }}
                     placeholder="0"
                     min="0"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-800 dark:text-white"
                   />
                 </div>
 
                 <div className="min-w-[150px]">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Max XP
                   </label>
                   <input
@@ -749,7 +753,7 @@ export default function UsersPage() {
                     }}
                     placeholder="No limit"
                     min="0"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-800 dark:text-white"
                   />
                 </div>
 
@@ -812,7 +816,7 @@ export default function UsersPage() {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 overflow-hidden">
+      <div className="bg-card border border-border rounded-lg overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600 mx-auto"></div>
@@ -821,42 +825,46 @@ export default function UsersPage() {
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-800">
+                <thead>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Device
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Country
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Learning
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Language
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Last Request
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Date Joined
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-sm font-medium text-foreground">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-right text-sm font-medium text-foreground">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                <tbody className="divide-y divide-border">
                   {users && users.users && users.users.length > 0 ? (
                     users.users.map((user: any) => (
-                      <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                      <tr
+                        key={user.id}
+                        onClick={() => setSelectedUserId(user.id)}
+                        className="cursor-pointer hover:bg-muted/50"
+                      >
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             {/* Avatar */}
                             <div className="flex-shrink-0">
@@ -864,171 +872,162 @@ export default function UsersPage() {
                             </div>
                             {/* Name and Email */}
                             <div className="min-w-0 max-w-[220px]">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              <div className="text-sm font-medium text-foreground">
                                 {user.display_name || user.name || "N/A"}
                               </div>
-                              <div className="break-all text-xs leading-4 text-gray-500 dark:text-gray-400" title={user.email || undefined}>
+                              <div className="break-all text-xs leading-4 text-muted-foreground" title={user.email || undefined}>
                                 {user.email || "No email"}
                               </div>
-                              <div className="flex items-center gap-1.5 mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                              <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
                                 {getProviderIcon(user.provider)}
                                 <span>{getProviderLabel(user.provider)}</span>
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <span className="flex items-center">{getDeviceIcon(user.device_platform)}</span>
-                            <div>
-                              <div className="text-sm text-gray-900 dark:text-white">
-                                {user.device_platform ? user.device_platform.charAt(0).toUpperCase() + user.device_platform.slice(1) : "Unknown"}
-                              </div>
-                              {user.device_name && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]" title={user.device_name}>
-                                  {user.device_name}
-                                </div>
-                              )}
-                              {user.device_app_version && (
-                                <div className="text-xs text-gray-400 dark:text-gray-500">
-                                  v{user.device_app_version}{user.device_build_number ? `(${user.device_build_number})` : ''}
-                                </div>
-                              )}
-                              {user.device_id && (
-                                <div
-                                  className="text-xs font-mono text-gray-400 dark:text-gray-500 truncate max-w-[140px]"
-                                  title={`Device ID: ${user.device_id}`}
-                                >
-                                  ID: {user.device_id}
-                                </div>
-                              )}
-                              {user.last_ip_address && (
-                                <div
-                                  className="text-xs font-mono text-gray-400 dark:text-gray-500 truncate max-w-[140px]"
-                                  title={`Last IP: ${user.last_ip_address}`}
-                                >
-                                  IP: {user.last_ip_address}
-                                </div>
-                              )}
-                            </div>
+                            <span className="text-sm text-foreground">
+                              {user.device_platform ? user.device_platform.charAt(0).toUpperCase() + user.device_platform.slice(1) : "Unknown"}
+                            </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                             {countryFlag(user.country_code) && (
                               <span className="text-base leading-none">{countryFlag(user.country_code)}</span>
                             )}
                             <span>{user.country_code ? user.country_code.toUpperCase() : "—"}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-2">
                           <div className="space-y-1.5">
                             {user.current_language_name ? (
                               <StatusBadge status="info" label={user.current_language_name} />
                             ) : (
-                              <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
+                              <span className="text-sm text-muted-foreground">—</span>
                             )}
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              Fluency: <span className="capitalize text-gray-700 dark:text-gray-200">{(user.proficiency_level ?? fluencyByUser[user.id])?.replace(/_/g, " ") || "Not available"}</span>
+                            <div className="text-xs text-muted-foreground">
+                              Fluency: <span className="capitalize text-foreground">{(user.proficiency_level ?? fluencyByUser[user.id])?.replace(/_/g, " ") || "Not available"}</span>
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                            <div className="text-xs text-muted-foreground">
                               {(user.total_xp ?? 0).toLocaleString()} XP
                             </div>
                             {user.id in learningPositionByUser ? (
                               learningPositionByUser[user.id]?.status === "current" ? (
                                 <div
-                                  className="space-y-0.5 border-t border-gray-100 pt-1.5 text-xs dark:border-gray-700"
+                                  className="space-y-0.5 border-t border-border pt-1.5 text-xs"
                                   title={learningPositionByUser[user.id]?.courseTitle ?? undefined}
                                 >
-                                  <div className="text-gray-500 dark:text-gray-400">
-                                    Unit: <span className="font-medium text-gray-700 dark:text-gray-200">
+                                  <div className="text-muted-foreground">
+                                    Unit: <span className="font-medium text-foreground">
                                       {learningPositionByUser[user.id]?.unitTitle ?? "Unknown unit"}
                                     </span>
                                   </div>
-                                  <div className="text-gray-500 dark:text-gray-400">
-                                    Lesson: <span className="font-medium text-gray-700 dark:text-gray-200">
+                                  <div className="text-muted-foreground">
+                                    Lesson: <span className="font-medium text-foreground">
                                       {learningPositionByUser[user.id]?.lessonTitle ?? "Unknown lesson"}
                                     </span>
                                   </div>
                                 </div>
                               ) : (
-                                <div className="border-t border-gray-100 pt-1.5 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
+                                <div className="border-t border-border pt-1.5 text-xs text-muted-foreground">
                                   {learningPositionByUser[user.id]?.status === "completed"
                                     ? "Course completed"
                                     : "No active lesson"}
                                 </div>
                               )
                             ) : (
-                              <div className="border-t border-gray-100 pt-1.5 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
-                                Loading current lesson…
+                              <div className="space-y-1.5 border-t border-border pt-1.5">
+                                <div className="h-2.5 w-24 animate-pulse rounded bg-muted" />
+                                <div className="h-2.5 w-28 animate-pulse rounded bg-muted" />
                               </div>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           {user.ui_locale_name ? (
                             <span title={user.ui_locale}>
                               <StatusBadge status="info" label={user.ui_locale_name} />
                             </span>
                           ) : (
                             <span
-                              className="text-sm text-gray-400 dark:text-gray-500"
+                              className="text-sm text-muted-foreground"
                               title="No ui_locale has been synced from a device yet"
                             >
                               Unknown
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-600 dark:text-gray-400" title={getLastRequestAt(user) ? new Date(getLastRequestAt(user)!).toLocaleString() : "Never"}>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <div className="text-sm text-muted-foreground" title={getLastRequestAt(user) ? new Date(getLastRequestAt(user)!).toLocaleString() : "Never"}>
                             {formatLastRequest(getLastRequestAt(user))}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-600 dark:text-gray-400" title={user.created_at ? new Date(user.created_at).toLocaleString() : undefined}>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <div className="text-sm text-muted-foreground" title={user.created_at ? new Date(user.created_at).toLocaleString() : undefined}>
                             {formatDateJoined(user.created_at)}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <StatusBadge status={user.is_active ? "success" : "error"}
                             label={user.is_active ? "Active" : "Inactive"} />
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end gap-2">
-                            <Link
-                              href={`/users/${user.id}`}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedUserId(user.id);
+                              }}
                               aria-label={`View ${user.display_name || user.email || "user"}`}
                               title="View user"
                               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-600 hover:bg-brand-50 hover:text-brand-900 dark:text-brand-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-300"
                             >
-                              <FiEye className="h-5 w-5" aria-hidden="true" />
-                            </Link>
+                              <Eye className="h-5 w-5" aria-hidden="true" />
+                            </button>
                             {user.is_active ? (
                               <button
-                                onClick={() => setActionConfirm({ userId: user.id, action: "deactivate", userName: user.display_name || user.email })}
+                                onClick={(e) => {
+                                  // The row itself opens the user drawer; without this the
+                                  // drawer opened too and locked the confirmation dialog.
+                                  e.stopPropagation();
+                                  setActionConfirm({ userId: user.id, action: "deactivate", userName: user.display_name || user.email });
+                                }}
                                 aria-label={`Deactivate ${user.display_name || user.email || "user"}`}
                                 title="Deactivate user"
                                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-orange-600 hover:bg-orange-50 hover:text-orange-900 dark:text-orange-400 dark:hover:bg-orange-900/30 dark:hover:text-orange-300"
                               >
-                                <FiUserX className="h-5 w-5" aria-hidden="true" />
+                                <UserX className="h-5 w-5" aria-hidden="true" />
                               </button>
                             ) : (
                               <button
-                                onClick={() => setActionConfirm({ userId: user.id, action: "reactivate", userName: user.display_name || user.email })}
+                                onClick={(e) => {
+                                  // The row itself opens the user drawer; without this the
+                                  // drawer opened too and locked the confirmation dialog.
+                                  e.stopPropagation();
+                                  setActionConfirm({ userId: user.id, action: "reactivate", userName: user.display_name || user.email });
+                                }}
                                 aria-label={`Reactivate ${user.display_name || user.email || "user"}`}
                                 title="Reactivate user"
                                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-green-600 hover:bg-green-50 hover:text-green-900 dark:text-green-400 dark:hover:bg-green-900/30 dark:hover:text-green-300"
                               >
-                                <FiUserCheck className="h-5 w-5" aria-hidden="true" />
+                                <UserCheck className="h-5 w-5" aria-hidden="true" />
                               </button>
                             )}
                             <button
-                              onClick={() => setActionConfirm({ userId: user.id, action: "delete", userName: user.display_name || user.email })}
+                              onClick={(e) => {
+                                  // The row itself opens the user drawer; without this the
+                                  // drawer opened too and locked the confirmation dialog.
+                                  e.stopPropagation();
+                                  setActionConfirm({ userId: user.id, action: "delete", userName: user.display_name || user.email });
+                                }}
                               aria-label={`Delete ${user.display_name || user.email || "user"}`}
                               title="Soft delete (deactivates account, data kept, reversible in the DB)"
                               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-600 hover:bg-red-50 hover:text-red-900 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                             >
-                              <FiTrash2 className="h-5 w-5" aria-hidden="true" />
+                              <Trash2 className="h-5 w-5" aria-hidden="true" />
                             </button>
                             <button
                               onClick={() => setActionConfirm({ userId: user.id, action: "purge", userName: user.display_name || user.email })}
@@ -1036,7 +1035,7 @@ export default function UsersPage() {
                               title="Hard delete (permanently erases the account and all data - irreversible)"
                               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-800 hover:bg-red-100 hover:text-red-950 dark:text-red-500 dark:hover:bg-red-900/50 dark:hover:text-red-300"
                             >
-                              <FiAlertOctagon className="h-5 w-5" aria-hidden="true" />
+                              <OctagonAlert className="h-5 w-5" aria-hidden="true" />
                             </button>
                           </div>
                         </td>
@@ -1044,7 +1043,7 @@ export default function UsersPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={11} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={11} className="px-3 py-8 text-center text-muted-foreground">
                         No users found
                       </td>
                     </tr>
@@ -1055,9 +1054,9 @@ export default function UsersPage() {
 
             {/* Pagination */}
             {users && totalPages > 1 && (
-              <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800">
+              <div className="px-4 py-3 border-t border-border">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <p className="text-sm text-foreground">
                     Showing {(page - 1) * limit + 1} to {Math.min(page * limit, users.total)} of {users.total} users
                   </p>
                   <Pagination
@@ -1078,18 +1077,18 @@ export default function UsersPage() {
       {/* Action Confirmation Modal */}
       {actionConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <DialogPanel className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClose={() => setActionConfirm(null)} aria-labelledby="user-action-dialog-title">
+            <h3 id="user-action-dialog-title" className="text-lg font-semibold text-foreground mb-4">
               Confirm {actionConfirm.action.charAt(0).toUpperCase() + actionConfirm.action.slice(1)}
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-sm text-muted-foreground mb-6">
               {getActionMessage(actionConfirm.action, actionConfirm.userName)}
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setActionConfirm(null)}
                 disabled={actionLoading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
+                className="px-4 py-2 text-sm font-medium text-foreground bg-card border border-input rounded-lg hover:bg-accent disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -1109,9 +1108,21 @@ export default function UsersPage() {
                 {actionLoading ? "Processing..." : `Yes, ${actionConfirm.action}`}
               </button>
             </div>
-          </div>
+          </DialogPanel>
         </div>
       )}
+
+      {/* User detail side panel */}
+      <UserDetailsSheet
+        userId={selectedUserId}
+        onClose={() => setSelectedUserId(null)}
+        onActionComplete={(action) => {
+          if (action === "delete" || action === "purge") {
+            setSelectedUserId(null);
+          }
+          refresh();
+        }}
+      />
     </div>
   );
 }

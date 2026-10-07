@@ -1,0 +1,428 @@
+"use client";
+
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api";
+
+/**
+ * Slice 2.9: Minimal Dashboard Observability UI for Phase 2 Enforcement
+ * 
+ * Read-only admin page that surfaces Slice 2.8 backend endpoints:
+ * - GET /api/v1/admin/enforcement/flags
+ * - GET /api/v1/admin/enforcement/events
+ * - GET /api/v1/admin/enforcement/metrics
+ * 
+ * IMPORTANT: This UI is read-only. No flag editing/toggling capability.
+ */
+
+interface EnforcementFlag {
+  flag_name: string;
+  enabled: boolean;
+  description: string;
+  category: string;
+  impact: string;
+  default_value: boolean;
+}
+
+interface EnforcementFlagsResponse {
+  flags: EnforcementFlag[];
+  timestamp: string;
+  environment: string;
+}
+
+interface EventSummary {
+  event_type: string;
+  flag_name: string;
+  count: number;
+  lesson_count: number;
+  sample_lesson_keys: string[];
+  last_occurrence: string;
+}
+
+interface EnforcementEventsResponse {
+  time_period_hours: number;
+  total_events: number;
+  summaries: EventSummary[];
+  timestamp: string;
+}
+
+interface SchemaVersionDist {
+  version: number;
+  count: number;
+  percentage: number;
+}
+
+interface EnforcementMetricsResponse {
+  publish_rejections_24h: number;
+  runtime_downgrades_24h: number;
+  schema_version_distribution: SchemaVersionDist[];
+  total_blueprints: number;
+  available_blueprints: number;
+  coming_soon_blueprints: number;
+  timestamp: string;
+}
+
+// API fetch functions. Routed through apiClient (not raw fetch) so the
+// /api/v1/admin/ -> /api/admin/ proxy rewrite and Authorization header
+// (sessionStorage, not localStorage — this is the only place that used to
+// read the wrong storage) are handled the same way as every other admin page.
+async function fetchEnforcementFlags(): Promise<EnforcementFlagsResponse> {
+  const response = await apiClient.get<EnforcementFlagsResponse>(
+    "/api/v1/admin/enforcement/flags"
+  );
+  return response.data;
+}
+
+async function fetchEnforcementEvents(hours: number = 24): Promise<EnforcementEventsResponse> {
+  const response = await apiClient.get<EnforcementEventsResponse>(
+    `/api/v1/admin/enforcement/events?hours=${hours}`
+  );
+  return response.data;
+}
+
+async function fetchEnforcementMetrics(): Promise<EnforcementMetricsResponse> {
+  const response = await apiClient.get<EnforcementMetricsResponse>(
+    "/api/v1/admin/enforcement/metrics"
+  );
+  return response.data;
+}
+
+export function EnforcementContent({ showHeader = true, isActive = true }: { showHeader?: boolean; isActive?: boolean }) {
+  const [eventTimeRange, setEventTimeRange] = useState<number>(24);
+
+  // Query hooks
+  const {
+    data: flagsData,
+    isLoading: flagsLoading,
+    error: flagsError,
+  } = useQuery({
+    queryKey: ["enforcement-flags"],
+    queryFn: fetchEnforcementFlags,
+    refetchInterval: isActive ? 60000 : false, // Refresh every minute
+  });
+
+  const {
+    data: eventsData,
+    isLoading: eventsLoading,
+    error: eventsError,
+  } = useQuery({
+    queryKey: ["enforcement-events", eventTimeRange],
+    queryFn: () => fetchEnforcementEvents(eventTimeRange),
+    refetchInterval: isActive ? 30000 : false, // Refresh every 30 seconds
+  });
+
+  const {
+    data: metricsData,
+    isLoading: metricsLoading,
+    error: metricsError,
+  } = useQuery({
+    queryKey: ["enforcement-metrics"],
+    queryFn: fetchEnforcementMetrics,
+    refetchInterval: isActive ? 60000 : false, // Refresh every minute
+  });
+
+  return (
+    <div className="min-h-screen bg-muted/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Page Header */}
+        {showHeader && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold text-foreground">
+              Phase 2 Enforcement Observability
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Monitor enforcement flag states, events, and system metrics. Read-only view. (Slice 2.8 + 2.9)
+            </p>
+          </div>
+        )}
+
+        {/* Enforcement Flags Section */}
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold text-foreground mb-4">
+            Enforcement Flags
+          </h2>
+          {flagsLoading && <div className="text-muted-foreground">Loading flags...</div>}
+          {flagsError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              Error: {flagsError.message}
+            </div>
+          )}
+          {flagsData && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {flagsData.flags.map((flag) => (
+                <div
+                  key={flag.flag_name}
+                  className={`p-4 rounded-lg border-2 ${
+                    flag.enabled
+                      ? "bg-green-50 border-green-300 dark:bg-green-900/20 dark:border-green-700"
+                      : "bg-gray-50 border-gray-300 dark:bg-gray-800 dark:border-gray-700"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold text-foreground">
+                          {flag.flag_name}
+                        </h3>
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded ${
+                            flag.enabled
+                              ? "bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200"
+                              : "bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                          }`}
+                        >
+                          {flag.enabled ? "ON" : "OFF"}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {flag.description}
+                      </p>
+                      <div className="flex gap-4 text-xs text-muted-foreground">
+                        <span>
+                          <strong>Category:</strong> {flag.category}
+                        </span>
+                        <span>
+                          <strong>Impact:</strong> {flag.impact}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs text-muted-foreground font-mono">
+                    {flag.flag_name}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {flagsData && (
+            <div className="mt-4 text-xs text-muted-foreground">
+              Last updated: {new Date(flagsData.timestamp).toLocaleString()}
+            </div>
+          )}
+        </section>
+
+        {/* Quick Metrics Section */}
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold text-foreground mb-4">
+            Quick Metrics (24h)
+          </h2>
+          {metricsLoading && <div className="text-muted-foreground">Loading metrics...</div>}
+          {metricsError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              Error: {metricsError.message}
+            </div>
+          )}
+          {metricsData && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-card p-4 rounded-lg border border-border">
+                <div className="text-sm text-muted-foreground mb-1">
+                  Publish Rejections
+                </div>
+                <div className="text-3xl font-bold text-foreground">
+                  {metricsData.publish_rejections_24h}
+                </div>
+              </div>
+              <div className="bg-card p-4 rounded-lg border border-border">
+                <div className="text-sm text-muted-foreground mb-1">
+                  Runtime Downgrades
+                </div>
+                <div className="text-3xl font-bold text-foreground">
+                  {metricsData.runtime_downgrades_24h}
+                </div>
+              </div>
+              <div className="bg-card p-4 rounded-lg border border-border">
+                <div className="text-sm text-muted-foreground mb-1">
+                  Available Blueprints
+                </div>
+                <div className="text-3xl font-bold text-foreground">
+                  {metricsData.available_blueprints}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  of {metricsData.total_blueprints} total
+                </div>
+              </div>
+              <div className="bg-card p-4 rounded-lg border border-border">
+                <div className="text-sm text-muted-foreground mb-1">
+                  Coming Soon
+                </div>
+                <div className="text-3xl font-bold text-foreground">
+                  {metricsData.coming_soon_blueprints}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {((metricsData.coming_soon_blueprints / metricsData.total_blueprints) * 100).toFixed(1)}%
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Schema Version Distribution */}
+        {metricsData && metricsData.schema_version_distribution.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              Schema Version Distribution
+            </h2>
+            <div className="bg-card p-4 rounded-lg border border-border">
+              <table className="min-w-full divide-y divide-border">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
+                      Version
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
+                      Count
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
+                      Percentage
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {metricsData.schema_version_distribution.map((dist) => (
+                    <tr key={dist.version}>
+                      <td className="px-4 py-2 text-sm text-foreground font-mono">
+                        v{dist.version}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-foreground">
+                        {dist.count}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-foreground">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-muted rounded h-2">
+                            <div
+                              className="bg-blue-600 dark:bg-blue-500 h-2 rounded"
+                              style={{ width: `${dist.percentage}%` }}
+                            />
+                          </div>
+                          <span className="text-xs">{dist.percentage.toFixed(1)}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {/* Enforcement Events Section */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-foreground">
+              Enforcement Events
+            </h2>
+            <div className="flex gap-2">
+              {[1, 24, 72, 168].map((hours) => (
+                <button
+                  key={hours}
+                  onClick={() => setEventTimeRange(hours)}
+                  className={`px-3 py-1 text-sm rounded ${
+                    eventTimeRange === hours
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  {hours}h
+                </button>
+              ))}
+            </div>
+          </div>
+          {eventsLoading && <div className="text-muted-foreground">Loading events...</div>}
+          {eventsError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              Error: {eventsError.message}
+            </div>
+          )}
+          {eventsData && (
+            <>
+              <div className="mb-4 text-sm text-muted-foreground">
+                Showing {eventsData.total_events} events in the last {eventsData.time_period_hours} hours
+              </div>
+              {eventsData.summaries.length === 0 ? (
+                <div className="bg-muted/50 p-8 rounded-lg border border-border text-center">
+                  <p className="text-muted-foreground">
+                    No enforcement events in the selected time period.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {eventsData.summaries.map((summary, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-card p-4 rounded-lg border border-border"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h3 className="font-semibold text-foreground">
+                            {summary.event_type.replace(/_/g, " ").toUpperCase()}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            Flag: <span className="font-mono">{summary.flag_name}</span>
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-foreground">
+                            {summary.count}
+                          </div>
+                          <div className="text-xs text-muted-foreground">events</div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Lessons Affected:</span>
+                          <span className="ml-2 font-semibold text-foreground">
+                            {summary.lesson_count}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Last Occurrence:</span>
+                          <span className="ml-2 font-mono text-xs text-foreground">
+                            {new Date(summary.last_occurrence).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                      {summary.sample_lesson_keys.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-border">
+                          <div className="text-xs text-muted-foreground mb-2">
+                            Sample Lessons:
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {summary.sample_lesson_keys.slice(0, 5).map((key) => (
+                              <span
+                                key={key}
+                                className="px-2 py-1 bg-muted text-xs font-mono rounded"
+                              >
+                                {key}
+                              </span>
+                            ))}
+                            {summary.sample_lesson_keys.length > 5 && (
+                              <span className="px-2 py-1 text-xs text-muted-foreground">
+                                +{summary.sample_lesson_keys.length - 5} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </section>
+
+        {/* Footer Note */}
+        <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <p className="text-sm text-blue-900 dark:text-blue-200">
+            <strong>Note:</strong> This page is read-only. To modify enforcement flags, use the
+            backend admin API or environment variables. See{" "}
+            <a href="#" className="underline">
+              PHASE2_CANARY_ROLLOUT_PLAN.md
+            </a>{" "}
+            for safe rollout procedures.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

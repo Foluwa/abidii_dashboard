@@ -6,14 +6,14 @@ import React from 'react';
 export function AnalyticsEmptyState({ message, hint }: { message: string; hint?: string }) {
   return (
     <div className="py-8 text-center">
-      <p className="text-gray-500 dark:text-gray-400">{message}</p>
-      {hint && <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{hint}</p>}
+      <p className="text-muted-foreground">{message}</p>
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
 
 export function AnalyticsPanelSkeleton({ heightClassName = 'h-64' }: { heightClassName?: string }) {
-  return <div className={`${heightClassName} animate-pulse rounded bg-gray-200 dark:bg-gray-800`} />;
+  return <div className={`${heightClassName} animate-pulse rounded bg-muted`} />;
 }
 
 export function AnalyticsErrorPanel({ message, onRetry }: { message: string; onRetry?: () => void }) {

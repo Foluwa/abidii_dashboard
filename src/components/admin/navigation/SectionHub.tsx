@@ -31,7 +31,7 @@ export default function SectionHub({
   return (
     <div className="space-y-6">
       <PageBreadCrumb pageTitle={title} />
-      <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
+      <p className="text-sm text-muted-foreground">{description}</p>
       <div className={resolvedGridClassName}>
         {links.map((item) => (
           <Link
@@ -39,17 +39,17 @@ export default function SectionHub({
             href={item.href}
             className={
               variant === "compact"
-                ? "rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800"
-                : "rounded-xl border border-gray-200 bg-white p-5 transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
+                ? "rounded-lg border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted/50"
+                : "rounded-xl border border-border bg-card p-5 transition hover:bg-muted/50"
             }
           >
             {variant === "compact" ? (
               item.label
             ) : (
               <>
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white">{item.label}</h3>
+                <h3 className="text-base font-semibold text-foreground">{item.label}</h3>
                 {item.description ? (
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
                 ) : null}
               </>
             )}

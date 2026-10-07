@@ -203,7 +203,7 @@ export default function CurriculumOpsPage() {
         </Alert>
         <button
           onClick={() => refresh()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           Retry
         </button>
@@ -216,7 +216,7 @@ export default function CurriculumOpsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <PageBreadCrumb pageTitle="Curriculum Ops" />
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Audit-derived operational counts for validate/publish actions on courses and lesson blueprints.
           </p>
         </div>
@@ -227,7 +227,7 @@ export default function CurriculumOpsPage() {
             courseAudit.refresh();
             blueprintAudit.refresh();
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           Refresh Data
         </button>
@@ -235,21 +235,21 @@ export default function CurriculumOpsPage() {
 
       <AnalyticsTabs />
 
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
+      <div className="bg-card border border-border rounded-lg p-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <div className="text-sm font-medium text-gray-900 dark:text-white">Last 24h (from audit log)</div>
-            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">Window starts: {fromTs24h}</div>
+            <div className="text-sm font-medium text-foreground">Last 24h (from audit log)</div>
+            <div className="mt-1 text-xs text-muted-foreground">Window starts: {fromTs24h}</div>
           </div>
-          <div className="text-xs text-gray-600 dark:text-gray-300">
-            Publish — Success: <span className="font-medium text-gray-900 dark:text-white">{last24hSummary.publishSuccess}</span> | Blocked:{' '}
-            <span className="font-medium text-gray-900 dark:text-white">{last24hSummary.publishBlocked}</span> | Failed:{' '}
-            <span className="font-medium text-gray-900 dark:text-white">{last24hSummary.publishFailed}</span>
+          <div className="text-xs text-muted-foreground">
+            Publish — Success: <span className="font-medium text-foreground">{last24hSummary.publishSuccess}</span> | Blocked:{' '}
+            <span className="font-medium text-foreground">{last24hSummary.publishBlocked}</span> | Failed:{' '}
+            <span className="font-medium text-foreground">{last24hSummary.publishFailed}</span>
           </div>
         </div>
 
         {last24hSummary.topValidationStatuses.length > 0 && (
-          <div className="mt-3 text-xs text-gray-600 dark:text-gray-300">
+          <div className="mt-3 text-xs text-muted-foreground">
             Top validation statuses: {' '}
             {last24hSummary.topValidationStatuses
               .map(([k, v]) => `${k} (${v})`)
@@ -258,18 +258,18 @@ export default function CurriculumOpsPage() {
         )}
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <div className="text-sm font-medium text-gray-900 dark:text-white">Recent blocked/failed (last 24h)</div>
-          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">Filter operational failures by action/result/target type.</div>
+      <div className="bg-card border border-border rounded-lg">
+        <div className="p-4 border-b border-border">
+          <div className="text-sm font-medium text-foreground">Recent blocked/failed (last 24h)</div>
+          <div className="mt-1 text-xs text-muted-foreground">Filter operational failures by action/result/target type.</div>
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Action search</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Action search</label>
               <input
                 value={recentActionSearch}
                 onChange={(e) => setRecentActionSearch(e.target.value)}
                 placeholder="publish, validate..."
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-theme-xs focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground shadow-theme-xs focus:border-brand-500 focus:outline-none"
               />
             </div>
             <div>
@@ -299,43 +299,43 @@ export default function CurriculumOpsPage() {
               />
             </div>
             <div className="flex items-end">
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                Matching rows: <span className="font-medium text-gray-900 dark:text-white">{recentTotal}</span>
+              <p className="text-xs text-muted-foreground">
+                Matching rows: <span className="font-medium text-foreground">{recentTotal}</span>
               </p>
             </div>
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.05]" role="table" aria-label="Recent blocked/failed">
-            <thead className="bg-gray-50 dark:bg-white/[0.02]">
+          <table className="min-w-full divide-y divide-border" role="table" aria-label="Recent blocked/failed">
+            <thead className="border-b">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Time</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Action</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Result</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Target</th>
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Time</th>
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Action</th>
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Result</th>
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Target</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
+            <tbody className="divide-y divide-border">
               {(courseAudit.isLoading || blueprintAudit.isLoading) && (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400" colSpan={4}>
+                  <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={4}>
                     Loading…
                   </td>
                 </tr>
               )}
               {!courseAudit.isLoading && !blueprintAudit.isLoading && recentRows.length === 0 && (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400" colSpan={4}>
+                  <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={4}>
                     No blocked/failed actions in this window.
                   </td>
                 </tr>
               )}
               {recentRows.map((row) => (
                 <tr key={row.id}>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-mono">{new Date(row.created_at).toLocaleString()}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 font-mono">{row.action}</td>
+                  <td className="px-4 py-3 text-sm text-foreground font-mono">{new Date(row.created_at).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-foreground font-mono">{row.action}</td>
                   <td className="px-4 py-3 text-sm">{resultBadge(getResult(row.details))}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 font-mono">
+                  <td className="px-4 py-3 text-sm text-foreground font-mono">
                     {row.target_type}:{' '}
                     {row.target_id || '—'}
                   </td>
@@ -344,8 +344,8 @@ export default function CurriculumOpsPage() {
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-gray-800">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex items-center justify-between border-t border-border px-4 py-3">
+          <p className="text-sm text-muted-foreground">
             Showing {recentPageStart} to {recentPageEnd} of {recentTotal} blocked/failed actions
           </p>
           <div className="ml-auto">
@@ -354,7 +354,7 @@ export default function CurriculumOpsPage() {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
+      <div className="bg-card border border-border rounded-lg p-4">
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div>
             <StyledSelect
@@ -373,12 +373,12 @@ export default function CurriculumOpsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Action filter</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Action filter</label>
             <input
               value={metricsActionFilter}
               onChange={(e) => setMetricsActionFilter(e.target.value)}
               placeholder="course.publish..."
-              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 border rounded-lg bg-card dark:border-gray-700 text-foreground"
             />
           </div>
           <div>
@@ -397,65 +397,65 @@ export default function CurriculumOpsPage() {
             />
           </div>
           <div className="flex items-end">
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              Window: <span className="text-gray-900 dark:text-white">{metrics?.window_days ?? days} days</span><br />
-              Matching rows: <span className="text-gray-900 dark:text-white">{metricsTotal}</span>
+            <div className="text-xs text-muted-foreground">
+              Window: <span className="text-foreground">{metrics?.window_days ?? days} days</span><br />
+              Matching rows: <span className="text-foreground">{metricsTotal}</span>
             </div>
           </div>
           <div className="flex items-end">
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              Total: <span className="text-gray-900 dark:text-white">{totals.total}</span>
+            <div className="text-xs text-muted-foreground">
+              Total: <span className="text-foreground">{totals.total}</span>
             </div>
           </div>
           <div className="flex items-end">
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              Success: <span className="text-gray-900 dark:text-white">{totals.success}</span> | Blocked:{' '}
-              <span className="text-gray-900 dark:text-white">{totals.blocked}</span> | Failed:{' '}
-              <span className="text-gray-900 dark:text-white">{totals.failed}</span>
+            <div className="text-xs text-muted-foreground">
+              Success: <span className="text-foreground">{totals.success}</span> | Blocked:{' '}
+              <span className="text-foreground">{totals.blocked}</span> | Failed:{' '}
+              <span className="text-foreground">{totals.failed}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
+      <div className="bg-card border border-border rounded-lg">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.05]" role="table">
-            <thead className="bg-gray-50 dark:bg-white/[0.02]">
+          <table className="min-w-full divide-y divide-border" role="table">
+            <thead className="border-b">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Day</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Action</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Result</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300">Count</th>
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Day</th>
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Action</th>
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Result</th>
+                <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Count</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-white/[0.05]">
+            <tbody className="divide-y divide-border">
               {isLoading && (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400" colSpan={4}>
+                  <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={4}>
                     Loading…
                   </td>
                 </tr>
               )}
               {!isLoading && metricsTotal === 0 && (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400" colSpan={4}>
+                  <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={4}>
                     No metrics in this window.
                   </td>
                 </tr>
               )}
               {paginatedMetricsRows.map((row, idx) => (
                 <tr key={`${row.day}-${row.action}-${row.result}-${idx}`}>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-mono">{row.day}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 font-mono">{row.action}</td>
+                  <td className="px-4 py-3 text-sm text-foreground font-mono">{row.day}</td>
+                  <td className="px-4 py-3 text-sm text-foreground font-mono">{row.action}</td>
                   <td className="px-4 py-3 text-sm">{resultBadge(row.result)}</td>
-                  <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{row.count.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-right text-sm text-foreground">{row.count.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-gray-800">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex items-center justify-between border-t border-border px-4 py-3">
+          <p className="text-sm text-muted-foreground">
             Showing {metricsPageStart} to {metricsPageEnd} of {metricsTotal} curriculum-ops metric rows
           </p>
           <div className="ml-auto">

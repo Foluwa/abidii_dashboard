@@ -76,7 +76,7 @@ export default function LessonPerformanceTable({
   const headerButton = (key: SortKey, label: string) => (
     <button
       onClick={() => toggleSort(key)}
-      className="flex items-center gap-1 uppercase text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+      className="flex items-center gap-1 uppercase text-xs font-medium text-muted-foreground hover:text-foreground"
     >
       {label}
       {sortKey === key && <span>{direction === 1 ? '▲' : '▼'}</span>}
@@ -86,39 +86,39 @@ export default function LessonPerformanceTable({
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="bg-gray-50 dark:bg-gray-800">
+        <thead className="border-b">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Lesson / Section</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Course</th>
-            <th className="px-4 py-3 text-right"><div className="flex justify-end">{headerButton('sessions', 'Sessions')}</div></th>
-            <th className="px-4 py-3 text-right"><div className="flex justify-end">{headerButton('completion', 'Completion')}</div></th>
-            <th className="px-4 py-3 text-right"><div className="flex justify-end">{headerButton('accuracy', 'First-Attempt Acc.')}</div></th>
-            <th className="px-4 py-3 text-right"><div className="flex justify-end">{headerButton('repeat', 'Repeat Rate')}</div></th>
-            <th className="px-4 py-3 text-right"><div className="flex justify-end">{headerButton('duration', 'Median Duration')}</div></th>
+            <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Lesson / Section</th>
+            <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Course</th>
+            <th className="px-4 py-2.5 text-right"><div className="flex justify-end">{headerButton('sessions', 'Sessions')}</div></th>
+            <th className="px-4 py-2.5 text-right"><div className="flex justify-end">{headerButton('completion', 'Completion')}</div></th>
+            <th className="px-4 py-2.5 text-right"><div className="flex justify-end">{headerButton('accuracy', 'First-Attempt Acc.')}</div></th>
+            <th className="px-4 py-2.5 text-right"><div className="flex justify-end">{headerButton('repeat', 'Repeat Rate')}</div></th>
+            <th className="px-4 py-2.5 text-right"><div className="flex justify-end">{headerButton('duration', 'Median Duration')}</div></th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="divide-y divide-border">
           {sorted.map((row) => (
-            <tr key={row.section_id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-              <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
+            <tr key={row.section_id} className="hover:bg-muted/50">
+              <td className="px-4 py-3 font-medium text-foreground">
                 <Link href={`/analytics/learning/lessons/${row.section_id}`} className="hover:underline">
                   {row.section_title ?? row.section_id}
                 </Link>
               </td>
-              <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{row.course_title ?? '—'}</td>
-              <td className="px-4 py-3 text-right text-gray-900 dark:text-white">
+              <td className="px-4 py-3 text-muted-foreground">{row.course_title ?? '—'}</td>
+              <td className="px-4 py-3 text-right text-foreground">
                 {row.sessions_started.toLocaleString()}
               </td>
-              <td className="px-4 py-3 text-right text-gray-900 dark:text-white">
+              <td className="px-4 py-3 text-right text-foreground">
                 {formatRate(row.session_completion_rate)}
               </td>
-              <td className="px-4 py-3 text-right text-gray-900 dark:text-white">
+              <td className="px-4 py-3 text-right text-foreground">
                 {formatRate(row.first_attempt_accuracy)}
               </td>
-              <td className="px-4 py-3 text-right text-gray-900 dark:text-white">
+              <td className="px-4 py-3 text-right text-foreground">
                 {formatRate(row.repeat_user_rate)}
               </td>
-              <td className="px-4 py-3 text-right text-gray-900 dark:text-white">
+              <td className="px-4 py-3 text-right text-foreground">
                 {formatDurationMs(row.median_wall_clock_duration_ms)}
               </td>
             </tr>

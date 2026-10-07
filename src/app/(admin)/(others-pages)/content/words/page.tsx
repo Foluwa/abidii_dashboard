@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useWords, useLanguages } from "@/hooks/useApi";
+import { useWords, useAdminLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import { useToast } from "@/contexts/ToastContext";
 import type { Word } from "@/types/api";
@@ -25,7 +25,7 @@ import {
   ActiveFilterChips,
   StickyBulkActionBar,
 } from '@/components/admin/layout';
-import { FiGlobe, FiBarChart2, FiCheckCircle, FiTrash2, FiVolume2, FiX } from "react-icons/fi";
+import { ChartColumn, CircleCheck, Globe, Trash2, Volume2, X } from "lucide-react";
 
 // POS options for multi-select
 const POS_OPTIONS = [
@@ -254,7 +254,7 @@ export default function WordsPage() {
     sort_by: sortBy,
     sort_dir: sortDir,
   });
-  const { languages } = useLanguages();
+  const { languages } = useAdminLanguages();
   // The lemma pool is English-anchored — there is exactly one valid
   // source language for creating/editing an entry.
   const englishLanguage = languages?.find((lang: any) => lang.iso_639_3 === 'eng');
@@ -530,9 +530,9 @@ export default function WordsPage() {
       />
 
       <ContentStatsGrid cols={3}>
-        <ContentStatsCard label="Total Entries" value={total || 0} icon={FiGlobe} />
-        <ContentStatsCard label="Current Page" value={page} icon={FiBarChart2} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
-        <ContentStatsCard label="Showing" value={`${Math.min((page - 1) * limit + 1, total)}-${Math.min(page * limit, total)}`} icon={FiCheckCircle} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+        <ContentStatsCard label="Total Entries" value={total || 0} icon={Globe} />
+        <ContentStatsCard label="Current Page" value={page} icon={ChartColumn} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
+        <ContentStatsCard label="Showing" value={`${Math.min((page - 1) * limit + 1, total)}-${Math.min(page * limit, total)}`} icon={CircleCheck} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
       </ContentStatsGrid>
 
       <DictionaryGoogleSheetsBulkImport onImportComplete={() => refresh()} />
@@ -550,9 +550,9 @@ export default function WordsPage() {
               meaningful "source language" to filter by anymore; this is
               the one language axis that actually varies. */}
           <div className="flex-1 min-w-[200px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               <div className="flex items-center gap-1.5">
-                <FiGlobe className="h-3.5 w-3.5" />
+                <Globe className="h-3.5 w-3.5" />
                 Translation Language
               </div>
             </label>
@@ -575,10 +575,11 @@ export default function WordsPage() {
 
           {/* Sort By */}
           <div className="min-w-[150px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Sort by
             </label>
             <StyledSelect
+                aria-label="Sort by"
               value={sortBy}
               onChange={(e) => {
                 setSortBy(e.target.value as any);
@@ -597,7 +598,7 @@ export default function WordsPage() {
           </div>
 
           <div className="flex-1 min-w-[240px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Primary Translation
             </label>
             <input
@@ -608,16 +609,17 @@ export default function WordsPage() {
                 setPage(1);
               }}
               placeholder="Filter by primary translation..."
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+              className="block w-full rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
 
           {/* Sort Direction */}
           <div className="min-w-[120px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Order
             </label>
             <StyledSelect
+                aria-label="Order"
               value={sortDir}
               onChange={(e) => {
                 setSortDir(e.target.value as any);
@@ -633,10 +635,11 @@ export default function WordsPage() {
 
           {/* Items Per Page */}
           <div>
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Items per page
             </label>
             <StyledSelect
+                aria-label="Items per page"
               value={limit}
               onChange={(e) => {
                 setLimit(Number(e.target.value));
@@ -653,11 +656,11 @@ export default function WordsPage() {
 
         {/* Advanced Filters Panel */}
         {showAdvancedFilters && (
-          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+          <div className="mt-5 border-t border-border pt-5">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {/* Boolean Filters Column */}
               <div className="space-y-4">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Content Flags</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Content Flags</h4>
                 
                 {/* Has Audio */}
                 <label className="flex items-center gap-3 cursor-pointer group">
@@ -668,15 +671,15 @@ export default function WordsPage() {
                       onChange={(e) => setHasAudio(e.target.checked ? true : undefined)}
                       className="peer sr-only"
                     />
-                    <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
+                    <div className="h-5 w-9 rounded-full bg-muted peer-checked:bg-brand-600 transition-colors" />
                     <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                  <span className="text-sm text-foreground group-hover:text-gray-900 dark:group-hover:text-white">
                     Has Audio
                   </span>
                   {hasAudio !== undefined && (
                     <button onClick={() => setHasAudio(undefined)} className="text-gray-400 hover:text-gray-600">
-                      <FiX className="h-3.5 w-3.5" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </label>
@@ -690,15 +693,15 @@ export default function WordsPage() {
                       onChange={(e) => setHasExamples(e.target.checked ? true : undefined)}
                       className="peer sr-only"
                     />
-                    <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
+                    <div className="h-5 w-9 rounded-full bg-muted peer-checked:bg-brand-600 transition-colors" />
                     <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                  <span className="text-sm text-foreground group-hover:text-gray-900 dark:group-hover:text-white">
                     Has Examples
                   </span>
                   {hasExamples !== undefined && (
                     <button onClick={() => setHasExamples(undefined)} className="text-gray-400 hover:text-gray-600">
-                      <FiX className="h-3.5 w-3.5" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </label>
@@ -712,15 +715,15 @@ export default function WordsPage() {
                       onChange={(e) => setHasRelated(e.target.checked ? true : undefined)}
                       className="peer sr-only"
                     />
-                    <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
+                    <div className="h-5 w-9 rounded-full bg-muted peer-checked:bg-brand-600 transition-colors" />
                     <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                  <span className="text-sm text-foreground group-hover:text-gray-900 dark:group-hover:text-white">
                     Has Related Terms
                   </span>
                   {hasRelated !== undefined && (
                     <button onClick={() => setHasRelated(undefined)} className="text-gray-400 hover:text-gray-600">
-                      <FiX className="h-3.5 w-3.5" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </label>
@@ -734,15 +737,15 @@ export default function WordsPage() {
                       onChange={(e) => setHasPronunciation(e.target.checked ? true : undefined)}
                       className="peer sr-only"
                     />
-                    <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
+                    <div className="h-5 w-9 rounded-full bg-muted peer-checked:bg-brand-600 transition-colors" />
                     <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                  <span className="text-sm text-foreground group-hover:text-gray-900 dark:group-hover:text-white">
                     Has IPA Pronunciation
                   </span>
                   {hasPronunciation !== undefined && (
                     <button onClick={() => setHasPronunciation(undefined)} className="text-gray-400 hover:text-gray-600">
-                      <FiX className="h-3.5 w-3.5" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </label>
@@ -756,15 +759,15 @@ export default function WordsPage() {
                       onChange={(e) => setToneMarksPresent(e.target.checked ? true : undefined)}
                       className="peer sr-only"
                     />
-                    <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
+                    <div className="h-5 w-9 rounded-full bg-muted peer-checked:bg-brand-600 transition-colors" />
                     <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                  <span className="text-sm text-foreground group-hover:text-gray-900 dark:group-hover:text-white">
                     Has Tone Marks (ẹ́, ọ̀, etc.)
                   </span>
                   {toneMarksPresent !== undefined && (
                     <button onClick={() => setToneMarksPresent(undefined)} className="text-gray-400 hover:text-gray-600">
-                      <FiX className="h-3.5 w-3.5" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </label>
@@ -778,15 +781,15 @@ export default function WordsPage() {
                       onChange={(e) => setIpaPresent(e.target.checked ? true : undefined)}
                       className="peer sr-only"
                     />
-                    <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-brand-600 transition-colors dark:bg-gray-700" />
+                    <div className="h-5 w-9 rounded-full bg-muted peer-checked:bg-brand-600 transition-colors" />
                     <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4 shadow-sm" />
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                  <span className="text-sm text-foreground group-hover:text-gray-900 dark:group-hover:text-white">
                     Has IPA Transcription
                   </span>
                   {ipaPresent !== undefined && (
                     <button onClick={() => setIpaPresent(undefined)} className="text-gray-400 hover:text-gray-600">
-                      <FiX className="h-3.5 w-3.5" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </label>
@@ -794,11 +797,11 @@ export default function WordsPage() {
 
               {/* Text Pattern Filters Column */}
               <div className="space-y-4">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Text Patterns</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Text Patterns</h4>
                 
                 {/* Starts With */}
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                  <label className="mb-1.5 block text-xs font-medium text-foreground">
                     Starts with
                   </label>
                   <input
@@ -809,13 +812,13 @@ export default function WordsPage() {
                       setPage(1);
                     }}
                     placeholder="e.g., a, ba"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                    className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-brand-500 dark:focus:border-brand-500"
                   />
                 </div>
 
                 {/* Contains */}
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                  <label className="mb-1.5 block text-xs font-medium text-foreground">
                     Contains
                   </label>
                   <input
@@ -826,13 +829,13 @@ export default function WordsPage() {
                       setPage(1);
                     }}
                     placeholder="e.g., ọ, sun"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                    className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-brand-500 dark:focus:border-brand-500"
                   />
                 </div>
 
                 {/* Ends With */}
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                  <label className="mb-1.5 block text-xs font-medium text-foreground">
                     Ends with
                   </label>
                   <input
@@ -843,13 +846,13 @@ export default function WordsPage() {
                       setPage(1);
                     }}
                     placeholder="e.g., mi, ọ"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                    className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-brand-500 dark:focus:border-brand-500"
                   />
                 </div>
 
                 {/* Word Length Range */}
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
+                  <label className="mb-1.5 block text-xs font-medium text-foreground">
                     Word Length
                   </label>
                   <div className="flex items-center gap-2">
@@ -863,7 +866,7 @@ export default function WordsPage() {
                         setPage(1);
                       }}
                       placeholder="Min"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-brand-500 dark:focus:border-brand-500"
                     />
                     <span className="text-gray-400">-</span>
                     <input
@@ -876,7 +879,7 @@ export default function WordsPage() {
                         setPage(1);
                       }}
                       placeholder="Max"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-brand-500 dark:focus:border-brand-500"
                     />
                   </div>
                 </div>
@@ -884,7 +887,7 @@ export default function WordsPage() {
 
               {/* Part of Speech Multi-Select Column */}
               <div className="space-y-4">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Part of Speech</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Part of Speech</h4>
                 <div className="flex flex-wrap gap-2">
                   {POS_OPTIONS.map((pos) => (
                     <button
@@ -892,19 +895,19 @@ export default function WordsPage() {
                       onClick={() => togglePosFilter(pos.value)}
                       className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                         posFilter.includes(pos.value)
-                          ? 'bg-brand-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                          ? 'bg-brand-600 text-white dark:text-gray-900'
+                          : 'bg-gray-100 text-foreground hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'
                       }`}
                     >
                       {pos.label}
                       {posFilter.includes(pos.value) && (
-                        <FiX className="ml-1.5 h-3 w-3" />
+                        <X className="ml-1.5 h-3 w-3" />
                       )}
                     </button>
                   ))}
                 </div>
                 {posFilter.length > 0 && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     Selected: {posFilter.join(', ')}
                   </p>
                 )}
@@ -927,14 +930,14 @@ export default function WordsPage() {
             disabled: isDeleting,
             loading: isDeleting,
             variant: 'danger',
-            icon: <FiTrash2 className="h-4 w-4" />,
+            icon: <Trash2 className="h-4 w-4" />,
           },
           {
             label: isRegenerating ? 'Regenerating...' : 'Regenerate Audio',
             onClick: handleBulkRegenerateAudio,
             disabled: isRegenerating,
             loading: isRegenerating,
-            icon: <FiVolume2 className="h-4 w-4" />,
+            icon: <Volume2 className="h-4 w-4" />,
           },
         ]}
       />
@@ -958,9 +961,9 @@ export default function WordsPage() {
 
       {/* Pagination */}
       {total > limit && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
           <div className="flex items-center justify-between gap-3 px-5 py-4">
-            <p className="text-sm text-gray-700 dark:text-gray-300">
+            <p className="text-sm text-foreground">
               Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} words
             </p>
             <div className="ml-auto">
@@ -978,11 +981,11 @@ export default function WordsPage() {
       <Modal isOpen={showModal} onClose={closeModal} className="max-w-2xl">
         <div className="max-h-[85vh] overflow-y-auto">
           {/* Header */}
-          <div className="border-b border-gray-200 px-6 py-5 dark:border-gray-700">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <div className="border-b border-border px-6 py-5">
+            <h3 className="text-xl font-semibold text-foreground">
               {editingWord ? "Edit Entry" : "Create New Entry"}
             </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-muted-foreground">
               {editingWord ? "Update lexicon entry details below" : "Fill in the details to add a new lexicon entry"}
             </p>
           </div>
@@ -1016,7 +1019,7 @@ export default function WordsPage() {
 
               {/* Word */}
               <div className="sm:col-span-2">
-                <label className="mb-2.5 block text-sm font-medium text-gray-900 dark:text-white">
+                <label className="mb-2.5 block text-sm font-medium text-foreground">
                   Word <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -1025,7 +1028,7 @@ export default function WordsPage() {
                   onChange={(e) => setFormData({ ...formData, word: e.target.value })}
                   required
                   placeholder="Enter word"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-brand-500 disabled:cursor-default disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                  className="w-full rounded-lg border border-input bg-card px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand-500 disabled:cursor-default disabled:bg-gray-100 dark:focus:border-brand-500"
                 />
               </div>
 
@@ -1068,7 +1071,7 @@ export default function WordsPage() {
 
               {/* Category */}
               <div className="sm:col-span-2">
-                <label className="mb-2.5 block text-sm font-medium text-gray-900 dark:text-white">
+                <label className="mb-2.5 block text-sm font-medium text-foreground">
                   Category
                 </label>
                 <input
@@ -1076,13 +1079,13 @@ export default function WordsPage() {
                   value={formData.word_category}
                   onChange={(e) => setFormData({ ...formData, word_category: e.target.value })}
                   placeholder="e.g., Animals, Food, Colors"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-brand-500 disabled:cursor-default disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                  className="w-full rounded-lg border border-input bg-card px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand-500 disabled:cursor-default disabled:bg-gray-100 dark:focus:border-brand-500"
                 />
               </div>
 
               {/* IPA Pronunciation */}
               <div className="sm:col-span-2">
-                <label className="mb-2.5 block text-sm font-medium text-gray-900 dark:text-white">
+                <label className="mb-2.5 block text-sm font-medium text-foreground">
                   IPA Pronunciation
                 </label>
                 <input
@@ -1090,13 +1093,13 @@ export default function WordsPage() {
                   value={formData.ipa_pronunciation}
                   onChange={(e) => setFormData({ ...formData, ipa_pronunciation: e.target.value })}
                   placeholder="Enter IPA pronunciation"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-brand-500 disabled:cursor-default disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                  className="w-full rounded-lg border border-input bg-card px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand-500 disabled:cursor-default disabled:bg-gray-100 dark:focus:border-brand-500"
                 />
               </div>
 
               {/* Usage Notes */}
               <div className="sm:col-span-2">
-                <label className="mb-2.5 block text-sm font-medium text-gray-900 dark:text-white">
+                <label className="mb-2.5 block text-sm font-medium text-foreground">
                   Usage Notes
                 </label>
                 <textarea
@@ -1104,20 +1107,20 @@ export default function WordsPage() {
                   onChange={(e) => setFormData({ ...formData, usage_notes: e.target.value })}
                   rows={3}
                   placeholder="Enter usage notes or examples"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-brand-500 disabled:cursor-default disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                  className="w-full rounded-lg border border-input bg-card px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand-500 disabled:cursor-default disabled:bg-gray-100 dark:focus:border-brand-500"
                 />
               </div>
 
               {/* Audio Upload */}
               <div className="col-span-2">
-                <label className="mb-2.5 block text-sm font-medium text-gray-900 dark:text-white">
+                <label className="mb-2.5 block text-sm font-medium text-foreground">
                   Audio File
                 </label>
                 <input
                   type="file"
                   accept="audio/*"
                   onChange={handleAudioChange}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-lg border border-input bg-card px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand-500"
                 />
                 {audioPreview && (
                   <div className="mt-3">
@@ -1125,13 +1128,13 @@ export default function WordsPage() {
                   </div>
                 )}
                 {uploadingAudio && (
-                  <p className="mt-2 text-sm text-gray-500">Uploading audio...</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Uploading audio...</p>
                 )}
               </div>
 
               {/* Audio S3 Key */}
               <div>
-                <label className="mb-2.5 block text-sm font-medium text-gray-900 dark:text-white">
+                <label className="mb-2.5 block text-sm font-medium text-foreground">
                   Audio S3 Bucket Key
                 </label>
                 <input
@@ -1139,13 +1142,13 @@ export default function WordsPage() {
                   value={formData.s3_bucket_key}
                   onChange={(e) => setFormData({ ...formData, s3_bucket_key: e.target.value })}
                   placeholder="audio/words/word.mp3"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-brand-500 disabled:cursor-default disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                  className="w-full rounded-lg border border-input bg-card px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand-500 disabled:cursor-default disabled:bg-gray-100 dark:focus:border-brand-500"
                 />
               </div>
 
               {/* Audio Duration */}
               <div>
-                <label className="mb-2.5 block text-sm font-medium text-gray-900 dark:text-white">
+                <label className="mb-2.5 block text-sm font-medium text-foreground">
                   Audio Duration (seconds)
                 </label>
                 <input
@@ -1157,23 +1160,23 @@ export default function WordsPage() {
                     audio_duration_sec: e.target.value ? Number(e.target.value) : null 
                   })}
                   placeholder="2.5"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-brand-500 disabled:cursor-default disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-500"
+                  className="w-full rounded-lg border border-input bg-card px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand-500 disabled:cursor-default disabled:bg-gray-100 dark:focus:border-brand-500"
                 />
               </div>
             </div>
 
             {/* Actions */}
-            <div className="mt-6 flex justify-end gap-3 border-t border-gray-200 pt-5 dark:border-gray-700">
+            <div className="mt-6 flex justify-end gap-3 border-t border-border pt-5">
               <button
                 type="button"
                 onClick={closeModal}
-                className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+                className="inline-flex items-center justify-center rounded-lg border border-input bg-card px-5 py-2.5 text-center text-sm font-medium text-foreground hover:bg-accent focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-300 dark:bg-brand-600 dark:hover:bg-brand-700 dark:focus:ring-brand-800"
+                className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-5 py-2.5 text-center text-sm font-medium text-primary-foreground hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-300 dark:bg-brand-600 dark:hover:bg-brand-700 dark:focus:ring-brand-800"
               >
                 {editingWord ? "Update Entry" : "Create Entry"}
               </button>

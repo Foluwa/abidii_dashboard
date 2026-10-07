@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useLanguages } from "@/hooks/useApi";
+import { useAdminLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import type { Language } from "@/types/api";
 import Toast from "@/components/ui/toast/Toast";
@@ -18,8 +18,9 @@ import {
   ActiveFilterChips,
   StickyBulkActionBar,
 } from '@/components/admin/layout';
-import { FiBarChart2, FiCheckCircle, FiTrash2, FiVolume2, FiVolumeX } from "react-icons/fi";
 import { RegenerateAudioModal, RegenerateAudioTarget } from "@/components/modals/RegenerateAudioModal";
+import { ChartColumn, CircleCheck, Trash2, Volume2, VolumeX } from "lucide-react";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 interface Letter {
   id: string;
@@ -34,7 +35,7 @@ interface Letter {
 }
 
 export default function LettersPage() {
-  const { languages } = useLanguages();
+  const { languages } = useAdminLanguages();
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
   const [letters, setLetters] = useState<Letter[]>([]);
   const [loading, setLoading] = useState(false);
@@ -297,10 +298,10 @@ export default function LettersPage() {
 
       {selectedLanguage && (
         <ContentStatsGrid cols={4}>
-          <ContentStatsCard label="Total" value={stats.total} icon={FiBarChart2} />
-          <ContentStatsCard label="Digraphs" value={stats.digraphs} icon={FiCheckCircle} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
-          <ContentStatsCard label="With Audio" value={stats.withAudio} icon={FiVolume2} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
-          <ContentStatsCard label="Missing Audio" value={stats.missingAudio} icon={FiVolumeX} iconBgClass="bg-red-100 dark:bg-red-900/20" iconTextClass="text-red-600 dark:text-red-400" />
+          <ContentStatsCard label="Total" value={stats.total} icon={ChartColumn} />
+          <ContentStatsCard label="Digraphs" value={stats.digraphs} icon={CircleCheck} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
+          <ContentStatsCard label="With Audio" value={stats.withAudio} icon={Volume2} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+          <ContentStatsCard label="Missing Audio" value={stats.missingAudio} icon={VolumeX} iconBgClass="bg-red-100 dark:bg-red-900/20" iconTextClass="text-red-600 dark:text-red-400" />
         </ContentStatsGrid>
       )}
 
@@ -324,10 +325,11 @@ export default function LettersPage() {
 
       <ContentFiltersCard>
         <div className="max-w-md">
-          <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+          <label className="mb-2 block text-xs font-medium text-foreground">
             Language
           </label>
           <StyledSelect
+                aria-label="Language"
             value={selectedLanguage}
             onChange={(e) => handleLanguageChange(e.target.value)}
             options={[
@@ -353,7 +355,7 @@ export default function LettersPage() {
             disabled: isDeleting,
             loading: isDeleting,
             variant: 'danger',
-            icon: <FiTrash2 className="h-4 w-4" />,
+            icon: <Trash2 className="h-4 w-4" />,
           },
         ]}
       />
@@ -366,11 +368,11 @@ export default function LettersPage() {
       )}
 
       {!loading && selectedLanguage && letters.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <p className="text-gray-500 dark:text-gray-400">No letters found for this language</p>
+        <div className="text-center py-12 bg-card rounded-lg border border-border">
+          <p className="text-muted-foreground">No letters found for this language</p>
           <button
             onClick={openCreateModal}
-            className="mt-4 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+            className="mt-4 px-4 py-2 bg-brand-600 text-primary-foreground rounded-lg hover:bg-brand-700 transition-colors"
           >
             Add Your First Letter
           </button>
@@ -385,7 +387,7 @@ export default function LettersPage() {
             return (
               <div
                 key={letter.id}
-                className={`bg-white dark:bg-gray-800 rounded-lg border p-4 text-center hover:shadow-md transition-shadow ${
+                className={`bg-card rounded-lg border p-4 text-center hover:shadow-md transition-shadow ${
                   isSelected ? 'border-brand-500 ring-2 ring-brand-500/20' : 'border-gray-200 dark:border-gray-700'
                 }`}
               >
@@ -394,13 +396,13 @@ export default function LettersPage() {
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => handleSelect(letter.id)}
-                    className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700"
+                    className="w-4 h-4 text-brand-600 border-input rounded focus:ring-brand-500 dark:bg-gray-700"
                   />
                 </div>
-                <div className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                <div className="text-4xl font-bold text-foreground mb-2">
                   {letter.glyph}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                <div className="text-sm text-muted-foreground mb-1">
                   {letter.display_name}
                 </div>
                 {letter.is_digraph && (
@@ -415,7 +417,7 @@ export default function LettersPage() {
                     title="Regenerate Audio"
                     aria-label="Regenerate Audio"
                   >
-                    <FiVolume2 className="w-3.5 h-3.5" />
+                    <Volume2 className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => openEditModal(letter)}
@@ -438,40 +440,40 @@ export default function LettersPage() {
 
       {/* Table View - Desktop Only */}
       {!loading && letters.length > 0 && (
-        <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="hidden lg:block bg-card rounded-lg border border-border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+              <thead className="border-b border-border">
                 <tr>
-                  <th className="px-4 py-3 text-left w-10">
+                  <th className="px-4 py-2.5 text-left w-10">
                     <input
                       type="checkbox"
                       checked={selectedIds.length === letters.length && letters.length > 0}
                       onChange={handleSelectAll}
-                      className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700"
+                      className="w-4 h-4 text-brand-600 border-input rounded focus:ring-brand-500 dark:bg-gray-700"
                     />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                     Glyph
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                     Display Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                     Order
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                     Type
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                     Audio
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-border">
                 {letters.map((letter) => {
                   const isSelected = selectedIds.includes(letter.id);
                   return (
@@ -481,46 +483,46 @@ export default function LettersPage() {
                         isSelected ? 'bg-brand-50 dark:bg-brand-900/10' : ''
                       }`}
                     >
-                      <td className="px-4 py-4 whitespace-nowrap">
+                      <td className="px-4 py-2.5 whitespace-nowrap">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleSelect(letter.id)}
-                          className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700"
+                          className="w-4 h-4 text-brand-600 border-input rounded focus:ring-brand-500 dark:bg-gray-700"
                         />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <div className="text-2xl font-bold text-foreground">
                           {letter.glyph}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm text-foreground">
                         {letter.display_name}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm text-muted-foreground">
                         {letter.order_index}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 py-2.5 whitespace-nowrap">
                         {letter.is_digraph ? (
                           <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
                             Digraph
                           </span>
                         ) : (
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-muted text-foreground">
                             Single
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-2.5">
                         {letter.audio_url ? (
                           <div className="max-w-md">
                             <InlineAudioPlayer src={letter.audio_url} size="md" />
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-400 dark:text-gray-600">No audio</span>
+                          <span className="text-xs text-muted-foreground">No audio</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleRegenerateAudio(letter)}
@@ -528,7 +530,7 @@ export default function LettersPage() {
                             title="Regenerate Audio"
                             aria-label="Regenerate Audio"
                           >
-                            <FiVolume2 className="h-4 w-4" />
+                            <Volume2 className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => openEditModal(letter)}
@@ -556,9 +558,9 @@ export default function LettersPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full m-4">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <DialogPanel className="bg-card rounded-lg shadow-xl max-w-md w-full m-4" onClose={closeModal} aria-labelledby="letter-dialog-title">
+            <div className="p-6 border-b border-border">
+              <h2 id="letter-dialog-title" className="text-xl font-semibold text-foreground">
                 {editingLetter ? "Edit Letter" : "Add Letter"}
               </h2>
             </div>
@@ -567,14 +569,14 @@ export default function LettersPage() {
               {error && <Alert variant="error" title="Error" message={error} />}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Glyph *
                 </label>
                 <input
                   type="text"
                   value={formData.glyph}
                   onChange={(e) => setFormData({ ...formData, glyph: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                   required
                   maxLength={10}
                   placeholder="e.g., A, Ẹ, GB (for digraph)"
@@ -582,14 +584,14 @@ export default function LettersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Display Name *
                 </label>
                 <input
                   type="text"
                   value={formData.display_name}
                   onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                   required
                   maxLength={20}
                   placeholder="e.g., Letter A, Ẹ"
@@ -597,14 +599,14 @@ export default function LettersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Order Index *
                 </label>
                 <input
                   type="number"
                   value={formData.order_index}
                   onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                   required
                   min={0}
                 />
@@ -616,27 +618,27 @@ export default function LettersPage() {
                   id="is_digraph"
                   checked={formData.is_digraph}
                   onChange={(e) => setFormData({ ...formData, is_digraph: e.target.checked })}
-                  className="h-4 w-4 text-blue-600 rounded border-gray-300 dark:border-gray-600"
+                  className="h-4 w-4 text-blue-600 rounded border-input"
                 />
-                <label htmlFor="is_digraph" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                <label htmlFor="is_digraph" className="ml-2 text-sm text-foreground">
                   Is Digraph (two or more letters representing one sound)
                 </label>
               </div>
 
               {/* Audio Upload */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Audio File (Optional)
                 </label>
                 <input
                   type="file"
                   accept="audio/*"
                   onChange={handleAudioChange}
-                  className="block w-full text-sm text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-white dark:bg-gray-700 focus:outline-none"
+                  className="block w-full text-sm text-gray-900 dark:text-gray-300 border border-input rounded-lg cursor-pointer bg-background focus:outline-none"
                 />
                 {audioPreview && (
                   <div className="mt-2">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <p className="text-xs text-muted-foreground mb-1">
                       {audioFile ? 'New audio file selected' : 'Current audio'}
                     </p>
                     <audio controls className="w-full h-10">
@@ -644,7 +646,7 @@ export default function LettersPage() {
                     </audio>
                   </div>
                 )}
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Max file size: 5MB. Supported formats: MP3, WAV, OGG
                 </p>
               </div>
@@ -653,20 +655,20 @@ export default function LettersPage() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="flex-1 px-4 py-2 border border-input text-foreground rounded-lg hover:bg-accent transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={uploadingAudio}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploadingAudio ? "Uploading..." : editingLetter ? "Update" : "Create"}
                 </button>
               </div>
             </form>
-          </div>
+          </DialogPanel>
         </div>
       )}
 

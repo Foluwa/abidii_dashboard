@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { FiX, FiCheckCircle, FiAlertCircle, FiInfo, FiAlertTriangle } from "react-icons/fi";
+import { CircleAlert, CircleCheck, Info, TriangleAlert, X } from "lucide-react";
 
 interface ToastProps {
   type: "success" | "error" | "warning" | "info";
@@ -22,10 +22,10 @@ const Toast: React.FC<ToastProps> = ({ type, message, onClose, duration = 3000 }
   }, [duration, onClose]);
 
   const icons = {
-    success: <FiCheckCircle className="w-5 h-5" />,
-    error: <FiAlertCircle className="w-5 h-5" />,
-    warning: <FiAlertTriangle className="w-5 h-5" />,
-    info: <FiInfo className="w-5 h-5" />,
+    success: <CircleCheck className="w-5 h-5" />,
+    error: <CircleAlert className="w-5 h-5" />,
+    warning: <TriangleAlert className="w-5 h-5" />,
+    info: <Info className="w-5 h-5" />,
   };
 
   const styles = {
@@ -49,7 +49,7 @@ const Toast: React.FC<ToastProps> = ({ type, message, onClose, duration = 3000 }
           className="flex-shrink-0 ml-2 opacity-70 hover:opacity-100 transition-opacity"
           aria-label="Close"
         >
-          <FiX className="w-4 h-4" />
+          <X className="w-4 h-4" />
         </button>
       </div>
     </div>

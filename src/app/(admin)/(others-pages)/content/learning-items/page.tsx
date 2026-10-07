@@ -25,23 +25,8 @@ import {
   ContentFiltersCard,
   ActiveFilterChips,
 } from '@/components/admin/layout';
-import { 
-  FiPlay, 
-  FiBook, 
-  FiToggleLeft, 
-  FiToggleRight,
-  FiArrowUp,
-  FiArrowDown,
-  FiAward,
-  FiEdit2,
-  FiTrash2,
-  FiImage,
-  FiUploadCloud,
-  FiX,
-  FiGlobe,
-  FiBarChart2,
-  FiCheckCircle,
-} from 'react-icons/fi';
+import { ArrowDown, ArrowUp, Award, Book, ChartColumn, CircleCheck, CloudUpload, Globe, Image as ImageIcon, Pencil, Play, Trash2, X } from "lucide-react";
+import { ToggleLeft, ToggleRight } from "lucide-react";
 
 const ITEM_TYPES = [
   { value: 'game', label: 'Game' },
@@ -505,14 +490,14 @@ export default function LearningItemsPage() {
               disabled={items.findIndex(i => i.id === item.id) === 0}
               className="text-gray-400 hover:text-blue-600 disabled:opacity-30"
             >
-              <FiArrowUp size={12} />
+              <ArrowUp size={12} />
             </button>
             <button
               onClick={() => moveItem(item, 'down')}
               disabled={items.findIndex(i => i.id === item.id) === items.length - 1}
               className="text-gray-400 hover:text-blue-600 disabled:opacity-30"
             >
-              <FiArrowDown size={12} />
+              <ArrowDown size={12} />
             </button>
           </div>
         </div>
@@ -522,7 +507,7 @@ export default function LearningItemsPage() {
       key: 'item_key',
       label: 'Key',
       render: (_, item: LearningItem) => (
-        <span className="font-mono text-xs text-gray-600 dark:text-gray-400">
+        <span className="font-mono text-xs text-muted-foreground">
           {item.item_key}
         </span>
       ),
@@ -532,7 +517,7 @@ export default function LearningItemsPage() {
       label: 'Title',
       render: (_, item: LearningItem) => (
         <div className="flex items-center gap-3">
-          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
             {item.image_url ? (
               <img
                 src={item.image_url}
@@ -544,17 +529,17 @@ export default function LearningItemsPage() {
                 {getIconEmoji(item.icon_name)}
               </div>
             )}
-            <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border border-white bg-gray-950 text-[10px] shadow-sm dark:border-gray-900">
+            <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border border-background bg-gray-950 text-[10px] shadow-sm">
               <span aria-hidden="true">{getIconEmoji(item.icon_name)}</span>
             </div>
           </div>
 
           <div className="min-w-0 max-w-[260px]">
-            <div className="font-medium text-gray-900 dark:text-white">{item.title}</div>
-            <div className="truncate text-xs text-gray-500 dark:text-gray-400">
+            <div className="font-medium text-foreground">{item.title}</div>
+            <div className="truncate text-xs text-muted-foreground">
               {item.about}
             </div>
-            <div className="mt-1 text-[11px] uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
+            <div className="mt-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
               {item.icon_name.replace(/_rounded$/, '').replace(/_/g, ' ')}
             </div>
           </div>
@@ -567,9 +552,9 @@ export default function LearningItemsPage() {
       render: (_, item: LearningItem) => (
         <div className="flex items-center gap-1">
           {item.item_type === 'game' ? (
-            <FiPlay className="text-purple-500" />
+            <Play className="text-purple-500" />
           ) : (
-            <FiBook className="text-blue-500" />
+            <Book className="text-blue-500" />
           )}
           <span className="capitalize">{item.item_type}</span>
         </div>
@@ -581,7 +566,7 @@ export default function LearningItemsPage() {
       render: (_, item: LearningItem) => (
         <div className="text-sm">
           <div>{item.level}</div>
-          <div className="text-xs text-gray-500">{item.difficulty}</div>
+          <div className="text-xs text-muted-foreground">{item.difficulty}</div>
         </div>
       ),
     },
@@ -606,19 +591,19 @@ export default function LearningItemsPage() {
           >
             {item.is_active ? (
               <>
-                <FiToggleRight className="text-green-500" size={20} />
+                <ToggleRight className="text-green-500" size={20} />
                 <span className="text-green-600">Active</span>
               </>
             ) : (
               <>
-                <FiToggleLeft className="text-gray-400" size={20} />
-                <span className="text-gray-500">Inactive</span>
+                <ToggleLeft className="text-gray-400" size={20} />
+                <span className="text-muted-foreground">Inactive</span>
               </>
             )}
           </button>
           {item.is_premium && (
             <div className="flex items-center gap-1 text-xs text-yellow-600">
-              <FiAward size={12} />
+              <Award size={12} />
               Premium
             </div>
           )}
@@ -634,14 +619,14 @@ export default function LearningItemsPage() {
             onClick={() => handleEdit(item)}
             className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
           >
-            <FiEdit2 size={14} />
+            <Pencil size={14} />
             Edit
           </button>
           <button
             onClick={() => handleDelete(item.id)}
             className="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
           >
-            <FiTrash2 size={14} />
+            <Trash2 size={14} />
             Delete
           </button>
         </div>
@@ -758,10 +743,10 @@ export default function LearningItemsPage() {
       />
 
       <ContentStatsGrid cols={4}>
-        <ContentStatsCard label="Total" value={items.length} icon={FiBarChart2} />
-        <ContentStatsCard label="Active" value={items.filter(i => i.is_active).length} icon={FiCheckCircle} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
-        <ContentStatsCard label="Games" value={items.filter(i => i.item_type === 'game').length} icon={FiPlay} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
-        <ContentStatsCard label="Lessons" value={items.filter(i => i.item_type === 'lesson').length} icon={FiBook} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
+        <ContentStatsCard label="Total" value={items.length} icon={ChartColumn} />
+        <ContentStatsCard label="Active" value={items.filter(i => i.is_active).length} icon={CircleCheck} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+        <ContentStatsCard label="Games" value={items.filter(i => i.item_type === 'game').length} icon={Play} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
+        <ContentStatsCard label="Lessons" value={items.filter(i => i.item_type === 'lesson').length} icon={Book} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
       </ContentStatsGrid>
 
       <ContentFiltersCard
@@ -773,9 +758,9 @@ export default function LearningItemsPage() {
         {/* Primary Filters Row */}
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[200px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               <div className="flex items-center gap-1.5">
-                <FiGlobe className="h-3.5 w-3.5" />
+                <Globe className="h-3.5 w-3.5" />
                 Language
               </div>
             </label>
@@ -798,7 +783,7 @@ export default function LearningItemsPage() {
           </div>
 
           <div className="flex-1 min-w-[240px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Search
             </label>
             <input
@@ -809,15 +794,16 @@ export default function LearningItemsPage() {
                 setCurrentPage(1);
               }}
               placeholder={`Search ${isGamesRoute ? 'games' : 'learning items'}...`}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+              className="block w-full rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
 
           <div className="min-w-[140px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Per Page
             </label>
             <StyledSelect
+                aria-label="Per Page"
               value={itemsPerPage}
               onChange={(e) => {
                 setItemsPerPage(Number(e.target.value));
@@ -835,7 +821,7 @@ export default function LearningItemsPage() {
 
         {/* Advanced Filters Panel */}
         {showAdvancedFilters && (
-          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+          <div className="mt-5 border-t border-border pt-5">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {!isGamesRoute && (
                 <div>
@@ -886,7 +872,7 @@ export default function LearningItemsPage() {
           />
           {!loading && (
             <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Showing {pageStart} to {pageEnd} of {totalFilteredItems} {isGamesRoute ? 'games' : 'learning items'}
               </p>
               <div className="ml-auto">
@@ -900,8 +886,8 @@ export default function LearningItemsPage() {
           )}
         </>
       ) : (
-        <div className="rounded-lg bg-white p-8 text-center shadow dark:bg-gray-800">
-          <p className="text-gray-500">Please select a language to view learning items</p>
+        <div className="rounded-lg bg-card p-8 text-center shadow">
+          <p className="text-muted-foreground">Please select a language to view learning items</p>
         </div>
       )}
 
@@ -960,14 +946,14 @@ export default function LearningItemsPage() {
               >
                 <input {...getInputProps()} />
                 <div className="flex flex-col items-center justify-center gap-3 text-center">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                    <FiUploadCloud size={24} />
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-foreground">
+                    <CloudUpload size={24} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <p className="text-sm font-semibold text-foreground">
                       {isDragActive ? 'Drop image here' : 'Drag and drop artwork here'}
                     </p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       PNG, JPG, WebP, or SVG up to 5MB.
                     </p>
                   </div>
@@ -975,7 +961,7 @@ export default function LearningItemsPage() {
                     type="button"
                     onClick={open}
                     disabled={isUploadingImage}
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="rounded-lg border border-input px-3 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Browse file
                   </button>
@@ -984,11 +970,11 @@ export default function LearningItemsPage() {
 
               {(isUploadingImage || imageUploadProgress > 0) && (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{isUploadingImage ? 'Uploading image...' : 'Upload complete'}</span>
                     <span>{imageUploadProgress}%</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
                     <div
                       className="h-full rounded-full bg-brand-600 transition-all"
                       style={{ width: `${imageUploadProgress}%` }}
@@ -998,9 +984,9 @@ export default function LearningItemsPage() {
               )}
 
               {formData.image_url ? (
-                <div className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-950">
+                <div className="rounded-xl border border-border bg-background p-3">
                   <div className="flex flex-col gap-3 md:flex-row md:items-start">
-                    <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded-lg bg-gray-100 md:w-40 dark:bg-gray-800">
+                    <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded-lg bg-muted md:w-40">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={formData.image_url}
@@ -1009,26 +995,26 @@ export default function LearningItemsPage() {
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                        <FiImage size={16} />
+                      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <ImageIcon size={16} />
                         Uploaded image
                       </div>
-                      <p className="mt-1 break-all text-xs text-gray-500 dark:text-gray-400">
+                      <p className="mt-1 break-all text-xs text-muted-foreground">
                         {formData.image_url}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={clearUploadedImage}
-                      className="inline-flex items-center gap-1 self-start rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                      className="inline-flex items-center gap-1 self-start rounded-lg border border-input px-3 py-2 text-sm text-foreground hover:bg-muted"
                     >
-                      <FiX size={14} />
+                      <X size={14} />
                       Remove
                     </button>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   Uploading artwork will automatically set the game image. No manual URL paste needed.
                 </p>
               )}
@@ -1036,26 +1022,21 @@ export default function LearningItemsPage() {
           </div>
 
           <div>
-            <label className={formLabelClassName}>Image Fit</label>
-            <select
+            <StyledSelect
+              label="Image Fit"
               value={formData.image_fit || 'cover'}
               onChange={(e) => setFormData({ ...formData, image_fit: e.target.value as 'cover' | 'contain' })}
-              className={formControlClassName}
-            >
-              {IMAGE_FIT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <p className="mt-2 text-xs text-gray-500">
+              options={IMAGE_FIT_OPTIONS}
+              fullWidth
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
               Choose whether the app crops the image to fill the card or shows the full image.
             </p>
           </div>
           
           <div>
-            <label className={formLabelClassName}>Type *</label>
-            <select
+            <StyledSelect
+              label="Type *"
               value={formData.item_type || 'game'}
               onChange={(e) => {
                 const nextType = e.target.value as 'game' | 'lesson';
@@ -1065,11 +1046,12 @@ export default function LearningItemsPage() {
                   launch_route: normalizeLaunchRoute(nextType, formData.launch_route),
                 });
               }}
-              className={formControlClassName}
-            >
-              <option value="game">Game</option>
-              <option value="lesson">Lesson</option>
-            </select>
+              options={[
+                { value: 'game', label: 'Game' },
+                { value: 'lesson', label: 'Lesson' },
+              ]}
+              fullWidth
+            />
           </div>
           
           <div>
@@ -1137,7 +1119,7 @@ export default function LearningItemsPage() {
               placeholder={formData.item_type === 'lesson' ? 'structuredLesson' : 'e.g., game'}
               disabled={formData.item_type === 'lesson'}
             />
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-muted-foreground">
               {formData.item_type === 'lesson'
                 ? 'Lesson items always launch the backend-driven structured lesson runtime.'
                 : 'Game items use a game route key such as game, numbers-hub, or /games/spelling-bee.'}

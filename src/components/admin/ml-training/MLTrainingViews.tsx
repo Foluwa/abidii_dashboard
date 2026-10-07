@@ -39,6 +39,7 @@ import {
   validateVerifiedPromotionManifest,
 } from "@/lib/adminMlApi";
 import { createQualityReviewJob } from "@/lib/adminJobsApi";
+import { TriangleAlert } from "lucide-react";
 
 const PAGE_SIZE = 20;
 
@@ -120,7 +121,7 @@ function statusClass(status?: string | null) {
   if (status === "queued") {
     return "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200";
   }
-  return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+  return "bg-muted text-foreground";
 }
 
 export function StatusPill({ status }: { status?: string | null }) {
@@ -148,24 +149,24 @@ export function InlineSuccess({ message }: { message: string }) {
 }
 
 export function LoadingBlock({ label = "Loading..." }: { label?: string }) {
-  return <div className="rounded-lg border border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">{label}</div>;
+  return <div className="rounded-lg border border-border p-4 text-sm text-muted-foreground">{label}</div>;
 }
 
 export function SummaryCard({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-      <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</div>
-      <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{value}</div>
-      {detail ? <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">{detail}</div> : null}
+    <div className="rounded-lg border border-border bg-card p-5">
+      <div className="text-sm font-medium text-muted-foreground">{label}</div>
+      <div className="mt-2 text-2xl font-semibold text-foreground">{value}</div>
+      {detail ? <div className="mt-1 text-xs text-muted-foreground">{detail}</div> : null}
     </div>
   );
 }
 
 export function Panel({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
+    <section className="rounded-lg border border-border bg-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
         {action}
       </div>
       <div className="p-5">{children}</div>
@@ -175,7 +176,7 @@ export function Panel({ title, children, action }: { title: string; children: Re
 
 export function JsonPreview({ value }: { value: unknown }) {
   return (
-    <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-gray-50 p-4 text-xs text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+    <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted/50 p-4 text-xs text-foreground">
       {JSON.stringify(value ?? {}, null, 2)}
     </pre>
   );
@@ -227,8 +228,8 @@ export function MLTrainingOverviewPage() {
   const { confirm, modal: confirmModal } = useConfirm();
   const { readiness, jobs, models, loading, error, refresh } = useMlOverview();
   const latestSmoke = useMemo(() => getLatestSmoke(jobs), [jobs]);
-  const runningJobs = readiness?.training_jobs.running || 0;
-  const succeededJobs = readiness?.training_jobs.succeeded || 0;
+  const runningJobs = readiness?.training_jobs?.running || 0;
+  const succeededJobs = readiness?.training_jobs?.succeeded || 0;
   const [trainingLang, setTrainingLang] = useState("yor");
   const [trainingLoading, setTrainingLoading] = useState<"train" | "retrain" | null>(null);
 
@@ -273,12 +274,15 @@ export function MLTrainingOverviewPage() {
       <PageBreadCrumb pageTitle="ML Training" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">ML Training</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Remote handwriting training readiness, smoke status, jobs, and model versions.</p>
+          <h1 className="text-3xl tracking-tight text-foreground">ML Training</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Remote handwriting training readiness, smoke status, jobs, and model versions.</p>
         </div>
         <div className="flex gap-2">
           <Link href="/operations/ml-training/jobs">
             <Button variant="outline" size="sm">Jobs</Button>
+          </Link>
+          <Link href="/operations/ml-training/candidate-manifests">
+            <Button variant="outline" size="sm">Candidate Review</Button>
           </Link>
           <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
         </div>
@@ -290,7 +294,7 @@ export function MLTrainingOverviewPage() {
         <SummaryCard label="Readiness Threshold" value={readiness?.threshold ?? "-"} detail="verified samples per label gate" />
         <SummaryCard label="Running Jobs" value={runningJobs} />
         <SummaryCard label="Succeeded Jobs" value={succeededJobs} />
-        <SummaryCard label="Model Versions" value={models.length} detail={`${readiness?.model_versions.production || 0} production`} />
+        <SummaryCard label="Model Versions" value={models.length} detail={`${readiness?.model_versions?.production || 0} production`} />
       </div>
 
       <Panel title="Dataset Readiness">
@@ -298,22 +302,22 @@ export function MLTrainingOverviewPage() {
           <LoadingBlock />
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+            <table className="min-w-full divide-y divide-border text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+                <tr className="text-left text-xs uppercase text-muted-foreground">
                   <th className="px-3 py-2">Language</th>
                   <th className="px-3 py-2">Labels</th>
                   <th className="px-3 py-2">Gate</th>
                   <th className="px-3 py-2">Sample Labels</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody className="divide-y divide-border">
                 {(readiness?.languages || []).map((language) => (
                   <tr key={language.language_code}>
-                    <td className="px-3 py-3 font-medium text-gray-900 dark:text-white">{language.language_code}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{language.label_count}</td>
+                    <td className="px-3 py-3 font-medium text-foreground">{language.language_code}</td>
+                    <td className="px-3 py-3 text-foreground">{language.label_count}</td>
                     <td className="px-3 py-3"><StatusPill status={language.label_count > 0 ? "active" : "pending"} /></td>
-                    <td className="px-3 py-3 text-gray-500 dark:text-gray-400">{language.labels.slice(0, 12).join(", ")}{language.labels.length > 12 ? "..." : ""}</td>
+                    <td className="px-3 py-3 text-muted-foreground">{language.labels.slice(0, 12).join(", ")}{language.labels.length > 12 ? "..." : ""}</td>
                   </tr>
                 ))}
               </tbody>
@@ -326,20 +330,20 @@ export function MLTrainingOverviewPage() {
         <Panel title="Latest Smoke Status" action={<Link className="text-sm font-medium text-brand-600" href="/operations/ml-training/jobs">View all</Link>}>
           {latestSmoke ? (
             <div className="space-y-3 text-sm">
-              <div className="flex items-center gap-2"><StatusPill status={latestSmoke.status} /><span className="text-gray-700 dark:text-gray-300">{latestSmoke.current_stage}</span></div>
-              <div className="font-mono text-xs text-gray-500 dark:text-gray-400">{latestSmoke.id}</div>
-              <div className="grid gap-2 text-gray-700 dark:text-gray-300 sm:grid-cols-2">
+              <div className="flex items-center gap-2"><StatusPill status={latestSmoke.status} /><span className="text-foreground">{latestSmoke.current_stage}</span></div>
+              <div className="font-mono text-xs text-muted-foreground">{latestSmoke.id}</div>
+              <div className="grid gap-2 text-foreground sm:grid-cols-2">
                 <div>Progress: {formatPercent(latestSmoke.progress_percentage)}</div>
                 <div>Executor: {latestSmoke.executor_type}</div>
                 <div>Instance: {latestSmoke.external_job_id || "-"}</div>
                 <div>Finished: {formatDate(latestSmoke.finished_at)}</div>
               </div>
             </div>
-          ) : loading ? <LoadingBlock /> : <div className="text-sm text-gray-500 dark:text-gray-400">No smoke jobs found.</div>}
+          ) : loading ? <LoadingBlock /> : <div className="text-sm text-muted-foreground">No smoke jobs found.</div>}
         </Panel>
 
         <Panel title="Training Trigger">
-          <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+          <div className="space-y-3 text-sm text-muted-foreground">
             <p>Train uses the verified R2 dataset only. Retrain additionally pulls in real user corrections, low-confidence predictions, and incorrect predictions collected since the model went live, merged on top of the verified dataset. Current Yoruba gate is 180+ samples per class.</p>
             <div className="flex flex-wrap items-center gap-2">
               <StyledSelect
@@ -361,18 +365,18 @@ export function MLTrainingOverviewPage() {
         </Panel>
         <Panel title="Model Versions" action={<>
           <Link className="text-sm font-medium text-brand-600 mr-3" href={MLFLOW_URL} target="_blank">MLflow ↗</Link>
-          <Link className="text-sm font-medium text-brand-600" href="/system/ml-training/models">View all</Link>
+          <Link className="text-sm font-medium text-brand-600" href="/operations/ml-training/models">View all</Link>
         </>}>
           {models.length > 0 ? (
             <div className="space-y-2 text-sm">
               {models.slice(0, 5).map((m) => (
                 <div key={m.id} className="flex items-center justify-between">
-                  <span className="text-gray-700 dark:text-gray-300">{m.model_name || m.id} ({m.language_code})</span>
+                  <span className="text-foreground">{m.model_name || m.id} ({m.language_code})</span>
                   <StatusPill status={String(m.status || "unknown")} />
                 </div>
               ))}
             </div>
-          ) : <div className="text-sm text-gray-500 dark:text-gray-400">No model versions yet.</div>}
+          ) : <div className="text-sm text-muted-foreground">No model versions yet.</div>}
         </Panel>
       </div>
     </div>
@@ -383,9 +387,9 @@ export function MLTrainingOverviewPage() {
 function JobsTable({ jobs }: { jobs: MlTrainingJob[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+      <table className="min-w-full divide-y divide-border text-sm">
         <thead>
-          <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+          <tr className="text-left text-xs uppercase text-muted-foreground">
             <th className="px-3 py-2">Status</th>
             <th className="px-3 py-2">Language</th>
             <th className="px-3 py-2">Stage</th>
@@ -395,22 +399,22 @@ function JobsTable({ jobs }: { jobs: MlTrainingJob[] }) {
             <th className="px-3 py-2" />
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+        <tbody className="divide-y divide-border">
           {jobs.map((job) => (
             <tr key={job.id}>
               <td className="px-3 py-3">
                 <div className="flex items-center gap-2">
                   <StatusPill status={job.status} />
                   {job.status === "running" && isHeartbeatStale(job.heartbeat_at) ? (
-                    <span title="No heartbeat in a while - may be stuck" className="text-amber-500">⚠</span>
+                    <span title="No heartbeat in a while - may be stuck"><TriangleAlert className="inline size-4 text-amber-500" aria-label="No heartbeat in a while - may be stuck" /></span>
                   ) : null}
                 </div>
               </td>
-              <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{job.language_code || "-"}</td>
-              <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{job.current_stage}</td>
-              <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatPercent(job.progress_percentage)}</td>
-              <td className="px-3 py-3 text-gray-500 dark:text-gray-400">{formatDate(job.created_at)}</td>
-              <td className="max-w-48 truncate px-3 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">{job.external_job_id || "-"}</td>
+              <td className="px-3 py-3 text-foreground">{job.language_code || "-"}</td>
+              <td className="px-3 py-3 text-foreground">{job.current_stage}</td>
+              <td className="px-3 py-3 text-foreground">{formatPercent(job.progress_percentage)}</td>
+              <td className="px-3 py-3 text-muted-foreground">{formatDate(job.created_at)}</td>
+              <td className="max-w-48 truncate px-3 py-3 font-mono text-xs text-muted-foreground">{job.external_job_id || "-"}</td>
               <td className="px-3 py-3 text-right">
                 <Link className="text-sm font-medium text-brand-600" href={`/operations/ml-training/jobs/${job.id}`}>Open</Link>
               </td>
@@ -461,8 +465,8 @@ export function MLTrainingJobsPage() {
       <PageBreadCrumb pageTitle="Training Jobs" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Training Jobs</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Queued, running, and completed ML training jobs.</p>
+          <h1 className="text-3xl tracking-tight text-foreground">Training Jobs</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Queued, running, and completed ML training jobs.</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
       </div>
@@ -487,7 +491,7 @@ export function MLTrainingJobsPage() {
             ]}
           />
         </div>
-        {loading && jobs.length === 0 ? <LoadingBlock /> : jobs.length > 0 ? <JobsTable jobs={jobs} /> : <div className="text-sm text-gray-500 dark:text-gray-400">No jobs found.</div>}
+        {loading && jobs.length === 0 ? <LoadingBlock /> : jobs.length > 0 ? <JobsTable jobs={jobs} /> : <div className="text-sm text-muted-foreground">No jobs found.</div>}
         <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       </Panel>
     </div>
@@ -539,8 +543,8 @@ export function MLTrainingJobDetailPage() {
       <PageBreadCrumb pageTitle="Training Job Detail" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Training Job Detail</h1>
-          <p className="mt-1 font-mono text-xs text-gray-500 dark:text-gray-400">{jobId}</p>
+          <h1 className="text-3xl tracking-tight text-foreground">Training Job Detail</h1>
+          <p className="mt-1 font-mono text-xs text-muted-foreground">{jobId}</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
       </div>
@@ -554,7 +558,7 @@ export function MLTrainingJobDetailPage() {
             <SummaryCard label="Language" value={job.language_code || "-"} />
             <SummaryCard label="Attempts" value={`${job.attempt_count}/${job.max_attempts}`} />
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+          <div className="h-2 overflow-hidden rounded-full bg-muted">
             <div className="h-full bg-brand-500" style={{ width: `${Math.min(100, Math.max(0, Number(job.progress_percentage || 0)))}%` }} />
           </div>
           {job.error_message ? <InlineError message={job.error_message} /> : null}
@@ -564,12 +568,12 @@ export function MLTrainingJobDetailPage() {
           <div className="grid gap-6 lg:grid-cols-2">
             <Panel title="Lambda Metadata"><JsonPreview value={metadataFromJob(job)} /></Panel>
             <Panel title="Timing">
-              <div className="grid gap-3 text-sm text-gray-700 dark:text-gray-300">
+              <div className="grid gap-3 text-sm text-foreground">
                 <div>Queued: {formatDate(job.queued_at)}</div>
                 <div>Started: {formatDate(job.started_at)}</div>
                 <div>
                   Heartbeat: {formatDate(job.heartbeat_at)}
-                  {job.heartbeat_at ? <span className="ml-2 text-gray-500 dark:text-gray-400">({formatHeartbeatAge(job.heartbeat_at)})</span> : null}
+                  {job.heartbeat_at ? <span className="ml-2 text-muted-foreground">({formatHeartbeatAge(job.heartbeat_at)})</span> : null}
                 </div>
                 <div>Finished: {formatDate(job.finished_at)}</div>
                 <div>
@@ -580,7 +584,7 @@ export function MLTrainingJobDetailPage() {
                       <Link className="text-brand-600" href={MLFLOW_URL} target="_blank">Open MLflow ↗</Link>
                     </>
                   ) : (
-                    <span className="text-gray-500 dark:text-gray-400">not recorded yet</span>
+                    <span className="text-muted-foreground">not recorded yet</span>
                   )}
                 </div>
               </div>
@@ -589,18 +593,18 @@ export function MLTrainingJobDetailPage() {
           <Panel title="Events / Logs">
             <div className="space-y-3">
               {events.map((event) => (
-                <div key={event.id} className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+                <div key={event.id} className="rounded-lg border border-border p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <StatusPill status={event.event_type} />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">{event.message}</span>
+                      <span className="text-sm font-medium text-foreground">{event.message}</span>
                     </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(event.created_at)}</span>
+                    <span className="text-xs text-muted-foreground">{formatDate(event.created_at)}</span>
                   </div>
                   {event.details ? <div className="mt-3"><JsonPreview value={event.details} /></div> : null}
                 </div>
               ))}
-              {events.length === 0 ? <div className="text-sm text-gray-500 dark:text-gray-400">No events recorded.</div> : null}
+              {events.length === 0 ? <div className="text-sm text-muted-foreground">No events recorded.</div> : null}
             </div>
           </Panel>
         </>
@@ -676,8 +680,8 @@ export function MLModelVersionsPage() {
       <PageBreadCrumb pageTitle="Model Versions" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Model Versions</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Staging and production handwriting model registry entries.</p>
+          <h1 className="text-3xl tracking-tight text-foreground">Model Versions</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Staging and production handwriting model registry entries.</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
       </div>
@@ -707,9 +711,9 @@ export function MLModelVersionsPage() {
         </div>
         {loading && models.length === 0 ? <LoadingBlock /> : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+            <table className="min-w-full divide-y divide-border text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+                <tr className="text-left text-xs uppercase text-muted-foreground">
                   <th className="px-3 py-2">Status</th>
                   <th className="px-3 py-2">Language</th>
                    <th className="px-3 py-2">Architecture</th>
@@ -723,7 +727,7 @@ export function MLModelVersionsPage() {
                   <th className="px-3 py-2">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody className="divide-y divide-border">
                 {models.map((model, index) => {
                   const busy = actionId === model.id;
                   const canPromote = Boolean(model.id) && model.status !== "production" && !busy;
@@ -731,8 +735,8 @@ export function MLModelVersionsPage() {
                   return (
                     <tr key={model.id || `${model.model_name}-${index}`}>
                       <td className="px-3 py-3"><StatusPill status={model.status} /></td>
-                       <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{model.language_code || "-"}</td>
-                       <td className="px-3 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">
+                       <td className="px-3 py-3 text-foreground">{model.language_code || "-"}</td>
+                       <td className="px-3 py-3 font-mono text-xs text-muted-foreground">
                          {(() => {
                            try {
                              const hp = typeof model.metrics === 'string' ? JSON.parse(model.metrics) : (model.metrics || {});
@@ -745,15 +749,15 @@ export function MLModelVersionsPage() {
                            } catch { return '—'; }
                          })()}
                        </td>
-                       <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{model.version || "-"}</td>
-                      <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{model.model_name || model.model_type || "-"}</td>
-                      <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatMetricPercent(model.validation_accuracy)}</td>
-                      <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatMetricPercent(model.test_accuracy)}</td>
-                      <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatNumber(model.training_dataset_size)}</td>
-                      <td className="px-3 py-3 text-gray-700 dark:text-gray-300">
+                       <td className="px-3 py-3 text-foreground">{model.version || "-"}</td>
+                      <td className="px-3 py-3 text-foreground">{model.model_name || model.model_type || "-"}</td>
+                      <td className="px-3 py-3 text-foreground">{formatMetricPercent(model.validation_accuracy)}</td>
+                      <td className="px-3 py-3 text-foreground">{formatMetricPercent(model.test_accuracy)}</td>
+                      <td className="px-3 py-3 text-foreground">{formatNumber(model.training_dataset_size)}</td>
+                      <td className="px-3 py-3 text-foreground">
                         {formatMetricPercent(pickMetric(model.metrics, ["macro_f1", "f1_macro"]))}
                       </td>
-                      <td className="px-3 py-3 text-gray-500 dark:text-gray-400">{formatDate(model.created_at)}</td>
+                      <td className="px-3 py-3 text-muted-foreground">{formatDate(model.created_at)}</td>
                       <td className="px-3 py-3">
                         <div className="flex gap-2">
                           <Button
@@ -773,7 +777,7 @@ export function MLModelVersionsPage() {
                             {busy ? "Working..." : "Rollback"}
                           </Button>
                         </div>
-                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="mt-1 text-xs text-muted-foreground">
                           {model.status === "production" ? "Rollback restores latest archived version." : "Promote makes this production."}
                         </div>
                       </td>
@@ -782,7 +786,7 @@ export function MLModelVersionsPage() {
                 })}
               </tbody>
             </table>
-            {models.length === 0 ? <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No model versions found.</div> : null}
+            {models.length === 0 ? <div className="p-4 text-sm text-muted-foreground">No model versions found.</div> : null}
           </div>
         )}
       </Panel>
@@ -847,8 +851,8 @@ export function MLVerifiedPromotionManifestsPage() {
       <PageBreadCrumb pageTitle="Verified Dataset Review" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Verified Dataset Review</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Review handwriting samples before promotion into datasets/verified/*.</p>
+          <h1 className="text-3xl tracking-tight text-foreground">Verified Dataset Review</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Review handwriting samples before promotion into datasets/verified/*.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
@@ -860,18 +864,18 @@ export function MLVerifiedPromotionManifestsPage() {
       <Panel title="Verified Readiness" action={<Link href="/operations/ml-training" className="text-sm text-brand-600 hover:underline">ML Training overview</Link>}>
         <div className="grid gap-4 md:grid-cols-2">
           {(readiness?.languages || []).map((lang) => (
-            <div key={lang.language} className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+            <div key={lang.language} className="rounded-lg border border-border p-4">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold uppercase text-gray-900 dark:text-white">{lang.language}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">target {lang.threshold}/class</div>
+                <div className="text-sm font-semibold uppercase text-foreground">{lang.language}</div>
+                <div className="text-xs text-muted-foreground">target {lang.threshold}/class</div>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <SummaryCard label="Ready Classes" value={lang.ready_count} />
                 <SummaryCard label="Gaps" value={lang.not_ready_count} />
               </div>
-              <div className="mt-3 max-h-40 overflow-auto text-xs text-gray-600 dark:text-gray-300">
+              <div className="mt-3 max-h-40 overflow-auto text-xs text-muted-foreground">
                 {lang.priority_gaps.slice(0, 20).map((gap) => (
-                  <div key={gap.label} className="flex justify-between border-b border-gray-100 py-1 dark:border-gray-800">
+                  <div key={gap.label} className="flex justify-between border-b border-border py-1">
                     <span>{gap.label}</span><span>{gap.count}/{lang.threshold}</span>
                   </div>
                 ))}
@@ -882,13 +886,13 @@ export function MLVerifiedPromotionManifestsPage() {
         </div>
       </Panel>
       <Panel title="Missing / Low Sample Classes">
-        <div className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+        <div className="mb-3 text-sm text-muted-foreground">
           Focused collection targets for handwriting classes blocking the verified-data gate. Counts include reviewed manifest approvals as pending impact, but do not assume promotion has been applied.
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+          <table className="min-w-full divide-y divide-border text-sm">
             <thead>
-              <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+              <tr className="text-left text-xs uppercase text-muted-foreground">
                 <th className="px-3 py-2">Class</th>
                 <th className="px-3 py-2">Candidates</th>
                 <th className="px-3 py-2">Approved Pending</th>
@@ -899,9 +903,9 @@ export function MLVerifiedPromotionManifestsPage() {
                 <th className="px-3 py-2">Collection Target</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <tbody className="divide-y divide-border">
               {(collectionGaps?.items || []).slice(0, 40).map((gap) => (
-                <tr key={`${gap.language}-${gap.label}`} className="text-gray-700 dark:text-gray-200">
+                <tr key={`${gap.language}-${gap.label}`} className="text-foreground">
                   <td className="px-3 py-2 font-medium">{gap.language} {gap.label}</td>
                   <td className="px-3 py-2">{gap.current_candidates}</td>
                   <td className="px-3 py-2">{gap.approved_pending_samples}</td>
@@ -914,15 +918,15 @@ export function MLVerifiedPromotionManifestsPage() {
               ))}
             </tbody>
           </table>
-          {collectionGaps?.items.length === 0 ? <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No focused collection gaps available.</div> : null}
+          {collectionGaps?.items.length === 0 ? <div className="p-4 text-sm text-muted-foreground">No focused collection gaps available.</div> : null}
         </div>
       </Panel>
       <Panel title="Manifests">
         {loading && manifests.length === 0 ? <LoadingBlock /> : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+            <table className="min-w-full divide-y divide-border text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+                <tr className="text-left text-xs uppercase text-muted-foreground">
                   <th className="px-3 py-2">Manifest</th>
                   <th className="px-3 py-2">Candidates</th>
                   <th className="px-3 py-2">Approved</th>
@@ -933,12 +937,12 @@ export function MLVerifiedPromotionManifestsPage() {
                   <th className="px-3 py-2">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody className="divide-y divide-border">
                 {manifests.map((manifest) => (
                   <tr key={manifest.id}>
                     <td className="px-3 py-3">
-                      <div className="font-medium text-gray-900 dark:text-white">{manifest.id}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{formatDate(manifest.created_at)}</div>
+                      <div className="font-medium text-foreground">{manifest.id}</div>
+                      <div className="text-xs text-muted-foreground">{formatDate(manifest.created_at)}</div>
                     </td>
                     <td className="px-3 py-3">{manifest.candidate_count}</td>
                     <td className="px-3 py-3">{countFor(manifest, "approved")}</td>
@@ -953,7 +957,7 @@ export function MLVerifiedPromotionManifestsPage() {
                 ))}
               </tbody>
             </table>
-            {manifests.length === 0 ? <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No manifests found.</div> : null}
+            {manifests.length === 0 ? <div className="p-4 text-sm text-muted-foreground">No manifests found.</div> : null}
           </div>
         )}
       </Panel>
@@ -976,7 +980,7 @@ function CandidatePreview({ manifestId, candidate }: { manifestId: string; candi
   }, [candidate.candidate_id, manifestId]);
 
   return (
-    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
+    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/50">
       {url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={url} alt={candidate.label} loading="lazy" className="max-h-full max-w-full object-contain" />
@@ -1123,8 +1127,8 @@ export function MLVerifiedPromotionManifestDetailPage() {
       <PageBreadCrumb pageTitle="Verified Manifest Review" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{manifestId}</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Approve or reject candidates before verified dataset promotion.</p>
+          <h1 className="text-3xl tracking-tight text-foreground">{manifestId}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Approve or reject candidates before verified dataset promotion.</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
       </div>
@@ -1150,11 +1154,11 @@ export function MLVerifiedPromotionManifestDetailPage() {
         {report ? <div className="mt-4"><JsonPreview value={report} /></div> : null}
       </Panel>
       <Panel title="AI Quality Review">
-        <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mb-4 text-sm text-muted-foreground">
           Runs a tiered AI review over this manifest&apos;s pending candidates - auto-approves
           high-confidence matches, auto-rejects clear garbage, leaves everything else pending
           for you to review below. Runs as a background job; watch progress on the{" "}
-          <Link href="/admin/jobs" className="text-brand-500 hover:underline">Admin Jobs page</Link>.
+          <Link href="/system/jobs?tab=admin" className="text-brand-500 hover:underline">Admin Jobs page</Link>.
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <StyledSelect
@@ -1171,9 +1175,9 @@ export function MLVerifiedPromotionManifestDetailPage() {
             onChange={(event) => setReviewLimit(event.target.value.replace(/\D/g, ""))}
             placeholder="Limit (optional)"
             inputMode="numeric"
-            className="w-40 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+            className="w-40 rounded-lg border border-input bg-card px-3 py-2 text-sm dark:text-white"
           />
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <label className="flex items-center gap-2 text-sm text-foreground">
             <input type="checkbox" checked={reviewDryRun} onChange={(event) => setReviewDryRun(event.target.checked)} />
             Dry-run (report only, no manifest changes)
           </label>
@@ -1203,10 +1207,10 @@ export function MLVerifiedPromotionManifestDetailPage() {
               { value: "rejected", label: "rejected" },
             ]}
           />
-          <input value={label} onChange={(event) => { setOffset(0); setLabel(event.target.value); }} placeholder="Label" className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={priorityOnly} onChange={(event) => { setOffset(0); setPriorityOnly(event.target.checked); }} /> Priority only</label>
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={conflictOnly} onChange={(event) => { setOffset(0); setConflictOnly(event.target.checked); }} /> Conflicts</label>
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={problemOnly} onChange={(event) => { setOffset(0); setProblemOnly(event.target.checked); }} /> Problems</label>
+          <input value={label} onChange={(event) => { setOffset(0); setLabel(event.target.value); }} placeholder="Label" className="rounded-lg border border-input bg-card px-3 py-2 text-sm dark:text-white" />
+          <label className="flex items-center gap-2 text-sm text-foreground"><input type="checkbox" checked={priorityOnly} onChange={(event) => { setOffset(0); setPriorityOnly(event.target.checked); }} /> Priority only</label>
+          <label className="flex items-center gap-2 text-sm text-foreground"><input type="checkbox" checked={conflictOnly} onChange={(event) => { setOffset(0); setConflictOnly(event.target.checked); }} /> Conflicts</label>
+          <label className="flex items-center gap-2 text-sm text-foreground"><input type="checkbox" checked={problemOnly} onChange={(event) => { setOffset(0); setProblemOnly(event.target.checked); }} /> Problems</label>
         </div>
         <div className="mb-4 flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => void updateVisible("approved")}>Approve Visible</Button>
@@ -1215,22 +1219,22 @@ export function MLVerifiedPromotionManifestDetailPage() {
         </div>
         <div className="space-y-3">
           {candidates.map((candidate) => (
-            <div key={candidate.candidate_id} className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+            <div key={candidate.candidate_id} className="rounded-lg border border-border bg-card p-4">
               <div className="flex flex-col gap-4 md:flex-row">
                 <CandidatePreview manifestId={manifestId} candidate={candidate} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill status={candidate.review_status} />
                     {candidate.label_conflict ? <StatusPill status="conflict" /> : null}
-                    <span className="font-semibold text-gray-900 dark:text-white">{candidate.language} / {candidate.canonical_label}</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{candidate.source_type}</span>
+                    <span className="font-semibold text-foreground">{candidate.language} / {candidate.canonical_label}</span>
+                    <span className="text-xs text-muted-foreground">{candidate.source_type}</span>
                   </div>
-                  <div className="mt-2 break-all text-xs text-gray-500 dark:text-gray-400">{candidate.source_key}</div>
-                  <div className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                  <div className="mt-2 break-all text-xs text-muted-foreground">{candidate.source_key}</div>
+                  <div className="mt-2 text-sm text-foreground">
                     prediction {candidate.model_prediction || "-"} · confidence {candidate.confidence ?? "-"} · {candidate.width}x{candidate.height}
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {(candidate.reason_for_inclusion || []).map((reason) => <span key={reason} className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">{reason}</span>)}
+                    {(candidate.reason_for_inclusion || []).map((reason) => <span key={reason} className="rounded bg-muted px-2 py-1 text-xs text-muted-foreground">{reason}</span>)}
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-row gap-2 md:flex-col">
@@ -1242,7 +1246,7 @@ export function MLVerifiedPromotionManifestDetailPage() {
             </div>
           ))}
           {loading ? <LoadingBlock /> : null}
-          {!loading && candidates.length === 0 ? <div className="text-sm text-gray-500 dark:text-gray-400">No candidates match these filters.</div> : null}
+          {!loading && candidates.length === 0 ? <div className="text-sm text-muted-foreground">No candidates match these filters.</div> : null}
         </div>
         <div className="mt-4">
           <Pagination currentPage={Math.floor(offset / limit) + 1} totalPages={Math.max(1, Math.ceil(total / limit))} onPageChange={(page) => setOffset((page - 1) * limit)} />
