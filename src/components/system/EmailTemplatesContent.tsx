@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import { apiClient } from "@/lib/api";
+import { useTheme } from "@/context/ThemeContext";
+import { pinEmailColorScheme, type EmailPreviewScheme } from "@/lib/emailPreview";
+import { cn } from "@/lib/utils";
 
 interface TemplateMeta {
   filename: string;
@@ -31,6 +34,10 @@ export function EmailTemplatesContent({ showHeader = true }: { showHeader?: bool
   const [previewing, setPreviewing] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  // The preview follows the dashboard theme until the admin picks a scheme.
+  const { theme } = useTheme();
+  const [schemeOverride, setSchemeOverride] = useState<EmailPreviewScheme | null>(null);
+  const previewScheme: EmailPreviewScheme = schemeOverride ?? (theme === "dark" ? "dark" : "light");
 
   const flash = (type: "ok" | "err", text: string) => {
     setMessage({ type, text });
@@ -178,8 +185,26 @@ export function EmailTemplatesContent({ showHeader = true }: { showHeader?: bool
               </div>
               {showPreview && previewHtml && (
                 <div className="rounded-xl border border-border bg-card shadow-xs">
-                  <div className="flex items-center justify-between border-b border-border px-5 py-2.5">
+                  <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-2.5">
                     <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Preview</span>
+                    <div className="ml-auto inline-flex rounded-md border border-border bg-muted p-0.5" role="group" aria-label="Preview colour scheme">
+                      {(["light", "dark"] as const).map((scheme) => (
+                        <button
+                          key={scheme}
+                          type="button"
+                          aria-pressed={previewScheme === scheme}
+                          onClick={() => setSchemeOverride(scheme === (theme === "dark" ? "dark" : "light") ? null : scheme)}
+                          className={cn(
+                            "rounded px-2.5 py-1 text-xs font-medium capitalize transition-colors",
+                            previewScheme === scheme
+                              ? "bg-background text-foreground shadow-xs"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          {scheme}
+                        </button>
+                      ))}
+                    </div>
                     <button
                       type="button"
                       onClick={() => setShowPreview(false)}
@@ -189,10 +214,13 @@ export function EmailTemplatesContent({ showHeader = true }: { showHeader?: bool
                     </button>
                   </div>
                   <div className="p-5">
-                    {/* The email renders on white, as most mail clients show it. */}
+                    {/* Rendered in the chosen scheme (defaults to the dashboard theme). */}
                     <iframe
-                      srcDoc={previewHtml}
-                      className="w-full rounded-lg border border-border bg-white"
+                      srcDoc={pinEmailColorScheme(previewHtml, previewScheme)}
+                      className={cn(
+                        "w-full rounded-lg border border-border",
+                        previewScheme === "dark" ? "bg-[#0B1220]" : "bg-white",
+                      )}
                       style={{ height: "600px" }}
                       title="Email Preview"
                     />

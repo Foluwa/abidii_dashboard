@@ -10,7 +10,23 @@ import { apiClient, handleApiError } from "@/lib/api";
 import type { UserRole } from "@/types/auth";
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
 import { countryName, countryFlagEmoji } from "@/lib/country-utils";
-import { Award } from "lucide-react";
+import {
+  Activity,
+  Award,
+  BadgeCheck,
+  Ban,
+  Check,
+  Copy,
+  Flame,
+  GraduationCap,
+  RotateCcw,
+  Star,
+  Trash2,
+  TriangleAlert,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
+import type { UserDetail } from "@/types/api";
 
 type ModalType = "deactivate" | "reactivate" | "delete" | "purge" | null;
 type DailyActivity = {
@@ -41,6 +57,25 @@ type GameSession = {
 const formatDateTime = (value?: string | null) => {
   if (!value) return "Never";
   return new Date(value).toLocaleString();
+};
+
+const formatShortDateTime = (value?: string | null) =>
+  value
+    ? new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+    : "Never";
+
+const PLATFORM_LABELS: Record<string, string> = { ios: "iOS", android: "Android", web: "Web", macos: "macOS" };
+const platformLabel = (value?: string | null) =>
+  value ? PLATFORM_LABELS[value.toLowerCase()] ?? value.charAt(0).toUpperCase() + value.slice(1) : null;
+
+/** "eng" / "yo" → "English" / "Yoruba"; falls back to the raw code. */
+const languageName = (code?: string | null) => {
+  if (!code) return null;
+  try {
+    return new Intl.DisplayNames(["en"], { type: "language" }).of(code) || code.toUpperCase();
+  } catch {
+    return code.toUpperCase();
+  }
 };
 
 const formatDate = (value?: string | null) => {
@@ -122,17 +157,17 @@ function ActivityHeatMap({
   const activeDays = dailyActivity?.filter((day) => Number(day.sessions || 0) > 0).length ?? 0;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6">
-      <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-start sm:justify-between">
+    <div className="rounded-xl border border-border bg-card p-5 shadow-xs">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">
-            Activity Heat Map
+          <h3 className="text-sm font-semibold text-foreground">
+            Activity
           </h3>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             Daily game/session activity over the last 365 days
           </p>
         </div>
-        <div className="text-sm text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           <span className="font-semibold text-foreground">{totalSessions}</span> sessions ·{" "}
           <span className="font-semibold text-foreground">{activeDays}</span> active days
         </div>
@@ -277,8 +312,20 @@ export function UserDetailPanel({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-brand-600"></div>
+      <div className="space-y-4" aria-busy="true" aria-label="Loading user">
+        <div className="flex items-center gap-4">
+          <div className="size-14 animate-pulse rounded-full bg-muted" />
+          <div className="space-y-2">
+            <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-56 animate-pulse rounded bg-muted" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-20 animate-pulse rounded-xl bg-muted" />
+          ))}
+        </div>
+        <div className="h-64 animate-pulse rounded-xl bg-muted" />
       </div>
     );
   }
@@ -291,12 +338,13 @@ export function UserDetailPanel({
     );
   }
 
+  const u = user as UserDetail;
   const lastRequestAt =
-    user.last_active_at ??
-    (user.last_request_at === undefined ? user.last_login_at : user.last_request_at);
-  const avatarSource = cleanSvgForDisplay(user.avatar_svg) || cleanSvgForDisplay(user.picture_url) || null;
-  const avatarLabel = user.display_name || user.email || "User";
-  const isPremium = Boolean(user.has_premium || user.is_premium);
+    u.last_active_at ??
+    (u.last_request_at === undefined ? u.last_login_at : u.last_request_at);
+  const avatarSource = cleanSvgForDisplay(u.avatar_svg) || cleanSvgForDisplay(u.picture_url) || null;
+  const avatarLabel = u.display_name || u.email || "User";
+  const isPremium = Boolean(u.has_premium || u.is_premium);
   const gameBreakdown = (player?.game_breakdown || []) as GameBreakdown[];
   const recentSessions = (player?.recent_sessions || []) as GameSession[];
   const maxGameSessions = Math.max(1, ...gameBreakdown.map((game) => Number(game.sessions || 0)));
@@ -308,9 +356,12 @@ export function UserDetailPanel({
   const topGame = gameBreakdown.length > 0
     ? [...gameBreakdown].sort((a, b) => Number(b.sessions || 0) - Number(a.sessions || 0))[0]
     : null;
+  const loadingText = <span className="text-muted-foreground">Loading…</span>;
 
   return (
-    <div className="space-y-4">
+    // Container queries: the same panel sits in the narrow drawer and on the
+    // full /users/[id] page, so it lays out by its own width, not the viewport.
+    <div className="@container space-y-5">
       {activeModal && (
         <ConfirmationModal
           isOpen={!!activeModal}
@@ -326,262 +377,363 @@ export function UserDetailPanel({
 
       {actionError && <Alert variant="error">{actionError}</Alert>}
 
-      {/* Header + actions */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
+      {/* Identity */}
+      <div className="flex flex-col gap-4 @xl:flex-row @xl:items-start @xl:justify-between">
+        <div className="flex min-w-0 items-center gap-4">
           <div className="relative inline-flex shrink-0">
             {avatarSource && !avatarFailed ? (
               <Image
                 src={avatarSource}
                 alt={`${avatarLabel} avatar`}
-                width={48}
-                height={48}
+                width={56}
+                height={56}
                 unoptimized
-                className="h-12 w-12 rounded-full object-cover bg-muted"
+                className="size-14 rounded-full bg-muted object-cover ring-1 ring-border"
                 referrerPolicy="no-referrer"
                 onError={() => setAvatarFailed(true)}
               />
             ) : (
-              <div className={`h-12 w-12 rounded-full ${getAvatarColor(user.id || avatarLabel)} flex items-center justify-center`}>
-                <span className="font-semibold text-white">{getInitials(avatarLabel)}</span>
+              <div className={`flex size-14 items-center justify-center rounded-full ${getAvatarColor(u.id || avatarLabel)}`}>
+                <span className="text-lg font-semibold text-white">{getInitials(avatarLabel)}</span>
               </div>
             )}
             {isPremium && (
-              <span className="absolute -bottom-1 -right-1 inline-flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-amber-400 text-amber-950 shadow-sm" title="Premium member" aria-label="Premium member">
-                <Award className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="absolute -bottom-0.5 -right-0.5 inline-flex size-6 items-center justify-center rounded-full border-2 border-background bg-amber-400 text-amber-950" title="Premium member" aria-label="Premium member">
+                <Award className="size-3.5" aria-hidden="true" />
               </span>
             )}
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">{avatarLabel}</h2>
-            <p className="text-sm text-muted-foreground">
-              {user.email || "No email"} · #{user.id.slice(0, 8)}
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-semibold leading-tight text-foreground">{avatarLabel}</h2>
+            <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+              {u.username && <span className="text-foreground/80">@{u.username}</span>}
+              {u.username && <span aria-hidden="true">·</span>}
+              <span className="truncate">{u.email || "No email"}</span>
+              {u.email_verified && (
+                <BadgeCheck className="size-4 shrink-0 text-sky-600 dark:text-sky-400" aria-label="Email verified" />
+              )}
             </p>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <StatusBadge status={getRoleBadgeStatus(u.role)} label={u.role} />
+              <StatusBadge status={u.is_active ? "success" : "error"} label={u.is_active ? "Active" : "Inactive"} />
+              {isPremium && <StatusBadge status="warning" label="Premium" />}
+              <CopyIdButton id={u.id} />
+            </div>
           </div>
         </div>
-        <div className="flex gap-2">
-          <StatusBadge status={getRoleBadgeStatus(user.role)} label={user.role} />
-          <StatusBadge status={user.is_active ? "success" : "error"} label={user.is_active ? "Active" : "Inactive"} />
+
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {u.is_active ? (
+            <ActionButton icon={Ban} onClick={() => setActiveModal("deactivate")}>Deactivate</ActionButton>
+          ) : (
+            <ActionButton icon={RotateCcw} onClick={() => setActiveModal("reactivate")}>Reactivate</ActionButton>
+          )}
+          <ActionButton icon={Trash2} onClick={() => setActiveModal("delete")}>Soft delete</ActionButton>
+          <ActionButton icon={TriangleAlert} destructive onClick={() => setActiveModal("purge")}>Purge</ActionButton>
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div className="flex flex-wrap gap-2">
-        {user.is_active ? (
-          <button
-            onClick={() => setActiveModal("deactivate")}
-            className="px-3 py-1.5 text-sm font-medium text-yellow-700 bg-yellow-100 rounded-lg hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50"
-          >
-            Deactivate
-          </button>
+      {/* Headline stats */}
+      <div className="grid grid-cols-2 gap-3 @lg:grid-cols-4">
+        <StatTile icon={Zap} label="Total XP" value={(u.total_xp ?? 0).toLocaleString()} />
+        <StatTile icon={Flame} label="Streak" value={`${u.current_streak ?? 0}d`} hint={`Best ${u.longest_streak ?? 0}d`} />
+        <StatTile icon={GraduationCap} label="Level" value={u.current_level ?? 1} hint={u.proficiency_level ? u.proficiency_level.replace(/_/g, " ") : undefined} />
+        <StatTile icon={Activity} label="Sessions" value={(u.total_sessions ?? 0).toLocaleString()} hint={avgSessionTimeMs > 0 ? `Avg ${formatDuration(avgSessionTimeMs)}` : undefined} />
+      </div>
+
+      <div className="grid gap-4 @4xl:grid-cols-2">
+        <Section title="Profile">
+          <Rows
+            rows={[
+              ["Display name", u.display_name || "Not set"],
+              ["Email", u.email || "Not set"],
+              ["Sign-in", <span key="p" className="capitalize">{u.provider || "device"}</span>],
+              ["Country", u.country_code ? `${countryFlagEmoji(u.country_code)} ${countryName(u.country_code)}` : "Unknown"],
+              ["Time zone", u.timezone || "Unknown"],
+              ["App language", u.ui_locale_name ? `${u.ui_locale_name}${u.ui_locale_source ? ` (${u.ui_locale_source})` : ""}` : "Unknown"],
+              ["Native language", languageName(u.native_language_code) ?? "Not set"],
+              ["Joined", formatDate(u.created_at) === "Never" ? "Unknown" : formatDate(u.created_at)],
+              ["Last request", <RelativeTime key="lr" value={lastRequestAt} />],
+              ["Experiment cohort", u.experiment_cohort || "None"],
+            ]}
+          />
+        </Section>
+
+        <div className="space-y-4">
+          <Section title="Learning">
+            <Rows
+              rows={[
+                ["Learning", u.current_language_name || "Unknown"],
+                ["Languages", u.languages_learning ?? 0],
+                ["Fluency", <span key="f" className="capitalize">{u.proficiency_level?.replace(/_/g, " ") || "Not available"}</span>],
+                ["Last study day", formatDate(u.last_activity_date)],
+                ["Global rank", u.global_alltime_rank ? `#${u.global_alltime_rank}` : "Unranked"],
+                [
+                  u.rank_language_name ? `${u.rank_language_name} rank` : "Language rank",
+                  u.language_alltime_rank ? `#${u.language_alltime_rank}` : "Unranked",
+                ],
+                ["Top game", isActivityLoading ? loadingText : topGame ? `${formatGameName(topGame.game_key)} · ${topGame.sessions}` : "None yet"],
+              ]}
+            />
+          </Section>
+
+          <Section title="Subscription">
+            {isPremium ? (
+              <Rows
+                rows={[
+                  ["Plan", u.premium_plan_id || "Premium"],
+                  ["Status", <span key="s" className="capitalize">{u.premium_status || "active"}</span>],
+                  ["Renews / ends", formatDate(u.premium_current_period_end)],
+                  ["Store", <span key="st">{[platformLabel(u.premium_provider), platformLabel(u.premium_platform)].filter(Boolean).join(" · ") || "Unknown"}</span>],
+                ]}
+              />
+            ) : (
+              <p className="py-1 text-sm text-muted-foreground">Free plan · no active subscription</p>
+            )}
+          </Section>
+        </div>
+      </div>
+
+      {(u.device_platform || u.device_name || u.device_app_version || u.device_id || u.last_ip_address || u.push_enabled != null) && (
+        <Section title="Device">
+          <Rows
+            columns
+            rows={[
+              ["Platform", platformLabel(u.device_platform) ?? "Unknown"],
+              ["Device", u.device_name || "Unknown"],
+              ["App version", u.device_app_version ? `v${u.device_app_version}${u.device_build_number ? ` (${u.device_build_number})` : ""}` : "Unknown"],
+              ["Push notifications", u.push_enabled == null ? "Unknown" : u.push_enabled ? "On" : "Off"],
+              ...(u.device_id ? ([["Device ID", <span key="d" className="font-mono text-xs">{u.device_id}</span>]] as Row[]) : []),
+              ...(u.last_ip_address ? ([["Last IP", <span key="ip" className="font-mono text-xs">{u.last_ip_address}</span>]] as Row[]) : []),
+            ]}
+          />
+        </Section>
+      )}
+
+      {/* Games */}
+      <Section
+        title="Game performance"
+        description={isActivityLoading ? "Loading…" : `${(player?.total_rounds ?? 0).toLocaleString()} rounds · ${Number(player?.avg_score ?? 0).toFixed(1)}% avg score · ${Number(player?.accuracy ?? 0).toFixed(1)}% accuracy · ${formatDuration(player?.total_time_ms)} played`}
+      >
+        {gameBreakdown.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs text-muted-foreground">
+                <tr className="border-b border-border">
+                  <th className="py-2 pr-3 font-medium">Game</th>
+                  <th className="w-1/3 px-3 py-2 font-medium">Sessions</th>
+                  <th className="px-3 py-2 text-right font-medium">Accuracy</th>
+                  <th className="px-3 py-2 text-right font-medium">Perfect</th>
+                  <th className="py-2 pl-3 text-right font-medium">Time</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {gameBreakdown.map((game) => (
+                  <tr key={game.game_key}>
+                    <td className="py-2.5 pr-3 font-medium text-foreground">{formatGameName(game.game_key)}</td>
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                          <div className="h-full rounded-full bg-foreground/70" style={{ width: `${Math.max(4, (Number(game.sessions || 0) / maxGameSessions) * 100)}%` }} />
+                        </div>
+                        <span className="w-8 text-right tabular-nums text-muted-foreground">{game.sessions}</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2.5 text-right tabular-nums">{Number(game.accuracy || 0).toFixed(1)}%</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums">{game.perfect_scores || 0}</td>
+                    <td className="py-2.5 pl-3 text-right tabular-nums">{formatDuration(game.total_time_ms)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <button
-            onClick={() => setActiveModal("reactivate")}
-            className="px-3 py-1.5 text-sm font-medium text-green-700 bg-green-100 rounded-lg hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
-          >
-            Reactivate
-          </button>
+          <p className="py-6 text-center text-sm text-muted-foreground">No game activity recorded.</p>
         )}
-        <button
-          onClick={() => setActiveModal("delete")}
-          className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-lg hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-        >
-          Soft Delete
-        </button>
-        <button
-          onClick={() => setActiveModal("purge")}
-          className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-        >
-          Purge
-        </button>
-      </div>
+      </Section>
 
-      {/* Learning Progress */}
-      <div className="p-4 bg-card border border-border rounded-lg">
-        <h3 className="mb-4 text-base font-semibold text-foreground">Learning Progress</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 text-center border border-border rounded-lg">
-            <p className="text-xl font-bold text-brand-600 dark:text-brand-400">{(user.total_sessions ?? 0).toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground mt-1">Total Sessions</p>
-          </div>
-          <div className="p-3 text-center border border-border rounded-lg">
-            <p className="text-xl font-bold text-brand-600 dark:text-brand-400">{user.languages_learning ?? 0}</p>
-            <p className="text-xs text-muted-foreground mt-1">Languages Learning</p>
-          </div>
-          <div className="p-3 text-center border border-border rounded-lg">
-            <p className="text-xl font-bold text-brand-600 dark:text-brand-400">Level {user.current_level ?? 1}</p>
-            <p className="text-xs text-muted-foreground mt-1">Current Level</p>
-          </div>
-          <div className="p-3 text-center border border-border rounded-lg">
-            <p className="text-xl font-bold text-brand-600 dark:text-brand-400">{isPremium ? "Premium" : "Free"}</p>
-            <p className="text-xs text-muted-foreground mt-1">Account Type</p>
-          </div>
-        </div>
-      </div>
-
-      {/* User Information */}
-      <div className="p-4 bg-card border border-border rounded-lg">
-        <h3 className="mb-4 text-base font-semibold text-foreground">User Information</h3>
-        <dl className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-          {[
-            ["Display Name", user.display_name || "Not set"],
-            ["Email", user.email || "Not set"],
-            ["Auth Provider", user.provider || "device"],
-            ["Learning Language", user.current_language_name || "Unknown"],
-            ["Language", user.ui_locale_name || "Unknown"],
-            ["Language Source", user.ui_locale_source || "Unknown"],
-            ["Fluency", user.proficiency_level?.replace(/_/g, " ") || "Not available"],
-            ["Total XP", (user.total_xp ?? 0).toLocaleString()],
-            ["Current Streak", `${user.current_streak ?? 0} days`],
-            ["Longest Streak", `${user.longest_streak ?? 0} days`],
-            ["Created At", formatDate(user.created_at) === "Never" ? "Unknown" : formatDate(user.created_at)],
-            ["Last Request", formatDateTime(lastRequestAt)],
-            ["Last Study Day", formatDate(user.last_activity_date)],
-            ["Avg. Session Time", isActivityLoading ? "Loading…" : avgSessionTimeMs > 0 ? formatDuration(avgSessionTimeMs) : "Not available"],
-            ["Leaderboard Rank", user.global_alltime_rank ? `#${user.global_alltime_rank} globally` : "Unranked"],
-            ["Most Played Game", isActivityLoading ? "Loading…" : topGame ? `${formatGameName(topGame.game_key)} (${topGame.sessions} sessions)` : "No games played yet"],
-          ].map(([label, value]) => (
-            <div key={label}>
-              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
-              <dd
-                className={`mt-0.5 text-sm text-foreground ${
-                  // Capitalise enum-style values only; names, emails and
-                  // dates must show exactly as stored.
-                  ["Auth Provider", "Language Source", "Fluency"].includes(label) ? "capitalize" : ""
-                }`}
-              >
-                {String(value)}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        {user.country_code && (
-          <div className="mt-3">
-            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Country</dt>
-            <dd className="mt-0.5 text-sm text-foreground">
-              {countryFlagEmoji(user.country_code)} {countryName(user.country_code)}
-            </dd>
-          </div>
-        )}
-        {(user.device_platform ||
-          user.device_name ||
-          user.device_app_version ||
-          user.device_id ||
-          user.last_ip_address) && (
-          <div className="mt-4 border-t border-border pt-3">
-            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Device
-            </div>
-            <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
-              {user.device_platform && (
-                <div>
-                  <dt className="text-xs text-muted-foreground">Platform</dt>
-                  <dd className="text-sm text-foreground capitalize">{user.device_platform}</dd>
-                </div>
-              )}
-              {user.device_name && (
-                <div>
-                  <dt className="text-xs text-muted-foreground">Device Name</dt>
-                  <dd className="text-sm text-foreground">{user.device_name}</dd>
-                </div>
-              )}
-              {user.device_app_version && (
-                <div>
-                  <dt className="text-xs text-muted-foreground">App Version</dt>
-                  <dd className="text-sm text-foreground">
-                    v{user.device_app_version}
-                    {user.device_build_number ? ` (${user.device_build_number})` : ""}
-                  </dd>
-                </div>
-              )}
-              {user.device_id && (
-                <div>
-                  <dt className="text-xs text-muted-foreground">Device ID</dt>
-                  <dd className="text-sm font-mono text-foreground break-all">{user.device_id}</dd>
-                </div>
-              )}
-              {user.last_ip_address && (
-                <div>
-                  <dt className="text-xs text-muted-foreground">Last IP Address</dt>
-                  <dd className="text-sm font-mono text-foreground">{user.last_ip_address}</dd>
-                </div>
-              )}
-            </dl>
-          </div>
-        )}
-      </div>
-
-      {/* Game performance summary */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {[
-          ["Game Sessions", player?.total_sessions ?? 0],
-          ["Rounds Played", player?.total_rounds ?? 0],
-          ["Average Score", `${Number(player?.avg_score ?? 0).toFixed(1)}%`],
-          ["Accuracy", `${Number(player?.accuracy ?? 0).toFixed(1)}%`],
-          ["Time Played", formatDuration(player?.total_time_ms)],
-        ].map(([label, value]) => (
-          <div key={String(label)} className="rounded-lg border border-border bg-card p-3">
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <p className="mt-1 text-lg font-bold text-foreground">{value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Games played */}
-      <div className="rounded-lg border border-border bg-card p-4">
-        <h3 className="text-base font-semibold text-foreground">Games played</h3>
-        <div className="mt-4 space-y-4">
-          {gameBreakdown.map((game) => (
-            <div key={game.game_key}>
-              <div className="mb-1.5 flex items-center justify-between gap-4 text-sm">
-                <span className="font-medium text-foreground">{formatGameName(game.game_key)}</span>
-                <span className="text-muted-foreground">{game.sessions} sessions · {Number(game.avg_score || 0).toFixed(1)}%</span>
-              </div>
-              <div className="h-2.5 overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.max(4, (Number(game.sessions || 0) / maxGameSessions) * 100)}%` }} />
-              </div>
-            </div>
-          ))}
-          {!gameBreakdown.length && <p className="py-8 text-center text-sm text-muted-foreground">No game activity recorded.</p>}
-        </div>
-      </div>
-
-      {/* Performance by game */}
-      <div className="rounded-lg border border-border bg-card p-4">
-        <h3 className="text-base font-semibold text-foreground">Performance by game</h3>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border text-left text-xs text-muted-foreground">
-              <tr><th className="py-2.5 pr-4">Game</th><th className="px-3 py-2.5 text-right">Accuracy</th><th className="px-3 py-2.5 text-right">Perfect</th><th className="py-2.5 pl-3 text-right">Time</th></tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {gameBreakdown.map((game) => (
-                <tr key={game.game_key}><td className="py-3 pr-4 font-medium text-foreground">{formatGameName(game.game_key)}</td><td className="px-3 py-3 text-right">{Number(game.accuracy || 0).toFixed(1)}%</td><td className="px-3 py-3 text-right">{game.perfect_scores || 0}</td><td className="py-3 pl-3 text-right">{formatDuration(game.total_time_ms)}</td></tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Recent game sessions */}
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
-        <div className="p-4">
-          <h3 className="text-base font-semibold text-foreground">Recent game sessions</h3>
-        </div>
+      <Section title="Recent sessions" flush>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs text-muted-foreground border-b"><tr><th className="px-4 py-2.5">Date</th><th className="px-4 py-2.5">Game</th><th className="px-4 py-2.5">Language</th><th className="px-4 py-2.5 text-right">Score</th><th className="px-4 py-2.5 text-right">Answers</th><th className="px-4 py-2.5 text-right">Duration</th></tr></thead>
+            <thead className="text-left text-xs text-muted-foreground">
+              <tr className="border-y border-border bg-muted/40">
+                <th className="px-5 py-2 font-medium">Date</th>
+                <th className="px-3 py-2 font-medium">Game</th>
+                <th className="px-3 py-2 font-medium">Language</th>
+                <th className="px-3 py-2 text-right font-medium">Score</th>
+                <th className="px-3 py-2 text-right font-medium">Answers</th>
+                <th className="px-5 py-2 text-right font-medium">Duration</th>
+              </tr>
+            </thead>
             <tbody className="divide-y divide-border">
               {recentSessions.map((session) => (
-                <tr key={session.session_id}><td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{formatDateTime(session.date)}</td><td className="px-4 py-3 font-medium text-foreground">{formatGameName(session.game_key)}{session.is_perfect && <span className="ml-2 text-amber-500" title="Perfect score">★</span>}</td><td className="px-4 py-3">{session.language_name || "—"}</td><td className="px-4 py-3 text-right font-semibold">{Number(session.score || 0).toFixed(1)}%</td><td className="px-4 py-3 text-right text-emerald-600">{session.correct || 0}<span className="text-gray-400"> / </span><span className="text-red-500">{session.wrong || 0}</span></td><td className="px-4 py-3 text-right">{formatDuration(session.duration_ms)}</td></tr>
+                <tr key={session.session_id}>
+                  <td className="whitespace-nowrap px-5 py-2.5 text-muted-foreground">{formatShortDateTime(session.date)}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 font-medium text-foreground">
+                    {formatGameName(session.game_key)}
+                    {session.is_perfect && <Star className="ml-1.5 inline size-3.5 fill-amber-400 text-amber-400" aria-label="Perfect score" />}
+                  </td>
+                  <td className="px-3 py-2.5">{session.language_name || "—"}</td>
+                  <td className="px-3 py-2.5 text-right font-medium tabular-nums">{Number(session.score || 0).toFixed(1)}%</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">
+                    <span className="text-emerald-600 dark:text-emerald-400">{session.correct || 0}</span>
+                    <span className="text-muted-foreground"> / </span>
+                    <span className="text-red-600 dark:text-red-400">{session.wrong || 0}</span>
+                  </td>
+                  <td className="whitespace-nowrap px-5 py-2.5 text-right tabular-nums">{formatDuration(session.duration_ms)}</td>
+                </tr>
               ))}
-              {!recentSessions.length && <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">No game sessions recorded.</td></tr>}
+              {!recentSessions.length && (
+                <tr><td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">No game sessions recorded.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
-      </div>
+      </Section>
 
       <ActivityHeatMap dailyActivity={player?.daily_activity} isLoading={isActivityLoading} />
     </div>
+  );
+}
+
+type Row = [React.ReactNode, React.ReactNode];
+
+function Section({
+  title,
+  description,
+  flush,
+  children,
+}: {
+  title: string;
+  description?: string;
+  flush?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs">
+      <header className="px-5 pb-2 pt-4">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+      </header>
+      <div className={flush ? "" : "px-5 pb-4"}>{children}</div>
+    </section>
+  );
+}
+
+/** Label / value list: label muted on the left, value right-aligned. */
+function Rows({ rows, columns }: { rows: Row[]; columns?: boolean }) {
+  return (
+    <dl className={columns ? "grid gap-x-8 @lg:grid-cols-2" : ""}>
+      {rows.map(([label, value], index) => (
+        <div
+          key={index}
+          className={
+            "flex items-baseline justify-between gap-4 border-b border-border/60 py-2 text-sm last:border-0" +
+            // Two columns: the odd second-to-last item also ends its column.
+            (columns ? " @lg:[&:nth-last-child(2):nth-child(odd)]:border-0" : "")
+          }
+        >
+          <dt className="shrink-0 text-muted-foreground">{label}</dt>
+          <dd className="min-w-0 truncate text-right font-medium text-foreground">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: React.ReactNode;
+  hint?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+      <div className="flex items-center justify-between text-muted-foreground">
+        <span className="text-xs font-medium">{label}</span>
+        <Icon className="size-4" aria-hidden="true" />
+      </div>
+      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-foreground">{value}</p>
+      {hint && <p className="mt-0.5 truncate text-xs capitalize text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+function ActionButton({
+  icon: Icon,
+  destructive,
+  onClick,
+  children,
+}: {
+  icon: LucideIcon;
+  destructive?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 " +
+        (destructive
+          ? "bg-destructive text-white hover:bg-destructive/90"
+          : "border border-input bg-background text-foreground hover:bg-accent")
+      }
+    >
+      <Icon className="size-3.5" aria-hidden="true" />
+      {children}
+    </button>
+  );
+}
+
+function CopyIdButton({ id }: { id: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        navigator.clipboard?.writeText(id).then(
+          () => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          },
+          () => undefined,
+        );
+      }}
+      title={id}
+      aria-label={copied ? "User ID copied" : "Copy user ID"}
+      className="inline-flex h-[22px] items-center gap-1 rounded-md border border-border px-1.5 font-mono text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+    >
+      {copied ? <Check className="size-3" aria-hidden="true" /> : <Copy className="size-3" aria-hidden="true" />}
+      {id.slice(0, 8)}
+    </button>
+  );
+}
+
+function RelativeTime({ value }: { value?: string | null }) {
+  // "Now" is captured once per mount so renders stay pure.
+  const [now] = useState(() => Date.now());
+  if (!value) return <>Never</>;
+  const date = new Date(value);
+  const diffSeconds = Math.round((date.getTime() - now) / 1000);
+  const units: Array<[Intl.RelativeTimeFormatUnit, number]> = [
+    ["year", 31536000],
+    ["month", 2592000],
+    ["day", 86400],
+    ["hour", 3600],
+    ["minute", 60],
+  ];
+  const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+  const [unit, seconds] = units.find(([, s]) => Math.abs(diffSeconds) >= s) ?? ["second", 1];
+  return (
+    <time dateTime={date.toISOString()} title={date.toLocaleString()}>
+      {rtf.format(Math.round(diffSeconds / seconds), unit)}
+    </time>
   );
 }
