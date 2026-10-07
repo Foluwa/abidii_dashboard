@@ -1,6 +1,6 @@
 import React from "react";
-import { FiEdit, FiTrash2, FiHash, FiVolume2, FiRefreshCw, FiLock } from "react-icons/fi";
 import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
+import { Hash, Lock, RefreshCw, SquarePen, Trash2, Volume2 } from "lucide-react";
 
 interface Number {
   id: string;
@@ -93,8 +93,8 @@ const NumbersDataTable: React.FC<Props> = ({
       processing: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
       completed: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
       failed: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200",
-      cancelled: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-      superseded: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+      cancelled: "bg-muted text-foreground",
+      superseded: "bg-muted text-foreground",
     };
     return (
       <span title={status === "failed" ? error || "Alignment failed" : `Alignment ${status}`} className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${classes[status] || classes.queued}`}>
@@ -129,10 +129,10 @@ const NumbersDataTable: React.FC<Props> = ({
 
   if (numbers.length === 0) {
     return (
-      <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-        <FiHash className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-        <p className="text-gray-600 dark:text-gray-400">No numbers found</p>
-        <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+      <div className="text-center py-12 bg-card rounded-xl border border-border">
+        <Hash className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+        <p className="text-muted-foreground">No numbers found</p>
+        <p className="text-sm text-muted-foreground mt-1">
           Try adjusting your filters or add new numbers
         </p>
       </div>
@@ -142,80 +142,80 @@ const NumbersDataTable: React.FC<Props> = ({
   return (
     <>
     {/* Desktop Table View */}
-    <div className="hidden lg:block overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-      <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
+    <div className="hidden lg:block overflow-x-auto rounded-xl border border-border">
+      <table className="w-full text-sm text-left text-muted-foreground">
+        <thead className="text-xs text-muted-foreground border-b">
           <tr>
-            <th scope="col" className="px-4 py-3">
+            <th scope="col" className="px-4 py-2.5">
               <input
                 type="checkbox"
                 checked={allVisibleNumbersSelected}
                 onChange={onToggleSelectAll}
-                className="h-4 w-4 rounded border-gray-300 text-brand-600"
+                className="h-4 w-4 rounded border-input text-brand-600"
                 aria-label="Select all visible numbers"
               />
             </th>
-            <th scope="col" className="px-6 py-3">Value</th>
-            <th scope="col" className="px-6 py-3">Word</th>
-            <th scope="col" className="px-6 py-3">Language</th>
-            <th scope="col" className="px-6 py-3">Type</th>
-            <th scope="col" className="px-6 py-3">System</th>
-            <th scope="col" className="px-6 py-3">Difficulty</th>
-            <th scope="col" className="px-6 py-3">Compound</th>
-            <th scope="col" className="px-6 py-3">Alignment</th>
-            <th scope="col" className="px-6 py-3">Audio</th>
-            <th scope="col" className="px-6 py-3 text-right">Actions</th>
+            <th scope="col" className="px-3 py-2.5">Value</th>
+            <th scope="col" className="px-3 py-2.5">Word</th>
+            <th scope="col" className="px-3 py-2.5">Language</th>
+            <th scope="col" className="px-3 py-2.5">Type</th>
+            <th scope="col" className="px-3 py-2.5">System</th>
+            <th scope="col" className="px-3 py-2.5">Difficulty</th>
+            <th scope="col" className="px-3 py-2.5">Compound</th>
+            <th scope="col" className="px-3 py-2.5">Alignment</th>
+            <th scope="col" className="px-3 py-2.5">Audio</th>
+            <th scope="col" className="px-3 py-2.5 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
           {numbers.map((number) => (
             <tr
               key={number.id}
-              className="bg-white border-b dark:bg-gray-900 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="bg-card border-b dark:border-gray-700 hover:bg-muted/50"
             >
-              <td className="px-4 py-4">
+              <td className="px-4 py-2.5">
                 <input
                   type="checkbox"
                   checked={selectedNumbers.includes(number.id)}
                   disabled={isRegenerationPending(number.last_regeneration_status)}
                   onChange={() => onToggleSelect(number.id)}
-                  className="h-4 w-4 rounded border-gray-300 text-brand-600 disabled:opacity-40"
+                  className="h-4 w-4 rounded border-input text-brand-600 disabled:opacity-40"
                   aria-label={`Select number ${number.word}`}
                 />
               </td>
               {/* Value */}
-              <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+              <td className="px-3 py-2.5 font-medium text-foreground">
                 {number.number_value}
               </td>
 
               {/* Word */}
-              <td className="px-6 py-4">
+              <td className="px-3 py-2.5">
                 <div>
-                  <div className="font-medium text-gray-900 dark:text-white">
+                  <div className="font-medium text-foreground">
                     {number.word}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-muted-foreground">
                     {number.word_normalized}
                   </div>
                 </div>
               </td>
 
               {/* Language */}
-              <td className="px-6 py-4">
+              <td className="px-3 py-2.5">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800 dark:bg-brand-900 dark:text-brand-300">
                   {getLanguageName(number.language_id)}
                 </span>
               </td>
 
               {/* Type */}
-              <td className="px-6 py-4">
+              <td className="px-3 py-2.5">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
                   {number.number_type}
                 </span>
               </td>
 
               {/* Number System */}
-              <td className="px-6 py-4">
+              <td className="px-3 py-2.5">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   number.number_system === 'vigesimal' 
                     ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
@@ -226,27 +226,27 @@ const NumbersDataTable: React.FC<Props> = ({
               </td>
 
               {/* Difficulty */}
-              <td className="px-6 py-4">
+              <td className="px-3 py-2.5">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getDifficultyBadge(number.difficulty_level)}`}>
                   Level {number.difficulty_level}
                 </span>
               </td>
 
               {/* Compound */}
-              <td className="px-6 py-4">
+              <td className="px-3 py-2.5">
                 {number.is_compound ? (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300">
                     Compound
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground">
                     Simple
                   </span>
                 )}
               </td>
 
               {/* Alignment */}
-              <td className="px-6 py-4">
+              <td className="px-3 py-2.5">
                 <div className="flex flex-col gap-1">
                   {renderAlignmentBadge(number.alignment_status)}
                   {renderAlignmentJobBadge(number.alignment_job_status, number.alignment_job_error)}
@@ -266,7 +266,7 @@ const NumbersDataTable: React.FC<Props> = ({
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    <span className="text-xs italic text-gray-400 dark:text-gray-500">
+                    <span className="text-xs italic text-muted-foreground">
                       No audio
                     </span>
                     {number.last_regeneration_status === "queued" && (
@@ -287,14 +287,14 @@ const NumbersDataTable: React.FC<Props> = ({
               </td>
 
               {/* Actions */}
-              <td className="px-6 py-4 text-right">
+              <td className="px-3 py-2.5 text-right">
                 <div className="flex items-center justify-end gap-2">
                   <button
                     onClick={() => onRequeueAlignment?.(number)}
                     className="p-2 text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300"
                     title="Requeue Alignment"
                   >
-                    <FiRefreshCw className="w-4 h-4" />
+                    <RefreshCw className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => onRegenerateAudio?.(number)}
@@ -303,21 +303,21 @@ const NumbersDataTable: React.FC<Props> = ({
                     title={regenerateAudioTitle(number)}
                     aria-label={regenerateAudioTitle(number)}
                   >
-                    {number.human_recorded ? <FiLock className="w-4 h-4" /> : <FiVolume2 className="w-4 h-4" />}
+                    {number.human_recorded ? <Lock className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                   </button>
                   <button
                     onClick={() => onEdit(number)}
                     className="p-2 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                     title="Edit"
                   >
-                    <FiEdit className="w-4 h-4" />
+                    <SquarePen className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => onDelete(number.id)}
                     className="p-2 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                     title="Delete"
                   >
-                    <FiTrash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </td>
@@ -332,7 +332,7 @@ const NumbersDataTable: React.FC<Props> = ({
       {numbers.map((number) => (
         <div
           key={number.id}
-          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4"
+          className="bg-card border border-border rounded-xl p-4"
         >
           <div className="mb-3">
             <input
@@ -340,15 +340,15 @@ const NumbersDataTable: React.FC<Props> = ({
               checked={selectedNumbers.includes(number.id)}
               disabled={isRegenerationPending(number.last_regeneration_status)}
               onChange={() => onToggleSelect(number.id)}
-              className="h-4 w-4 rounded border-gray-300 text-brand-600 disabled:opacity-40"
+              className="h-4 w-4 rounded border-input text-brand-600 disabled:opacity-40"
               aria-label={`Select number ${number.word}`}
             />
           </div>
           {/* Number Value */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <FiHash className="text-gray-400" size={20} />
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">
+              <Hash className="text-gray-400" size={20} />
+              <span className="text-2xl font-bold text-foreground">
                 {number.number_value}
               </span>
             </div>
@@ -359,10 +359,10 @@ const NumbersDataTable: React.FC<Props> = ({
 
           {/* Word */}
           <div className="mb-3">
-            <div className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+            <div className="text-lg font-semibold text-foreground mb-1">
               {number.word}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-muted-foreground">
               {number.word_normalized}
             </div>
           </div>
@@ -387,7 +387,7 @@ const NumbersDataTable: React.FC<Props> = ({
                 Compound
               </span>
             ) : (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground">
                 Simple
               </span>
             )}
@@ -414,12 +414,12 @@ const NumbersDataTable: React.FC<Props> = ({
           )}
 
           {/* Actions */}
-          <div className="flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
+          <div className="flex items-center gap-2 border-t border-border pt-3">
             <button
               onClick={() => onRequeueAlignment?.(number)}
               className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:text-orange-400 dark:hover:bg-orange-900/30 rounded-lg transition-colors"
             >
-              <FiRefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4" />
               Align
             </button>
             <button
@@ -429,20 +429,20 @@ const NumbersDataTable: React.FC<Props> = ({
               title={regenerateAudioTitle(number)}
               aria-label={regenerateAudioTitle(number)}
             >
-              {number.human_recorded ? <FiLock className="w-4 h-4" /> : <FiVolume2 className="w-4 h-4" />}
+              {number.human_recorded ? <Lock className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </button>
             <button
               onClick={() => onEdit(number)}
               className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
             >
-              <FiEdit className="w-4 h-4" />
+              <SquarePen className="w-4 h-4" />
               Edit
             </button>
             <button
               onClick={() => onDelete(number.id)}
               className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 rounded-lg transition-colors"
             >
-              <FiTrash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" />
               Delete
             </button>
           </div>

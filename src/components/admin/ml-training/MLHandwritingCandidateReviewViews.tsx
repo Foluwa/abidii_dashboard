@@ -106,8 +106,8 @@ export function MLHandwritingCandidateManifestsPage() {
       <PageBreadCrumb pageTitle="Candidate Review" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Candidate Review</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <h1 className="text-3xl tracking-tight text-foreground">Candidate Review</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             DB-backed handwriting candidate review - imports from R2 <code>drawings/</code>, reviews approve/reject
             individually or in bulk, then promotes approved candidates straight into <code>datasets/training/</code>.
           </p>
@@ -122,7 +122,7 @@ export function MLHandwritingCandidateManifestsPage() {
       {error ? <InlineError message={error} /> : null}
 
       <Panel title="Import New Manifest">
-        <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mb-4 text-sm text-muted-foreground">
           Scans an R2 prefix (default <code>drawings/{"{language}"}/</code>) and creates a manifest of candidate
           rows for review. Never touches <code>datasets/training/</code> until promotion is explicitly applied.
         </p>
@@ -139,7 +139,7 @@ export function MLHandwritingCandidateManifestsPage() {
             value={sourcePrefix}
             onChange={(event) => setSourcePrefix(event.target.value)}
             placeholder={`drawings/${createLanguage}/ (default)`}
-            className="w-72 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+            className="w-72 rounded-lg border border-input bg-card px-3 py-2 text-sm dark:text-white"
           />
           <Button size="sm" onClick={() => void createManifest()} disabled={creating}>
             {creating ? "Creating..." : "Create Manifest"}
@@ -165,9 +165,9 @@ export function MLHandwritingCandidateManifestsPage() {
           <LoadingBlock />
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+            <table className="min-w-full divide-y divide-border text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+                <tr className="text-left text-xs uppercase text-muted-foreground">
                   <th className="px-3 py-2">Manifest</th>
                   <th className="px-3 py-2">Source</th>
                   <th className="px-3 py-2">Status</th>
@@ -177,14 +177,14 @@ export function MLHandwritingCandidateManifestsPage() {
                   <th className="px-3 py-2">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody className="divide-y divide-border">
                 {manifests.map((manifest) => (
                   <tr key={manifest.id}>
                     <td className="px-3 py-3">
-                      <div className="font-medium text-gray-900 dark:text-white">{manifest.id}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{formatDate(manifest.created_at)}</div>
+                      <div className="font-medium text-foreground">{manifest.id}</div>
+                      <div className="text-xs text-muted-foreground">{formatDate(manifest.created_at)}</div>
                     </td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">
+                    <td className="px-3 py-3 text-foreground">
                       {manifest.language_code} / {manifest.source}
                     </td>
                     <td className="px-3 py-3"><StatusPill status={manifest.status} /></td>
@@ -200,7 +200,7 @@ export function MLHandwritingCandidateManifestsPage() {
                 ))}
               </tbody>
             </table>
-            {manifests.length === 0 ? <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No candidate manifests found.</div> : null}
+            {manifests.length === 0 ? <div className="p-4 text-sm text-muted-foreground">No candidate manifests found.</div> : null}
           </div>
         )}
       </Panel>
@@ -223,7 +223,7 @@ function CandidateImagePreview({ candidate }: { candidate: HandwritingCandidate 
   }, [candidate.id]);
 
   return (
-    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
+    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/50">
       {url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={url} alt={candidate.final_label || candidate.raw_label || "candidate"} loading="lazy" className="max-h-full max-w-full object-contain" />
@@ -304,7 +304,7 @@ function CandidateVisionSuggestion({
       </Button>
       {suggestion ? (
         <>
-          <span className="text-sm text-gray-700 dark:text-gray-300">
+          <span className="text-sm text-foreground">
             suggests: {suggestion.caseGroup || "-"} / {suggestion.label || "-"}
             {suggestion.confidence != null ? ` (${(suggestion.confidence * 100).toFixed(0)}%)` : ""}
           </span>
@@ -432,8 +432,8 @@ export function MLHandwritingCandidateManifestDetailPage() {
       <PageBreadCrumb pageTitle="Candidate Manifest Review" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{manifestId}</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Approve or reject candidates before promotion into datasets/training/*.</p>
+          <h1 className="text-3xl tracking-tight text-foreground">{manifestId}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Approve or reject candidates before promotion into datasets/training/*.</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
       </div>
@@ -465,19 +465,19 @@ export function MLHandwritingCandidateManifestDetailPage() {
           <div className="mt-4 space-y-3">
             {promotionResult.per_class_impact.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+                <table className="min-w-full divide-y divide-border text-sm">
                   <thead>
-                    <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+                    <tr className="text-left text-xs uppercase text-muted-foreground">
                       <th className="px-3 py-2">Class</th>
                       <th className="px-3 py-2">Before</th>
                       <th className="px-3 py-2">Added</th>
                       <th className="px-3 py-2">After</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  <tbody className="divide-y divide-border">
                     {promotionResult.per_class_impact.map((impact) => (
                       <tr key={impact.class_id}>
-                        <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{impact.class_id}</td>
+                        <td className="px-3 py-2 font-medium text-foreground">{impact.class_id}</td>
                         <td className="px-3 py-2">{impact.before}</td>
                         <td className="px-3 py-2">{impact.would_add || impact.added}</td>
                         <td className="px-3 py-2">{impact.after}</td>
@@ -517,7 +517,7 @@ export function MLHandwritingCandidateManifestDetailPage() {
             value={label}
             onChange={(event) => { setOffset(0); setLabel(event.target.value); }}
             placeholder="Label"
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+            className="rounded-lg border border-input bg-card px-3 py-2 text-sm dark:text-white"
           />
         </div>
         <div className="mb-4 flex flex-wrap gap-2">
@@ -527,19 +527,19 @@ export function MLHandwritingCandidateManifestDetailPage() {
         </div>
         <div className="space-y-3">
           {candidates.map((candidate) => (
-            <div key={candidate.id} className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+            <div key={candidate.id} className="rounded-lg border border-border bg-card p-4">
               <div className="flex flex-col gap-4 md:flex-row">
                 <CandidateImagePreview candidate={candidate} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill status={candidate.review_status} />
-                    <span className="font-semibold text-gray-900 dark:text-white">
+                    <span className="font-semibold text-foreground">
                       {candidate.language_code} / {candidate.final_case_group || "-"} / {candidate.final_label || candidate.raw_label || "-"}
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{candidate.source_type}</span>
+                    <span className="text-xs text-muted-foreground">{candidate.source_type}</span>
                     {candidate.vision_status !== "not_requested" ? <StatusPill status={`vision:${candidate.vision_status}`} /> : null}
                   </div>
-                  <div className="mt-2 break-all text-xs text-gray-500 dark:text-gray-400">{candidate.source_key}</div>
+                  <div className="mt-2 break-all text-xs text-muted-foreground">{candidate.source_key}</div>
                   <CandidateVisionSuggestion candidate={candidate} onApplied={refresh} />
                 </div>
                 <div className="flex shrink-0 flex-row gap-2 md:flex-col">
@@ -551,7 +551,7 @@ export function MLHandwritingCandidateManifestDetailPage() {
             </div>
           ))}
           {loading ? <LoadingBlock /> : null}
-          {!loading && candidates.length === 0 ? <div className="text-sm text-gray-500 dark:text-gray-400">No candidates match these filters.</div> : null}
+          {!loading && candidates.length === 0 ? <div className="text-sm text-muted-foreground">No candidates match these filters.</div> : null}
         </div>
         <div className="mt-4">
           <Pagination

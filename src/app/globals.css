@@ -4,7 +4,20 @@
 
 @theme {
   --font-*: initial;
-  --font-outfit: Outfit, sans-serif;
+  /* Studio Admin default font: Geist, with Noto Sans as an explicit
+     fallback that guarantees Yoruba combining-diacritic coverage
+     (ẹ ọ ṣ ṅ ń + tone marks). */
+  --font-sans: "Geist", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-outfit: var(--font-sans);
+
+  /* Radius scale (Studio Admin). Kept as overridable tokens. */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius: 0.625rem;
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
@@ -38,18 +51,18 @@
   --color-white: #ffffff;
   --color-black: #101828;
 
-  --color-brand-25: #f2f7ff;
-  --color-brand-50: #ecf3ff;
-  --color-brand-100: #dde9ff;
-  --color-brand-200: #c2d6ff;
-  --color-brand-300: #9cb9ff;
-  --color-brand-400: #7592ff;
-  --color-brand-500: #465fff;
-  --color-brand-600: #3641f5;
-  --color-brand-700: #2a31d8;
-  --color-brand-800: #252dae;
-  --color-brand-900: #262e89;
-  --color-brand-950: #161950;
+  --color-brand-25: oklch(0.985 0 0);
+  --color-brand-50: oklch(0.97 0 0);
+  --color-brand-100: oklch(0.922 0 0);
+  --color-brand-200: oklch(0.87 0 0);
+  --color-brand-300: oklch(0.708 0 0);
+  --color-brand-400: oklch(0.556 0 0);
+  --color-brand-500: oklch(0.439 0 0);
+  --color-brand-600: oklch(0.205 0 0);
+  --color-brand-700: oklch(0.145 0 0);
+  --color-brand-800: oklch(0.145 0 0);
+  --color-brand-900: oklch(0.145 0 0);
+  --color-brand-950: oklch(0.145 0 0);
 
   --color-blue-light-25: #f5fbff;
   --color-blue-light-50: #f0f9ff;
@@ -64,19 +77,19 @@
   --color-blue-light-900: #0b4a6f;
   --color-blue-light-950: #062c41;
 
-  --color-gray-25: #fcfcfd;
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f2f4f7;
-  --color-gray-200: #e4e7ec;
-  --color-gray-300: #d0d5dd;
-  --color-gray-400: #98a2b3;
-  --color-gray-500: #667085;
-  --color-gray-600: #475467;
-  --color-gray-700: #344054;
-  --color-gray-800: #1d2939;
-  --color-gray-900: #101828;
-  --color-gray-950: #0c111d;
-  --color-gray-dark: #1a2231;
+  --color-gray-25: oklch(0.985 0 0);
+  --color-gray-50: oklch(0.985 0 0);
+  --color-gray-100: oklch(0.97 0 0);
+  --color-gray-200: oklch(0.922 0 0);
+  --color-gray-300: oklch(0.87 0 0);
+  --color-gray-400: oklch(0.708 0 0);
+  --color-gray-500: oklch(0.556 0 0);
+  --color-gray-600: oklch(0.439 0 0);
+  --color-gray-700: oklch(0.371 0 0);
+  --color-gray-800: oklch(0.269 0 0);
+  --color-gray-900: oklch(0.205 0 0);
+  --color-gray-950: oklch(0.145 0 0);
+  --color-gray-dark: oklch(0.205 0 0);
 
   --color-orange-25: #fffaf5;
   --color-orange-50: #fff6ed;
@@ -134,6 +147,40 @@
 
   --color-theme-purple-500: #7a5af8;
 
+  /* Shadcn semantic tokens (Studio Admin default, neutral light) */
+  --color-background: oklch(1 0 0);
+  --color-foreground: oklch(0.145 0 0);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.145 0 0);
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.145 0 0);
+  --color-primary: oklch(0.205 0 0);
+  --color-primary-foreground: oklch(0.985 0 0);
+  --color-secondary: oklch(0.97 0 0);
+  --color-secondary-foreground: oklch(0.205 0 0);
+  --color-muted: oklch(0.97 0 0);
+  --color-muted-foreground: oklch(0.556 0 0);
+  --color-accent: oklch(0.97 0 0);
+  --color-accent-foreground: oklch(0.205 0 0);
+  --color-destructive: oklch(0.577 0.245 27.325);
+  --color-border: oklch(0.922 0 0);
+  --color-input: oklch(0.922 0 0);
+
+  --color-ring: oklch(0.708 0 0);
+  --color-chart-1: #38bdf8;
+  --color-chart-2: #34d399;
+  --color-chart-3: #fbbf24;
+  --color-chart-4: #a78bfa;
+  --color-chart-5: #fb7185;
+  --color-sidebar: oklch(0.985 0 0);
+  --color-sidebar-foreground: oklch(0.145 0 0);
+  --color-sidebar-primary: oklch(0.205 0 0);
+  --color-sidebar-primary-foreground: oklch(0.985 0 0);
+  --color-sidebar-accent: oklch(0.97 0 0);
+  --color-sidebar-accent-foreground: oklch(0.205 0 0);
+  --color-sidebar-border: oklch(0.922 0 0);
+  --color-sidebar-ring: oklch(0.708 0 0);
+
   --shadow-theme-md:
     0px 4px 8px -2px rgba(16, 24, 40, 0.1),
     0px 2px 4px -2px rgba(16, 24, 40, 0.06);
@@ -167,6 +214,106 @@
   --z-index-999999: 999999;
 }
 
+/* Raw chart-series variables (read by the shadcn chart wrapper via
+   `var(--chart-N)`). Bright, colour-distinct series palette — intentionally
+   NOT derived from the neutral primary/sidebar tokens. Light theme uses
+   deeper (600-level) variants for contrast against white cards; dark mode
+   overrides to the brighter (400-level) variants. */
+:root {
+  --chart-1: #0284c7; /* sky-600 */
+  --chart-2: #059669; /* emerald-600 */
+  --chart-3: #d97706; /* amber-600 */
+  --chart-4: #7c3aed; /* violet-600 */
+  --chart-5: #e11d48; /* rose-600 */
+}
+
+/*
+  Dark mode — Studio Admin default (neutral) dark theme.
+
+  Values are the reference repo's exact `.dark` oklch tokens
+  (commit 52bba6a4), mapped onto Abidii's gray/brand token names:
+    background  oklch(0.145 0 0)   -> gray-950
+    card        oklch(0.205 0 0)   -> gray-900 / sidebar
+    secondary   oklch(0.269 0 0)   -> gray-800 (inset/hover)
+    muted-fg    oklch(0.708 0 0)   -> gray-400 (muted text)
+    foreground  oklch(0.985 0 0)   -> gray-50 (bright text)
+    primary     oklch(0.922 0 0)   -> brand-600 (light button)
+    primary-fg  oklch(0.205 0 0)   -> gray-900 (button text)
+    ring        oklch(0.556 0 0)   -> ring
+    border      oklch(1 0 0 / 10%) -> borders
+  The light theme is unchanged; semantic + chart colours are preserved.
+*/
+.dark {
+  /* Neutral surface/text ramp (exact reference lightness ladder) */
+  --color-gray-25: oklch(0.985 0 0);
+  --color-gray-50: oklch(0.985 0 0);
+  --color-gray-100: oklch(0.87 0 0);
+  --color-gray-200: oklch(0.87 0 0);
+  --color-gray-300: oklch(0.87 0 0);
+  --color-gray-400: oklch(0.708 0 0);
+  --color-gray-500: oklch(0.556 0 0);
+  --color-gray-600: oklch(0.439 0 0);
+  --color-gray-700: oklch(0.371 0 0);
+  --color-gray-800: oklch(0.269 0 0);
+  --color-gray-900: oklch(0.205 0 0);
+  --color-gray-950: oklch(0.145 0 0);
+  --color-gray-dark: oklch(0.205 0 0);
+
+  /* Primary/accent — light primary (oklch 0.922), neutral accents */
+  --color-brand-25: oklch(0.269 0 0);
+  --color-brand-50: oklch(0.269 0 0);
+  --color-brand-100: oklch(0.269 0 0);
+  --color-brand-200: oklch(0.556 0 0);
+  --color-brand-300: oklch(0.708 0 0);
+  --color-brand-400: oklch(0.922 0 0);
+  --color-brand-500: oklch(0.922 0 0);
+  --color-brand-600: oklch(0.922 0 0);
+  --color-brand-700: oklch(0.985 0 0);
+  --color-brand-800: oklch(0.556 0 0);
+  --color-brand-900: oklch(0.269 0 0);
+  --color-brand-950: oklch(0.269 0 0);
+
+  /* Shadcn semantic tokens (dark) */
+  --color-background: oklch(0.145 0 0);
+  --color-foreground: oklch(0.985 0 0);
+  --color-card: oklch(0.205 0 0);
+  --color-card-foreground: oklch(0.985 0 0);
+  --color-popover: oklch(0.205 0 0);
+  --color-popover-foreground: oklch(0.985 0 0);
+  --color-primary: oklch(0.922 0 0);
+  --color-primary-foreground: oklch(0.205 0 0);
+  --color-secondary: oklch(0.269 0 0);
+  --color-secondary-foreground: oklch(0.985 0 0);
+  --color-muted: oklch(0.269 0 0);
+  --color-muted-foreground: oklch(0.708 0 0);
+  --color-accent: oklch(0.269 0 0);
+  --color-accent-foreground: oklch(0.985 0 0);
+  --color-destructive: oklch(0.704 0.191 22.216);
+  --color-border: oklch(1 0 0 / 10%);
+  --color-input: oklch(1 0 0 / 15%);
+
+  --color-ring: oklch(0.556 0 0);
+  --color-sidebar: oklch(0.205 0 0);
+  --color-sidebar-foreground: oklch(0.985 0 0);
+  --color-sidebar-primary: oklch(0.488 0.243 264.376);
+  --color-sidebar-primary-foreground: oklch(0.985 0 0);
+  --color-sidebar-accent: oklch(0.269 0 0);
+  --color-sidebar-accent-foreground: oklch(0.985 0 0);
+  --color-sidebar-border: oklch(1 0 0 / 10%);
+  --color-sidebar-ring: oklch(0.556 0 0);
+
+  /* Brighter (400-level) chart series for dark backgrounds. */
+  --chart-1: #38bdf8;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #a78bfa;
+  --chart-5: #fb7185;
+
+  /* Neutralize the blue focus ring + date-picker shadow in dark mode. */
+  --shadow-focus-ring: 0px 0px 0px 4px oklch(0.556 0 0 / 0.12);
+  --shadow-datepicker: -5px 0 0 oklch(0.269 0 0), 5px 0 0 oklch(0.269 0 0);
+}
+
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
@@ -193,27 +340,27 @@
 }
 
 @utility menu-item {
-  @apply relative flex items-center w-full gap-3 px-3 py-2 font-medium rounded-lg text-theme-sm;
+  @apply relative flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm [&_svg]:size-4 [&_svg]:shrink-0;
 }
 
 @utility menu-item-active {
-  @apply bg-brand-50 text-brand-500 dark:bg-brand-500/[0.12] dark:text-brand-400;
+  @apply bg-sidebar-accent font-medium text-sidebar-accent-foreground;
 }
 
 @utility menu-item-inactive {
-  @apply text-gray-700 hover:bg-gray-100 group-hover:text-gray-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-300;
+  @apply text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground;
 }
 
 @utility menu-item-icon {
-  @apply text-gray-500 group-hover:text-gray-700 dark:text-gray-400;
+  @apply flex items-center;
 }
 
 @utility menu-item-icon-active {
-  @apply text-brand-500 dark:text-brand-400;
+  @apply flex items-center;
 }
 
 @utility menu-item-icon-inactive {
-  @apply text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300;
+  @apply flex items-center;
 }
 
 @utility menu-item-arrow {
@@ -221,23 +368,23 @@
 }
 
 @utility menu-item-arrow-active {
-  @apply rotate-180 text-brand-500 dark:text-brand-400;
+  @apply rotate-180;
 }
 
 @utility menu-item-arrow-inactive {
-  @apply text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300;
+  @apply text-sidebar-foreground/50;
 }
 
 @utility menu-dropdown-item {
-  @apply relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-theme-sm font-medium;
+  @apply relative flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm;
 }
 
 @utility menu-dropdown-item-active {
-  @apply bg-brand-50 text-brand-500 dark:bg-brand-500/[0.12] dark:text-brand-400;
+  @apply bg-sidebar-accent font-medium text-sidebar-accent-foreground;
 }
 
 @utility menu-dropdown-item-inactive {
-  @apply text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5;
+  @apply text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground;
 }
 
 @utility menu-dropdown-badge {
@@ -435,7 +582,7 @@ span.flatpickr-weekday,
 .flatpickr-day.startRange,
 .flatpickr-day.selected,
 .flatpickr-day.endRange {
-  @apply !text-white dark:!text-white;
+  @apply !text-white dark:!text-gray-900;
 }
 .flatpickr-day.selected,
 .flatpickr-day.startRange,

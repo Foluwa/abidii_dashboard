@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { FiCheckCircle, FiAlertCircle, FiInfo, FiX } from "react-icons/fi";
+import { CircleAlert, CircleCheck, Info, X } from "lucide-react";
 
 type ToastType = "success" | "error" | "info";
 
@@ -101,11 +101,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-0.5">
                 {toast.type === "success" ? (
-                  <FiCheckCircle className="h-5 w-5" />
+                  <CircleCheck className="h-5 w-5" />
                 ) : toast.type === "error" ? (
-                  <FiAlertCircle className="h-5 w-5" />
+                  <CircleAlert className="h-5 w-5" />
                 ) : (
-                  <FiInfo className="h-5 w-5" />
+                  <Info className="h-5 w-5" />
                 )}
               </div>
               <div className="flex-1 text-sm font-medium">{toast.message}</div>
@@ -113,7 +113,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 onClick={() => removeToast(toast.id)}
                 className="flex-shrink-0 opacity-70 hover:opacity-100 transition-opacity"
               >
-                <FiX className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </button>
             </div>
           </div>

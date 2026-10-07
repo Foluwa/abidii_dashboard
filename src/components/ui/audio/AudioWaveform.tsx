@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { FiPlay, FiPause, FiVolume2, FiVolumeX } from "react-icons/fi";
+import { Pause as PauseIcon, Play as PlayIcon, Volume2, VolumeX } from "lucide-react";
 
 interface AudioWaveformProps {
   src: string;
@@ -261,16 +261,16 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
             hasError || !src
               ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
-              : 'bg-brand-600 hover:bg-brand-700 text-white'
+              : 'bg-brand-600 hover:bg-brand-700 text-white dark:text-gray-900'
           }`}
           disabled={!src || hasError}
           title={hasError ? 'Audio unavailable' : src ? 'Play/Pause' : 'No audio source'}
           aria-label={hasError ? 'Audio unavailable' : isPlaying ? 'Pause' : 'Play'}
         >
           {isPlaying ? (
-            <FiPause className="w-4 h-4" />
+            <PauseIcon className="w-4 h-4" />
           ) : (
-            <FiPlay className="w-4 h-4 ml-0.5" />
+            <PlayIcon className="w-4 h-4 ml-0.5" />
           )}
         </button>
 
@@ -285,7 +285,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         </div>
 
         {/* Time Display */}
-        <div className="flex-shrink-0 text-xs font-mono text-gray-600 dark:text-gray-400 min-w-[80px] text-right">
+        <div className="flex-shrink-0 text-xs font-mono text-muted-foreground min-w-[80px] text-right">
           {formatTime(currentTime)} / {formatTime(duration)}
         </div>
 
@@ -293,14 +293,14 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={toggleMute}
-            className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+            className="p-2 text-muted-foreground hover:text-foreground"
             title={isMuted || volume === 0 ? 'Unmute' : 'Mute'}
             aria-label={isMuted || volume === 0 ? 'Unmute' : 'Mute'}
           >
             {isMuted || volume === 0 ? (
-              <FiVolumeX className="w-4 h-4" />
+              <VolumeX className="w-4 h-4" />
             ) : (
-              <FiVolume2 className="w-4 h-4" />
+              <Volume2 className="w-4 h-4" />
             )}
           </button>
           <input
@@ -310,7 +310,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
             step="0.01"
             value={isMuted ? 0 : volume}
             onChange={handleVolumeChange}
-            className="w-20 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-brand-600"
+            className="w-20 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-brand-600"
           />
         </div>
       </div>

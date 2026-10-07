@@ -1,11 +1,17 @@
 "use client";
 import React from "react";
-import dynamic from "next/dynamic";
-import { ApexOptions } from "apexcharts";
-
-const ReactApexChart = dynamic(() => import("react-apexcharts"), {
-  ssr: false,
-});
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { chartTheme } from "@/components/charts/chartTheme";
+import { useTheme } from "@/context/ThemeContext";
 
 interface RoomsTimeSeriesChartProps {
   title: string;
@@ -24,65 +30,83 @@ export default function RoomsTimeSeriesChart({
   title,
   categories,
   series,
-  colors = ["#465FFF", "#12B76A", "#F79009"],
+  colors,
   height = 220,
 }: RoomsTimeSeriesChartProps) {
-  const options: ApexOptions = {
-    colors,
-    chart: {
-      fontFamily: "Outfit, sans-serif",
-      type: "bar",
-      height,
-      toolbar: { show: false },
-      zoom: { enabled: false },
-      stacked: false,
-    },
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        columnWidth: "55%",
-        borderRadius: 4,
-        borderRadiusApplication: "end",
-      },
-    },
-    dataLabels: { enabled: false },
-    stroke: { show: true, width: 2, colors: ["transparent"] },
-    xaxis: {
-      categories,
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-    },
-    legend: {
-      show: true,
-      position: "top",
-      horizontalAlign: "left",
-      fontFamily: "Outfit",
-    },
-    grid: {
-      borderColor: "#e5e7eb",
-      strokeDashArray: 4,
-      yaxis: { lines: { show: true } },
-    },
-    fill: { opacity: 1 },
-    tooltip: {
-      y: { formatter: (val: number) => `${val}` },
-    },
-  };
+  const { theme } = useTheme();
+  const c = chartTheme(theme);
+  const resolvedColors = colors ?? c.colors;
+
+  const data = categories.map((category, index) => {
+    const row: Record<string, string | number> = { category };
+    series.forEach((s) => {
+      row[s.name] = s.data[index] ?? 0;
+    });
+    return row;
+  });
 
   const hasData = categories.length > 0 && series.some((s) => s.data.some((v) => v > 0));
 
   return (
     <div className="overflow-hidden">
-      <h3 className="px-1 pb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{title}</h3>
+      <h3 className="px-1 pb-2 text-sm font-medium text-foreground">{title}</h3>
       {hasData ? (
         <div className="max-w-full overflow-x-auto custom-scrollbar">
-          <div className="min-w-[600px]">
-            <ReactApexChart options={options} series={series} type="bar" height={height} />
+          <div className="min-w-[600px]" style={{ height }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="4" vertical={false} stroke={c.grid} />
+                <XAxis
+                  dataKey="category"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: c.text, fontSize: 12, fontFamily: c.fontFamily }}
+                  tickMargin={8}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: c.text, fontSize: 12, fontFamily: c.fontFamily }}
+                  width={40}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  cursor={{ fill: theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)" }}
+                  contentStyle={{
+                    background: theme === "dark" ? "#18181b" : "#ffffff",
+                    border: `1px solid ${c.grid}`,
+                    borderRadius: 8,
+                    fontFamily: c.fontFamily,
+                    fontSize: 12,
+                    color: c.heading,
+                  }}
+                  labelStyle={{ color: c.heading }}
+                  itemStyle={{ color: c.text }}
+                  formatter={(value) => String(value)}
+                />
+                <Legend
+                  verticalAlign="top"
+                  align="left"
+                  iconType="circle"
+                  iconSize={8}
+                  wrapperStyle={{ fontFamily: c.fontFamily, fontSize: 12, color: c.text, paddingBottom: 8 }}
+                />
+                {series.map((s, index) => (
+                  <Bar
+                    key={s.name}
+                    dataKey={s.name}
+                    fill={resolvedColors[index % resolvedColors.length]}
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={36}
+                  />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       ) : (
         <div
-          className="flex items-center justify-center text-sm text-gray-500 dark:text-gray-400"
+          className="flex items-center justify-center text-sm text-muted-foreground"
           style={{ height }}
         >
           No activity in this period

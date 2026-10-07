@@ -397,8 +397,8 @@ export default function AdminLessonBlueprintDetailPage({
     return (
       <div className="space-y-6">
         <PageBreadCrumb pageTitle="Lesson Blueprint" />
-        <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
-          <div className="w-6 h-6 border-2 border-gray-200 border-t-brand-600 rounded-full animate-spin" />
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <div className="w-6 h-6 border-2 border-input border-t-brand-600 rounded-full animate-spin" />
           <span>Loading blueprint…</span>
         </div>
       </div>
@@ -416,7 +416,7 @@ export default function AdminLessonBlueprintDetailPage({
           <button
             onClick={handleValidate}
             disabled={isValidating || isPublishing || isUnpublishing}
-            className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-brand-500 dark:hover:bg-brand-600"
+            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-brand-500 dark:hover:bg-brand-600"
           >
             {isValidating ? 'Validating…' : 'Validate'}
           </button>
@@ -449,69 +449,69 @@ export default function AdminLessonBlueprintDetailPage({
         </div>
       </div>
 
-      <details className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+      <details className="rounded-lg border border-border bg-card">
+        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-foreground">
           <div className="flex items-center justify-between gap-3">
             <span>Server-authoritative validation and publishing workflow</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">Show details</span>
+            <span className="text-xs text-muted-foreground">Show details</span>
           </div>
         </summary>
-        <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-800">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="border-t border-border px-4 py-3">
+          <div className="text-sm text-muted-foreground">
             Validate first, then publish. The server is the source of truth for publishability, availability, and linked-course readiness. Publishing this blueprint can also trigger linked-course revalidation so remaining blockers are visible immediately on this page.
           </div>
           <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Details</h2>
+            <div className="rounded-lg border border-border bg-muted/50 p-4">
+              <h2 className="text-base font-semibold text-foreground">Details</h2>
               <dl className="mt-3 space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-gray-600 dark:text-gray-400">Blueprint Key</dt>
-                  <dd className="text-gray-900 dark:text-white font-mono break-all">{blueprint?.blueprint_key}</dd>
+                  <dt className="text-muted-foreground">Blueprint Key</dt>
+                  <dd className="text-foreground font-mono break-all">{blueprint?.blueprint_key}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-gray-600 dark:text-gray-400">Lesson Kind</dt>
-                  <dd className="text-gray-900 dark:text-white">{blueprint?.lesson_kind}</dd>
+                  <dt className="text-muted-foreground">Lesson Kind</dt>
+                  <dd className="text-foreground">{blueprint?.lesson_kind}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-gray-600 dark:text-gray-400">Schema Version</dt>
-                  <dd className="text-gray-900 dark:text-white">{blueprint?.schema_version}</dd>
+                  <dt className="text-muted-foreground">Schema Version</dt>
+                  <dd className="text-foreground">{blueprint?.schema_version}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-gray-600 dark:text-gray-400">Status</dt>
+                  <dt className="text-muted-foreground">Status</dt>
                   <dd>{statusBadge}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-gray-600 dark:text-gray-400">Review state</dt>
+                  <dt className="text-muted-foreground">Review state</dt>
                   <dd>{reviewBadge}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-gray-600 dark:text-gray-400">Enabled</dt>
+                  <dt className="text-muted-foreground">Enabled</dt>
                   <dd>{enabledBadge}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-gray-600 dark:text-gray-400">Availability</dt>
+                  <dt className="text-muted-foreground">Availability</dt>
                   <dd>{availabilityBadge}</dd>
                 </div>
               </dl>
               {isLoadingPublic && (
-                <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Loading availability…</p>
+                <p className="mt-3 text-xs text-muted-foreground">Loading availability…</p>
               )}
             </div>
 
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">IDs</h2>
+            <div className="rounded-lg border border-border bg-muted/50 p-4">
+              <h2 className="text-base font-semibold text-foreground">IDs</h2>
               <dl className="mt-3 space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-gray-600 dark:text-gray-400">Blueprint ID</dt>
-                  <dd className="text-gray-900 dark:text-white font-mono break-all">{blueprint?.id}</dd>
+                  <dt className="text-muted-foreground">Blueprint ID</dt>
+                  <dd className="text-foreground font-mono break-all">{blueprint?.id}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-gray-600 dark:text-gray-400">Course ID</dt>
-                  <dd className="text-gray-900 dark:text-white font-mono break-all">{blueprint?.course_id}</dd>
+                  <dt className="text-muted-foreground">Course ID</dt>
+                  <dd className="text-foreground font-mono break-all">{blueprint?.course_id}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-gray-600 dark:text-gray-400">Section ID</dt>
-                  <dd className="text-gray-900 dark:text-white font-mono break-all">{blueprint?.section_id}</dd>
+                  <dt className="text-muted-foreground">Section ID</dt>
+                  <dd className="text-foreground font-mono break-all">{blueprint?.section_id}</dd>
                 </div>
               </dl>
             </div>
@@ -537,21 +537,21 @@ export default function AdminLessonBlueprintDetailPage({
       )}
 
       {blueprint && (
-        <details className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <details className="rounded-lg border border-border bg-card">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3">
             <div>
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Linked Course Flow</h2>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              <h2 className="text-base font-semibold text-foreground">Linked Course Flow</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
                 Publish this blueprint, revalidate the linked course, and finish the unblock flow without leaving this page.
               </p>
             </div>
-            <span className="text-xs text-gray-500 dark:text-gray-400">Show details</span>
+            <span className="text-xs text-muted-foreground">Show details</span>
           </summary>
-          <div className="border-t border-gray-200 p-4 dark:border-gray-800">
+          <div className="border-t border-border p-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Unblock linked course publication</h3>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              <h3 className="text-sm font-semibold text-foreground">Unblock linked course publication</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
                 Run the publish workflow here when this blueprint is the section-level blocker.
               </p>
             </div>
@@ -561,7 +561,7 @@ export default function AdminLessonBlueprintDetailPage({
                 <button
                   onClick={handleValidateLinkedCourse}
                   disabled={isValidating || isPublishing || isUnpublishing}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+                  className="rounded-lg border border-input bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isValidating ? 'Validating…' : 'Revalidate Linked Course'}
                 </button>
@@ -587,34 +587,34 @@ export default function AdminLessonBlueprintDetailPage({
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Course & Section</h3>
+            <div className="rounded-lg border border-border p-4">
+              <h3 className="text-sm font-semibold text-foreground">Course & Section</h3>
               <dl className="mt-3 space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-gray-600 dark:text-gray-400">Course</dt>
-                  <dd className="text-right text-gray-900 dark:text-white">
+                  <dt className="text-muted-foreground">Course</dt>
+                  <dd className="text-right text-foreground">
                     {linkedCourse?.title || blueprint.course_key || 'Unknown course'}
                     {(linkedCourse?.course_key || blueprint.course_key) && (
-                      <div className="font-mono text-xs text-gray-500 dark:text-gray-400">
+                      <div className="font-mono text-xs text-muted-foreground">
                         {linkedCourse?.course_key || blueprint.course_key}
                       </div>
                     )}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="text-gray-600 dark:text-gray-400">Unit / Section</dt>
-                  <dd className="text-right text-gray-900 dark:text-white">
+                  <dt className="text-muted-foreground">Unit / Section</dt>
+                  <dd className="text-right text-foreground">
                     {(linkedSectionContext.unit?.title || blueprint.unit_key || 'Unknown unit') +
                       ' / ' +
                       (linkedSectionContext.section?.title || blueprint.section_key || 'Unknown section')}
-                    <div className="font-mono text-xs text-gray-500 dark:text-gray-400">
+                    <div className="font-mono text-xs text-muted-foreground">
                       {(linkedSectionContext.unit?.unit_key || blueprint.unit_key || '—')}.
                       {linkedSectionContext.section?.section_key || blueprint.section_key || '—'}
                     </div>
                   </dd>
                 </div>
                 <div className="flex items-start justify-between gap-3">
-                  <dt className="pt-1 text-gray-600 dark:text-gray-400">Section state</dt>
+                  <dt className="pt-1 text-muted-foreground">Section state</dt>
                   <dd className="flex flex-wrap justify-end gap-2">
                     {getStatusBadge(linkedSectionContext.section?.status || null)}
                     {typeof linkedSectionContext.section?.enabled === 'boolean' &&
@@ -638,7 +638,7 @@ export default function AdminLessonBlueprintDetailPage({
                   </dd>
                 </div>
                 <div className="flex items-start justify-between gap-3">
-                  <dt className="pt-1 text-gray-600 dark:text-gray-400">Blueprint state</dt>
+                  <dt className="pt-1 text-muted-foreground">Blueprint state</dt>
                   <dd className="flex flex-wrap justify-end gap-2">
                     {linkedSectionContext.section?.lesson_blueprint_id ? (
                       <>
@@ -661,18 +661,18 @@ export default function AdminLessonBlueprintDetailPage({
               </dl>
             </div>
 
-            <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Course Publish Readiness</h3>
+            <div className="rounded-lg border border-border p-4">
+              <h3 className="text-sm font-semibold text-foreground">Course Publish Readiness</h3>
               {isLoadingLinkedCourse || isLoadingLinkedCurriculum ? (
-                <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">Loading linked course status…</p>
+                <p className="mt-3 text-sm text-muted-foreground">Loading linked course status…</p>
               ) : (
                 <div className="mt-3 space-y-3 text-sm">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-gray-600 dark:text-gray-400">Course status</span>
+                    <span className="text-muted-foreground">Course status</span>
                     <span>{linkedCourseStatusBadge}</span>
                   </div>
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-gray-600 dark:text-gray-400">Validation</span>
+                    <span className="text-muted-foreground">Validation</span>
                     <span>
                       {linkedCourseValidation?.status === 'valid' ? (
                         <StatusBadge status="success" label="Valid" />
@@ -684,7 +684,7 @@ export default function AdminLessonBlueprintDetailPage({
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-gray-600 dark:text-gray-400">Publishability</span>
+                    <span className="text-muted-foreground">Publishability</span>
                     <span>
                       {linkedCourseCanPublish ? (
                         <StatusBadge status="success" label="Ready to publish" />
@@ -694,8 +694,8 @@ export default function AdminLessonBlueprintDetailPage({
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-gray-600 dark:text-gray-400">Blocking errors</span>
-                    <span className="text-gray-900 dark:text-white">
+                    <span className="text-muted-foreground">Blocking errors</span>
+                    <span className="text-foreground">
                       {linkedCourseValidation?.blocking_error_count ?? '—'}
                     </span>
                   </div>
@@ -722,15 +722,15 @@ export default function AdminLessonBlueprintDetailPage({
                     )}
 
                   {linkedSectionIssues.length > 0 && (
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <div className="rounded-lg border border-border bg-muted/50 p-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Issues touching this section
                       </div>
                       <div className="mt-2 space-y-2">
                         {linkedSectionIssues.map((issue, index) => (
                           <div key={`${issue.code}-${issue.path}-${index}`}>
-                            <div className="text-xs font-semibold text-gray-900 dark:text-white">{issue.code}</div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">{issue.message}</div>
+                            <div className="text-xs font-semibold text-foreground">{issue.code}</div>
+                            <div className="text-xs text-muted-foreground">{issue.message}</div>
                           </div>
                         ))}
                       </div>
@@ -744,10 +744,10 @@ export default function AdminLessonBlueprintDetailPage({
         </details>
       )}
 
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-lg border border-border bg-card p-4">
         <div className="mb-4">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">Preview Result</h2>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <h2 className="text-base font-semibold text-foreground">Preview Result</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             Validation is computed against the current draft payload before publish.
           </p>
         </div>
@@ -761,23 +761,23 @@ export default function AdminLessonBlueprintDetailPage({
         />
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-lg border border-border bg-card p-4">
           <button
             type="button"
             onClick={() => setIsVersionHistoryOpen((current) => !current)}
             className="flex w-full items-start justify-between gap-4 text-left"
           >
             <div>
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Version History</h2>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              <h2 className="text-base font-semibold text-foreground">Version History</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
                 Snapshot history used for restore, compare, and restore workflows.
               </p>
             </div>
             <div className="flex items-center gap-3">
               {isLoadingHistory && (
-                <span className="text-sm text-gray-500 dark:text-gray-400">Loading…</span>
+                <span className="text-sm text-muted-foreground">Loading…</span>
               )}
-              <span className="text-lg leading-none text-gray-500 dark:text-gray-400">
+              <span className="text-lg leading-none text-muted-foreground">
                 {isVersionHistoryOpen ? '−' : '+'}
               </span>
             </div>
@@ -786,13 +786,13 @@ export default function AdminLessonBlueprintDetailPage({
           {isVersionHistoryOpen && (
             <div className="mt-4 grid h-[640px] min-h-0 gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
               {versionHistory.length === 0 ? (
-                <div className="text-sm text-gray-600 dark:text-gray-400">No history snapshots found yet.</div>
+                <div className="text-sm text-muted-foreground">No history snapshots found yet.</div>
               ) : (
                 <>
-                  <div className="flex min-h-0 flex-col rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+                  <div className="flex min-h-0 flex-col rounded-lg border border-border p-3">
                     <div>
-                      <div className="text-sm font-semibold text-gray-900 dark:text-white">Snapshot History</div>
-                      <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="text-sm font-semibold text-foreground">Snapshot History</div>
+                      <div className="mt-1 text-sm text-muted-foreground">
                         Snapshot history used for restore, compare, and restore workflows.
                       </div>
                     </div>
@@ -808,17 +808,17 @@ export default function AdminLessonBlueprintDetailPage({
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div>
-                              <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                              <div className="text-sm font-semibold text-foreground">
                                 v{version.version_number} • {version.event_type}
                               </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                              <div className="text-xs text-muted-foreground">
                                 {new Date(version.created_at).toLocaleString()}
                               </div>
                             </div>
                             <div className="flex flex-wrap gap-2">
                               <button
                                 onClick={() => handleLoadVersionDiff(version.id)}
-                                className="rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                className="rounded-lg border border-input px-2 py-1 text-xs font-medium text-foreground hover:bg-muted/50"
                               >
                                 Compare
                               </button>
@@ -836,19 +836,19 @@ export default function AdminLessonBlueprintDetailPage({
                     </div>
                   </div>
 
-                  <div className="min-h-0 overflow-hidden rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+                  <div className="min-h-0 overflow-hidden rounded-lg border border-border p-3">
                     <div className="mb-4">
-                      <div className="text-sm font-semibold text-gray-900 dark:text-white">Compare Snapshot</div>
-                      <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="text-sm font-semibold text-foreground">Compare Snapshot</div>
+                      <div className="mt-1 text-sm text-muted-foreground">
                         Select a snapshot to compare it against the current blueprint.
                       </div>
                     </div>
                     {!versionDiff ? (
-                      <div className="text-sm text-gray-600 dark:text-gray-400">No snapshot selected yet.</div>
+                      <div className="text-sm text-muted-foreground">No snapshot selected yet.</div>
                     ) : (
                       <div className="flex h-full min-h-0 flex-col space-y-4">
                         <div>
-                          <div className="text-sm font-semibold text-gray-900 dark:text-white">Changed Fields</div>
+                          <div className="text-sm font-semibold text-foreground">Changed Fields</div>
                           <div className="mt-2 flex flex-wrap gap-2">
                             {versionDiff.changed_fields.length === 0 ? (
                               <StatusBadge status="info" label="No changes" />
@@ -861,7 +861,7 @@ export default function AdminLessonBlueprintDetailPage({
                         </div>
                         <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-2">
                           <div className="min-h-0">
-                            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                               Snapshot
                             </div>
                             <pre className="h-[180px] overflow-auto rounded-lg bg-gray-950 p-3 text-xs text-gray-100">
@@ -869,7 +869,7 @@ export default function AdminLessonBlueprintDetailPage({
                             </pre>
                           </div>
                           <div className="min-h-0">
-                            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                               Current
                             </div>
                             <pre className="h-[180px] overflow-auto rounded-lg bg-gray-950 p-3 text-xs text-gray-100">

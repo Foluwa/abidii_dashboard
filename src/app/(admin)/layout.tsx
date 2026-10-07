@@ -21,8 +21,8 @@ export default function AdminLayout({
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 border-4 border-t-4 border-gray-200 border-t-brand-600 rounded-full animate-spin"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+          <div className="w-16 h-16 mx-auto mb-4 border-4 border-t-4 border-input border-t-brand-600 rounded-full animate-spin"></div>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -32,8 +32,8 @@ export default function AdminLayout({
   const mainContentMargin = isMobileOpen
     ? "ml-0"
     : isExpanded || isHovered
-    ? "lg:ml-[290px]"
-    : "lg:ml-[90px]";
+    ? "lg:ml-64"
+    : "lg:ml-12";
 
   return (
     <div className="min-h-screen xl:flex">

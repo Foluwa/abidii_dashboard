@@ -2,8 +2,8 @@
 
 import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { FiUploadCloud, FiX, FiCheck, FiAlertCircle, FiFile } from "react-icons/fi";
 import { apiClient } from "@/lib/api";
+import { Check, CircleAlert, CloudUpload, File as FileIcon, X } from "lucide-react";
 
 interface AudioFile {
   file: File;
@@ -186,22 +186,22 @@ export const BulkAudioUpload: React.FC<BulkAudioUploadProps> = ({
         `}
       >
         <input {...getInputProps()} />
-        <FiUploadCloud className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <CloudUpload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+        <p className="text-sm font-medium text-foreground mb-1">
           {isDragActive
             ? "Drop files here..."
             : "Drag & drop audio files or click to browse"}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-muted-foreground">
           Supported formats: MP3, WAV, OGG • Max {maxFileSize}MB per file
         </p>
       </div>
 
       {/* Status Summary */}
       {files.length > 0 && (
-        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-4 text-sm">
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-muted-foreground">
               Total: {files.length}
             </span>
             {statusCounts.success > 0 && (
@@ -224,14 +224,14 @@ export const BulkAudioUpload: React.FC<BulkAudioUploadProps> = ({
             {statusCounts.success > 0 && (
               <button
                 onClick={clearCompleted}
-                className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
               >
                 Clear Completed
               </button>
             )}
             <button
               onClick={clearAll}
-              className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+              className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
             >
               Clear All
             </button>
@@ -245,38 +245,38 @@ export const BulkAudioUpload: React.FC<BulkAudioUploadProps> = ({
           {files.map((file) => (
             <div
               key={file.id}
-              className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+              className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg"
             >
               {/* Status Icon */}
               <div className="flex-shrink-0">
                 {file.status === "pending" && (
-                  <FiFile className="w-5 h-5 text-gray-400" />
+                  <FileIcon className="w-5 h-5 text-gray-400" />
                 )}
                 {file.status === "uploading" && (
                   <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
                 )}
                 {file.status === "success" && (
-                  <FiCheck className="w-5 h-5 text-green-500" />
+                  <Check className="w-5 h-5 text-green-500" />
                 )}
                 {file.status === "error" && (
-                  <FiAlertCircle className="w-5 h-5 text-red-500" />
+                  <CircleAlert className="w-5 h-5 text-red-500" />
                 )}
               </div>
 
               {/* File Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {file.name}
                   </p>
-                  <span className="text-xs text-gray-500 ml-2">
+                  <span className="text-xs text-muted-foreground ml-2">
                     {(file.size / 1024).toFixed(1)} KB
                   </span>
                 </div>
 
                 {/* Progress Bar */}
                 {file.status === "uploading" && (
-                  <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-brand-500 transition-all duration-300"
                       style={{ width: `${file.progress}%` }}
@@ -286,7 +286,7 @@ export const BulkAudioUpload: React.FC<BulkAudioUploadProps> = ({
 
                 {/* Matched Item */}
                 {file.itemId && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Matched to: {items.find((i) => i.id === file.itemId)?.name}
                   </p>
                 )}
@@ -307,7 +307,7 @@ export const BulkAudioUpload: React.FC<BulkAudioUploadProps> = ({
                   title="Remove file"
                   aria-label="Remove file"
                 >
-                  <FiX className="w-4 h-4" />
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -320,7 +320,7 @@ export const BulkAudioUpload: React.FC<BulkAudioUploadProps> = ({
         <button
           onClick={uploadFiles}
           disabled={isUploading}
-          className="w-full px-4 py-3 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full px-4 py-3 text-sm font-medium text-primary-foreground bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isUploading
             ? `Uploading ${statusCounts.uploading} of ${files.length}...`

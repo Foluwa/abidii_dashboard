@@ -5,9 +5,10 @@ import { apiClient } from "@/lib/api";
 import { useToast } from "@/contexts/ToastContext";
 import { Modal } from "@/components/ui/modal";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
-import { FiVolume2, FiCheck, FiRefreshCw, FiX } from "react-icons/fi";
+import { Combobox } from "@/components/ui/form/Combobox";
 import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
 import { useAudioJob, acceptAudioJob } from "@/hooks/useAudioJob";
+import { Check, RefreshCw, Volume2, X } from "lucide-react";
 
 interface Voice {
   id: string;
@@ -262,25 +263,25 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
             }))}
             fullWidth
           />
-          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1.5 text-xs text-muted-foreground">
             Filter voices by TTS provider. Generated audio will prefer WAV when the provider supports it, otherwise it will fall back automatically.
           </p>
         </div>
 
         {/* Voice Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Select Voice *
           </label>
 
           {isLoadingVoices ? (
-            <div className="text-sm text-gray-500">Loading voices...</div>
+            <div className="text-sm text-muted-foreground">Loading voices...</div>
           ) : filteredVoices.length === 0 ? (
             <div className="text-sm text-red-600">
               No compatible voices available for {target.languageCode}{selectedProvider !== "all" ? ` using ${selectedProvider}` : ""}
             </div>
           ) : (
-            <StyledSelect
+            <Combobox
               value={selectedVoiceId}
               onChange={(e) => setSelectedVoiceId(e.target.value)}
               required
@@ -288,11 +289,13 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
                 value: voice.id,
                 label: `${getVoiceLabel(voice)} (${voice.provider})`,
               }))}
+              placeholder="Select voice"
+              searchPlaceholder="Search voices..."
               fullWidth
             />
           )}
 
-          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1.5 text-xs text-muted-foreground">
             Choose the TTS provider and voice for audio generation
           </p>
         </div>
@@ -307,7 +310,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
 
         {/* Text Override */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Text to Speak
           </label>
           <input
@@ -315,9 +318,9 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
             value={textOverride}
             onChange={(e) => setTextOverride(e.target.value)}
             placeholder={target.defaultText}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-400"
+            className="w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm text-foreground shadow-sm transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:focus:border-brand-400"
           />
-          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1.5 text-xs text-muted-foreground">
             Override the text sent to TTS. Leave as default to use the saved content text for this item.
           </p>
         </div>
@@ -326,7 +329,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
         {selectedVoiceId && (
           <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
             <div className="flex items-start gap-3">
-              <FiVolume2 className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <Volume2 className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div className="text-sm text-blue-800 dark:text-blue-300">
                 <p className="font-medium">
                   {selectedVoice ? getVoiceLabel(selectedVoice) : "Selected voice"}
@@ -341,21 +344,21 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-foreground hover:text-foreground disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isLoading || !selectedVoiceId || filteredVoices.length === 0}
-            className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900"
+            className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900"
           >
-            <FiVolume2 className="h-4 w-4" />
+            <Volume2 className="h-4 w-4" />
             {isLoading ? "Regenerating..." : "Regenerate Audio"}
           </button>
         </div>
@@ -365,7 +368,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
       {step === "polling" && (
         <div className="flex flex-col items-center justify-center gap-4 py-10">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-200 border-t-brand-600 dark:border-gray-700 dark:border-t-brand-400" />
-          <p className="text-sm text-gray-600 dark:text-gray-300">
+          <p className="text-sm text-muted-foreground">
             Generating audio{status ? ` (${status})` : ""}...
           </p>
           {jobError && (
@@ -376,13 +379,13 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
 
       {step === "preview" && (
         <div className="space-y-6">
-          <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800/60">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          <div className="rounded-lg bg-muted/50 p-4">
+            <p className="text-sm font-medium text-foreground mb-3">
               Preview: &ldquo;{job?.text_to_speak ?? target.displayText}&rdquo;
             </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Current (live)
                 </p>
                 <InlineAudioPlayer src={target.currentAudioUrl} size="md" />
@@ -395,38 +398,38 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
               </div>
             </div>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-muted-foreground">
             Play both and compare before deciding. Accept to publish the new take,
             regenerate again to try a different voice or text, or discard to leave the
             current live audio untouched.
           </p>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
             <button
               type="button"
               onClick={handleDiscard}
               disabled={isAccepting}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground hover:text-foreground disabled:opacity-50"
             >
-              <FiX className="h-4 w-4" />
+              <X className="h-4 w-4" />
               Discard
             </button>
             <button
               type="button"
               onClick={handleRegenerateAgain}
               disabled={isAccepting}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
             >
-              <FiRefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4" />
               Regenerate Again
             </button>
             <button
               type="button"
               onClick={handleAccept}
               disabled={isAccepting || !audioUrl}
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900"
             >
-              <FiCheck className="h-4 w-4" />
+              <Check className="h-4 w-4" />
               {isAccepting ? "Accepting..." : "Accept"}
             </button>
           </div>

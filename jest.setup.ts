@@ -3,6 +3,17 @@
  */
 
 import '@testing-library/jest-dom';
+
+// jsdom lacks the pointer-capture and scrolling APIs Radix Select/Popover
+// call when opening a menu; stub them so the real components can be driven
+// in tests.
+if (typeof Element !== 'undefined') {
+  const proto = Element.prototype as unknown as Record<string, unknown>;
+  if (!proto.hasPointerCapture) proto.hasPointerCapture = () => false;
+  if (!proto.setPointerCapture) proto.setPointerCapture = () => {};
+  if (!proto.releasePointerCapture) proto.releasePointerCapture = () => {};
+  if (!proto.scrollIntoView) proto.scrollIntoView = () => {};
+}
 import type { ReactNode } from 'react';
 
 // Mock Next.js router

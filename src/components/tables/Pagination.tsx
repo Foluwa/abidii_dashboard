@@ -49,12 +49,12 @@ const Pagination: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div className={`flex items-center gap-2 ${className}`.trim()}>
+    <nav aria-label="Pagination" className={`flex items-center gap-1.5 ${className}`.trim()}>
       <button
         type="button"
         onClick={() => goToPage(safeCurrentPage - 1)}
         disabled={safeCurrentPage === 1}
-        className="flex h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-700 shadow-theme-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+        className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         Previous
       </button>
@@ -62,7 +62,7 @@ const Pagination: React.FC<PaginationProps> = ({
         {pageItems.map((item, index) => {
           if (item === "ellipsis") {
             return (
-              <span key={`ellipsis-${index}`} className="px-2 text-sm text-gray-500 dark:text-gray-400">
+              <span key={`ellipsis-${index}`} className="px-2 text-sm text-muted-foreground">
                 ...
               </span>
             );
@@ -75,10 +75,10 @@ const Pagination: React.FC<PaginationProps> = ({
               type="button"
               onClick={() => goToPage(page)}
               aria-current={safeCurrentPage === page ? "page" : undefined}
-              className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium ${
+              className={`inline-flex size-8 items-center justify-center rounded-md text-sm font-medium tabular-nums transition-colors ${
                 safeCurrentPage === page
-                  ? "bg-brand-600 text-white"
-                  : "text-gray-700 hover:bg-blue-500/[0.08] hover:text-brand-500 dark:text-gray-300 dark:hover:text-brand-500"
+                  ? "border border-input bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               }`}
             >
               {page}
@@ -90,11 +90,11 @@ const Pagination: React.FC<PaginationProps> = ({
         type="button"
         onClick={() => goToPage(safeCurrentPage + 1)}
         disabled={safeCurrentPage === safeTotalPages}
-        className="flex h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-700 shadow-theme-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+        className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         Next
       </button>
-    </div>
+    </nav>
   );
 };
 

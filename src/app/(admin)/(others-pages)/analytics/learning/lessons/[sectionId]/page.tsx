@@ -15,6 +15,7 @@ import {
   useLearningAnalyticsOverview,
 } from '@/hooks/useApi';
 import { formatCount, formatDurationMs, formatRate } from '@/lib/formatAnalytics';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 
 type DatePreset = '7' | '30' | '90' | 'all';
 
@@ -66,23 +67,23 @@ export default function LessonAnalyticsDetailPage() {
           </Link>
           <PageBreadCrumb pageTitle={sectionMeta?.section_title ?? 'Lesson Analytics'} />
           {sectionMeta?.course_title && (
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{sectionMeta.course_title}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{sectionMeta.course_title}</p>
           )}
         </div>
         <div className="flex items-center gap-3">
-          <select
+          <StyledSelect
             value={preset}
             onChange={(e) => setPreset(e.target.value as DatePreset)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-          >
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 90 days</option>
-            <option value="all">All time</option>
-          </select>
+            options={[
+              { value: '7', label: 'Last 7 days' },
+              { value: '30', label: 'Last 30 days' },
+              { value: '90', label: 'Last 90 days' },
+              { value: 'all', label: 'All time' },
+            ]}
+          />
           <button
             onClick={() => refresh()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             Refresh Data
           </button>
@@ -138,26 +139,26 @@ export default function LessonAnalyticsDetailPage() {
             />
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Drop-off by Step</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          <div className="bg-card border border-border rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-1">Drop-off by Step</h3>
+            <p className="text-sm text-muted-foreground mb-4">
               Where learners stop without completing the lesson.
             </p>
             <DropoffPanel rows={summary?.drop_off ?? []} />
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Exercise Accuracy</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          <div className="bg-card border border-border rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-1">Exercise Accuracy</h3>
+            <p className="text-sm text-muted-foreground mb-4">
               First-attempt vs. eventual accuracy per exercise, in lesson order.
             </p>
             <ExerciseAccuracyTable rows={summary?.accuracy ?? []} />
           </div>
 
           {versions && versions.length > 1 && (
-            <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Content Versions</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <div className="bg-card border border-border rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-1">Content Versions</h3>
+              <p className="text-sm text-muted-foreground mb-4">
                 This lesson&apos;s content has changed during the selected period. Numbers are shown side by side -
                 differences may reflect cohort or date effects, not just the content change itself.
               </p>

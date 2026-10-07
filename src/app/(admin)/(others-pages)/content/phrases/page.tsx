@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useLanguages } from "@/hooks/useApi";
+import { useAdminLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import {
   ContentPageHeader,
@@ -22,7 +22,7 @@ import { RegenerateAudioModal } from "@/components/modals/RegenerateAudioModal";
 import { scheduleQueuedAudioRefresh } from "@/lib/audioRegeneration";
 import { GoogleSheetsBulkImport } from "@/components/admin/GoogleSheetsBulkImport";
 import Pagination from "@/components/tables/Pagination";
-import { FiGlobe, FiBarChart2, FiVolume2, FiCheckCircle, FiGitMerge, FiLock } from "react-icons/fi";
+import { ChartColumn, CircleCheck, GitMerge, Globe, Lock, Volume2 } from "lucide-react";
 
 interface Phrase {
   id: string;
@@ -250,8 +250,8 @@ function renderAlignmentJobBadge(phrase: Phrase) {
     processing: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
     completed: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
     failed: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200",
-    cancelled: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-    superseded: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    cancelled: "bg-muted text-foreground",
+    superseded: "bg-muted text-foreground",
   };
 
   const label = phrase.alignment_job_status.charAt(0).toUpperCase() + phrase.alignment_job_status.slice(1);
@@ -329,7 +329,7 @@ function formatErrorMessage(error: any, fallbackMessage: string): string {
 }
 
 export default function PhrasesPage() {
-  const { languages } = useLanguages();
+  const { languages } = useAdminLanguages();
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
   const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [loading, setLoading] = useState(false);
@@ -1281,10 +1281,10 @@ export default function PhrasesPage() {
       {error && <Toast type="error" message={error} onClose={() => setError("")} />}
 
       <ContentStatsGrid cols={4}>
-        <ContentStatsCard label="Total" value={stats.total} icon={FiBarChart2} />
-        <ContentStatsCard label="Aligned" value={stats.aligned} icon={FiCheckCircle} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
-        <ContentStatsCard label="Needs Alignment" value={stats.needsAlignment} icon={FiGitMerge} iconBgClass="bg-amber-100 dark:bg-amber-900/20" iconTextClass="text-amber-600 dark:text-amber-400" />
-        <ContentStatsCard label="With Audio" value={stats.withAudio} icon={FiVolume2} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+        <ContentStatsCard label="Total" value={stats.total} icon={ChartColumn} />
+        <ContentStatsCard label="Aligned" value={stats.aligned} icon={CircleCheck} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
+        <ContentStatsCard label="Needs Alignment" value={stats.needsAlignment} icon={GitMerge} iconBgClass="bg-amber-100 dark:bg-amber-900/20" iconTextClass="text-amber-600 dark:text-amber-400" />
+        <ContentStatsCard label="With Audio" value={stats.withAudio} icon={Volume2} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
       </ContentStatsGrid>
 
       {/* Bulk Import from Google Sheets (has built-in accordion) */}
@@ -1320,9 +1320,9 @@ export default function PhrasesPage() {
         {/* Primary Filters Row */}
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[200px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               <div className="flex items-center gap-1.5">
-                <FiGlobe className="h-3.5 w-3.5" />
+                <Globe className="h-3.5 w-3.5" />
                 Language
               </div>
             </label>
@@ -1341,7 +1341,7 @@ export default function PhrasesPage() {
           </div>
 
           <div className="flex-1 min-w-[240px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Search
             </label>
             <input
@@ -1352,15 +1352,16 @@ export default function PhrasesPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+              className="block w-full rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
 
           <div className="min-w-[140px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Per Page
             </label>
             <StyledSelect
+                aria-label="Per Page"
               value={limit}
               onChange={(e) => {
                 setLimit(Number(e.target.value));
@@ -1381,7 +1382,7 @@ export default function PhrasesPage() {
 
         {/* Advanced Filters Panel */}
         {showAdvancedFilters && (
-          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+          <div className="mt-5 border-t border-border pt-5">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <StyledSelect
                 label="Alignment Filter"
@@ -1408,7 +1409,7 @@ export default function PhrasesPage() {
             disabled: isBulkRegenerating || isLoadingVoices,
             loading: isBulkRegenerating || isLoadingVoices,
             variant: 'primary',
-            icon: <FiVolume2 className="h-4 w-4" />,
+            icon: <Volume2 className="h-4 w-4" />,
           },
         ]}
       />
@@ -1416,17 +1417,17 @@ export default function PhrasesPage() {
       {/* Phrases Table - Desktop Only */}
       {selectedLanguage && (
         <>
-        <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="hidden lg:block bg-card rounded-lg shadow">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
           ) : phrases.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400">No phrases found for this language</p>
+              <p className="text-muted-foreground">No phrases found for this language</p>
               <button
                 onClick={openCreateModal}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
               >
                 Add First Phrase
               </button>
@@ -1435,78 +1436,78 @@ export default function PhrasesPage() {
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
+                  <thead className="border-b">
                     <tr>
-                      <th className="px-6 py-3 text-left">
+                      <th className="px-3 py-2.5 text-left">
                         <input
                           type="checkbox"
                           checked={allVisiblePhrasesSelected}
                           onChange={toggleSelectAllVisiblePhrases}
-                          className="h-4 w-4 rounded border-gray-300 text-brand-600"
+                          className="h-4 w-4 rounded border-input text-brand-600"
                           aria-label="Select all visible phrases"
                         />
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                         Phrase
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                         Translation
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                         Category
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                         Difficulty
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                         Alignment
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                         Audio
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  <tbody className="divide-y divide-border">
                     {phrases.map((phrase) => (
                       <tr key={phrase.id}>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-2.5">
                           <input
                             type="checkbox"
                             checked={selectedPhrases.includes(phrase.id)}
                             disabled={isRegenerationBlocked(phrase)}
                             onChange={() => togglePhraseSelection(phrase.id)}
-                            className="h-4 w-4 rounded border-gray-300 text-brand-600 disabled:opacity-40"
+                            className="h-4 w-4 rounded border-input text-brand-600 disabled:opacity-40"
                             aria-label={`Select phrase ${phrase.phrase}`}
                           />
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        <td className="px-3 py-2.5">
+                          <div className="text-sm font-medium text-foreground">
                             {phrase.phrase}
                           </div>
                           {phrase.romanization && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                            <div className="text-xs text-muted-foreground">
                               {phrase.romanization}
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                        <td className="px-3 py-2.5 text-sm text-foreground">
                           {phrase.translation}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                        <td className="px-3 py-2.5 text-sm text-foreground">
                           {phrase.category || "-"}
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                        <td className="px-3 py-2.5">
+                          <span className="text-sm text-foreground">
                             Level {phrase.difficulty_level || 1}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-2.5">
                           <span
                             className={`px-2 py-1 text-xs rounded-full ${
                               phrase.is_published
@@ -1522,19 +1523,19 @@ export default function PhrasesPage() {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-2.5">
                           <div className="flex flex-col items-start gap-2">
                             {renderPhraseAlignmentBadge(phrase)}
                             {renderAlignmentJobBadge(phrase)}
                             {!phrase.alignment_status && !phrase.alignment_job_status && (
-                              <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
+                              <span className="text-sm text-muted-foreground">-</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-2.5">
                           <InlineAudioPlayer src={phrase.audio_url} />
                         </td>
-                        <td className="px-6 py-4 text-right space-x-2">
+                        <td className="px-3 py-2.5 text-right space-x-2">
                           <button
                             onClick={() => handleRegenerateAudio(phrase)}
                             disabled={isRegenerationBlocked(phrase)}
@@ -1542,7 +1543,7 @@ export default function PhrasesPage() {
                             title={regenerateAudioTitle(phrase)}
                             aria-label={regenerateAudioTitle(phrase)}
                           >
-                            {phrase.human_recorded ? <FiLock className="w-4 h-4" /> : <FiVolume2 className="w-4 h-4" />}
+                            {phrase.human_recorded ? <Lock className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                           </button>
                           <button
                             onClick={() => openEditModal(phrase)}
@@ -1570,15 +1571,15 @@ export default function PhrasesPage() {
         {/* Mobile Grid View */}
         <div className="lg:hidden">
           {loading ? (
-            <div className="flex items-center justify-center h-64 bg-white dark:bg-gray-800 rounded-lg shadow">
+            <div className="flex items-center justify-center h-64 bg-card rounded-lg shadow">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
           ) : phrases.length === 0 ? (
-            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
-              <p className="text-gray-500 dark:text-gray-400">No phrases found for this language</p>
+            <div className="text-center py-12 bg-card rounded-lg shadow">
+              <p className="text-muted-foreground">No phrases found for this language</p>
               <button
                 onClick={openCreateModal}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
               >
                 Add First Phrase
               </button>
@@ -1586,39 +1587,39 @@ export default function PhrasesPage() {
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {phrases.map((phrase) => (
-                <div key={phrase.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                <div key={phrase.id} className="bg-card rounded-lg shadow p-4">
                   <div className="mb-3 flex items-start justify-between gap-3">
                     <input
                       type="checkbox"
                       checked={selectedPhrases.includes(phrase.id)}
                       disabled={isRegenerationBlocked(phrase)}
                       onChange={() => togglePhraseSelection(phrase.id)}
-                      className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-600 disabled:opacity-40"
+                      className="mt-1 h-4 w-4 rounded border-input text-brand-600 disabled:opacity-40"
                       aria-label={`Select phrase ${phrase.phrase}`}
                     />
                   </div>
                   {/* Phrase */}
                   <div className="mb-3">
-                    <div className="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                    <div className="text-base font-semibold text-foreground mb-1">
                       {phrase.phrase}
                     </div>
                     {phrase.romanization && (
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                      <div className="text-sm text-muted-foreground">
                         {phrase.romanization}
                       </div>
                     )}
                   </div>
                   <div className="mb-3">
-                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                    <div className="text-xs font-medium text-muted-foreground uppercase mb-1">
                       Translation
                     </div>
-                    <div className="text-sm text-gray-700 dark:text-gray-300">
+                    <div className="text-sm text-foreground">
                       {phrase.translation}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mb-3">
                     {phrase.category && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground">
                         {phrase.category}
                       </span>
                     )}
@@ -1642,12 +1643,12 @@ export default function PhrasesPage() {
                         renderRegenerationBadge(phrase.last_regeneration_status, phrase.last_regeneration_error)}
                       {phrase.alignment_job_status && renderAlignmentJobBadge(phrase)}
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Audio:</span>
+                        <span className="text-xs font-medium text-muted-foreground uppercase">Audio:</span>
                         <InlineAudioPlayer src={phrase.audio_url} />
                       </div>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
+                  <div className="flex items-center gap-2 border-t border-border pt-3">
                     <button
                       onClick={() => handleRegenerateAudio(phrase)}
                       disabled={isRegenerationBlocked(phrase)}
@@ -1655,7 +1656,7 @@ export default function PhrasesPage() {
                       title={regenerateAudioTitle(phrase)}
                       aria-label={regenerateAudioTitle(phrase)}
                     >
-                      {phrase.human_recorded ? <FiLock className="w-4 h-4" /> : <FiVolume2 className="w-4 h-4" />}
+                      {phrase.human_recorded ? <Lock className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                     </button>
                     <button
                       onClick={() => openEditModal(phrase)}
@@ -1675,8 +1676,8 @@ export default function PhrasesPage() {
             </div>
           )}
         </div>
-        <div className="mt-4 px-6 py-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-between">
-          <div className="text-sm text-gray-700 dark:text-gray-300">
+        <div className="mt-4 px-6 py-4 border border-border rounded-lg bg-card flex items-center justify-between">
+          <div className="text-sm text-foreground">
             Showing {total === 0 ? 0 : (page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} phrases
           </div>
           <div className="ml-auto">
@@ -1703,77 +1704,77 @@ export default function PhrasesPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Phrase *
                   </label>
                   <input
                     type="text"
                     value={formData.phrase}
                     onChange={(e) => setFormData({ ...formData, phrase: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                     required
                   />
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Translation *
                   </label>
                   <input
                     type="text"
                     value={formData.translation}
                     onChange={(e) => setFormData({ ...formData, translation: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                     required
                   />
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Literal Translation
                   </label>
                   <input
                     type="text"
                     value={formData.literal_translation}
                     onChange={(e) => setFormData({ ...formData, literal_translation: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                   />
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Audio URL
                   </label>
                   <input
                     type="url"
                     value={formData.audio_url}
                     onChange={(e) => setFormData({ ...formData, audio_url: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                     placeholder="https://cdn.example.com/audio/phrase.mp3"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Romanization
                   </label>
                   <input
                     type="text"
                     value={formData.romanization}
                     onChange={(e) => setFormData({ ...formData, romanization: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Category
                   </label>
                   <input
                     type="text"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                     placeholder="e.g., greeting, travel, food"
                   />
                 </div>
@@ -1792,26 +1793,26 @@ export default function PhrasesPage() {
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Usage Context
                   </label>
                   <textarea
                     value={formData.usage_context}
                     onChange={(e) => setFormData({ ...formData, usage_context: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                     rows={2}
                     placeholder="When and how to use this phrase"
                   />
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Cultural Notes
                   </label>
                   <textarea
                     value={formData.cultural_notes}
                     onChange={(e) => setFormData({ ...formData, cultural_notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                     rows={2}
                     placeholder="Cultural context or significance"
                   />
@@ -1823,20 +1824,20 @@ export default function PhrasesPage() {
                     id="is_published"
                     checked={formData.is_published}
                     onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-                    className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                    className="h-4 w-4 text-blue-600 rounded border-input"
                   />
-                  <label htmlFor="is_published" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="is_published" className="ml-2 text-sm text-foreground">
                     Published (visible to users)
                   </label>
                 </div>
               </div>
 
               {editingPhrase && (
-                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/30 p-4 space-y-4">
+                <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Phrase Alignment</h3>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      <h3 className="text-sm font-semibold text-foreground">Phrase Alignment</h3>
+                      <p className="text-xs text-muted-foreground mt-1">
                         Review the full phrase timing first, then refine words for karaoke-level playback.
                       </p>
                     </div>
@@ -1845,7 +1846,7 @@ export default function PhrasesPage() {
 
                   {(alignmentError || alignmentLoading) && (
                     alignmentLoading ? (
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Loading alignment...</div>
+                      <div className="text-sm text-muted-foreground">Loading alignment...</div>
                     ) : (
                       <Alert variant="error" title="Error" message={alignmentError} />
                     )
@@ -1855,7 +1856,7 @@ export default function PhrasesPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       {renderAlignmentJobBadge(editingPhrase)}
                       {editingPhrase.alignment_job_updated_at && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-xs text-muted-foreground">
                           Updated {new Date(editingPhrase.alignment_job_updated_at).toLocaleString()}
                         </div>
                       )}
@@ -1871,7 +1872,7 @@ export default function PhrasesPage() {
                   )}
 
                   {alignmentRecord && ((alignmentRecord.provider_used && alignmentRecord.provider_used.trim()) || (alignmentRecord.engine_used && alignmentRecord.engine_used.trim()) || alignmentRecord.confidence !== null) && (
-                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <div className="text-xs text-muted-foreground">
                       {[
                         [alignmentRecord.provider_used?.trim(), alignmentRecord.engine_used?.trim()].filter(Boolean).join(" / "),
                         alignmentRecord.confidence != null ? `confidence ${alignmentRecord.confidence.toFixed(2)}` : "",
@@ -1888,16 +1889,16 @@ export default function PhrasesPage() {
                   )}
 
                   {formData.audio_url ? (
-                    <AudioWaveform src={formData.audio_url} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3" />
+                    <AudioWaveform src={formData.audio_url} className="rounded-lg border border-border bg-card p-3" />
                   ) : (
-                    <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="rounded-lg border border-dashed border-input p-4 text-sm text-muted-foreground">
                       Add an audio URL to preview the phrase waveform and save timings.
                     </div>
                   )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         Segment Start (ms)
                       </label>
                       <input
@@ -1909,12 +1910,12 @@ export default function PhrasesPage() {
                           text: formData.phrase,
                           start_ms: Number(e.target.value || 0),
                         }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         Segment End (ms)
                       </label>
                       <input
@@ -1926,27 +1927,27 @@ export default function PhrasesPage() {
                           text: formData.phrase,
                           end_ms: Number(e.target.value || 0),
                         }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                       />
                     </div>
                   </div>
 
-                  <div className="rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2">
-                    <div className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+                  <div className="rounded-lg bg-card border border-border px-3 py-2">
+                    <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
                       Transcript
                     </div>
-                    <div className="text-sm text-gray-900 dark:text-white">{formData.phrase || "Phrase text will appear here"}</div>
+                    <div className="text-sm text-foreground">{formData.phrase || "Phrase text will appear here"}</div>
                   </div>
 
-                  <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-3">
+                  <div className="rounded-lg border border-border bg-card p-4 space-y-3">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">Optional Word Timings</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        <div className="text-sm font-medium text-foreground">Optional Word Timings</div>
+                        <div className="text-xs text-muted-foreground mt-1">
                           Add word-level timing only when you want a second pass after segment review.
                         </div>
                       </div>
-                      <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                      <label className="inline-flex items-center gap-2 text-sm text-foreground">
                         <input
                           type="checkbox"
                           checked={wordTimingsEnabled}
@@ -1957,14 +1958,14 @@ export default function PhrasesPage() {
                               syncWordsFromTranscript();
                             }
                           }}
-                          className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                          className="h-4 w-4 rounded border-input text-blue-600"
                         />
                         Enable word timings
                       </label>
                     </div>
 
                     {(wordTimingsEnabled || alignmentRecord?.word_timing_reliable || alignmentWords.length > 0) && (
-                      <div className="text-xs text-gray-600 dark:text-gray-400">
+                      <div className="text-xs text-muted-foreground">
                         {wordTimingsEnabled
                           ? alignmentConfidence >= DEFAULT_WORD_ALIGNMENT_CONFIDENCE
                             ? "Saving now will mark these word timings reliable."
@@ -1979,7 +1980,7 @@ export default function PhrasesPage() {
                       <>
                         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="block text-sm font-medium text-foreground mb-1">
                               Word Timing Confidence
                             </label>
                             <div className="flex items-center gap-3">
@@ -1992,11 +1993,11 @@ export default function PhrasesPage() {
                                 onChange={(e) => setAlignmentConfidence(Number(e.target.value))}
                                 className="w-full"
                               />
-                              <span className="min-w-12 text-sm font-medium text-gray-900 dark:text-white">
+                              <span className="min-w-12 text-sm font-medium text-foreground">
                                 {alignmentConfidence.toFixed(2)}
                               </span>
                             </div>
-                            <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                            <div className="mt-1 text-xs text-muted-foreground">
                               {alignmentConfidence >= DEFAULT_WORD_ALIGNMENT_CONFIDENCE
                                 ? "Reliable threshold met for word-level playback helpers."
                                 : "Below 0.85, word timings stay editable but are not marked reliable."}
@@ -2028,43 +2029,43 @@ export default function PhrasesPage() {
                           <button
                             type="button"
                             onClick={addAlignmentWord}
-                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            className="px-3 py-2 rounded-lg border border-input text-foreground hover:bg-accent"
                           >
                             Add Word
                           </button>
                           <button
                             type="button"
                             onClick={redistributeAlignmentWords}
-                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            className="px-3 py-2 rounded-lg border border-input text-foreground hover:bg-accent"
                           >
                             Redistribute Evenly
                           </button>
                         </div>
 
-                        <div className="text-xs text-gray-600 dark:text-gray-400">
+                        <div className="text-xs text-muted-foreground">
                           Use the waveform as the visual anchor, then nudge, expand, snap edges, or preview one word clip at a time.
                         </div>
 
                         <div className="space-y-3">
                           {alignmentWords.length === 0 ? (
-                            <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-sm text-gray-600 dark:text-gray-400">
+                            <div className="rounded-lg border border-dashed border-input p-3 text-sm text-muted-foreground">
                               No word timings yet. Use “Split From Transcript” to seed them from the phrase.
                             </div>
                           ) : alignmentWords.map((word, index) => (
-                            <div key={`${index}-${word.word}`} className="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 dark:border-gray-700 p-3 xl:grid-cols-[minmax(0,2fr)_120px_120px_minmax(0,320px)_auto] xl:items-end">
+                            <div key={`${index}-${word.word}`} className="grid grid-cols-1 gap-3 rounded-lg border border-border p-3 xl:grid-cols-[minmax(0,2fr)_120px_120px_minmax(0,320px)_auto] xl:items-end">
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-foreground mb-1">
                                   Word {index + 1}
                                 </label>
                                 <input
                                   type="text"
                                   value={word.word}
                                   onChange={(e) => updateAlignmentWord(index, "word", e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                                 />
                               </div>
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-foreground mb-1">
                                   Start (ms)
                                 </label>
                                 <input
@@ -2072,11 +2073,11 @@ export default function PhrasesPage() {
                                   min={0}
                                   value={word.start_ms}
                                   onChange={(e) => updateAlignmentWord(index, "start_ms", Number(e.target.value || 0))}
-                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                                 />
                               </div>
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-foreground mb-1">
                                   End (ms)
                                 </label>
                                 <input
@@ -2084,39 +2085,39 @@ export default function PhrasesPage() {
                                   min={0}
                                   value={word.end_ms}
                                   onChange={(e) => updateAlignmentWord(index, "end_ms", Number(e.target.value || 0))}
-                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                                 />
                               </div>
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-foreground mb-1">
                                   Snap Helpers
                                 </label>
                                 <div className="flex flex-wrap gap-2">
                                   <button
                                     type="button"
                                     onClick={() => shiftAlignmentWord(index, -wordSnapStepMs)}
-                                    className="px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    className="px-2.5 py-2 rounded-lg border border-input text-xs text-foreground hover:bg-accent"
                                   >
                                     -{wordSnapStepMs} ms
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => shiftAlignmentWord(index, wordSnapStepMs)}
-                                    className="px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    className="px-2.5 py-2 rounded-lg border border-input text-xs text-foreground hover:bg-accent"
                                   >
                                     Shift +
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => expandAlignmentWord(index, wordSnapStepMs, "left")}
-                                    className="px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    className="px-2.5 py-2 rounded-lg border border-input text-xs text-foreground hover:bg-accent"
                                   >
                                     Expand Left
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => expandAlignmentWord(index, wordSnapStepMs, "right")}
-                                    className="px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    className="px-2.5 py-2 rounded-lg border border-input text-xs text-foreground hover:bg-accent"
                                   >
                                     Expand Right
                                   </button>
@@ -2200,7 +2201,7 @@ export default function PhrasesPage() {
                       Approve
                     </button>
                     {alignmentRecord && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="text-xs text-muted-foreground">
                         Version {alignmentRecord.version} · Updated {new Date(alignmentRecord.updated_at).toLocaleString()}
                       </div>
                     )}
@@ -2213,13 +2214,13 @@ export default function PhrasesPage() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="px-4 py-2 border border-input text-foreground rounded-lg hover:bg-accent"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                 >
                   {editingPhrase ? "Update" : "Create"}
                 </button>
@@ -2241,22 +2242,20 @@ export default function PhrasesPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Provider *
             </label>
             {isLoadingVoices ? (
-              <div className="text-sm text-gray-500 dark:text-gray-400">Loading providers...</div>
+              <div className="text-sm text-muted-foreground">Loading providers...</div>
             ) : (
-              <select
+              <StyledSelect
                 value={bulkRegenerateProvider}
                 onChange={(e) => {
                   setBulkRegenerateProvider(e.target.value);
                   setBulkRegenerateVoiceId("");
                 }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-              >
-                <option value="">Select provider</option>
-                {Array.from(new Set(
+                placeholder="Select provider"
+                options={Array.from(new Set(
                   availableVoices
                     .filter((voice) => {
                       const selectedLanguageRecord = languages.find((lang: any) => lang.id === selectedLanguage);
@@ -2270,30 +2269,25 @@ export default function PhrasesPage() {
                     .filter(Boolean)
                 ))
                   .sort((a, b) => voiceProviderPriority(a) - voiceProviderPriority(b) || a.localeCompare(b))
-                  .map((provider) => (
-                    <option key={provider} value={provider}>
-                      {provider}
-                    </option>
-                  ))}
-              </select>
+                  .map((provider) => ({ value: provider, label: provider }))}
+                fullWidth
+              />
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Voice *
             </label>
             {isLoadingVoices ? (
-              <div className="text-sm text-gray-500 dark:text-gray-400">Loading voices...</div>
+              <div className="text-sm text-muted-foreground">Loading voices...</div>
             ) : (
-              <select
+              <StyledSelect
                 value={bulkRegenerateVoiceId}
                 onChange={(e) => setBulkRegenerateVoiceId(e.target.value)}
                 disabled={!bulkRegenerateProvider}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-              >
-                <option value="">{bulkRegenerateProvider ? "Select voice" : "Select provider first"}</option>
-                {availableVoices
+                placeholder={bulkRegenerateProvider ? "Select voice" : "Select provider first"}
+                options={availableVoices
                   .filter((voice) => {
                     const selectedLanguageRecord = languages.find((lang: any) => lang.id === selectedLanguage);
                     const voicePrefix = mapIso6393ToVoicePrefix(selectedLanguageRecord?.iso_639_3);
@@ -2303,20 +2297,19 @@ export default function PhrasesPage() {
                       && (voice.language_code === voicePrefix || voice.language_code.startsWith(`${voicePrefix}-`))
                     );
                   })
-                  .map((voice) => (
-                    <option key={voice.id} value={voice.id}>
-                      {voice.display_name || voice.voice_name} ({voice.provider})
-                      {voice.gender ? ` - ${voice.gender}` : ""}
-                    </option>
-                  ))}
-              </select>
+                  .map((voice) => ({
+                    value: voice.id,
+                    label: `${voice.display_name || voice.voice_name} (${voice.provider})${voice.gender ? ` - ${voice.gender}` : ""}`,
+                  }))}
+                fullWidth
+              />
             )}
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-muted-foreground">
               Provider and voice are required for bulk regeneration.
             </p>
           </div>
 
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             This will queue fresh TTS generation jobs for the selected phrases. Successful jobs will then trigger auto-alignment in the background.
           </p>
 
@@ -2325,7 +2318,7 @@ export default function PhrasesPage() {
               type="button"
               onClick={confirmBulkRegenerateAudio}
               disabled={isBulkRegenerating || isLoadingVoices || !bulkRegenerateProvider || !bulkRegenerateVoiceId}
-              className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 text-sm font-semibold text-primary-foreground bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isBulkRegenerating ? "Regenerating..." : "Regenerate"}
             </button>
@@ -2333,7 +2326,7 @@ export default function PhrasesPage() {
               type="button"
               onClick={() => setShowBulkRegenerateConfirm(false)}
               disabled={isBulkRegenerating}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-medium text-foreground bg-muted rounded-lg hover:bg-gray-200 disabled:opacity-50"
             >
               Cancel
             </button>

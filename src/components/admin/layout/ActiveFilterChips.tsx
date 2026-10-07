@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { FiX } from 'react-icons/fi';
+import { X } from "lucide-react";
 
 interface FilterChip {
   label: string;
@@ -19,8 +19,8 @@ export function ActiveFilterChips({ filters }: ActiveFilterChipsProps) {
   if (filters.length === 0) return null;
 
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4 dark:border-white/[0.05]">
-      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Active:</span>
+    <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+      <span className="text-xs font-medium text-muted-foreground">Active:</span>
       {filters.map((filter, idx) => (
         <span
           key={idx}
@@ -32,7 +32,7 @@ export function ActiveFilterChips({ filters }: ActiveFilterChipsProps) {
             className="hover:text-brand-900"
             aria-label={`Clear filter ${filter.label}`}
           >
-            <FiX className="h-3 w-3" />
+            <X className="h-3 w-3" />
           </button>
         </span>
       ))}

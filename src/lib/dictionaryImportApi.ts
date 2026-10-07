@@ -52,7 +52,7 @@ export async function listDictionaryImportBatches(params?: { limit?: number; off
   const res = await apiClient.get<DictionaryImportBatchListItem[]>(
     `/api/v1/admin/dictionary-import/batches${suffix}`
   );
-  return res.data;
+  return Array.isArray(res.data) ? res.data : [];
 }
 
 export async function getDictionaryImportBatch(batchId: string) {

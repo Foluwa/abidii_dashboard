@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { FiExternalLink, FiFileText, FiImage, FiPause, FiPlay, FiVideo, FiVolume2 } from 'react-icons/fi';
+import { ExternalLink, FileText, Image, Pause as PauseIcon, Play as PlayIcon, Video as VideoIcon, Volume2 } from "lucide-react";
 
 type MediaKind = 'image' | 'audio' | 'video' | 'file';
 
@@ -81,17 +81,17 @@ export default function MediaLinkPreview({
 
   const mediaBadge =
     resolvedKind === 'image' ? (
-      <FiImage className="h-4 w-4" aria-hidden="true" />
+      <Image className="h-4 w-4" aria-hidden="true" />
     ) : resolvedKind === 'audio' ? (
-      <FiVolume2 className="h-4 w-4" aria-hidden="true" />
+      <Volume2 className="h-4 w-4" aria-hidden="true" />
     ) : resolvedKind === 'video' ? (
-      <FiVideo className="h-4 w-4" aria-hidden="true" />
+      <VideoIcon className="h-4 w-4" aria-hidden="true" />
     ) : (
-      <FiFileText className="h-4 w-4" aria-hidden="true" />
+      <FileText className="h-4 w-4" aria-hidden="true" />
     );
 
   return (
-    <div className="group rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
+    <div className="group rounded-lg border border-border bg-muted/50 p-3">
       <div className="flex items-start gap-3">
         {resolvedKind === 'image' ? (
           <div className={`relative ${previewWidthClass} flex-shrink-0`}>
@@ -123,15 +123,15 @@ export default function MediaLinkPreview({
             aria-label={label || 'Video preview'}
           />
         ) : resolvedKind === 'audio' ? (
-          <div className="flex min-w-[12rem] flex-shrink-0 items-center gap-2 rounded-lg border border-gray-200 bg-white px-2 py-2 dark:border-gray-700 dark:bg-gray-900">
+          <div className="flex min-w-[12rem] flex-shrink-0 items-center gap-2 rounded-lg border border-border bg-card px-2 py-2">
             <button
               type="button"
               onClick={() => void toggleAudio()}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-300 bg-white text-brand-700 hover:bg-brand-50 dark:border-brand-800 dark:bg-gray-950 dark:text-brand-300 dark:hover:bg-brand-950/30"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-300 bg-background text-brand-700 hover:bg-brand-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
               aria-label={isPlaying ? 'Pause audio' : 'Play audio'}
               title={isPlaying ? 'Pause audio' : 'Play audio'}
             >
-              {isPlaying ? <FiPause className="h-4 w-4" aria-hidden="true" /> : <FiPlay className="h-4 w-4" aria-hidden="true" />}
+              {isPlaying ? <PauseIcon className="h-4 w-4" aria-hidden="true" /> : <PlayIcon className="h-4 w-4" aria-hidden="true" />}
             </button>
             <audio
               ref={audioRef}
@@ -143,16 +143,16 @@ export default function MediaLinkPreview({
             />
           </div>
         ) : (
-          <div className={`${previewHeightClass} ${previewWidthClass} flex flex-shrink-0 items-center justify-center rounded-lg border border-dashed border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400`}>
-            <FiFileText className="h-5 w-5" aria-hidden="true" />
+          <div className={`${previewHeightClass} ${previewWidthClass} flex flex-shrink-0 items-center justify-center rounded-lg border border-dashed border-input text-muted-foreground`}>
+            <FileText className="h-5 w-5" aria-hidden="true" />
           </div>
         )}
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              {label ? <div className="truncate text-sm font-medium text-gray-900 dark:text-white">{label}</div> : null}
-              <div className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
+              {label ? <div className="truncate text-sm font-medium text-foreground">{label}</div> : null}
+              <div className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 {mediaBadge}
                 <span>{resolvedKind}</span>
               </div>
@@ -163,9 +163,9 @@ export default function MediaLinkPreview({
               rel="noreferrer"
               title={url}
               aria-label={label ? `Open ${label} in a new tab` : `Open ${resolvedKind} in a new tab`}
-              className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+              className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-input bg-card text-foreground hover:bg-muted/50"
             >
-              <FiExternalLink className="h-4 w-4" aria-hidden="true" />
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </a>
           </div>
         </div>

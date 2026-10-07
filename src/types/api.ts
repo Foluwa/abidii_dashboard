@@ -194,6 +194,13 @@ export interface UserDetail extends UserListItem {
   global_alltime_rank?: number | null;
   language_alltime_rank?: number | null;
   rank_language_name?: string | null;
+  // Raw users-row columns returned by GET /admin/users/{id} (SELECT u.*).
+  username?: string | null;
+  email_verified?: boolean | null;
+  timezone?: string | null;
+  native_language_code?: string | null;
+  push_enabled?: boolean | null;
+  experiment_cohort?: string | null;
   languages?: Array<{
     language_id: string;
     language_name: string;

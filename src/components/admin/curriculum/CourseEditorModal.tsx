@@ -85,7 +85,7 @@ export function CourseEditorModal({
         {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
 
         <div>
-          <label htmlFor="course-editor-key" className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+          <label htmlFor="course-editor-key" className="mb-1 block text-xs font-medium text-muted-foreground">
             Course key
           </label>
           <input
@@ -95,15 +95,15 @@ export function CourseEditorModal({
               setDraft((current) => ({ ...current, course_key: event.target.value }))
             }
             placeholder="abidii_yoruba_v2"
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
           />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-xs text-muted-foreground">
             This becomes the public curriculum key used by dashboard and mobile routes.
           </p>
         </div>
 
         <div>
-          <label htmlFor="course-editor-title" className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+          <label htmlFor="course-editor-title" className="mb-1 block text-xs font-medium text-muted-foreground">
             Title
           </label>
           <input
@@ -113,12 +113,12 @@ export function CourseEditorModal({
               setDraft((current) => ({ ...current, title: event.target.value }))
             }
             placeholder="Abidii Yoruba v2"
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
           />
         </div>
 
         <div>
-          <label htmlFor="course-editor-language" className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+          <label htmlFor="course-editor-language" className="mb-1 block text-xs font-medium text-muted-foreground">
             Target language
           </label>
           <StyledSelect
@@ -134,7 +134,7 @@ export function CourseEditorModal({
         </div>
 
         <div>
-          <label htmlFor="course-editor-description" className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+          <label htmlFor="course-editor-description" className="mb-1 block text-xs font-medium text-muted-foreground">
             Description
           </label>
           <textarea
@@ -145,23 +145,23 @@ export function CourseEditorModal({
               setDraft((current) => ({ ...current, description: event.target.value }))
             }
             placeholder="Short course description for dashboard context."
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none"
           />
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
+        <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
           <button
             type="button"
             onClick={onClose}
             disabled={!!isSaving}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+            className="rounded-lg border border-input bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitDisabled}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSaving ? 'Saving…' : mode === 'create' ? 'Create Course' : 'Save Course'}
           </button>
