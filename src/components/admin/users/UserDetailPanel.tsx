@@ -443,7 +443,15 @@ export function UserDetailPanel({
           ].map(([label, value]) => (
             <div key={label}>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
-              <dd className="mt-0.5 text-sm text-foreground capitalize">{String(value)}</dd>
+              <dd
+                className={`mt-0.5 text-sm text-foreground ${
+                  // Capitalise enum-style values only; names, emails and
+                  // dates must show exactly as stored.
+                  ["Auth Provider", "Language Source", "Fluency"].includes(label) ? "capitalize" : ""
+                }`}
+              >
+                {String(value)}
+              </dd>
             </div>
           ))}
         </dl>

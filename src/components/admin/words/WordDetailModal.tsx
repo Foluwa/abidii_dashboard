@@ -17,6 +17,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { Eye, EyeOff, Loader, Pencil, Plus, RefreshCw, Save as SaveIcon, Trash2, Volume2, X } from "lucide-react";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 interface WordDetailModalProps {
   wordId: string;
@@ -289,7 +290,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
   if (isLoading || !wordDetail) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-card rounded-lg p-8">
+        <div className="bg-card rounded-lg p-8" role="status" aria-label="Loading word">
           <Loader className="animate-spin text-brand-600 w-8 h-8" />
         </div>
       </div>
@@ -300,7 +301,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-card rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogPanel className="bg-card rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClose={onClose} aria-label="Word details">
         {/* Header */}
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div className="flex-1">
@@ -959,7 +960,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
             Close
           </button>
         </div>
-      </div>
+      </DialogPanel>
     </div>
   );
 }

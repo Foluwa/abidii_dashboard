@@ -6,6 +6,7 @@ import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
 import { useToast } from "@/contexts/ToastContext";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 interface QuickPracticeItem {
   id?: string;
@@ -154,9 +155,9 @@ export default function QuickPracticePage() {
       {/* Edit Modal */}
       {showForm && editing && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg shadow-xl max-w-md w-full m-4">
+          <DialogPanel className="bg-card rounded-lg shadow-xl max-w-md w-full m-4" onClose={() => { setShowForm(false); setEditing(null); }} aria-labelledby="quick-practice-dialog-title">
             <div className="p-6 border-b border-border">
-              <h2 className="text-xl font-semibold text-foreground">{editing.item_id ? "Edit Item" : "Add Item"}</h2>
+              <h2 id="quick-practice-dialog-title" className="text-xl font-semibold text-foreground">{editing.item_id ? "Edit Item" : "Add Item"}</h2>
             </div>
             <div className="p-6 space-y-4">
               <div>
@@ -188,7 +189,7 @@ export default function QuickPracticePage() {
                 {isSaving ? "Saving..." : "Save"}
               </button>
             </div>
-          </div>
+          </DialogPanel>
         </div>
       )}
     </div>

@@ -9,6 +9,7 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { useToast } from "@/contexts/ToastContext";
 import { Lightbulb } from "lucide-react";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 interface ConfigItem {
   key: string;
@@ -420,8 +421,8 @@ function CreateConfigModal({ onClose, onSuccess }: { onClose: () => void; onSucc
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="bg-card rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold mb-4 text-foreground">Create New Configuration</h3>
+      <DialogPanel className="bg-card rounded-lg p-6 w-full max-w-md" onClose={onClose} aria-labelledby="create-config-dialog-title" onClick={(e) => e.stopPropagation()}>
+        <h3 id="create-config-dialog-title" className="text-lg font-semibold mb-4 text-foreground">Create New Configuration</h3>
         
         {error && <Alert variant="error" className="mb-4">{error}</Alert>}
 
@@ -529,7 +530,7 @@ function CreateConfigModal({ onClose, onSuccess }: { onClose: () => void; onSucc
             </button>
           </div>
         </form>
-      </div>
+      </DialogPanel>
     </div>
   );
 }

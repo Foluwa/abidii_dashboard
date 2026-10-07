@@ -10,6 +10,7 @@ import Alert from "@/components/ui/alert/Alert";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { Book, Globe, Music, Users } from "lucide-react";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 export default function LanguagesPage() {
   const { languages, isLoading, isError, refresh } = useAdminLanguages();
@@ -37,7 +38,7 @@ export default function LanguagesPage() {
   useEffect(() => {
     if (!showModal) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeModal();
+      if (event.key === "Escape" && !event.defaultPrevented) closeModal();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -373,13 +374,12 @@ export default function LanguagesPage() {
             if (e.target === e.currentTarget) closeModal();
           }}
         >
-          <div
-            role="dialog"
-            aria-modal="true"
+          <DialogPanel
+            aria-labelledby="language-dialog-title"
             className="bg-card rounded-lg shadow-xl max-w-md w-full m-4 max-h-[90vh] overflow-y-auto"
           >
             <div className="p-6 border-b border-border">
-              <h2 className="text-xl font-semibold text-foreground">
+              <h2 id="language-dialog-title" className="text-xl font-semibold text-foreground">
                 {editingLanguage ? "Edit Language" : "Add Language"}
               </h2>
             </div>
@@ -487,7 +487,7 @@ export default function LanguagesPage() {
                 </button>
               </div>
             </form>
-          </div>
+          </DialogPanel>
         </div>
       )}
 

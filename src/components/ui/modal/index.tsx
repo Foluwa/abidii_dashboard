@@ -1,9 +1,7 @@
 "use client";
 import React, { useRef, useEffect, useId } from "react";
 import { X } from "lucide-react";
-
-const FOCUSABLE =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+import { useDialogFocus } from "./useDialogFocus";
 
 interface ModalProps {
   isOpen: boolean;
@@ -29,41 +27,12 @@ export const Modal: React.FC<ModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
 
-  // Move focus into the dialog when it opens, keep Tab inside it, and give
-  // focus back to whatever opened it when it closes.
-  useEffect(() => {
-    if (!isOpen) return;
-    const opener = document.activeElement as HTMLElement | null;
-    const node = modalRef.current;
-    const first = node?.querySelector<HTMLElement>(FOCUSABLE);
-    (first ?? node)?.focus({ preventScroll: true });
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Tab" || !node) return;
-      const items = Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
-        (el) => el.offsetParent !== null || el === document.activeElement,
-      );
-      if (items.length === 0) return;
-      const firstEl = items[0];
-      const lastEl = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === firstEl) {
-        event.preventDefault();
-        lastEl.focus();
-      } else if (!event.shiftKey && document.activeElement === lastEl) {
-        event.preventDefault();
-        firstEl.focus();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      if (opener && document.contains(opener)) opener.focus({ preventScroll: true });
-    };
-  }, [isOpen]);
+  useDialogFocus(isOpen, modalRef);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      // A nested Radix menu that handled Escape marks it defaultPrevented.
+      if (event.key === "Escape" && !event.defaultPrevented) {
         onClose();
       }
     };

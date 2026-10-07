@@ -3,7 +3,9 @@
  * Reusable modal for forms and content display
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
+import { X } from 'lucide-react';
+import { useDialogFocus } from '@/components/ui/modal/useDialogFocus';
 
 interface ModalProps {
   isOpen: boolean;
@@ -24,10 +26,15 @@ export default function Modal({
   showCloseButton = true,
   closeOnOutsideClick = true,
 }: ModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useDialogFocus(isOpen, dialogRef);
+
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      // A nested Radix menu that handled Escape marks it defaultPrevented.
+      if (e.key === 'Escape' && isOpen && !e.defaultPrevented) {
         onClose();
       }
     };
@@ -63,29 +70,34 @@ export default function Modal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-gray-950/45 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
         onClick={closeOnOutsideClick ? onClose : undefined}
       />
 
       {/* Modal Container */}
       <div className="flex min-h-screen items-center justify-center p-4">
         <div
-          className={`relative flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-lg bg-card shadow-xl transition-all ${sizeClasses[size]}`}
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          tabIndex={-1}
+          className={`relative flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl outline-none transition-all ${sizeClasses[size]}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className="flex shrink-0 items-center justify-between border-b border-border p-6">
-            <h3 className="text-xl font-semibold text-foreground">
+            <h2 id={titleId} className="text-lg font-semibold text-foreground">
               {title}
-            </h3>
+            </h2>
             {showCloseButton && (
               <button
+                type="button"
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
+                aria-label="Close dialog"
+                className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground opacity-70 transition-opacity hover:bg-accent hover:opacity-100 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="size-4" />
               </button>
             )}
           </div>

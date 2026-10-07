@@ -20,6 +20,7 @@ import {
 } from '@/components/admin/layout';
 import { RegenerateAudioModal, RegenerateAudioTarget } from "@/components/modals/RegenerateAudioModal";
 import { ChartColumn, CircleCheck, Trash2, Volume2, VolumeX } from "lucide-react";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 interface Letter {
   id: string;
@@ -557,9 +558,9 @@ export default function LettersPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg shadow-xl max-w-md w-full m-4">
+          <DialogPanel className="bg-card rounded-lg shadow-xl max-w-md w-full m-4" onClose={closeModal} aria-labelledby="letter-dialog-title">
             <div className="p-6 border-b border-border">
-              <h2 className="text-xl font-semibold text-foreground">
+              <h2 id="letter-dialog-title" className="text-xl font-semibold text-foreground">
                 {editingLetter ? "Edit Letter" : "Add Letter"}
               </h2>
             </div>
@@ -667,7 +668,7 @@ export default function LettersPage() {
                 </button>
               </div>
             </form>
-          </div>
+          </DialogPanel>
         </div>
       )}
 

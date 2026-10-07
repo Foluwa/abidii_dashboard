@@ -27,6 +27,7 @@ import {
 } from "@/lib/user-learning-position";
 import { UserDetailsSheet } from "@/components/admin/users/UserDetailsSheet";
 import { Award, Eye, Globe, Mail, OctagonAlert, Smartphone, Trash2, UserCheck, UserX } from "lucide-react";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 type TabRole = "all" | UserRole;
 type ActionType = "deactivate" | "reactivate" | "delete" | "purge";
@@ -1076,8 +1077,8 @@ export default function UsersPage() {
       {/* Action Confirmation Modal */}
       {actionConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
+          <DialogPanel className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClose={() => setActionConfirm(null)} aria-labelledby="user-action-dialog-title">
+            <h3 id="user-action-dialog-title" className="text-lg font-semibold text-foreground mb-4">
               Confirm {actionConfirm.action.charAt(0).toUpperCase() + actionConfirm.action.slice(1)}
             </h3>
             <p className="text-sm text-muted-foreground mb-6">
@@ -1107,7 +1108,7 @@ export default function UsersPage() {
                 {actionLoading ? "Processing..." : `Yes, ${actionConfirm.action}`}
               </button>
             </div>
-          </div>
+          </DialogPanel>
         </div>
       )}
 

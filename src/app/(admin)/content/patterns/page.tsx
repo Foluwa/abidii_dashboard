@@ -14,6 +14,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import { ChevronDown, ChevronUp, Info, Pencil, Plus, Trash2 } from "lucide-react";
 import { Layers } from "lucide-react";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 const CATEGORIES = [
   { value: 'number_formation', label: 'Number Formation' },
@@ -357,9 +358,9 @@ export default function PatternsPage() {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-card rounded-xl shadow-xl">
+          <DialogPanel className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-card rounded-xl shadow-xl" onClose={() => setIsModalOpen(false)} aria-labelledby="pattern-dialog-title">
             <div className="sticky top-0 z-10 flex items-center justify-between p-4 bg-card border-b dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-foreground">
+              <h2 id="pattern-dialog-title" className="text-lg font-semibold text-foreground">
                 {editingPattern ? 'Edit Pattern' : 'Create Pattern'}
               </h2>
               <button
@@ -482,7 +483,7 @@ export default function PatternsPage() {
                 </button>
               </div>
             </form>
-          </div>
+          </DialogPanel>
         </div>
       )}
     </div>

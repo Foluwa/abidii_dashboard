@@ -9,6 +9,7 @@ import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import Pagination from "@/components/tables/Pagination";
 import { Mic, Pause, Play, Server } from "lucide-react";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 interface Voice {
   id: string;
@@ -376,9 +377,9 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <DialogPanel className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClose={closeModal} aria-labelledby="voice-dialog-title">
             <div className="p-6 border-b border-border">
-              <h2 className="text-xl font-semibold text-foreground">
+              <h2 id="voice-dialog-title" className="text-xl font-semibold text-foreground">
                 {editingVoice ? "Edit Voice" : "Add Voice"}
               </h2>
             </div>
@@ -513,7 +514,7 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
                 </button>
               </div>
             </form>
-          </div>
+          </DialogPanel>
         </div>
       )}
 

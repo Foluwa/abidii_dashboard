@@ -5,6 +5,7 @@ import { apiClient } from "@/lib/api";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
 import { TriangleAlert } from "lucide-react";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 export function TestingContent({ showHeader = true }: { showHeader?: boolean }) {
   const [telegramLoading, setTelegramLoading] = useState(false);
@@ -176,8 +177,8 @@ export function TestingContent({ showHeader = true }: { showHeader?: boolean }) 
       {/* Critical Alert Confirmation Modal */}
       {showCriticalConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="w-full max-w-md p-6 bg-card rounded-lg">
-            <h3 className="mb-4 text-lg font-semibold text-foreground">
+          <DialogPanel className="w-full max-w-md p-6 bg-card rounded-lg" onClose={() => setShowCriticalConfirm(false)} aria-labelledby="critical-alert-dialog-title">
+            <h3 id="critical-alert-dialog-title" className="mb-4 text-lg font-semibold text-foreground">
               Confirm Critical Alert Test
             </h3>
             <p className="mb-6 text-sm text-muted-foreground">
@@ -197,7 +198,7 @@ export function TestingContent({ showHeader = true }: { showHeader?: boolean }) 
                 Cancel
               </button>
             </div>
-          </div>
+          </DialogPanel>
         </div>
       )}
     </div>

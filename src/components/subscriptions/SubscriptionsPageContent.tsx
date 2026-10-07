@@ -16,6 +16,7 @@ import {
 } from "@/hooks/useApi";
 import { CircleCheck, CircleX, Clock, CreditCard, Smartphone, Wrench } from "lucide-react";
 import { Card, CardAction, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 type SubscriptionStatus = "active" | "trialing" | "past_due" | "canceled" | "expired" | "";
 type SubscriptionProvider = "apple" | "google" | "stripe" | "manual" | "";
@@ -434,10 +435,10 @@ export function SubscriptionsPageContent({
       {/* Create Modal */}
       {createOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-lg bg-card shadow-lg">
+          <DialogPanel className="w-full max-w-2xl rounded-lg bg-card shadow-lg" onClose={closeCreate} aria-labelledby="create-sub-dialog-title">
             <div className="px-6 py-4 border-b border-border flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Add Manual Subscription</h3>
+                <h3 id="create-sub-dialog-title" className="text-lg font-semibold text-foreground">Add Manual Subscription</h3>
                 <p className="text-sm text-muted-foreground">
                   Grant premium manually (no payment charge)
                 </p>
@@ -585,17 +586,17 @@ export function SubscriptionsPageContent({
                 {createSaving ? "Creating..." : "Create"}
               </Button>
             </div>
-          </div>
+          </DialogPanel>
         </div>
       )}
 
       {/* Edit Modal */}
       {editOpen && editSub && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-lg bg-card shadow-lg">
+          <DialogPanel className="w-full max-w-2xl rounded-lg bg-card shadow-lg" onClose={closeEdit} aria-labelledby="edit-sub-dialog-title">
             <div className="px-6 py-4 border-b border-border flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Edit Subscription</h3>
+                <h3 id="edit-sub-dialog-title" className="text-lg font-semibold text-foreground">Edit Subscription</h3>
                 <p className="text-sm text-muted-foreground">
                   {editSub.user_email || editSub.user_id}
                 </p>
@@ -690,7 +691,7 @@ export function SubscriptionsPageContent({
                 {editSaving ? "Saving..." : "Save"}
               </Button>
             </div>
-          </div>
+          </DialogPanel>
         </div>
       )}
 
