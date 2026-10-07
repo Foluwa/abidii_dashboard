@@ -73,7 +73,7 @@ export default function ConfirmationModal({
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow-xl transition-all">
+        <div className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-card shadow-xl transition-all">
           <div className="p-6">
             {/* Icon and Title */}
             <div className="flex items-center gap-4">
@@ -81,7 +81,7 @@ export default function ConfirmationModal({
                 {styles.icon}
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-foreground">
                   {title}
                 </h3>
               </div>
@@ -89,7 +89,7 @@ export default function ConfirmationModal({
 
             {/* Message */}
             <div className="mt-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 {message}
               </p>
             </div>
@@ -100,7 +100,7 @@ export default function ConfirmationModal({
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-input rounded-lg hover:bg-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
               >
                 {cancelLabel}
               </button>

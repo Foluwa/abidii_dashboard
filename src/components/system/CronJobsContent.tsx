@@ -125,7 +125,7 @@ export function CronJobsContent({ showHeader = true, isActive = true }: { showHe
         );
       default:
         return (
-          <span className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+          <span className="rounded bg-muted px-2 py-1 text-xs font-medium text-foreground">
             Unknown
           </span>
         );
@@ -152,97 +152,97 @@ export function CronJobsContent({ showHeader = true, isActive = true }: { showHe
       )}
 
       {loading ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-lg border border-border bg-card p-6">
           <div className="space-y-3">
             {Array.from({ length: 8 }, (_, idx) => (
-              <div key={idx} className="h-10 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+              <div key={idx} className="h-10 animate-pulse rounded bg-muted" />
             ))}
           </div>
         </div>
       ) : !data ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
           No cron data available.
         </div>
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Jobs</h3>
-              <p className="mt-2 text-3xl font-bold text-gray-800 dark:text-white">{data.total_jobs}</p>
+            <div className="rounded-lg bg-card p-6 shadow">
+              <h3 className="text-sm font-medium text-muted-foreground">Total Jobs</h3>
+              <p className="mt-2 text-3xl font-bold text-foreground">{data.total_jobs}</p>
             </div>
-            <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Enabled</h3>
+            <div className="rounded-lg bg-card p-6 shadow">
+              <h3 className="text-sm font-medium text-muted-foreground">Enabled</h3>
               <p className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">{data.enabled_jobs}</p>
             </div>
-            <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Disabled</h3>
-              <p className="mt-2 text-3xl font-bold text-gray-600 dark:text-gray-400">
+            <div className="rounded-lg bg-card p-6 shadow">
+              <h3 className="text-sm font-medium text-muted-foreground">Disabled</h3>
+              <p className="mt-2 text-3xl font-bold text-muted-foreground">
                 {Math.max(0, data.total_jobs - data.enabled_jobs)}
               </p>
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
-            <div className="border-b border-gray-200 p-6 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Scheduled Jobs</h3>
+          <div className="overflow-hidden rounded-lg bg-card shadow">
+            <div className="border-b border-border p-6">
+              <h3 className="text-lg font-semibold text-foreground">Scheduled Jobs</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead className="border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Job Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Schedule
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Next Run
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Last Run
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Last Status
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-border">
                   {jobs.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                      <td colSpan={6} className="px-3 py-10 text-center text-sm text-muted-foreground">
                         No scheduled jobs found.
                       </td>
                     </tr>
                   ) : (
                     jobs.map((job) => (
-                      <tr key={job.name} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="px-6 py-4">
+                      <tr key={job.name} className="hover:bg-accent">
+                        <td className="px-3 py-2.5">
                           <div>
-                            <div className="text-sm font-medium text-gray-800 dark:text-white">{job.name}</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">{job.description || "—"}</div>
+                            <div className="text-sm font-medium text-foreground">{job.name}</div>
+                            <div className="text-xs text-muted-foreground">{job.description || "—"}</div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                          <code className="rounded bg-gray-100 px-2 py-1 dark:bg-gray-700">{job.schedule}</code>
+                        <td className="px-3 py-2.5 text-sm text-muted-foreground">
+                          <code className="rounded bg-muted px-2 py-1">{job.schedule}</code>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-2.5">
                           {job.enabled ? (
                             <span className="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
                               Enabled
                             </span>
                           ) : (
-                            <span className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                            <span className="rounded bg-muted px-2 py-1 text-xs font-medium text-foreground">
                               Disabled
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{formatDate(job.next_run)}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{formatDate(job.last_run)}</td>
-                        <td className="px-6 py-4">{getStatusBadge(job.last_status)}</td>
+                        <td className="px-3 py-2.5 text-sm text-muted-foreground">{formatDate(job.next_run)}</td>
+                        <td className="px-3 py-2.5 text-sm text-muted-foreground">{formatDate(job.last_run)}</td>
+                        <td className="px-3 py-2.5">{getStatusBadge(job.last_status)}</td>
                       </tr>
                     ))
                   )}
@@ -251,50 +251,50 @@ export function CronJobsContent({ showHeader = true, isActive = true }: { showHe
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
-            <div className="border-b border-gray-200 p-6 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Recent Executions</h3>
+          <div className="overflow-hidden rounded-lg bg-card shadow">
+            <div className="border-b border-border p-6">
+              <h3 className="text-lg font-semibold text-foreground">Recent Executions</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead className="border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Job Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Started
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Completed
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Duration
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Error
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-border">
                   {recentRuns.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                      <td colSpan={6} className="px-3 py-10 text-center text-sm text-muted-foreground">
                         No recent executions found.
                       </td>
                     </tr>
                   ) : (
                     recentRuns.map((run, index) => (
-                      <tr key={`${run.job_name}-${run.started_at}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="px-6 py-4 text-sm font-medium text-gray-800 dark:text-white">{run.job_name}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{formatDate(run.started_at)}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{formatDate(run.completed_at)}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{formatDuration(run.duration_seconds)}</td>
-                        <td className="px-6 py-4">{getStatusBadge(run.status)}</td>
-                        <td className="max-w-md px-6 py-4 text-sm text-red-600 dark:text-red-400">
+                      <tr key={`${run.job_name}-${run.started_at}-${index}`} className="hover:bg-accent">
+                        <td className="px-3 py-2.5 text-sm font-medium text-foreground">{run.job_name}</td>
+                        <td className="px-3 py-2.5 text-sm text-muted-foreground">{formatDate(run.started_at)}</td>
+                        <td className="px-3 py-2.5 text-sm text-muted-foreground">{formatDate(run.completed_at)}</td>
+                        <td className="px-3 py-2.5 text-sm text-muted-foreground">{formatDuration(run.duration_seconds)}</td>
+                        <td className="px-3 py-2.5">{getStatusBadge(run.status)}</td>
+                        <td className="max-w-md px-3 py-2.5 text-sm text-red-600 dark:text-red-400">
                           {run.error_message ? <span className="block truncate">{run.error_message}</span> : "—"}
                         </td>
                       </tr>
@@ -305,7 +305,7 @@ export function CronJobsContent({ showHeader = true, isActive = true }: { showHe
             </div>
           </div>
 
-          <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-center text-sm text-muted-foreground">
             Auto-refreshing every minute
             {lastUpdatedAt ? ` • Last updated ${lastUpdatedAt.toLocaleTimeString()}` : ""}
           </div>

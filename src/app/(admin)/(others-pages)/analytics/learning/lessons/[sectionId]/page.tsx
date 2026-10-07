@@ -67,7 +67,7 @@ export default function LessonAnalyticsDetailPage() {
           </Link>
           <PageBreadCrumb pageTitle={sectionMeta?.section_title ?? 'Lesson Analytics'} />
           {sectionMeta?.course_title && (
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{sectionMeta.course_title}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{sectionMeta.course_title}</p>
           )}
         </div>
         <div className="flex items-center gap-3">
@@ -139,26 +139,26 @@ export default function LessonAnalyticsDetailPage() {
             />
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Drop-off by Step</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          <div className="bg-card border border-border rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-1">Drop-off by Step</h3>
+            <p className="text-sm text-muted-foreground mb-4">
               Where learners stop without completing the lesson.
             </p>
             <DropoffPanel rows={summary?.drop_off ?? []} />
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Exercise Accuracy</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          <div className="bg-card border border-border rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-1">Exercise Accuracy</h3>
+            <p className="text-sm text-muted-foreground mb-4">
               First-attempt vs. eventual accuracy per exercise, in lesson order.
             </p>
             <ExerciseAccuracyTable rows={summary?.accuracy ?? []} />
           </div>
 
           {versions && versions.length > 1 && (
-            <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Content Versions</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <div className="bg-card border border-border rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-1">Content Versions</h3>
+              <p className="text-sm text-muted-foreground mb-4">
                 This lesson&apos;s content has changed during the selected period. Numbers are shown side by side -
                 differences may reflect cohort or date effects, not just the content change itself.
               </p>

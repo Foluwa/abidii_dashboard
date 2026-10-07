@@ -32,9 +32,9 @@ const Button: React.FC<ButtonProps> = ({
   // Variant Classes
   const variantClasses = {
     primary:
-      "bg-brand-600 text-white dark:text-gray-900 shadow-sm hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:bg-brand-300 dark:focus-visible:ring-offset-gray-900",
+      "bg-brand-600 text-primary-foreground shadow-sm hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:bg-brand-300 dark:focus-visible:ring-offset-gray-900",
     outline:
-      "bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-700 dark:hover:bg-gray-700/50 dark:hover:text-gray-100 dark:focus-visible:ring-offset-gray-900",
+      "bg-card text-foreground ring-1 ring-inset ring-gray-300 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:ring-gray-700 dark:hover:text-gray-100 dark:focus-visible:ring-offset-gray-900",
   };
 
   return (

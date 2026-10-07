@@ -153,23 +153,23 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
             type="button"
             onClick={() => void handleCleanupOrphans()}
             disabled={isCleaningOrphans}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+            className="rounded-lg border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
           >
             {isCleaningOrphans ? 'Cleaning…' : 'Clean Stale Bindings'}
           </button>
           <Link
             href="/curriculum/lesson-blueprints"
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+            className="rounded-lg border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
           >
             View Blueprints
           </Link>
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-4 lg:grid-cols-4">
           <div className="lg:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Search</label>
             <input
               value={search}
               onChange={(event) => {
@@ -177,7 +177,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
                 setPage(1);
               }}
               placeholder="Blueprint key, file name, field path"
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+              className="block h-12 w-full rounded-lg border border-input bg-background px-4 text-sm text-foreground focus:border-brand-500 focus:outline-none"
             />
           </div>
 
@@ -216,7 +216,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
           <span>{total} asset{total === 1 ? '' : 's'} found</span>
           <span>{summary.image} images</span>
           <span>{summary.audio} audio</span>
@@ -225,7 +225,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
       </div>
 
       {isLoading ? (
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+        <div className="rounded-xl border border-dashed border-input bg-card px-6 py-16 text-center text-sm text-muted-foreground">
           Loading assets…
         </div>
       ) : isError ? (
@@ -233,7 +233,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
           Failed to load curriculum assets.
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+        <div className="rounded-xl border border-dashed border-input bg-card px-6 py-16 text-center text-sm text-muted-foreground">
           No uploaded lesson assets match the current filters.
         </div>
       ) : (
@@ -243,7 +243,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
             return (
               <article
                 key={`${item.blueprint_id}:${item.field_path}:${item.binding.storage_key}`}
-                className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+                className="rounded-xl border border-border bg-card p-3 shadow-sm"
               >
                 <MediaLinkPreview
                   kind={assetKindLabel}
@@ -255,36 +255,36 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
                 <div className="mt-3 space-y-2">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                      <div className="truncate text-sm font-semibold text-foreground">
                         {item.binding.file_name || item.field_path}
                       </div>
-                      <div className="mt-1 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      <div className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
                         {assetKindLabel}
                       </div>
                     </div>
                   </div>
 
-                  <dl className="space-y-2 text-xs text-gray-500 dark:text-gray-400">
+                  <dl className="space-y-2 text-xs text-muted-foreground">
                     <div>
-                      <dt className="font-medium text-gray-700 dark:text-gray-300">Course</dt>
+                      <dt className="font-medium text-foreground">Course</dt>
                       <dd className="mt-1">{item.course_key || 'Unknown course'}</dd>
                     </div>
                     <div>
-                      <dt className="font-medium text-gray-700 dark:text-gray-300">Blueprint</dt>
+                      <dt className="font-medium text-foreground">Blueprint</dt>
                       <dd className="mt-1">{item.blueprint_key}</dd>
                     </div>
                     <div>
-                      <dt className="font-medium text-gray-700 dark:text-gray-300">Section</dt>
+                      <dt className="font-medium text-foreground">Section</dt>
                       <dd className="mt-1">
                         {item.unit_key || 'Unit?'} / {item.section_key || 'Section?'}
                       </dd>
                     </div>
                     <div>
-                      <dt className="font-medium text-gray-700 dark:text-gray-300">Field path</dt>
+                      <dt className="font-medium text-foreground">Field path</dt>
                       <dd className="mt-1 break-all">{item.field_path}</dd>
                     </div>
                     <div>
-                      <dt className="font-medium text-gray-700 dark:text-gray-300">Uploaded</dt>
+                      <dt className="font-medium text-foreground">Uploaded</dt>
                       <dd className="mt-1">{formatDate(item.binding.uploaded_at)}</dd>
                     </div>
                   </dl>
@@ -301,7 +301,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
                     type="button"
                     onClick={() => openRenameModal(item.blueprint_id, item.field_path, item.binding.file_name)}
                     disabled={pendingKey === `${item.blueprint_id}:${item.field_path}:rename`}
-                    className="rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="rounded-lg border border-input px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
                   >
                     Rename
                   </button>
@@ -317,7 +317,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
                     href={item.binding.asset_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="rounded-lg border border-input px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted/50"
                   >
                     Open Asset
                   </a>
@@ -328,9 +328,9 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
         </div>
       )}
 
-      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Showing {pageStart} to {pageEnd} of {total} media assets
           </p>
           <div className="ml-auto">
@@ -351,12 +351,12 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
       >
         {renameDraft ? (
           <div className="space-y-4">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div className="rounded-lg border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
               <div><span className="font-medium">Field:</span> {renameDraft.fieldPath}</div>
               <div className="mt-1"><span className="font-medium">Current name:</span> {renameDraft.currentName}</div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">New file name</label>
+              <label className="mb-1 block text-sm font-medium text-foreground">New file name</label>
               <input
                 type="text"
                 value={renameDraft.nextName}
@@ -367,7 +367,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
                     void handleRenameSubmit();
                   }
                 }}
-                className="block h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+                className="block h-11 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:border-brand-500 focus:outline-none"
               />
             </div>
             <div className="flex justify-end gap-2">
@@ -375,7 +375,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
                 type="button"
                 onClick={() => setRenameDraft(null)}
                 disabled={pendingKey === `${renameDraft.blueprintId}:${renameDraft.fieldPath}:rename`}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                className="rounded-lg border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -383,7 +383,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
                 type="button"
                 onClick={() => void handleRenameSubmit()}
                 disabled={pendingKey === `${renameDraft.blueprintId}:${renameDraft.fieldPath}:rename`}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:opacity-60"
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700 disabled:opacity-60"
               >
                 {pendingKey === `${renameDraft.blueprintId}:${renameDraft.fieldPath}:rename` ? 'Saving…' : 'Save'}
               </button>

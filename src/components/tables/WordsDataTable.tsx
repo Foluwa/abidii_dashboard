@@ -7,9 +7,9 @@ import {
   TableRow,
 } from "../ui/table";
 import Badge from "../ui/badge/Badge";
-import { FiTrash2, FiVolume2, FiSearch, FiFilter, FiEye } from "react-icons/fi";
 import { ConfirmationModal } from "../ui/modal/ConfirmationModal";
 import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
+import { Eye, Funnel, Search as SearchIcon, Trash2, Volume2 } from "lucide-react";
 
 interface Word {
   id: string;
@@ -102,7 +102,7 @@ export default function WordsDataTable({
       pron: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400",
     };
 
-    const colorClass = posColors[pos] || "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400";
+    const colorClass = posColors[pos] || "bg-muted text-muted-foreground";
 
     return (
       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorClass}`}>
@@ -115,7 +115,7 @@ export default function WordsDataTable({
     const glosses = word.primary_glosses ?? [];
     if (!glosses.length) {
       return (
-        <span className="text-xs italic text-gray-400 dark:text-gray-500">
+        <span className="text-xs italic text-muted-foreground">
           No translations yet
         </span>
       );
@@ -129,18 +129,18 @@ export default function WordsDataTable({
         {visible.map((gloss) => (
           <span
             key={gloss.id}
-            className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+            className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
           >
             {gloss.text}
             {gloss.language_code ? (
-              <span className="ml-1 text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <span className="ml-1 text-[10px] uppercase tracking-wide text-muted-foreground">
                 {gloss.language_code}
               </span>
             ) : null}
           </span>
         ))}
         {remaining > 0 ? (
-          <span className="text-xs text-gray-500 dark:text-gray-400">+{remaining} more</span>
+          <span className="text-xs text-muted-foreground">+{remaining} more</span>
         ) : null}
       </div>
     );
@@ -153,11 +153,11 @@ export default function WordsDataTable({
 
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="flex items-center justify-center p-12">
           <div className="flex flex-col items-center gap-3">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-brand-600 dark:border-gray-700 dark:border-t-brand-500"></div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Loading lexicon entries...</p>
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-border border-t-brand-600 dark:border-t-brand-500"></div>
+            <p className="text-sm text-muted-foreground">Loading lexicon entries...</p>
           </div>
         </div>
       </div>
@@ -167,24 +167,24 @@ export default function WordsDataTable({
   return (
     <>
     {/* Desktop Table View */}
-    <div className="hidden lg:block overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+    <div className="hidden lg:block overflow-hidden rounded-xl border border-border bg-card">
       {/* Search Bar */}
-      <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/40">
+      <div className="border-b border-border bg-muted/40 px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="relative flex-1">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <FiSearch className="h-4 w-4 text-gray-400" />
+              <SearchIcon className="h-4 w-4 text-gray-400" />
             </div>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearch(e.target.value)}
               placeholder="Search headwords or translations..."
-              className="block w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+              className="block w-full rounded-lg border border-input bg-card py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
-          <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800">
-            <FiFilter className="h-4 w-4" />
+          <button className="inline-flex items-center gap-2 rounded-lg border border-input bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/50">
+            <Funnel className="h-4 w-4" />
             Filter
           </button>
         </div>
@@ -195,7 +195,7 @@ export default function WordsDataTable({
         <div className="min-w-[1000px]">
           <Table>
             {/* Table Header */}
-            <TableHeader className="border-b border-gray-100 dark:border-gray-800">
+            <TableHeader className="border-b border-border">
               <TableRow>
                 {onSelectAll && (
                   <TableCell
@@ -206,7 +206,7 @@ export default function WordsDataTable({
                       type="checkbox"
                       checked={selectedWords.length === words.length && words.length > 0}
                       onChange={onSelectAll}
-                      className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
+                      className="h-4 w-4 rounded border-input text-brand-600 focus:ring-brand-500 dark:bg-gray-800"
                     />
                   </TableCell>
                 )}
@@ -256,7 +256,7 @@ export default function WordsDataTable({
             </TableHeader>
 
             {/* Table Body */}
-            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <TableBody className="divide-y divide-border">
               {words && words.length > 0 ? (
                 words.map((word) => (
                   <TableRow
@@ -270,7 +270,7 @@ export default function WordsDataTable({
                           type="checkbox"
                           checked={selectedWords.includes(word.id)}
                           onChange={() => onSelectWord(word.id)}
-                          className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
+                          className="h-4 w-4 rounded border-input text-brand-600 focus:ring-brand-500 dark:bg-gray-800"
                         />
                       </TableCell>
                     )}
@@ -279,19 +279,19 @@ export default function WordsDataTable({
                         Same pattern as the mobile dictionary screens. */}
                     <TableCell className="px-5 py-4 text-start">
                       <div className="flex flex-col gap-1">
-                        <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                        <span className="text-lg font-semibold text-foreground">
                           {getPrimaryTranslation(word) || (
-                            <span className="italic text-gray-400 dark:text-gray-500">
+                            <span className="italic text-muted-foreground">
                               No translation
                             </span>
                           )}
                         </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-muted-foreground">
                           {word.headword || word.word}
                           {(word.source_language_code || word.language_code) ? ` (${word.source_language_code || word.language_code})` : ''}
                         </span>
                         {word.lemma_normalized !== (word.headword || word.word).toLowerCase() && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                          <span className="text-xs text-muted-foreground">
                             Normalized: {word.lemma_normalized}
                           </span>
                         )}
@@ -308,7 +308,7 @@ export default function WordsDataTable({
                       <div className="max-w-md space-y-2">
                         {renderGlosses(word)}
                         {word.target_languages?.length ? (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                          <div className="text-xs text-muted-foreground">
                             Targets: {word.target_languages.map((lang) => lang.language_code || lang.language_name || 'unknown').join(', ')}
                           </div>
                         ) : null}
@@ -320,7 +320,7 @@ export default function WordsDataTable({
                       {word.difficulty_level ? (
                         getDifficultyBadge(word.difficulty_level)
                       ) : (
-                        <span className="text-xs italic text-gray-400 dark:text-gray-500">
+                        <span className="text-xs italic text-muted-foreground">
                           Not set
                         </span>
                       )}
@@ -346,7 +346,7 @@ export default function WordsDataTable({
                           <InlineAudioPlayer src={word.audio_url} size="md" />
                         </div>
                       ) : (
-                        <span className="text-xs italic text-gray-400 dark:text-gray-500">
+                        <span className="text-xs italic text-muted-foreground">
                           No audio
                         </span>
                       )}
@@ -361,7 +361,7 @@ export default function WordsDataTable({
                             className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
                             title="View details"
                           >
-                            <FiEye className="h-3.5 w-3.5" />
+                            <Eye className="h-3.5 w-3.5" />
                             View
                           </button>
                         )}
@@ -376,14 +376,14 @@ export default function WordsDataTable({
                             className="inline-flex items-center rounded-lg p-2 text-purple-600 transition-colors hover:bg-purple-50 hover:text-purple-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-purple-400 dark:hover:bg-purple-900/20"
                             title={regeneratingAudio === word.id ? 'Regenerating...' : 'Regenerate Audio'}
                           >
-                            <FiVolume2 className={`h-4 w-4 ${regeneratingAudio === word.id ? 'animate-pulse' : ''}`} />
+                            <Volume2 className={`h-4 w-4 ${regeneratingAudio === word.id ? 'animate-pulse' : ''}`} />
                           </button>
                         )}
                         <button
                           onClick={() => setDeleteConfirm({ id: word.id, word: word.word })}
                           className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                         >
-                          <FiTrash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-3.5 w-3.5" />
                           Delete
                         </button>
                       </div>
@@ -394,12 +394,12 @@ export default function WordsDataTable({
                 <TableRow>
                   <td
                     colSpan={9}
-                    className="px-5 py-12 text-center text-gray-500 dark:text-gray-400"
+                    className="px-3 py-12 text-center text-muted-foreground"
                   >
                     <div className="flex flex-col items-center gap-2">
-                      <FiSearch className="h-12 w-12 text-gray-300 dark:text-gray-700" />
+                      <SearchIcon className="h-12 w-12 text-muted-foreground/50" />
                       <p className="text-sm font-medium">No lexicon entries found</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Try searching by headword or translation
                       </p>
                     </div>
@@ -432,27 +432,27 @@ export default function WordsDataTable({
     {/* Mobile Grid View */}
     <div className="lg:hidden">
       {/* Search Bar */}
-      <div className="mb-4 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 px-4 py-3">
+      <div className="mb-4 rounded-xl border border-border bg-card px-4 py-3">
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <FiSearch className="h-4 w-4 text-gray-400" />
+            <SearchIcon className="h-4 w-4 text-gray-400" />
           </div>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearch(e.target.value)}
             placeholder="Search headwords or translations..."
-            className="block w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+            className="block w-full rounded-lg border border-input bg-card py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
           />
         </div>
       </div>
 
       {/* Grid Cards */}
       {isLoading ? (
-        <div className="flex items-center justify-center p-12 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex items-center justify-center p-12 rounded-xl border border-border bg-card">
           <div className="flex flex-col items-center gap-3">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-brand-600 dark:border-gray-700 dark:border-t-brand-500"></div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Loading lexicon entries...</p>
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-border border-t-brand-600 dark:border-t-brand-500"></div>
+            <p className="text-sm text-muted-foreground">Loading lexicon entries...</p>
           </div>
         </div>
       ) : words && words.length > 0 ? (
@@ -460,15 +460,15 @@ export default function WordsDataTable({
           {words.map((word) => (
             <div
               key={word.id}
-              className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+              className="rounded-xl border border-border bg-card p-4"
             >
               {/* Word Header — Yoruba headline, English lemma as caption */}
               <div className="mb-3 flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xl font-bold text-gray-900 dark:text-white">
+                    <span className="text-xl font-bold text-foreground">
                       {getPrimaryTranslation(word) || (
-                        <span className="italic text-gray-400 dark:text-gray-500">
+                        <span className="italic text-muted-foreground">
                           No translation
                         </span>
                       )}
@@ -478,16 +478,16 @@ export default function WordsDataTable({
                         type="checkbox"
                         checked={selectedWords.includes(word.id)}
                         onChange={() => onSelectWord(word.id)}
-                        className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
+                        className="h-4 w-4 rounded border-input text-brand-600 focus:ring-brand-500 dark:bg-gray-800"
                       />
                     )}
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-muted-foreground">
                     {word.headword || word.word}
                     {(word.source_language_code || word.language_code) ? ` (${word.source_language_code || word.language_code})` : ''}
                   </span>
                   {word.lemma_normalized !== (word.headword || word.word).toLowerCase() && (
-                    <span className="block text-xs text-gray-500 dark:text-gray-400">
+                    <span className="block text-xs text-muted-foreground">
                       Normalized: {word.lemma_normalized}
                     </span>
                   )}
@@ -501,7 +501,7 @@ export default function WordsDataTable({
               </div>
 
               <div className="mb-3">
-                <div className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   All Translations
                 </div>
                 {renderGlosses(word)}
@@ -510,8 +510,8 @@ export default function WordsDataTable({
               {/* Category */}
               {word.category && (
                 <div className="mb-3">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Category: </span>
-                  <span className="text-sm text-gray-900 dark:text-white">{word.category}</span>
+                  <span className="text-xs text-muted-foreground">Category: </span>
+                  <span className="text-sm text-foreground">{word.category}</span>
                 </div>
               )}
 
@@ -523,13 +523,13 @@ export default function WordsDataTable({
               )}
 
               {/* Actions */}
-              <div className="flex items-center gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+              <div className="flex items-center gap-2 border-t border-border pt-3">
                 {onViewDetails && (
                   <button
                     onClick={() => onViewDetails(word.id)}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
                   >
-                    <FiEye className="h-3.5 w-3.5" />
+                    <Eye className="h-3.5 w-3.5" />
                     View
                   </button>
                 )}
@@ -544,14 +544,14 @@ export default function WordsDataTable({
                     className="flex-1 inline-flex items-center justify-center rounded-lg px-3 py-2 text-purple-600 transition-colors hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed dark:text-purple-400 dark:hover:bg-purple-900/20"
                     title={regeneratingAudio === word.id ? 'Regenerating...' : 'Regenerate Audio'}
                   >
-                    <FiVolume2 className={`h-4 w-4 ${regeneratingAudio === word.id ? 'animate-pulse' : ''}`} />
+                    <Volume2 className={`h-4 w-4 ${regeneratingAudio === word.id ? 'animate-pulse' : ''}`} />
                   </button>
                 )}
                 <button
                   onClick={() => setDeleteConfirm({ id: word.id, word: word.word })}
                   className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                 >
-                  <FiTrash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3.5 w-3.5" />
                   Delete
                 </button>
               </div>
@@ -559,10 +559,10 @@ export default function WordsDataTable({
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-white p-12 dark:border-gray-800 dark:bg-gray-900">
-          <FiSearch className="h-12 w-12 text-gray-300 dark:text-gray-700" />
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No lexicon entries found</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-12">
+          <SearchIcon className="h-12 w-12 text-muted-foreground/50" />
+          <p className="text-sm font-medium text-muted-foreground">No lexicon entries found</p>
+          <p className="text-xs text-muted-foreground">
             Try adjusting your search or filters
           </p>
         </div>

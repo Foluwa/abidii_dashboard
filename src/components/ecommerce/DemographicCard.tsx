@@ -30,17 +30,17 @@ export default function DemographicCard() {
   const grandTotal = topCountries.reduce((s, c) => s + c.count, 0) || total || 1;
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
+    <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+        <h3 className="text-lg font-semibold text-foreground">
           Customer Demographics
         </h3>
-        <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
+        <p className="mt-1 text-muted-foreground text-theme-sm">
           Geographic distribution of users worldwide
         </p>
       </div>
 
-      <div className="px-4 py-6 my-6 overflow-hidden border border-gray-200 rounded-2xl bg-gray-50 dark:border-gray-800 dark:bg-gray-900 sm:px-6">
+      <div className="px-4 py-6 my-6 overflow-hidden border border-border rounded-2xl bg-muted/50 sm:px-6">
         <div className="h-[212px] w-full">
           <CountryMap />
         </div>
@@ -51,7 +51,7 @@ export default function DemographicCard() {
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-500" />
         </div>
       ) : topCountries.length === 0 ? (
-        <p className="py-4 text-center text-sm text-gray-400 dark:text-gray-500">
+        <p className="py-4 text-center text-sm text-muted-foreground">
           No geographic data yet.
         </p>
       ) : (
@@ -70,22 +70,22 @@ export default function DemographicCard() {
                       .join("")}
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate font-semibold text-gray-800 text-theme-sm dark:text-white/90">
+                    <p className="truncate font-semibold text-foreground text-theme-sm">
                       {countryName(country_code)}
                     </p>
-                    <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
+                    <span className="block text-muted-foreground text-theme-xs">
                       {count.toLocaleString()} {count === 1 ? "user" : "users"}
                     </span>
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-3 w-32">
-                  <div className="relative h-2 w-full rounded-sm bg-gray-200 dark:bg-gray-800">
+                  <div className="relative h-2 w-full rounded-sm bg-muted">
                     <div
                       className="absolute left-0 top-0 h-full rounded-sm bg-brand-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <p className="w-10 text-right font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                  <p className="w-10 text-right font-medium text-foreground text-theme-sm">
                     {pct}%
                   </p>
                 </div>

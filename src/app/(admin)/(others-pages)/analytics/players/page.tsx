@@ -9,7 +9,7 @@ import Pagination from '@/components/tables/Pagination';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { cleanSvgForDisplay, getInitials as getSvgInitials, getAvatarColor as getSvgAvatarColor } from '@/lib/svg-utils';
 import AnalyticsTabs from '@/components/analytics/AnalyticsTabs';
-import { FiAward } from 'react-icons/fi';
+import { Award } from "lucide-react";
 
 type TimeRange = 'week' | 'month' | 'all';
 type SortBy = 'score' | 'sessions' | 'accuracy' | 'time' | 'xp';
@@ -141,7 +141,7 @@ export default function PlayerAnalyticsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <PageBreadCrumb pageTitle="Player Analytics" />
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Track individual player performance, leaderboard rankings, and progress over time
           </p>
         </div>
@@ -158,16 +158,16 @@ export default function PlayerAnalyticsPage() {
       {!selectedUserId ? (
         <>
           {/* Filters */}
-          <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
+          <div className="bg-card border border-border rounded-lg p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
               <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search Player</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Search Player</label>
                 <input
                   type="text"
                   placeholder="Search by name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                  className="w-full px-3 py-2 border rounded-lg bg-card dark:border-gray-700 text-foreground placeholder-gray-400"
                 />
               </div>
               <div>
@@ -231,30 +231,30 @@ export default function PlayerAnalyticsPage() {
           {/* Summary Stats */}
           {leaderboard && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Total Players</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{leaderboard.total?.toLocaleString() || 0}</p>
+              <div className="p-4 bg-card border border-border rounded-lg">
+                <p className="text-sm text-muted-foreground">Total Players</p>
+                <p className="text-2xl font-semibold text-foreground">{leaderboard.total?.toLocaleString() || 0}</p>
               </div>
-              <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Showing</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{leaderboard.players?.length || 0}</p>
+              <div className="p-4 bg-card border border-border rounded-lg">
+                <p className="text-sm text-muted-foreground">Showing</p>
+                <p className="text-2xl font-semibold text-foreground">{leaderboard.players?.length || 0}</p>
               </div>
-              <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Page</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{page} / {Math.ceil((leaderboard.total || 1) / 20)}</p>
+              <div className="p-4 bg-card border border-border rounded-lg">
+                <p className="text-sm text-muted-foreground">Page</p>
+                <p className="text-2xl font-semibold text-foreground">{page} / {Math.ceil((leaderboard.total || 1) / 20)}</p>
               </div>
-              <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Period</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white capitalize">{timeRange === 'all' ? 'All Time' : `This ${timeRange}`}</p>
+              <div className="p-4 bg-card border border-border rounded-lg">
+                <p className="text-sm text-muted-foreground">Period</p>
+                <p className="text-2xl font-semibold text-foreground capitalize">{timeRange === 'all' ? 'All Time' : `This ${timeRange}`}</p>
               </div>
             </div>
           )}
 
           {/* Leaderboard */}
-          <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 overflow-hidden">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Player Leaderboard</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="p-6 border-b border-border">
+              <h3 className="text-lg font-semibold text-foreground">Player Leaderboard</h3>
+              <p className="text-sm text-muted-foreground mt-1">
                 {leaderboard?.total || 0} players ranked by {sortBy === 'score' ? 'average score' : sortBy}
               </p>
             </div>
@@ -262,52 +262,52 @@ export default function PlayerAnalyticsPage() {
             {isLoading ? (
               <div className="p-8 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-500 dark:text-gray-400">Loading players...</p>
+                <p className="mt-4 text-muted-foreground">Loading players...</p>
               </div>
             ) : leaderboard?.players?.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-800">
+                  <thead className="border-b">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                         Rank
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                         Player
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">
                         Sessions
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">
                         Avg Score
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">
                         Accuracy
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">
                         Perfect
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">
                         Time Played
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">
                         XP
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  <tbody className="divide-y divide-border">
                     {leaderboard.players.map((player: any) => (
                       <tr
                         key={player.user_id}
                         onClick={() => router.push(`/analytics/players?userId=${player.user_id}`)}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                        className="hover:bg-muted/50 cursor-pointer transition-colors"
                       >
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2.5 whitespace-nowrap">
                           <span className={`text-2xl ${player.rank <= 3 ? '' : 'text-gray-500 dark:text-gray-400 text-base'}`}>
                             {getRankBadge(player.rank)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2.5 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="relative flex-shrink-0">
                               {player.avatar_url && cleanSvgForDisplay(player.avatar_url) ? (
@@ -318,22 +318,22 @@ export default function PlayerAnalyticsPage() {
                                 </div>
                               )}
                               {player.has_premium && (
-                                <span className="absolute -bottom-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-amber-400 text-amber-950 shadow-sm dark:border-gray-900" title="Premium member" aria-label="Premium member">
-                                  <FiAward className="h-2.5 w-2.5" aria-hidden="true" />
+                                <span className="absolute -bottom-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full border-2 border-background bg-amber-400 text-amber-950 shadow-sm" title="Premium member" aria-label="Premium member">
+                                  <Award className="h-2.5 w-2.5" aria-hidden="true" />
                                 </span>
                               )}
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              <div className="text-sm font-medium text-foreground">
                                 {player.display_name || 'Anonymous'}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                        <td className="px-3 py-2.5 whitespace-nowrap text-right text-sm text-foreground">
                           {player.total_sessions?.toLocaleString() || 0}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                        <td className="px-3 py-2.5 whitespace-nowrap text-right text-sm">
                           <span className={`font-semibold ${
                             player.avg_score >= 90 ? 'text-green-600 dark:text-green-400' :
                             player.avg_score >= 70 ? 'text-yellow-600 dark:text-yellow-400' :
@@ -342,16 +342,16 @@ export default function PlayerAnalyticsPage() {
                             {player.avg_score?.toFixed(1) || 0}%
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                        <td className="px-3 py-2.5 whitespace-nowrap text-right text-sm text-foreground">
                           {player.accuracy?.toFixed(1) || 0}%
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600 dark:text-green-400">
+                        <td className="px-3 py-2.5 whitespace-nowrap text-right text-sm text-green-600 dark:text-green-400">
                           {player.perfect_scores || 0}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                        <td className="px-3 py-2.5 whitespace-nowrap text-right text-sm text-foreground">
                           {formatDuration(player.total_time_ms)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                        <td className="px-3 py-2.5 whitespace-nowrap text-right text-sm">
                           <span className="font-semibold text-purple-600 dark:text-purple-400">
                             {player.xp?.toLocaleString() || 0}
                           </span>
@@ -362,15 +362,15 @@ export default function PlayerAnalyticsPage() {
                 </table>
               </div>
             ) : (
-              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+              <div className="p-8 text-center text-muted-foreground">
                 No players found matching your filters. Try adjusting your search criteria.
               </div>
             )}
             
             {/* Pagination */}
             {leaderboard && (
-              <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-700">
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="flex items-center justify-between border-t border-border px-6 py-4">
+                <span className="text-sm text-muted-foreground">
                   Showing {leaderboard.total === 0 ? 0 : (page - 1) * 20 + 1} to {leaderboard.total === 0 ? 0 : Math.min(page * 20, leaderboard.total)} of {leaderboard.total} players
                 </span>
                 <div className="ml-auto">
@@ -394,12 +394,12 @@ export default function PlayerAnalyticsPage() {
           {isLoadingPlayer ? (
             <div className="p-8 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-500 dark:text-gray-400">Loading player data...</p>
+              <p className="mt-4 text-muted-foreground">Loading player data...</p>
             </div>
           ) : player ? (
             <>
               {/* Player Header */}
-              <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
+              <div className="bg-card border border-border rounded-lg p-6">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
                     <div className="relative flex-shrink-0">
@@ -411,16 +411,16 @@ export default function PlayerAnalyticsPage() {
                         </div>
                       )}
                       {player.has_premium && (
-                        <span className="absolute -bottom-1 -right-1 inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-amber-400 text-amber-950 shadow-sm dark:border-gray-900" title="Premium member" aria-label="Premium member">
-                          <FiAward className="h-4 w-4" aria-hidden="true" />
+                        <span className="absolute -bottom-1 -right-1 inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-background bg-amber-400 text-amber-950 shadow-sm" title="Premium member" aria-label="Premium member">
+                          <Award className="h-4 w-4" aria-hidden="true" />
                         </span>
                       )}
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      <h2 className="text-2xl font-bold text-foreground">
                         {player.display_name || 'Anonymous Player'}
                       </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         Joined: {formatShortDate(player.joined_date)}
                       </p>
                     </div>
@@ -429,72 +429,72 @@ export default function PlayerAnalyticsPage() {
                     <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
                       {player.xp?.toLocaleString() || 0} XP
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Total Experience</p>
+                    <p className="text-sm text-muted-foreground">Total Experience</p>
                   </div>
                 </div>
               </div>
 
               {/* Stats Overview */}
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Sessions</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">{player.total_sessions || 0}</p>
+                <div className="p-4 bg-card border border-border rounded-lg">
+                  <p className="text-sm text-muted-foreground">Total Sessions</p>
+                  <p className="text-2xl font-semibold text-foreground">{player.total_sessions || 0}</p>
                 </div>
-                <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Rounds</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">{player.total_rounds?.toLocaleString() || 0}</p>
+                <div className="p-4 bg-card border border-border rounded-lg">
+                  <p className="text-sm text-muted-foreground">Total Rounds</p>
+                  <p className="text-2xl font-semibold text-foreground">{player.total_rounds?.toLocaleString() || 0}</p>
                 </div>
-                <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Average Score</p>
+                <div className="p-4 bg-card border border-border rounded-lg">
+                  <p className="text-sm text-muted-foreground">Average Score</p>
                   <p className={`text-2xl font-semibold ${
                     player.avg_score >= 80 ? 'text-green-600 dark:text-green-400' :
                     player.avg_score >= 60 ? 'text-yellow-600 dark:text-yellow-400' :
                     'text-red-600 dark:text-red-400'
                   }`}>{player.avg_score?.toFixed(1) || 0}%</p>
                 </div>
-                <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Accuracy</p>
+                <div className="p-4 bg-card border border-border rounded-lg">
+                  <p className="text-sm text-muted-foreground">Accuracy</p>
                   <p className={`text-2xl font-semibold ${
                     player.accuracy >= 80 ? 'text-green-600 dark:text-green-400' :
                     player.accuracy >= 60 ? 'text-yellow-600 dark:text-yellow-400' :
                     'text-red-600 dark:text-red-400'
                   }`}>{player.accuracy?.toFixed(1) || 0}%</p>
                 </div>
-                <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Perfect Scores</p>
+                <div className="p-4 bg-card border border-border rounded-lg">
+                  <p className="text-sm text-muted-foreground">Perfect Scores</p>
                   <p className="text-2xl font-semibold text-green-600 dark:text-green-400">{player.perfect_scores || 0}</p>
                 </div>
-                <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Time Played</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">{formatDuration(player.total_time_ms)}</p>
+                <div className="p-4 bg-card border border-border rounded-lg">
+                  <p className="text-sm text-muted-foreground">Time Played</p>
+                  <p className="text-2xl font-semibold text-foreground">{formatDuration(player.total_time_ms)}</p>
                 </div>
               </div>
 
               {/* Two Column Layout */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Game Breakdown */}
-                <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 overflow-hidden">
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Performance by Game</h3>
+                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                  <div className="p-6 border-b border-border">
+                    <h3 className="text-lg font-semibold text-foreground">Performance by Game</h3>
                   </div>
                   {player.game_breakdown?.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-800">
+                        <thead className="border-b">
                           <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Game</th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Sessions</th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Avg Score</th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Perfect</th>
+                            <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Game</th>
+                            <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Sessions</th>
+                            <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Avg Score</th>
+                            <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Perfect</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody className="divide-y divide-border">
                           {player.game_breakdown.map((game: any, idx: number) => (
-                            <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                              <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">
+                            <tr key={idx} className="hover:bg-muted/50">
+                              <td className="px-4 py-3 text-foreground font-medium">
                                 {formatGameName(game.game_key)}
                               </td>
-                              <td className="px-4 py-3 text-right text-gray-900 dark:text-white">{game.sessions}</td>
+                              <td className="px-4 py-3 text-right text-foreground">{game.sessions}</td>
                               <td className="px-4 py-3 text-right">
                                 <span className={`font-semibold ${
                                   game.avg_score >= 80 ? 'text-green-600 dark:text-green-400' :
@@ -511,30 +511,30 @@ export default function PlayerAnalyticsPage() {
                       </table>
                     </div>
                   ) : (
-                    <p className="p-6 text-center text-gray-500 dark:text-gray-400">No game data available</p>
+                    <p className="p-6 text-center text-muted-foreground">No game data available</p>
                   )}
                 </div>
 
                 {/* Weaknesses */}
-                <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 overflow-hidden">
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Areas for Improvement</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Content this player struggles with most</p>
+                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                  <div className="p-6 border-b border-border">
+                    <h3 className="text-lg font-semibold text-foreground">Areas for Improvement</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Content this player struggles with most</p>
                   </div>
                   {player.weaknesses?.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-800">
+                        <thead className="border-b">
                           <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Content</th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Misses</th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Accuracy</th>
+                            <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Content</th>
+                            <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Misses</th>
+                            <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Accuracy</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody className="divide-y divide-border">
                           {player.weaknesses.map((weakness: any, idx: number) => (
-                            <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                              <td className="px-4 py-3 text-gray-900 dark:text-white font-medium max-w-[200px] truncate" title={weakness.content}>
+                            <tr key={idx} className="hover:bg-muted/50">
+                              <td className="px-4 py-3 text-foreground font-medium max-w-[200px] truncate" title={weakness.content}>
                                 {weakness.content || 'N/A'}
                               </td>
                               <td className="px-4 py-3 text-right text-red-600 dark:text-red-400">
@@ -554,45 +554,45 @@ export default function PlayerAnalyticsPage() {
                       </table>
                     </div>
                   ) : (
-                    <p className="p-6 text-center text-gray-500 dark:text-gray-400">No weakness data available - great job!</p>
+                    <p className="p-6 text-center text-muted-foreground">No weakness data available - great job!</p>
                   )}
                 </div>
               </div>
 
               {/* Recent Sessions */}
-              <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 overflow-hidden">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Sessions</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Last 20 game sessions</p>
+              <div className="bg-card border border-border rounded-lg overflow-hidden">
+                <div className="p-6 border-b border-border">
+                  <h3 className="text-lg font-semibold text-foreground">Recent Sessions</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Last 20 game sessions</p>
                 </div>
                 {player.recent_sessions?.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead className="bg-gray-50 dark:bg-gray-800">
+                      <thead className="border-b">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Game</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Language</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Score</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Correct</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Wrong</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Duration</th>
-                          <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Perfect</th>
+                          <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">Date</th>
+                          <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">Game</th>
+                          <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">Language</th>
+                          <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">Score</th>
+                          <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">Correct</th>
+                          <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">Wrong</th>
+                          <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">Duration</th>
+                          <th className="px-3 py-2.5 text-center text-sm font-medium text-muted-foreground">Perfect</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      <tbody className="divide-y divide-border">
                         {player.recent_sessions.map((session: any) => (
-                          <tr key={session.session_id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
+                          <tr key={session.session_id} className="hover:bg-muted/50">
+                            <td className="px-3 py-2.5 whitespace-nowrap text-foreground">
                               {formatDate(session.date)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
+                            <td className="px-3 py-2.5 whitespace-nowrap text-foreground">
                               {formatGameName(session.game_key)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">
+                            <td className="px-3 py-2.5 whitespace-nowrap text-muted-foreground">
                               {session.language_name || 'Unknown'}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <td className="px-3 py-2.5 whitespace-nowrap text-right">
                               <span className={`font-semibold ${
                                 session.score >= 90 ? 'text-green-600 dark:text-green-400' :
                                 session.score >= 70 ? 'text-yellow-600 dark:text-yellow-400' :
@@ -601,16 +601,16 @@ export default function PlayerAnalyticsPage() {
                                 {session.score?.toFixed(1)}%
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-green-600 dark:text-green-400">
+                            <td className="px-3 py-2.5 whitespace-nowrap text-right text-green-600 dark:text-green-400">
                               {session.correct}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-red-600 dark:text-red-400">
+                            <td className="px-3 py-2.5 whitespace-nowrap text-right text-red-600 dark:text-red-400">
                               {session.wrong}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-gray-900 dark:text-white">
+                            <td className="px-3 py-2.5 whitespace-nowrap text-right text-foreground">
                               {formatDuration(session.duration_ms)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <td className="px-3 py-2.5 whitespace-nowrap text-center">
                               {session.is_perfect ? (
                                 <span className="text-green-600 dark:text-green-400">⭐</span>
                               ) : (
@@ -623,16 +623,16 @@ export default function PlayerAnalyticsPage() {
                     </table>
                   </div>
                 ) : (
-                  <p className="p-6 text-center text-gray-500 dark:text-gray-400">No session data available</p>
+                  <p className="p-6 text-center text-muted-foreground">No session data available</p>
                 )}
               </div>
 
               {/* Daily Activity */}
               {player.daily_activity?.length > 0 && (
-                <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 overflow-hidden">
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Daily Activity</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Sessions played per day (last 30 days)</p>
+                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                  <div className="p-6 border-b border-border">
+                    <h3 className="text-lg font-semibold text-foreground">Daily Activity</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Sessions played per day (last 30 days)</p>
                   </div>
                   <div className="p-6">
                     <div className="flex gap-1 flex-wrap">
@@ -649,9 +649,9 @@ export default function PlayerAnalyticsPage() {
                         />
                       ))}
                     </div>
-                    <div className="flex items-center gap-4 mt-4 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
                       <span>Less</span>
-                      <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded" />
+                      <div className="w-4 h-4 bg-muted rounded" />
                       <div className="w-4 h-4 bg-green-400 rounded" />
                       <div className="w-4 h-4 bg-green-500 rounded" />
                       <div className="w-4 h-4 bg-green-600 rounded" />
@@ -662,7 +662,7 @@ export default function PlayerAnalyticsPage() {
               )}
             </>
           ) : (
-            <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            <div className="p-8 text-center text-muted-foreground">
               Player not found. They may have been deleted or the ID is invalid.
             </div>
           )}

@@ -85,7 +85,7 @@ export default function DataTable<T extends Record<string, unknown>>({
 
   if (data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400">
+      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
         <svg className="w-16 h-16 mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
@@ -97,18 +97,18 @@ export default function DataTable<T extends Record<string, unknown>>({
   return (
     <>
     {/* Desktop Table View */}
-    <div className="hidden lg:block overflow-hidden border border-gray-200 rounded-lg dark:border-gray-800">
+    <div className="hidden lg:block overflow-hidden border border-border rounded-lg">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-          <thead className="bg-gray-50 dark:bg-gray-800/50">
+        <table className="min-w-full divide-y divide-border">
+          <thead className="border-b">
             <tr>
               {selectedIds !== undefined && (
-                <th scope="col" className="px-4 py-3 text-left w-10">
+                <th scope="col" className="px-4 py-2.5 text-left w-10">
                   <input
                     type="checkbox"
                     checked={allSelected}
                     onChange={onSelectAll}
-                    className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700"
+                    className="w-4 h-4 text-brand-600 border-input rounded focus:ring-brand-500 dark:bg-gray-700"
                   />
                 </th>
               )}
@@ -116,13 +116,13 @@ export default function DataTable<T extends Record<string, unknown>>({
                 <th
                   key={String(column.key)}
                   scope="col"
-                  className={`px-6 py-3 text-${column.align || 'left'} text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400`}
+                  className={`px-6 py-3 text-${column.align || 'left'} text-xs font-medium text-muted-foreground uppercase tracking-wider`}
                   style={{ width: column.width }}
                 >
                   {column.sortable ? (
                     <button
                       onClick={() => handleSort(String(column.key))}
-                      className="flex items-center hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none"
+                      className="flex items-center hover:text-foreground focus:outline-none"
                     >
                       {column.label}
                       {getSortIcon(String(column.key))}
@@ -133,13 +133,13 @@ export default function DataTable<T extends Record<string, unknown>>({
                 </th>
               ))}
               {actions && (
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                <th scope="col" className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">
                   Actions
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-800">
+          <tbody className="bg-card divide-y divide-border">
             {data.map((item) => {
               const itemId = keyExtractor(item);
               const isSelected = selectedIds?.includes(itemId) ?? false;
@@ -154,12 +154,12 @@ export default function DataTable<T extends Record<string, unknown>>({
                 `}
               >
                 {selectedIds !== undefined && (
-                  <td className="px-4 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-4 py-2.5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => onSelect?.(itemId)}
-                      className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700"
+                      className="w-4 h-4 text-brand-600 border-input rounded focus:ring-brand-500 dark:bg-gray-700"
                     />
                   </td>
                 )}
@@ -171,11 +171,11 @@ export default function DataTable<T extends Record<string, unknown>>({
                       className={`px-6 py-4 whitespace-nowrap text-sm text-${column.align || 'left'}`}
                     >
                       {column.render ? (
-                        <div className="text-gray-900 dark:text-gray-100">
+                        <div className="text-foreground">
                           {column.render(value, item)}
                         </div>
                       ) : (
-                        <span className="text-gray-900 dark:text-gray-100">
+                        <span className="text-foreground">
                           {value !== null && value !== undefined ? String(value) : '-'}
                         </span>
                       )}
@@ -183,7 +183,7 @@ export default function DataTable<T extends Record<string, unknown>>({
                   );
                 })}
                 {actions && (
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-3 py-2.5 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end space-x-2" onClick={(e) => e.stopPropagation()}>
                       {actions(item)}
                     </div>
@@ -200,11 +200,11 @@ export default function DataTable<T extends Record<string, unknown>>({
     {/* Mobile Grid View */}
     <div className="lg:hidden grid grid-cols-1 gap-4">
       {loading ? (
-        <div className="flex items-center justify-center py-12 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
         </div>
       ) : data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground rounded-lg border border-border bg-card">
           <svg className="w-16 h-16 mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
@@ -218,12 +218,12 @@ export default function DataTable<T extends Record<string, unknown>>({
           <div
             key={itemId}
             onClick={() => onRowClick?.(item)}
-            className={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 ${
-              onRowClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50' : ''
-            }`}
+            className={`bg-card border border-border rounded-lg p-4 ${
+ onRowClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50' : ''
+ }`}
           >
             {selectedIds !== undefined && (
-              <div className="flex items-center mb-3 pb-3 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex items-center mb-3 pb-3 border-b border-border">
                 <input
                   type="checkbox"
                   checked={isSelected}
@@ -231,19 +231,19 @@ export default function DataTable<T extends Record<string, unknown>>({
                     e.stopPropagation();
                     onSelect?.(itemId);
                   }}
-                  className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700"
+                  className="w-4 h-4 text-brand-600 border-input rounded focus:ring-brand-500 dark:bg-gray-700"
                 />
-                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">Select</span>
+                <span className="ml-2 text-xs text-muted-foreground">Select</span>
               </div>
             )}
             {columns.map((column) => {
               const value = item[column.key as keyof T];
               return (
                 <div key={String(column.key)} className="mb-3 last:mb-0">
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                  <div className="text-xs font-medium text-muted-foreground uppercase mb-1">
                     {column.label}
                   </div>
-                  <div className="text-sm text-gray-900 dark:text-gray-100">
+                  <div className="text-sm text-foreground">
                     {column.render ? (
                       column.render(value, item)
                     ) : (
@@ -254,7 +254,7 @@ export default function DataTable<T extends Record<string, unknown>>({
               );
             })}
             {actions && (
-              <div className="flex items-center gap-2 border-t border-gray-200 dark:border-gray-800 pt-3 mt-3">
+              <div className="flex items-center gap-2 border-t border-border pt-3 mt-3">
                 {actions(item)}
               </div>
             )}

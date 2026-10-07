@@ -89,27 +89,27 @@ export function SecurityExceptionsContent({ showHeader = true }: { showHeader?: 
 
       <form
         onSubmit={handleAdd}
-        className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:flex-row sm:items-end"
+        className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-end"
       >
         <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Email</label>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">Email</label>
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="person@example.com"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            className="w-full rounded-lg border border-input px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
           />
         </div>
         <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Note (optional)</label>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">Note (optional)</label>
           <input
             type="text"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="e.g. Founder testing account"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            className="w-full rounded-lg border border-input px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
           />
         </div>
         <button
@@ -127,35 +127,35 @@ export function SecurityExceptionsContent({ showHeader = true }: { showHeader?: 
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-950 dark:text-gray-400">
+          <thead className="text-xs text-muted-foreground border-b">
             <tr>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Note</th>
-              <th className="px-4 py-3">Added</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th className="px-4 py-2.5">Email</th>
+              <th className="px-4 py-2.5">Note</th>
+              <th className="px-4 py-2.5">Added</th>
+              <th className="px-4 py-2.5 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+          <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">
                   Loading...
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">
                   No exceptions configured.
                 </td>
               </tr>
             ) : (
               items.map((item) => (
                 <tr key={item.id}>
-                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{item.email}</td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{item.note || "—"}</td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                  <td className="px-4 py-3 font-medium text-foreground">{item.email}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{item.note || "—"}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
                     {new Date(item.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 text-right">

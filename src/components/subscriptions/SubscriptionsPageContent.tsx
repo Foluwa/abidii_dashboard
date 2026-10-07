@@ -381,7 +381,7 @@ export function SubscriptionsPageContent({
       case "expired":
         return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
+        return "bg-gray-100 text-muted-foreground dark:bg-gray-900/30";
     }
   };
 
@@ -432,17 +432,17 @@ export function SubscriptionsPageContent({
       {/* Create Modal */}
       {createOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-lg bg-white dark:bg-gray-800 shadow-lg">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div className="w-full max-w-2xl rounded-lg bg-card shadow-lg">
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Add Manual Subscription</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <h3 className="text-lg font-semibold text-foreground">Add Manual Subscription</h3>
+                <p className="text-sm text-muted-foreground">
                   Grant premium manually (no payment charge)
                 </p>
               </div>
               <button
                 onClick={closeCreate}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-muted-foreground hover:text-foreground"
                 aria-label="Close"
               >
                 ✕
@@ -455,7 +455,7 @@ export function SubscriptionsPageContent({
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   User (ID or email)
                 </label>
                 <div className="relative">
@@ -472,17 +472,17 @@ export function SubscriptionsPageContent({
                       window.setTimeout(() => setCreateUserSuggestionsOpen(false), 150);
                     }}
                     placeholder="Type email or name to search"
-                    className="block w-full h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
                   />
 
                   {createUserSuggestionsLoading && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
                       Searching…
                     </div>
                   )}
 
                   {createUserSuggestionsOpen && createUserSuggestions.length > 0 && (
-                    <div className="absolute z-50 mt-1 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg overflow-hidden">
+                    <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-card shadow-lg overflow-hidden">
                       {createUserSuggestions.map((u) => (
                         <button
                           key={u.id}
@@ -491,12 +491,12 @@ export function SubscriptionsPageContent({
                             setCreateUserQ(u.email || u.id);
                             setCreateUserSuggestionsOpen(false);
                           }}
-                          className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          className="w-full text-left px-3 py-2 hover:bg-accent"
                         >
-                          <div className="text-sm text-gray-900 dark:text-white">
+                          <div className="text-sm text-foreground">
                             {u.email || "(no email)"}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                          <div className="text-xs text-muted-foreground">
                             {u.display_name ? `${u.display_name} • ` : ""}
                             {u.id.slice(0, 8)}…
                           </div>
@@ -509,12 +509,12 @@ export function SubscriptionsPageContent({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Plan ID</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Plan ID</label>
                   <input
                     value={createPlanId}
                     onChange={(e) => setCreatePlanId(e.target.value)}
                     placeholder="premium_monthly"
-                    className="block w-full h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
                   />
                 </div>
 
@@ -535,43 +535,43 @@ export function SubscriptionsPageContent({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Start</label>
                   <input
                     type="datetime-local"
                     value={createStart}
                     onChange={(e) => setCreateStart(e.target.value)}
-                    className="block w-full h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expires</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Expires</label>
                   <input
                     type="datetime-local"
                     value={createEnd}
                     onChange={(e) => setCreateEnd(e.target.value)}
-                    className="block w-full h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reason (required)</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Reason (required)</label>
                 <textarea
                   value={createReason}
                   onChange={(e) => setCreateReason(e.target.value)}
                   rows={3}
                   placeholder="e.g., Manual premium grant for QA"
-                  className="block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  className="block w-full px-3 py-2 rounded-md border border-input dark:bg-gray-700 dark:text-white"
                 />
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
+            <div className="px-6 py-4 border-t border-border flex items-center justify-end gap-2">
               <button
                 onClick={closeCreate}
                 disabled={createSaving}
-                className="px-4 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                className="px-4 py-2 text-sm rounded-md border border-input disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -590,17 +590,17 @@ export function SubscriptionsPageContent({
       {/* Edit Modal */}
       {editOpen && editSub && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-lg bg-white dark:bg-gray-800 shadow-lg">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div className="w-full max-w-2xl rounded-lg bg-card shadow-lg">
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Edit Subscription</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <h3 className="text-lg font-semibold text-foreground">Edit Subscription</h3>
+                <p className="text-sm text-muted-foreground">
                   {editSub.user_email || editSub.user_id}
                 </p>
               </div>
               <button
                 onClick={closeEdit}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-muted-foreground hover:text-foreground"
                 aria-label="Close"
               >
                 ✕
@@ -614,12 +614,12 @@ export function SubscriptionsPageContent({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Plan ID</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Plan ID</label>
                   <input
                     value={editPlanId}
                     onChange={(e) => setEditPlanId(e.target.value)}
                     placeholder="premium_monthly"
-                    className="block w-full h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
                   />
                 </div>
 
@@ -640,43 +640,43 @@ export function SubscriptionsPageContent({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Start</label>
                   <input
                     type="datetime-local"
                     value={editStart}
                     onChange={(e) => setEditStart(e.target.value)}
-                    className="block w-full h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expires</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Expires</label>
                   <input
                     type="datetime-local"
                     value={editEnd}
                     onChange={(e) => setEditEnd(e.target.value)}
-                    className="block w-full h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reason (required)</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Reason (required)</label>
                 <textarea
                   value={editReason}
                   onChange={(e) => setEditReason(e.target.value)}
                   rows={3}
                   placeholder="e.g., Manual override for testing payment failure"
-                  className="block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  className="block w-full px-3 py-2 rounded-md border border-input dark:bg-gray-700 dark:text-white"
                 />
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
+            <div className="px-6 py-4 border-t border-border flex items-center justify-end gap-2">
               <button
                 onClick={closeEdit}
                 disabled={editSaving}
-                className="px-4 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                className="px-4 py-2 text-sm rounded-md border border-input disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -695,10 +695,10 @@ export function SubscriptionsPageContent({
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-semibold text-foreground">
             Subscription Management
           </h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             View and manage user subscriptions
           </p>
         </div>
@@ -712,11 +712,11 @@ export function SubscriptionsPageContent({
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="bg-card rounded-lg shadow p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Subscriptions</p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+              <p className="text-sm text-muted-foreground">Total Subscriptions</p>
+              <p className="text-2xl font-semibold text-foreground">
                 {statsLoading ? "..." : stats?.total ?? 0}
               </p>
             </div>
@@ -728,10 +728,10 @@ export function SubscriptionsPageContent({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="bg-card rounded-lg shadow p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Active Subscriptions</p>
+              <p className="text-sm text-muted-foreground">Active Subscriptions</p>
               <p className="text-2xl font-semibold text-green-600">
                 {statsLoading ? "..." : stats?.active ?? 0}
               </p>
@@ -744,10 +744,10 @@ export function SubscriptionsPageContent({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="bg-card rounded-lg shadow p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Trial</p>
+              <p className="text-sm text-muted-foreground">Trial</p>
               <p className="text-2xl font-semibold text-blue-600">
                 {statsLoading ? "..." : stats?.trial ?? 0}
               </p>
@@ -760,10 +760,10 @@ export function SubscriptionsPageContent({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="bg-card rounded-lg shadow p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Expired/Canceled</p>
+              <p className="text-sm text-muted-foreground">Expired/Canceled</p>
               <p className="text-2xl font-semibold text-red-600">
                 {statsLoading ? "..." : (stats?.expired ?? 0) + (stats?.canceled ?? 0)}
               </p>
@@ -778,10 +778,10 @@ export function SubscriptionsPageContent({
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 p-4">
+      <div className="bg-card rounded-lg shadow mb-6 p-4">
         <div className="flex flex-wrap gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               User
             </label>
             <input
@@ -791,7 +791,7 @@ export function SubscriptionsPageContent({
                 setPage(1);
               }}
               placeholder="User ID, email, or username"
-              className="block w-full sm:w-96 lg:w-[32rem] h-12 px-4 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base"
+              className="block w-full sm:w-96 lg:w-[32rem] h-12 px-4 rounded-md border-input dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base"
             />
           </div>
 
@@ -859,23 +859,23 @@ export function SubscriptionsPageContent({
               );
             }}
             className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-              activeView === value
-                ? "bg-brand-600 text-white dark:text-gray-900"
-                : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-            }`}
+ activeView === value
+ ? "bg-brand-600 text-white dark:text-gray-900"
+ : "border border-input bg-card text-foreground hover:bg-gray-50 dark:hover:bg-gray-700"
+ }`}
           >
             {label}
           </button>
         ))}
       </div>
-      <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+      <p className="mb-6 text-sm text-muted-foreground">
         Use tabs for <span className="font-medium">Recent Subscription Events</span> and{" "}
         <span className="font-medium">Recent Verification Attempts</span>.
       </p>
 
       {/* Table */}
       {activeView === "subscriptions" && (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      <div className="bg-card rounded-lg shadow overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -887,69 +887,69 @@ export function SubscriptionsPageContent({
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+              <table className="min-w-full divide-y divide-border">
+                <thead className="border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Plan
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Provider
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Start Date
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Expires
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="bg-card divide-y divide-border">
                   {subscriptions?.map((sub: Subscription) => (
-                    <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={sub.id} className="hover:bg-accent">
+                      <td className="px-3 py-2.5 whitespace-nowrap">
                         <div className="flex items-center">
                           <div>
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            <div className="text-sm font-medium text-foreground">
                               {sub.user_email || "No email"}
                             </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                            <div className="text-sm text-muted-foreground">
                               {sub.user_id?.slice(0, 8)}...
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-white">
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <div className="text-sm text-foreground">
                           {sub.plan_id || "—"}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 py-2.5 whitespace-nowrap">
                         <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(sub.status)}`}>
                           {sub.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900 dark:text-white">
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <span className="text-sm text-foreground">
                           {getProviderIcon(sub.provider)} {sub.provider}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm text-muted-foreground">
                         {formatDate(sub.current_period_start)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm text-muted-foreground">
                         {formatDate(sub.current_period_end)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm">
                         <div className="flex items-center gap-3">
                           <button
                             onClick={() => openEdit(sub)}
@@ -959,7 +959,7 @@ export function SubscriptionsPageContent({
                           </button>
                           <button
                             onClick={() => setSelectedUserId(sub.user_id)}
-                            className="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
+                            className="text-muted-foreground hover:text-gray-800 dark:hover:text-gray-100"
                           >
                             View User
                           </button>
@@ -969,7 +969,7 @@ export function SubscriptionsPageContent({
                   ))}
                   {(!subscriptions || subscriptions.length === 0) && (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={7} className="px-3 py-12 text-center text-muted-foreground">
                         No subscriptions found
                       </td>
                     </tr>
@@ -979,9 +979,9 @@ export function SubscriptionsPageContent({
             </div>
 
             {/* Pagination */}
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="px-6 py-4 border-t border-border">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-sm text-muted-foreground">
                   Showing {total === 0 ? 0 : (page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} subscriptions
                 </div>
                 <div className="ml-auto">
@@ -1000,18 +1000,18 @@ export function SubscriptionsPageContent({
 
       {/* Recent Subscription Events */}
       {activeView === "events" && (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Subscription Events</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="bg-card rounded-lg shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">Recent Subscription Events</h2>
+          <p className="text-sm text-muted-foreground">
             Webhook + system lifecycle events (renewals, cancellations, refunds, failures)
           </p>
         </div>
 
-        <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+        <div className="border-b border-border px-6 py-4">
           <div className="flex flex-wrap gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
+              <label className="mb-1 block text-sm font-medium text-foreground">Search</label>
               <input
                 value={eventsSearch}
                 onChange={(e) => {
@@ -1019,7 +1019,7 @@ export function SubscriptionsPageContent({
                   setEventsPage(1);
                 }}
                 placeholder="User id, email, username"
-                className="block w-full sm:w-80 h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="block w-full sm:w-80 h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
               />
             </div>
             <div>
@@ -1069,48 +1069,48 @@ export function SubscriptionsPageContent({
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+              <table className="min-w-full divide-y divide-border">
+                <thead className="border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Time
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Event
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Plan
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Provider
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="bg-card divide-y divide-border">
                   {events?.map((ev: SubscriptionEvent) => (
-                    <tr key={ev.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <tr key={ev.id} className="hover:bg-accent">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm text-muted-foreground">
                         {formatDateTime(ev.created_at)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <div className="text-sm font-medium text-foreground">
                           {ev.user_email || "No email"}
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">{ev.user_id?.slice(0, 8)}...</div>
+                        <div className="text-sm text-muted-foreground">{ev.user_id?.slice(0, 8)}...</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm text-foreground">
                         {ev.event_type}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm text-foreground">
                         {ev.plan_id || "—"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 py-2.5 whitespace-nowrap">
                         <span
                           className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(
                             ev.status
@@ -1119,14 +1119,14 @@ export function SubscriptionsPageContent({
                           {ev.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm text-foreground">
                         {getProviderIcon(ev.provider)} {ev.provider} ({ev.platform})
                       </td>
                     </tr>
                   ))}
                   {(!events || events.length === 0) && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">
                         No events found
                       </td>
                     </tr>
@@ -1134,9 +1134,9 @@ export function SubscriptionsPageContent({
                 </tbody>
               </table>
             </div>
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="px-6 py-4 border-t border-border">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-sm text-muted-foreground">
                   Showing {eventsTotal === 0 ? 0 : (eventsPage - 1) * eventsLimit + 1} to {Math.min(eventsPage * eventsLimit, eventsTotal)} of {eventsTotal} events
                 </div>
                 <div className="ml-auto">
@@ -1155,18 +1155,18 @@ export function SubscriptionsPageContent({
 
       {/* Recent Verification Attempts */}
       {activeView === "attempts" && (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Verification Attempts</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="bg-card rounded-lg shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">Recent Verification Attempts</h2>
+          <p className="text-sm text-muted-foreground">
             Client receipt verification attempts (including failures/expired/invalid)
           </p>
         </div>
 
-        <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+        <div className="border-b border-border px-6 py-4">
           <div className="flex flex-wrap gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
+              <label className="mb-1 block text-sm font-medium text-foreground">Search</label>
               <input
                 value={attemptsSearch}
                 onChange={(e) => {
@@ -1174,7 +1174,7 @@ export function SubscriptionsPageContent({
                   setAttemptsPage(1);
                 }}
                 placeholder="User id, email, username"
-                className="block w-full sm:w-80 h-11 px-3 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="block w-full sm:w-80 h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
               />
             </div>
           </div>
@@ -1189,45 +1189,45 @@ export function SubscriptionsPageContent({
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+              <table className="min-w-full divide-y divide-border">
+                <thead className="border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Time
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Provider
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Result
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Plan / Product
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Message
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="bg-card divide-y divide-border">
                   {attempts?.map((at: SubscriptionAttempt) => (
-                    <tr key={at.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <tr key={at.id} className="hover:bg-accent">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm text-muted-foreground">
                         {formatDateTime(at.created_at)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <div className="text-sm font-medium text-foreground">
                           {at.user_email || "No email"}
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">{at.user_id?.slice(0, 8)}...</div>
+                        <div className="text-sm text-muted-foreground">{at.user_id?.slice(0, 8)}...</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm text-foreground">
                         {getProviderIcon(at.provider)} {at.provider} ({at.platform})
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 py-2.5 whitespace-nowrap">
                         <span
                           className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             at.success
@@ -1238,18 +1238,18 @@ export function SubscriptionsPageContent({
                           {at.success ? "success" : "failed"}{at.status ? ` (${at.status})` : ""}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm text-foreground">
                         <div>{at.plan_id || "—"}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{at.product_id || "—"}</div>
+                        <div className="text-xs text-muted-foreground">{at.product_id || "—"}</div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-md truncate">
+                      <td className="px-3 py-2.5 text-sm text-muted-foreground max-w-md truncate">
                         {at.message || "—"}
                       </td>
                     </tr>
                   ))}
                   {(!attempts || attempts.length === 0) && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">
                         No attempts found
                       </td>
                     </tr>
@@ -1257,9 +1257,9 @@ export function SubscriptionsPageContent({
                 </tbody>
               </table>
             </div>
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="px-6 py-4 border-t border-border">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-sm text-muted-foreground">
                   Showing {attemptsTotal === 0 ? 0 : (attemptsPage - 1) * attemptsLimit + 1} to {Math.min(attemptsPage * attemptsLimit, attemptsTotal)} of {attemptsTotal} attempts
                 </div>
                 <div className="ml-auto">

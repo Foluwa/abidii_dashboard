@@ -46,14 +46,14 @@ const Select: React.FC<SelectProps> = ({
           "dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800",
           "data-[placeholder]:text-gray-400 dark:data-[placeholder]:text-gray-400",
           selectedValue
-            ? "text-gray-800 dark:text-white/90"
-            : "text-gray-400 dark:text-gray-400",
+            ? "text-foreground"
+            : "text-muted-foreground",
           className,
         )}
       >
         <SelectPrimitive.Value placeholder={placeholder} />
         <SelectPrimitive.Icon asChild>
-          <ChevronDownIcon className="size-4 shrink-0 text-gray-400 dark:text-gray-500" />
+          <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
         </SelectPrimitive.Icon>
       </SelectPrimitive.Trigger>
 
@@ -61,7 +61,7 @@ const Select: React.FC<SelectProps> = ({
         <SelectPrimitive.Content
           position="popper"
           sideOffset={4}
-          className="z-50 max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-900"
+          className="z-50 max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-border bg-card p-1 shadow-lg"
         >
           <SelectPrimitive.Viewport className="p-1">
             {options.map((option) => (

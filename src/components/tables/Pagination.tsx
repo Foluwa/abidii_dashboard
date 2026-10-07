@@ -54,7 +54,7 @@ const Pagination: React.FC<PaginationProps> = ({
         type="button"
         onClick={() => goToPage(safeCurrentPage - 1)}
         disabled={safeCurrentPage === 1}
-        className="flex h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-700 shadow-theme-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+        className="flex h-10 items-center justify-center rounded-lg border border-input bg-card px-3.5 py-2.5 text-sm text-foreground shadow-theme-xs hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Previous
       </button>
@@ -62,7 +62,7 @@ const Pagination: React.FC<PaginationProps> = ({
         {pageItems.map((item, index) => {
           if (item === "ellipsis") {
             return (
-              <span key={`ellipsis-${index}`} className="px-2 text-sm text-gray-500 dark:text-gray-400">
+              <span key={`ellipsis-${index}`} className="px-2 text-sm text-muted-foreground">
                 ...
               </span>
             );
@@ -90,7 +90,7 @@ const Pagination: React.FC<PaginationProps> = ({
         type="button"
         onClick={() => goToPage(safeCurrentPage + 1)}
         disabled={safeCurrentPage === safeTotalPages}
-        className="flex h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-700 shadow-theme-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+        className="flex h-10 items-center justify-center rounded-lg border border-input bg-card px-3.5 py-2.5 text-sm text-foreground shadow-theme-xs hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Next
       </button>

@@ -22,7 +22,7 @@ export default function AdminLayout({
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 border-4 border-t-4 border-gray-200 border-t-brand-600 rounded-full animate-spin"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );

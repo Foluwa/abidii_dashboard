@@ -229,7 +229,7 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
             type="button"
             onClick={() => void handleRunScan('dry_run')}
             disabled={isSubmittingScan || isScanRunning}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+            className="rounded-lg border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
           >
             {isSubmittingScan && !isScanRunning ? 'Queueing…' : isScanRunning ? 'Scan Running…' : 'Run Dry Scan'}
           </button>
@@ -237,7 +237,7 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
             type="button"
             onClick={() => void handleRunScan('active')}
             disabled={isSubmittingScan || isScanRunning}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:opacity-50"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700 disabled:opacity-50"
           >
             {isSubmittingScan && !isScanRunning ? 'Queueing…' : isScanRunning ? 'Scan Running…' : 'Run Active Scan'}
           </button>
@@ -252,25 +252,25 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {activeSummaryCards.map((card) => (
-          <div key={card.label} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{card.label}</div>
-            <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{card.value}</div>
+          <div key={card.label} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">{card.label}</div>
+            <div className="mt-2 text-2xl font-semibold text-foreground">{card.value}</div>
           </div>
         ))}
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Scan Runs</h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <h2 className="text-lg font-semibold text-foreground">Recent Scan Runs</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Scheduled scans use the configured defaults. Manual scans can be dry-run or active, but neither mode deletes objects.
             </p>
           </div>
           {summary.data?.last_completed_scan ? (
-            <div className="text-right text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-right text-sm text-muted-foreground">
               <div>Last completed scan</div>
-              <div className="font-medium text-gray-900 dark:text-white">{formatDate(summary.data.last_completed_scan.completed_at)}</div>
+              <div className="font-medium text-foreground">{formatDate(summary.data.last_completed_scan.completed_at)}</div>
             </div>
           ) : null}
         </div>
@@ -278,19 +278,19 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                <th className="px-3 py-3">Started</th>
-                <th className="px-3 py-3">Mode</th>
-                <th className="px-3 py-3">Objects</th>
-                <th className="px-3 py-3">Candidates</th>
-                <th className="px-3 py-3">Errors</th>
-                <th className="px-3 py-3">Trigger</th>
+              <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="px-3 py-2.5">Started</th>
+                <th className="px-3 py-2.5">Mode</th>
+                <th className="px-3 py-2.5">Objects</th>
+                <th className="px-3 py-2.5">Candidates</th>
+                <th className="px-3 py-2.5">Errors</th>
+                <th className="px-3 py-2.5">Trigger</th>
               </tr>
             </thead>
             <tbody>
               {scans.isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">Loading scans…</td>
+                  <td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">Loading scans…</td>
                 </tr>
               ) : scans.isError ? (
                 <tr>
@@ -298,17 +298,17 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
                 </tr>
               ) : (scans.data?.items ?? []).length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">No scans recorded yet.</td>
+                  <td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">No scans recorded yet.</td>
                 </tr>
               ) : (
                 (scans.data?.items ?? []).map((scan) => (
-                  <tr key={scan.scan_id} className="border-b border-gray-100 align-top dark:border-gray-800">
-                    <td className="px-3 py-3 text-gray-900 dark:text-white">{formatDate(scan.started_at)}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">{scan.scan_mode}{!scan.completed_at ? ' (running)' : ''}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">{scan.objects_scanned.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">{scan.candidates_found.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">{scan.error_count}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">{scan.triggered_by_type}</td>
+                  <tr key={scan.scan_id} className="border-b border-border align-top">
+                    <td className="px-3 py-3 text-foreground">{formatDate(scan.started_at)}</td>
+                    <td className="px-3 py-3 text-foreground">{scan.scan_mode}{!scan.completed_at ? ' (running)' : ''}</td>
+                    <td className="px-3 py-3 text-foreground">{scan.objects_scanned.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-foreground">{scan.candidates_found.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-foreground">{scan.error_count}</td>
+                    <td className="px-3 py-3 text-foreground">{scan.triggered_by_type}</td>
                   </tr>
                 ))
               )}
@@ -317,10 +317,10 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="grid gap-4 lg:grid-cols-5">
           <div className="lg:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Search</label>
             <input
               aria-label="Search"
               value={search}
@@ -329,7 +329,7 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
                 setPage(1);
               }}
               placeholder="Storage key or error"
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+              className="block h-12 w-full rounded-lg border border-input bg-background px-4 text-sm text-foreground"
             />
           </div>
           <div>
@@ -391,7 +391,7 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Min age days</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Min age days</label>
             <input
               aria-label="Min age days"
               type="number"
@@ -401,11 +401,11 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
                 setMinAgeDays(event.target.value);
                 setPage(1);
               }}
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+              className="block h-12 w-full rounded-lg border border-input bg-background px-4 text-sm text-foreground"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Min size bytes</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Min size bytes</label>
             <input
               aria-label="Min size bytes"
               type="number"
@@ -415,7 +415,7 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
                 setMinSize(event.target.value);
                 setPage(1);
               }}
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+              className="block h-12 w-full rounded-lg border border-input bg-background px-4 text-sm text-foreground"
             />
           </div>
         </div>
@@ -425,7 +425,7 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
             type="button"
             onClick={() => void handleBulkAction('review')}
             disabled={isApplyingAction || selectedIds.length === 0}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+            className="rounded-lg border border-input px-3 py-2 text-sm text-foreground hover:bg-muted/50 disabled:opacity-50"
           >
             Review
           </button>
@@ -433,7 +433,7 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
             type="button"
             onClick={() => void handleBulkAction('protect')}
             disabled={isApplyingAction || selectedIds.length === 0}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+            className="rounded-lg border border-input px-3 py-2 text-sm text-foreground hover:bg-muted/50 disabled:opacity-50"
           >
             Protect
           </button>
@@ -441,7 +441,7 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
             type="button"
             onClick={() => void handleBulkAction('skip')}
             disabled={isApplyingAction || selectedIds.length === 0}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+            className="rounded-lg border border-input px-3 py-2 text-sm text-foreground hover:bg-muted/50 disabled:opacity-50"
           >
             Skip
           </button>
@@ -461,7 +461,7 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
           >
             Delete Now
           </button>
-          <div className="ml-auto text-sm text-gray-500 dark:text-gray-400">
+          <div className="ml-auto text-sm text-muted-foreground">
             {selectedIds.length} selected
           </div>
         </div>
@@ -469,8 +469,8 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                <th className="px-3 py-3">
+              <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="px-3 py-2.5">
                   <input
                     aria-label="Select all visible candidates"
                     type="checkbox"
@@ -478,20 +478,20 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
                     onChange={toggleAllVisible}
                   />
                 </th>
-                <th className="px-3 py-3">Storage key</th>
-                <th className="px-3 py-3">Type</th>
-                <th className="px-3 py-3">Size</th>
-                <th className="px-3 py-3">Prefix</th>
-                <th className="px-3 py-3">Age</th>
-                <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3">Preview</th>
-                <th className="px-3 py-3">Actions</th>
+                <th className="px-3 py-2.5">Storage key</th>
+                <th className="px-3 py-2.5">Type</th>
+                <th className="px-3 py-2.5">Size</th>
+                <th className="px-3 py-2.5">Prefix</th>
+                <th className="px-3 py-2.5">Age</th>
+                <th className="px-3 py-2.5">Status</th>
+                <th className="px-3 py-2.5">Preview</th>
+                <th className="px-3 py-2.5">Actions</th>
               </tr>
             </thead>
             <tbody>
               {candidates.isLoading ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-10 text-center text-gray-500 dark:text-gray-400">Loading orphan candidates…</td>
+                  <td colSpan={9} className="px-3 py-10 text-center text-muted-foreground">Loading orphan candidates…</td>
                 </tr>
               ) : candidates.isError ? (
                 <tr>
@@ -499,11 +499,11 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
                 </tr>
               ) : candidateItems.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-10 text-center text-gray-500 dark:text-gray-400">No orphan candidates match the current filters.</td>
+                  <td colSpan={9} className="px-3 py-10 text-center text-muted-foreground">No orphan candidates match the current filters.</td>
                 </tr>
               ) : (
                 candidateItems.map((item: OrphanAssetCandidateItem) => (
-                  <tr key={item.candidate_id} className="border-b border-gray-100 align-top dark:border-gray-800">
+                  <tr key={item.candidate_id} className="border-b border-border align-top">
                     <td className="px-3 py-3">
                       <input
                         aria-label={`Select candidate ${item.storage_key}`}
@@ -512,17 +512,17 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
                         onChange={() => toggleCandidate(item.candidate_id)}
                       />
                     </td>
-                    <td className="px-3 py-3 text-gray-900 dark:text-white">
+                    <td className="px-3 py-3 text-foreground">
                       <div className="max-w-[24rem] break-all font-medium">{item.storage_key}</div>
-                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">{item.flagged_reason}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">{item.flagged_reason}</div>
                       {item.latest_error ? (
                         <div className="mt-1 text-xs text-red-600 dark:text-red-300">{item.latest_error}</div>
                       ) : null}
                     </td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">{item.asset_type}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">{formatBytes(item.object_size)}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">{item.prefix}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">{ageInDays(item.last_modified)}d</td>
+                    <td className="px-3 py-3 text-foreground">{item.asset_type}</td>
+                    <td className="px-3 py-3 text-foreground">{formatBytes(item.object_size)}</td>
+                    <td className="px-3 py-3 text-foreground">{item.prefix}</td>
+                    <td className="px-3 py-3 text-foreground">{ageInDays(item.last_modified)}d</td>
                     <td className="px-3 py-3">{mapStatusBadge(item.status)}</td>
                     <td className="px-3 py-3">
                       <MediaPreview previewUrl={item.preview_url} assetType={item.asset_type} />
@@ -530,7 +530,7 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
                     <td className="px-3 py-3">
                       <div className="flex flex-wrap gap-2">
                         <button type="button" onClick={() => void handleBulkAction('protect', [item.candidate_id])} className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-300">Protect</button>
-                        <button type="button" onClick={() => void handleBulkAction('skip', [item.candidate_id])} className="text-xs font-medium text-gray-600 hover:underline dark:text-gray-300">Skip</button>
+                        <button type="button" onClick={() => void handleBulkAction('skip', [item.candidate_id])} className="text-xs font-medium text-muted-foreground hover:underline">Skip</button>
                         <button type="button" onClick={() => void handleBulkAction('schedule_delete', [item.candidate_id])} className="text-xs font-medium text-amber-700 hover:underline dark:text-amber-300">Schedule</button>
                         <button type="button" onClick={() => void handleBulkAction('delete_now', [item.candidate_id])} className="text-xs font-medium text-red-700 hover:underline dark:text-red-300">Delete now</button>
                       </div>
@@ -543,7 +543,7 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
         </div>
 
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Showing {pageStart} to {pageEnd} of {totalCandidates} orphan asset candidates
           </p>
           <div className="ml-auto">

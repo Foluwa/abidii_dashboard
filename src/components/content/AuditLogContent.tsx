@@ -172,7 +172,7 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
       {showHeader && <PageBreadCrumb pageTitle="Audit Log" />}
 
       <div className="space-y-6">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-xl border border-border bg-card p-5">
           {/* Ops Mode bar */}
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <button
@@ -180,23 +180,23 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
               aria-pressed={opsMode}
               onClick={() => setOpsMode((m) => !m)}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                opsMode
-                  ? 'bg-brand-600 text-white dark:text-gray-900 hover:bg-brand-700'
-                  : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-white/[0.05]'
-              }`}
+ opsMode
+ ? 'bg-brand-600 text-primary-foreground hover:bg-brand-700'
+ : 'border border-input bg-card text-foreground hover:bg-gray-50 dark:hover:bg-white/[0.05]'
+ }`}
             >
               {opsMode ? 'Ops Mode ON' : 'Ops Mode'}
             </button>
 
             {opsMode && (
               <>
-                <span className="text-xs text-gray-500 dark:text-gray-400">Preset:</span>
+                <span className="text-xs text-muted-foreground">Preset:</span>
                 {(['all', 'publish', 'validate', 'unpublish'] as const).map((p) => (
                   <button
                     key={p}
                     type="button"
                     onClick={() => applyOpsPreset(p)}
-                    className="rounded border border-gray-300 bg-gray-50 px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+                    className="rounded border border-input bg-muted/50 px-2.5 py-1 text-xs text-foreground hover:bg-gray-100 dark:hover:bg-white/[0.05]"
                   >
                     {p === 'all' ? 'All ops' : p}
                   </button>
@@ -207,7 +207,7 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">Action prefix</label>
+              <label className="block text-xs font-medium text-muted-foreground">Action prefix</label>
               <div className="mt-1">
                 <StyledSelect
                   options={actionPrefixOptions}
@@ -221,7 +221,7 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">Action</label>
+              <label className="block text-xs font-medium text-muted-foreground">Action</label>
               <input
                 value={action}
                 onChange={(e) => {
@@ -229,12 +229,12 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
                   setAction(e.target.value);
                 }}
                 placeholder="e.g. course.publish"
-                className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                className="mt-1 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">Target type</label>
+              <label className="block text-xs font-medium text-muted-foreground">Target type</label>
               <div className="mt-1">
                 <StyledSelect
                   options={targetTypeOptions}
@@ -248,7 +248,7 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">Result</label>
+              <label className="block text-xs font-medium text-muted-foreground">Result</label>
               <div className="mt-1">
                 <StyledSelect
                   options={resultOptions}
@@ -262,7 +262,7 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">Target ID</label>
+              <label className="block text-xs font-medium text-muted-foreground">Target ID</label>
               <input
                 value={targetId}
                 onChange={(e) => {
@@ -270,12 +270,12 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
                   setTargetId(e.target.value);
                 }}
                 placeholder="UUID"
-                className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                className="mt-1 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">Admin user ID</label>
+              <label className="block text-xs font-medium text-muted-foreground">Admin user ID</label>
               <input
                 value={adminUserId}
                 onChange={(e) => {
@@ -283,14 +283,14 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
                   setAdminUserId(e.target.value);
                 }}
                 placeholder="UUID"
-                className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                className="mt-1 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground"
               />
             </div>
 
             <div>
               <label
                 htmlFor="auditLogSearch"
-                className="block text-xs font-medium text-gray-600 dark:text-gray-300"
+                className="block text-xs font-medium text-muted-foreground"
               >
                 Search
               </label>
@@ -302,14 +302,14 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
                   setQ(e.target.value);
                 }}
                 placeholder="Search action, actor, target, details…"
-                className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                className="mt-1 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground"
               />
             </div>
 
             <div>
               <label
                 htmlFor="auditLogTimeWindow"
-                className="block text-xs font-medium text-gray-600 dark:text-gray-300"
+                className="block text-xs font-medium text-muted-foreground"
               >
                 Time window
               </label>
@@ -358,48 +358,48 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table">
-              <thead className="bg-gray-50 dark:bg-gray-800/40">
+            <table className="min-w-full divide-y divide-border" role="table">
+              <thead className="border-b">
                 {opsMode ? (
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Time</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Action</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Entity type</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Entity key</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Result</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Link / Details</th>
+                    <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Time</th>
+                    <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Action</th>
+                    <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Entity type</th>
+                    <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Entity key</th>
+                    <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Result</th>
+                    <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Link / Details</th>
                   </tr>
                 ) : (
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Time</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Actor</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Action</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Target</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Result</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Details</th>
+                    <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Time</th>
+                    <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Actor</th>
+                    <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Action</th>
+                    <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Target</th>
+                    <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Result</th>
+                    <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Details</th>
                   </tr>
                 )}
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+              <tbody className="divide-y divide-border">
                 {isLoading && (
                   <tr>
-                    <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={6}>
+                    <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={6}>
                       Loading…
                     </td>
                   </tr>
                 )}
                 {isError && (
                   <tr>
-                    <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={6}>
+                    <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={6}>
                       Failed to load audit log.
                     </td>
                   </tr>
                 )}
                 {!isLoading && !isError && items.length === 0 && (
                   <tr>
-                    <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={6}>
+                    <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={6}>
                       No audit log entries found.
                     </td>
                   </tr>
@@ -409,16 +409,16 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
                   if (opsMode) {
                     return (
                       <tr key={row.id}>
-                        <td className="px-4 py-2 text-xs text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                        <td className="px-4 py-2 text-xs text-foreground whitespace-nowrap">
                           {new Date(row.created_at).toLocaleString()}
                         </td>
-                        <td className="px-4 py-2 text-xs font-mono text-gray-900 dark:text-white">
+                        <td className="px-4 py-2 text-xs font-mono text-foreground">
                           {row.action}
                         </td>
-                        <td className="px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
+                        <td className="px-4 py-2 text-xs text-muted-foreground">
                           {row.entity_type || row.target_type || '—'}
                         </td>
-                        <td className="px-4 py-2 text-xs text-gray-900 dark:text-white">
+                        <td className="px-4 py-2 text-xs text-foreground">
                           {row.entity_key || '—'}
                         </td>
                         <td className="px-4 py-2 text-xs">{resultBadge(row.details)}</td>
@@ -426,7 +426,7 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
                           {targetRoute && (
                             <Link
                               href={targetRoute}
-                              className="rounded border border-gray-300 bg-gray-50 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                              className="rounded border border-input bg-muted/50 px-2 py-1 text-xs text-foreground hover:bg-gray-100"
                             >
                               ↗ Entity
                             </Link>
@@ -434,7 +434,7 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
                           <button
                             type="button"
                             onClick={() => openDetails(row)}
-                            className="rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                            className="rounded border border-input bg-card px-2 py-1 text-xs text-foreground hover:bg-gray-50"
                           >
                             View
                           </button>
@@ -445,18 +445,18 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
 
                   return (
                     <tr key={row.id}>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                      <td className="px-4 py-3 text-sm text-foreground">
                         {new Date(row.created_at).toLocaleString()}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                        <div className="font-medium text-gray-900 dark:text-white">{row.actor_email || '—'}</div>
-                        <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{row.actor_display_name || row.admin_user_id}</div>
+                      <td className="px-4 py-3 text-sm text-foreground">
+                        <div className="font-medium text-foreground">{row.actor_email || '—'}</div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">{row.actor_display_name || row.admin_user_id}</div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                      <td className="px-4 py-3 text-sm text-foreground">
                         {row.action}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{row.entity_type || row.target_type || '—'}</div>
+                      <td className="px-4 py-3 text-sm text-foreground">
+                        <div className="text-xs text-muted-foreground">{row.entity_type || row.target_type || '—'}</div>
                         {targetRoute ? (
                           <Link href={targetRoute} className="hover:underline">
                             {row.entity_id || row.target_id}
@@ -470,7 +470,7 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
                         <button
                           type="button"
                           onClick={() => openDetails(row)}
-                          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+                          className="rounded-lg border border-input bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/50"
                         >
                           View
                         </button>
@@ -483,8 +483,8 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3">
+          <p className="text-sm text-muted-foreground">
             Showing {pageStart} to {pageEnd} of {total} audit log entries
           </p>
           <div className="ml-auto">
@@ -504,9 +504,9 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
         maxWidth="4xl"
       >
         <div className="space-y-3">
-          <div className="text-sm text-gray-900 dark:text-white">
+          <div className="text-sm text-foreground">
             <div className="font-medium">{detailsItem?.action}</div>
-            <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">{detailsItem?.id}</div>
+            <div className="mt-1 text-xs text-muted-foreground">{detailsItem?.id}</div>
           </div>
 
           {/* Copy buttons */}
@@ -516,7 +516,7 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
               onClick={() =>
                 detailsItem?.id && copyToClipboard(detailsItem.id, 'request_id')
               }
-              className="rounded border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-white/[0.05]"
+              className="rounded border border-input bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 dark:hover:bg-white/[0.05]"
             >
               {copiedField === 'request_id' ? '✓ Copied!' : 'Copy request_id'}
             </button>
@@ -526,18 +526,18 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
                 detailsItem?.details != null &&
                 copyToClipboard(JSON.stringify(detailsItem.details, null, 2), 'json')
               }
-              className="rounded border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-white/[0.05]"
+              className="rounded border border-input bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-gray-50 dark:hover:bg-white/[0.05]"
             >
               {copiedField === 'json' ? '✓ Copied!' : 'Copy JSON'}
             </button>
           </div>
 
           {(detailsItem?.details as any)?.validation_status && (
-            <div className="rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+            <div className="rounded-lg border border-border bg-card p-3 text-xs text-foreground">
               Validation status: <span className="font-medium">{String((detailsItem?.details as any)?.validation_status)}</span>
             </div>
           )}
-          <pre className="max-h-[60vh] overflow-auto rounded-lg bg-gray-50 p-4 text-xs text-gray-900 dark:bg-gray-800 dark:text-gray-100">
+          <pre className="max-h-[60vh] overflow-auto rounded-lg bg-muted/50 p-4 text-xs text-foreground">
             {JSON.stringify(detailsItem?.details ?? null, null, 2)}
           </pre>
         </div>

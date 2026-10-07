@@ -62,7 +62,7 @@ export default function LearningAnalyticsOverviewPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <PageBreadCrumb pageTitle="Learning Analytics" />
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Understand lesson engagement, completion, difficulty, and learner progression.
           </p>
         </div>
@@ -77,7 +77,7 @@ export default function LearningAnalyticsOverviewPage() {
       <AnalyticsTabs />
 
       {/* Filters */}
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
+      <div className="bg-card border border-border rounded-lg p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <StyledSelect
             id="learning-analytics-date-range"
@@ -122,7 +122,7 @@ export default function LearningAnalyticsOverviewPage() {
                 setLanguageId('');
                 setSearch('');
               }}
-              className="w-full px-4 py-2 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="w-full px-4 py-2 text-muted-foreground border border-input rounded-lg hover:bg-muted/50"
             >
               Reset Filters
             </button>
@@ -167,11 +167,11 @@ export default function LearningAnalyticsOverviewPage() {
       )}
 
       {/* Lesson performance table */}
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
+      <div className="bg-card border border-border rounded-lg p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Lesson Performance</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <h3 className="text-lg font-semibold text-foreground">Lesson Performance</h3>
+            <p className="text-sm text-muted-foreground">
               Click a lesson to see exercise-level detail and drop-off.
             </p>
           </div>
@@ -180,7 +180,7 @@ export default function LearningAnalyticsOverviewPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search lesson or course…"
-            className="w-full sm:w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            className="w-full sm:w-64 rounded-lg border border-input px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
           />
         </div>
         {isLoading ? (
@@ -192,9 +192,9 @@ export default function LearningAnalyticsOverviewPage() {
 
       {/* Lessons needing attention - transparent sort, no synthetic score */}
       {!isLoading && needsAttention.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Lessons Needing Attention</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-1">Lessons Needing Attention</h3>
+          <p className="text-sm text-muted-foreground mb-4">
             Lowest first-attempt accuracy among lessons with at least {LOW_SAMPLE_THRESHOLD} sessions - a
             transparent sort of the same metrics above, not a hidden score.
           </p>

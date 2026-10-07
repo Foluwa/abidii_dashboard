@@ -21,7 +21,7 @@ export default function AlertsHubPage() {
     <div className="space-y-6">
       <div>
         <PageBreadCrumb pageTitle="Alerts" />
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Review alert history and test the alerting pipeline
         </p>
       </div>

@@ -28,11 +28,11 @@ export default function DropoffPanel({ rows }: { rows: AnalyticsDropoffRow[] }) 
 
         return (
           <div key={idx} className="flex items-center gap-3" title={tooltip}>
-            <div className="w-40 shrink-0 truncate text-sm font-medium text-gray-900 dark:text-white">
+            <div className="w-40 shrink-0 truncate text-sm font-medium text-foreground">
               {label}
             </div>
             <div className="flex-1">
-              <div className="h-5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+              <div className="h-5 overflow-hidden rounded-full bg-muted">
                 <div
                   className="flex h-5 items-center justify-end rounded-full bg-orange-500 px-2 text-xs font-medium text-white"
                   style={{ width: `${widthPct}%` }}
@@ -41,7 +41,7 @@ export default function DropoffPanel({ rows }: { rows: AnalyticsDropoffRow[] }) 
                 </div>
               </div>
             </div>
-            <div className="w-16 shrink-0 text-right text-sm text-gray-500 dark:text-gray-400">
+            <div className="w-16 shrink-0 text-right text-sm text-muted-foreground">
               {row.percent_of_started_sessions !== null
                 ? `${(row.percent_of_started_sessions * 100).toFixed(0)}%`
                 : '—'}
@@ -49,7 +49,7 @@ export default function DropoffPanel({ rows }: { rows: AnalyticsDropoffRow[] }) 
           </div>
         );
       })}
-      <p className="pt-1 text-xs text-gray-400 dark:text-gray-500">
+      <p className="pt-1 text-xs text-muted-foreground">
         Drop-off includes sessions that were not completed and have been inactive beyond the analytics
         inactivity threshold - it does not necessarily mean the learner explicitly gave up.
       </p>

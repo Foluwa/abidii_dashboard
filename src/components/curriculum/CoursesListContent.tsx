@@ -368,13 +368,13 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
           <button
             type="button"
             onClick={openCreateCourseModal}
-            className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700"
+            className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700"
           >
             New Course
           </button>
           <Link
             href="/curriculum/publishing"
-            className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+            className="inline-flex items-center justify-center rounded-lg border border-input bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
           >
             Readiness Matrix
           </Link>
@@ -382,11 +382,11 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
       </div>
 
       {/* Filters + Actions */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="p-5">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Search</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Search</label>
               <input
                 value={search}
                 onChange={(e) => {
@@ -394,11 +394,11 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
                   setPage(1);
                 }}
                 placeholder="course key or title"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-theme-xs focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground shadow-theme-xs focus:border-brand-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Status</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Status</label>
               <StyledSelect
                 value={status}
                 onChange={(e) => {
@@ -416,7 +416,7 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Enabled</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Enabled</label>
               <StyledSelect
                 value={enabled}
                 onChange={(e) => {
@@ -437,7 +437,7 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
                 type="button"
                 disabled={selectedIds.length === 0 || isBulkRunning}
                 onClick={onBulkValidate}
-                className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Validate Selected
               </button>
@@ -445,7 +445,7 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
                 type="button"
                 disabled={selectedIds.length === 0 || isBulkRunning}
                 onClick={() => setShowPublishConfirm(true)}
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+                className="flex-1 rounded-lg border border-input bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Publish Selected
               </button>
@@ -453,14 +453,14 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
                 type="button"
                 disabled={selectedIds.length === 0 || isBulkRunning}
                 onClick={() => setShowUnpublishConfirm(true)}
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+                className="flex-1 rounded-lg border border-input bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Unpublish Selected
               </button>
             </div>
           </div>
 
-          <div className="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
             <div>Selected: {selectedIds.length}</div>
             <div>
               {bulkProgress && isBulkRunning
@@ -474,10 +474,10 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
 
       {/* Results summary */}
       {lastBulkOutcomes && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
           <div className="p-5">
-            <div className="text-sm font-medium text-gray-900 dark:text-white">Last bulk run</div>
-            <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+            <div className="text-sm font-medium text-foreground">Last bulk run</div>
+            <div className="mt-2 text-xs text-muted-foreground">
               Success: {summarize(lastBulkOutcomes).success}, Blocked: {summarize(lastBulkOutcomes).blocked}, Failed: {summarize(lastBulkOutcomes).failed}
             </div>
 
@@ -486,7 +486,7 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
                 type="button"
                 onClick={onRetryFailed}
                 disabled={isBulkRunning || lastBulkOutcomes.every((o) => o.outcome !== 'failed')}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+                className="rounded-lg border border-input bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Retry failed
               </button>
@@ -497,7 +497,7 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
                   setLastBulkOutcomes(null);
                   setLastBulkAction(null);
                 }}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03]"
+                className="rounded-lg border border-input bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Clear
               </button>
@@ -505,21 +505,21 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
 
             {lastBulkOutcomes.some((o) => o.outcome !== 'success') && (
               <div className="mt-4 overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table">
-                  <thead className="bg-gray-50 dark:bg-gray-800/40">
+                <table className="min-w-full divide-y divide-border" role="table">
+                  <thead className="border-b">
                     <tr>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Course</th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Outcome</th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Attempts</th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+                      <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Course</th>
+                      <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Outcome</th>
+                      <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Attempts</th>
+                      <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  <tbody className="divide-y divide-border">
                     {lastBulkOutcomes
                       .filter((o) => o.outcome !== 'success')
                       .map((o) => (
                         <tr key={o.id}>
-                          <td className="px-3 py-2 text-xs text-gray-900 dark:text-white">
+                          <td className="px-3 py-2 text-xs text-foreground">
                             <Link
                               href={`/curriculum/courses/${o.id}`}
                               className="hover:underline"
@@ -527,20 +527,20 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
                               {labelById.get(o.id) || o.id}
                             </Link>
                           </td>
-                          <td className="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">{o.outcome}</td>
-                          <td className="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">{o.attempts}</td>
+                          <td className="px-3 py-2 text-xs text-foreground">{o.outcome}</td>
+                          <td className="px-3 py-2 text-xs text-foreground">{o.attempts}</td>
                           <td className="px-3 py-2 text-xs">
                             {o.outcome === 'blocked' && (
                               <button
                                 type="button"
                                 onClick={() => openBlockedValidation(o)}
-                                className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+                                className="rounded-lg border border-input bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted/50"
                               >
                                 View validation
                               </button>
                             )}
                             {o.outcome === 'failed' && (
-                              <span className="text-xs text-gray-600 dark:text-gray-400">{o.errorMessage || 'failed'}</span>
+                              <span className="text-xs text-muted-foreground">{o.errorMessage || 'failed'}</span>
                             )}
                           </td>
                         </tr>
@@ -563,12 +563,12 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
       </Modal>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table">
-            <thead className="bg-gray-50 dark:bg-gray-800/40">
+          <table className="min-w-full divide-y divide-border" role="table">
+            <thead className="border-b">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
                   <input
                     type="checkbox"
                     checked={allOnPageSelected}
@@ -576,31 +576,31 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
                     aria-label="Select all on page"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Course</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Key</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Enabled</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Course</th>
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Key</th>
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Status</th>
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Enabled</th>
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+            <tbody className="divide-y divide-border">
               {isLoading && (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={6}>
+                  <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={6}>
                     Loading…
                   </td>
                 </tr>
               )}
               {isError && (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={6}>
+                  <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={6}>
                     Failed to load courses.
                   </td>
                 </tr>
               )}
               {!isLoading && !isError && items.length === 0 && (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-gray-600 dark:text-gray-400" colSpan={6}>
+                  <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={6}>
                     No courses found.
                   </td>
                 </tr>
@@ -615,7 +615,7 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
                       aria-label={`Select course ${course.title}`}
                     />
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                  <td className="px-4 py-3 text-sm text-foreground">
                     <Link
                       href={`/curriculum/courses/${course.id}`}
                       className="hover:underline"
@@ -623,7 +623,7 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
                       {course.title}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{course.course_key}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{course.course_key}</td>
                   <td className="px-4 py-3 text-sm">
                     <StatusBadge status={course.status as any} />
                   </td>
@@ -635,7 +635,7 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
                       <button
                         type="button"
                         onClick={() => openEditCourseModal(course)}
-                        className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+                        className="rounded-lg border border-input bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/50"
                       >
                         Edit
                       </button>
@@ -643,7 +643,7 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
                         type="button"
                         onClick={() => setArchiveConfirmCourse(course)}
                         disabled={pendingCourseActionId === course.id}
-                        className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-medium text-amber-800 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-900 dark:bg-gray-800 dark:text-amber-300 dark:hover:bg-amber-950/30"
+                        className="rounded-lg border border-amber-300 bg-card px-3 py-2 text-xs font-medium text-amber-800 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-900 dark:text-amber-300 dark:hover:bg-amber-950/30"
                       >
                         Archive
                       </button>
@@ -651,7 +651,7 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
                         type="button"
                         onClick={() => setDeleteConfirmCourse(course)}
                         disabled={pendingCourseActionId === course.id}
-                        className="rounded-lg border border-red-300 bg-white px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:bg-gray-800 dark:text-red-300 dark:hover:bg-red-950/30"
+                        className="rounded-lg border border-red-300 bg-card px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
                       >
                         Delete
                       </button>
@@ -666,7 +666,7 @@ export function CoursesListContent({ showHeader = true }: { showHeader?: boolean
 
       {/* Pagination */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Showing {pageStart} to {pageEnd} of {total} courses
         </p>
         <div className="ml-auto">

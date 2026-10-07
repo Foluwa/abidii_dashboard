@@ -49,7 +49,7 @@ export default function RoomsTimeSeriesChart({
 
   return (
     <div className="overflow-hidden">
-      <h3 className="px-1 pb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{title}</h3>
+      <h3 className="px-1 pb-2 text-sm font-medium text-foreground">{title}</h3>
       {hasData ? (
         <div className="max-w-full overflow-x-auto custom-scrollbar">
           <div className="min-w-[600px]" style={{ height }}>
@@ -106,7 +106,7 @@ export default function RoomsTimeSeriesChart({
         </div>
       ) : (
         <div
-          className="flex items-center justify-center text-sm text-gray-500 dark:text-gray-400"
+          className="flex items-center justify-center text-sm text-muted-foreground"
           style={{ height }}
         >
           No activity in this period

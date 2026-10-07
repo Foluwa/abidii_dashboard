@@ -110,7 +110,7 @@ export function LanguageSettingsContent({ showHeader = true }: { showHeader?: bo
         {showHeader && <PageBreadCrumb pageTitle="Language Practice Settings" />}
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
-          <span className="ml-3 text-gray-600 dark:text-gray-400">Loading...</span>
+          <span className="ml-3 text-muted-foreground">Loading...</span>
         </div>
       </div>
     );
@@ -132,40 +132,40 @@ export function LanguageSettingsContent({ showHeader = true }: { showHeader?: bo
       {showHeader && <PageBreadCrumb pageTitle="Language Practice Settings" />}
       
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="text-lg font-semibold text-foreground">
           Numbers Practice Range Limits
         </h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Configure the maximum number range available for practice per language.
           Leave empty to use the actual maximum from the database.
         </p>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-900/50">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+        <table className="min-w-full divide-y divide-border">
+          <thead className="border-b">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                 Language
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                 ISO Code
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                 Numbers in DB
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                 Practice Limit
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                 Effective Max
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="divide-y divide-border">
             {languagesWithStats.map((lang) => {
               const actualMax = lang.numbersAvailability?.actual_max_in_db || 0;
               const effectiveMax = lang.numbersAvailability?.max_available || actualMax;
@@ -173,34 +173,34 @@ export function LanguageSettingsContent({ showHeader = true }: { showHeader?: bo
               
               return (
                 <tr key={lang.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 py-2.5 whitespace-nowrap">
                     <div className="flex items-center">
                       {lang.flag_emoji && (
                         <span className="mr-2 text-xl">{lang.flag_emoji}</span>
                       )}
                       <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        <div className="text-sm font-medium text-foreground">
                           {lang.name}
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                        <div className="text-sm text-muted-foreground">
                           {lang.native_name}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-gray-700 rounded">
+                  <td className="px-3 py-2.5 whitespace-nowrap">
+                    <span className="px-2 py-1 text-xs font-mono bg-muted rounded">
                       {lang.iso_639_3}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  <td className="px-3 py-2.5 whitespace-nowrap text-sm text-foreground">
                     {actualMax > 0 ? (
                       <span className="font-medium">{actualMax.toLocaleString()}</span>
                     ) : (
                       <span className="text-gray-400">No data</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 py-2.5 whitespace-nowrap">
                     {editingLanguage === lang.id ? (
                       <input
                         type="number"
@@ -219,7 +219,7 @@ export function LanguageSettingsContent({ showHeader = true }: { showHeader?: bo
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 py-2.5 whitespace-nowrap">
                     <span className={`text-sm font-medium ${
                       hasCustomLimit 
                         ? 'text-amber-600 dark:text-amber-400' 
@@ -231,7 +231,7 @@ export function LanguageSettingsContent({ showHeader = true }: { showHeader?: bo
                       <span className="ml-2 text-xs text-gray-500">(limited)</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                  <td className="px-3 py-2.5 whitespace-nowrap text-right text-sm">
                     {editingLanguage === lang.id ? (
                       <div className="flex justify-end gap-2">
                         <button

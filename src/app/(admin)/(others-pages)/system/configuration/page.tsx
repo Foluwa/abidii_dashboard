@@ -24,7 +24,7 @@ export default function ConfigurationPage() {
     <div className="space-y-6">
       <div>
         <PageBreadCrumb pageTitle="Configuration" />
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Manage platform settings, application configuration, and language practice limits
         </p>
       </div>

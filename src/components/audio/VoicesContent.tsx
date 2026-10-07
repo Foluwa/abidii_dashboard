@@ -8,8 +8,7 @@ import Alert from "@/components/ui/alert/Alert";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import Pagination from "@/components/tables/Pagination";
-import { FaMicrophone, FaPlay, FaPause } from "react-icons/fa";
-import { FiServer } from "react-icons/fi";
+import { Mic, Pause, Play, Server } from "lucide-react";
 
 interface Voice {
   id: string;
@@ -188,8 +187,8 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Voice Management</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Voice Management</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Manage TTS voices across all providers
           </p>
         </div>
@@ -221,7 +220,7 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
           />
         </div>
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Language
           </label>
           <input
@@ -232,21 +231,21 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
               setPage(1);
             }}
             placeholder="e.g., en-US, yo-NG"
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground"
           />
         </div>
       </div>
 
       {/* Voices Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div className="bg-card rounded-lg shadow">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         ) : voices.length === 0 ? (
           <div className="text-center py-12">
-            <FaMicrophone className="mx-auto text-gray-400 text-5xl mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No voices found</p>
+            <Mic className="mx-auto text-gray-400 text-5xl mb-4" />
+            <p className="text-muted-foreground">No voices found</p>
             <button
               onClick={openCreateModal}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -258,54 +257,54 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead className="border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Voice
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Provider
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Language
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Details
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Sample
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-border">
                   {voices.map((voice) => (
                     <tr key={voice.id}>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      <td className="px-3 py-2.5">
+                        <div className="text-sm font-medium text-foreground">
                           {voice.voice_name}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-xs text-muted-foreground">
                           ID: {voice.voice_id}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-2.5">
                         <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
                           {voice.provider}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      <td className="px-3 py-2.5 text-sm text-foreground">
                         {voice.language_code}
                         {voice.language_name && (
                           <div className="text-xs text-gray-500">{voice.language_name}</div>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      <td className="px-3 py-2.5 text-sm text-foreground">
                         {voice.gender && <div>Gender: {voice.gender}</div>}
                         {voice.accent && <div>Accent: {voice.accent}</div>}
                         {voice.style_tags.length > 0 && (
@@ -314,23 +313,23 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-2.5">
                         {voice.sample_audio_url ? (
                           <button
                             onClick={() => toggleAudio(voice.sample_audio_url)}
                             className="text-blue-600 hover:text-blue-800 dark:text-blue-400"
                           >
                             {playingAudio === voice.sample_audio_url ? (
-                              <FaPause />
+                              <Pause />
                             ) : (
-                              <FaPlay />
+                              <Play />
                             )}
                           </button>
                         ) : (
                           <span className="text-gray-400 text-xs">No sample</span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-2.5">
                         <span
                           className={`px-2 py-1 text-xs rounded-full ${
                             voice.is_active
@@ -341,7 +340,7 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
                           {voice.is_active ? "Active" : "Inactive"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right space-x-2">
+                      <td className="px-3 py-2.5 text-right space-x-2">
                         <button
                           onClick={() => openEditModal(voice)}
                           className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm"
@@ -362,8 +361,8 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
             </div>
 
             {/* Pagination */}
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <div className="text-sm text-gray-700 dark:text-gray-300">
+            <div className="px-6 py-4 border-t border-border flex items-center justify-between">
+              <div className="text-sm text-foreground">
                 Showing {pageStart} to {pageEnd} of {total} voices
               </div>
               <div className="ml-auto">
@@ -377,9 +376,9 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-border">
+              <h2 className="text-xl font-semibold text-foreground">
                 {editingVoice ? "Edit Voice" : "Add Voice"}
               </h2>
             </div>
@@ -404,33 +403,33 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Voice ID *
                   </label>
                   <input
                     type="text"
                     value={formData.voice_id}
                     onChange={(e) => setFormData({ ...formData, voice_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Voice Name *
                   </label>
                   <input
                     type="text"
                     value={formData.voice_name}
                     onChange={(e) => setFormData({ ...formData, voice_name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Language Code *
                   </label>
                   <input
@@ -438,7 +437,7 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
                     value={formData.language_code}
                     onChange={(e) => setFormData({ ...formData, language_code: e.target.value })}
                     placeholder="e.g., en-US, yo-NG"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                     required
                   />
                 </div>
@@ -459,7 +458,7 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Age Group
                   </label>
                   <input
@@ -467,12 +466,12 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
                     value={formData.age_group}
                     onChange={(e) => setFormData({ ...formData, age_group: e.target.value })}
                     placeholder="e.g., adult, child, senior"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                   />
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Accent
                   </label>
                   <input
@@ -480,7 +479,7 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
                     value={formData.accent}
                     onChange={(e) => setFormData({ ...formData, accent: e.target.value })}
                     placeholder="e.g., British, American, Nigerian"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                   />
                 </div>
 
@@ -492,7 +491,7 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                     className="h-4 w-4 text-blue-600 rounded border-gray-300"
                   />
-                  <label htmlFor="is_active" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="is_active" className="ml-2 text-sm text-foreground">
                     Active (available for TTS generation)
                   </label>
                 </div>
@@ -502,7 +501,7 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="px-4 py-2 border border-input text-foreground rounded-lg hover:bg-accent"
                 >
                   Cancel
                 </button>

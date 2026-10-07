@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { FiFilter, FiX, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { ChevronDown, ChevronUp, Funnel, X } from "lucide-react";
 
 interface ContentFiltersCardProps {
   children: React.ReactNode;
@@ -24,31 +24,31 @@ export function ContentFiltersCard({
   advancedLabel = 'Advanced',
 }: ContentFiltersCardProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
-      <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-gray-800 dark:bg-gray-800/40">
+    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-theme-xs">
+      <div className="border-b border-border bg-muted/40 px-5 py-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Filters</h3>
+          <h3 className="text-sm font-semibold text-foreground">Filters</h3>
           <div className="flex items-center gap-2">
             {activeFilterCount > 0 && onClearAll && (
               <button
                 onClick={onClearAll}
                 className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
               >
-                <FiX className="h-3 w-3" />
+                <X className="h-3 w-3" />
                 Clear all ({activeFilterCount})
               </button>
             )}
             {onToggleAdvanced && (
               <button
                 onClick={onToggleAdvanced}
-                className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="inline-flex items-center gap-1 rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted"
               >
-                <FiFilter className="h-3 w-3" />
+                <Funnel className="h-3 w-3" />
                 {advancedLabel}
                 {showAdvanced ? (
-                  <FiChevronUp className="h-3 w-3" />
+                  <ChevronUp className="h-3 w-3" />
                 ) : (
-                  <FiChevronDown className="h-3 w-3" />
+                  <ChevronDown className="h-3 w-3" />
                 )}
               </button>
             )}

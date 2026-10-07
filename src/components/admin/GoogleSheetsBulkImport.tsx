@@ -219,18 +219,18 @@ export function GoogleSheetsBulkImport({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg mb-6">
+    <div className="bg-card border border-border rounded-lg mb-6">
       {/* Accordion Header */}
       <button
         type="button"
         onClick={toggleExpanded}
         className="flex w-full items-center justify-between p-6 text-left hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors"
       >
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="text-lg font-semibold text-foreground">
           Bulk Import from Google Sheets
         </h2>
         <svg
-          className={`h-5 w-5 text-gray-500 transition-transform dark:text-gray-400 ${isExpanded ? 'rotate-180' : ''}`}
+          className={`h-5 w-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -253,11 +253,11 @@ export function GoogleSheetsBulkImport({
       </div>
 
       {showColumnInfo && (
-        <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <div className="mb-4 p-4 bg-muted rounded-lg">
+          <p className="text-sm font-medium text-foreground mb-2">
             Expected columns in your Google Sheet:
           </p>
-          <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+          <ul className="text-sm text-muted-foreground space-y-1">
             {expectedColumns.map((col) => (
               <li key={col.name}>
                 <span className="font-mono text-xs bg-gray-200 dark:bg-gray-600 px-1 rounded">
@@ -268,7 +268,7 @@ export function GoogleSheetsBulkImport({
                 )}
                 : {col.description}
                 {col.example && (
-                  <span className="text-gray-500 dark:text-gray-500 ml-1">
+                  <span className="text-muted-foreground ml-1">
                     (e.g., {col.example})
                   </span>
                 )}
@@ -280,7 +280,7 @@ export function GoogleSheetsBulkImport({
 
       <div className="grid gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-foreground mb-1">
             Google Sheet URL or Spreadsheet ID
           </label>
           <input
@@ -288,13 +288,13 @@ export function GoogleSheetsBulkImport({
             value={sheetReference}
             onChange={(e) => setSheetReference(e.target.value)}
             placeholder="https://docs.google.com/spreadsheets/d/... or just the ID"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Worksheet Title
             </label>
             <input
@@ -302,12 +302,12 @@ export function GoogleSheetsBulkImport({
               value={worksheetTitle}
               onChange={(e) => setWorksheetTitle(e.target.value)}
               placeholder="e.g., phrases, sentences"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Header Row
             </label>
             <input
@@ -315,7 +315,7 @@ export function GoogleSheetsBulkImport({
               value={headerRow}
               onChange={(e) => setHeaderRow(Number(e.target.value))}
               min={1}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
             />
           </div>
         </div>
@@ -346,12 +346,12 @@ export function GoogleSheetsBulkImport({
       {validation && (
         <div className="mt-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-sm font-semibold text-foreground">
               Validation Results
             </h3>
             <div className="flex gap-3 text-sm">
               {validation.batch_id && (
-                <span className="font-mono text-gray-500 dark:text-gray-400">
+                <span className="font-mono text-muted-foreground">
                   {validation.batch_id.slice(0, 8)}
                 </span>
               )}
@@ -379,7 +379,7 @@ export function GoogleSheetsBulkImport({
                   </li>
                 ))}
                 {validation.issues.length > 20 && (
-                  <li className="text-gray-600 dark:text-gray-400">
+                  <li className="text-muted-foreground">
                     + {validation.issues.length - 20} more errors...
                   </li>
                 )}
@@ -388,8 +388,8 @@ export function GoogleSheetsBulkImport({
           )}
 
           {validation.preview.length > 0 && (
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="bg-muted rounded-lg p-3">
+              <p className="text-sm font-medium text-foreground mb-2">
                 Preview (first {validation.preview.length} rows):
               </p>
               <div className="overflow-x-auto">
@@ -399,7 +399,7 @@ export function GoogleSheetsBulkImport({
                       {Object.keys(validation.preview[0] || {}).map((key) => (
                         <th
                           key={key}
-                          className="px-2 py-1 text-left text-gray-700 dark:text-gray-300"
+                          className="px-2 py-1 text-left text-foreground"
                         >
                           {key}
                         </th>
@@ -415,7 +415,7 @@ export function GoogleSheetsBulkImport({
                         {Object.values(row).map((val: any, colIdx) => (
                           <td
                             key={colIdx}
-                            className="px-2 py-1 text-gray-600 dark:text-gray-400"
+                            className="px-2 py-1 text-muted-foreground"
                           >
                             {String(val).substring(0, 50)}
                           </td>
@@ -432,7 +432,7 @@ export function GoogleSheetsBulkImport({
 
       <div className="mt-6">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Batch History</h3>
+          <h3 className="text-sm font-semibold text-foreground">Batch History</h3>
           <button
             type="button"
             onClick={() => void refreshHistory()}
@@ -442,34 +442,34 @@ export function GoogleSheetsBulkImport({
             {loadingHistory ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
-        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="overflow-x-auto rounded-lg border border-border">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-900/40">
+            <thead className="border-b">
               <tr>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Status</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Worksheet</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Rows</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Created / Updated</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Issues</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Finished</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground">Status</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground">Worksheet</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground">Rows</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground">Created / Updated</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground">Issues</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground">Finished</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-border">
               {history.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-3 py-4 text-gray-600 dark:text-gray-300">
+                  <td colSpan={6} className="px-3 py-2.5 text-muted-foreground">
                     No import batches found for this content type.
                   </td>
                 </tr>
               ) : (
                 history.map((batch) => (
                   <tr key={batch.id}>
-                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.status}</td>
-                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.worksheet_title || batch.source_name || '-'}</td>
-                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.valid_rows}/{batch.total_rows}</td>
-                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.created_count} / {batch.updated_count}</td>
-                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.error_count} errors, {batch.warning_count} warnings</td>
-                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">
+                    <td className="px-3 py-2 text-foreground">{batch.status}</td>
+                    <td className="px-3 py-2 text-foreground">{batch.worksheet_title || batch.source_name || '-'}</td>
+                    <td className="px-3 py-2 text-foreground">{batch.valid_rows}/{batch.total_rows}</td>
+                    <td className="px-3 py-2 text-foreground">{batch.created_count} / {batch.updated_count}</td>
+                    <td className="px-3 py-2 text-foreground">{batch.error_count} errors, {batch.warning_count} warnings</td>
+                    <td className="px-3 py-2 text-foreground">
                       {batch.finished_at ? new Date(batch.finished_at).toLocaleString() : '-'}
                     </td>
                   </tr>

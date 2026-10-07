@@ -10,7 +10,7 @@ import { apiClient, handleApiError } from "@/lib/api";
 import type { UserRole } from "@/types/auth";
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
 import { countryName, countryFlagEmoji } from "@/lib/country-utils";
-import { FiAward } from "react-icons/fi";
+import { Award } from "lucide-react";
 
 type ModalType = "deactivate" | "reactivate" | "delete" | "purge" | null;
 type DailyActivity = {
@@ -107,7 +107,7 @@ const activityCellClass = (sessions: number) => {
   if (sessions >= 5) return "bg-emerald-600 dark:bg-emerald-600";
   if (sessions >= 2) return "bg-emerald-400 dark:bg-emerald-700";
   if (sessions >= 1) return "bg-emerald-200 dark:bg-emerald-900";
-  return "bg-gray-100 dark:bg-gray-800";
+  return "bg-muted";
 };
 
 function ActivityHeatMap({
@@ -122,24 +122,24 @@ function ActivityHeatMap({
   const activeDays = dailyActivity?.filter((day) => Number(day.sessions || 0) > 0).length ?? 0;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+    <div className="rounded-lg border border-border bg-card p-6">
       <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-foreground">
             Activity Heat Map
           </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Daily game/session activity over the last 365 days
           </p>
         </div>
-        <div className="text-sm text-gray-600 dark:text-gray-300">
-          <span className="font-semibold text-gray-900 dark:text-white">{totalSessions}</span> sessions ·{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">{activeDays}</span> active days
+        <div className="text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">{totalSessions}</span> sessions ·{" "}
+          <span className="font-semibold text-foreground">{activeDays}</span> active days
         </div>
       </div>
 
       {isLoading ? (
-        <div className="h-32 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
+        <div className="h-32 rounded-lg bg-muted animate-pulse" />
       ) : (
         <>
           <div className="overflow-x-auto pb-2">
@@ -162,9 +162,9 @@ function ActivityHeatMap({
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-2 mt-4 text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
             <span>Less</span>
-            <div className="h-3 w-3 rounded-sm bg-gray-100 dark:bg-gray-800" />
+            <div className="h-3 w-3 rounded-sm bg-muted" />
             <div className="h-3 w-3 rounded-sm bg-emerald-200 dark:bg-emerald-900" />
             <div className="h-3 w-3 rounded-sm bg-emerald-400 dark:bg-emerald-700" />
             <div className="h-3 w-3 rounded-sm bg-emerald-600 dark:bg-emerald-600" />
@@ -337,7 +337,7 @@ export function UserDetailPanel({
                 width={48}
                 height={48}
                 unoptimized
-                className="h-12 w-12 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
+                className="h-12 w-12 rounded-full object-cover bg-muted"
                 referrerPolicy="no-referrer"
                 onError={() => setAvatarFailed(true)}
               />
@@ -347,14 +347,14 @@ export function UserDetailPanel({
               </div>
             )}
             {isPremium && (
-              <span className="absolute -bottom-1 -right-1 inline-flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-amber-400 text-amber-950 shadow-sm dark:border-gray-900" title="Premium member" aria-label="Premium member">
-                <FiAward className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="absolute -bottom-1 -right-1 inline-flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-amber-400 text-amber-950 shadow-sm" title="Premium member" aria-label="Premium member">
+                <Award className="h-3.5 w-3.5" aria-hidden="true" />
               </span>
             )}
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{avatarLabel}</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <h2 className="text-lg font-semibold text-foreground">{avatarLabel}</h2>
+            <p className="text-sm text-muted-foreground">
               {user.email || "No email"} · #{user.id.slice(0, 8)}
             </p>
           </div>
@@ -397,31 +397,31 @@ export function UserDetailPanel({
       </div>
 
       {/* Learning Progress */}
-      <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-        <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">Learning Progress</h3>
+      <div className="p-4 bg-card border border-border rounded-lg">
+        <h3 className="mb-4 text-base font-semibold text-foreground">Learning Progress</h3>
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 text-center border border-gray-200 rounded-lg dark:border-gray-800">
+          <div className="p-3 text-center border border-border rounded-lg">
             <p className="text-xl font-bold text-brand-600 dark:text-brand-400">{(user.total_sessions ?? 0).toLocaleString()}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Sessions</p>
+            <p className="text-xs text-muted-foreground mt-1">Total Sessions</p>
           </div>
-          <div className="p-3 text-center border border-gray-200 rounded-lg dark:border-gray-800">
+          <div className="p-3 text-center border border-border rounded-lg">
             <p className="text-xl font-bold text-brand-600 dark:text-brand-400">{user.languages_learning ?? 0}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Languages Learning</p>
+            <p className="text-xs text-muted-foreground mt-1">Languages Learning</p>
           </div>
-          <div className="p-3 text-center border border-gray-200 rounded-lg dark:border-gray-800">
+          <div className="p-3 text-center border border-border rounded-lg">
             <p className="text-xl font-bold text-brand-600 dark:text-brand-400">Level {user.current_level ?? 1}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Current Level</p>
+            <p className="text-xs text-muted-foreground mt-1">Current Level</p>
           </div>
-          <div className="p-3 text-center border border-gray-200 rounded-lg dark:border-gray-800">
+          <div className="p-3 text-center border border-border rounded-lg">
             <p className="text-xl font-bold text-brand-600 dark:text-brand-400">{isPremium ? "Premium" : "Free"}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Account Type</p>
+            <p className="text-xs text-muted-foreground mt-1">Account Type</p>
           </div>
         </div>
       </div>
 
       {/* User Information */}
-      <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-        <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">User Information</h3>
+      <div className="p-4 bg-card border border-border rounded-lg">
+        <h3 className="mb-4 text-base font-semibold text-foreground">User Information</h3>
         <dl className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
           {[
             ["Display Name", user.display_name || "Not set"],
@@ -442,15 +442,15 @@ export function UserDetailPanel({
             ["Most Played Game", isActivityLoading ? "Loading…" : topGame ? `${formatGameName(topGame.game_key)} (${topGame.sessions} sessions)` : "No games played yet"],
           ].map(([label, value]) => (
             <div key={label}>
-              <dt className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</dt>
-              <dd className="mt-0.5 text-sm text-gray-900 dark:text-white capitalize">{String(value)}</dd>
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
+              <dd className="mt-0.5 text-sm text-foreground capitalize">{String(value)}</dd>
             </div>
           ))}
         </dl>
         {user.country_code && (
           <div className="mt-3">
-            <dt className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Country</dt>
-            <dd className="mt-0.5 text-sm text-gray-900 dark:text-white">
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Country</dt>
+            <dd className="mt-0.5 text-sm text-foreground">
               {countryFlagEmoji(user.country_code)} {countryName(user.country_code)}
             </dd>
           </div>
@@ -460,27 +460,27 @@ export function UserDetailPanel({
           user.device_app_version ||
           user.device_id ||
           user.last_ip_address) && (
-          <div className="mt-4 border-t border-gray-100 pt-3 dark:border-gray-800">
-            <div className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <div className="mt-4 border-t border-border pt-3">
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Device
             </div>
             <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
               {user.device_platform && (
                 <div>
-                  <dt className="text-xs text-gray-500 dark:text-gray-400">Platform</dt>
-                  <dd className="text-sm text-gray-900 dark:text-white capitalize">{user.device_platform}</dd>
+                  <dt className="text-xs text-muted-foreground">Platform</dt>
+                  <dd className="text-sm text-foreground capitalize">{user.device_platform}</dd>
                 </div>
               )}
               {user.device_name && (
                 <div>
-                  <dt className="text-xs text-gray-500 dark:text-gray-400">Device Name</dt>
-                  <dd className="text-sm text-gray-900 dark:text-white">{user.device_name}</dd>
+                  <dt className="text-xs text-muted-foreground">Device Name</dt>
+                  <dd className="text-sm text-foreground">{user.device_name}</dd>
                 </div>
               )}
               {user.device_app_version && (
                 <div>
-                  <dt className="text-xs text-gray-500 dark:text-gray-400">App Version</dt>
-                  <dd className="text-sm text-gray-900 dark:text-white">
+                  <dt className="text-xs text-muted-foreground">App Version</dt>
+                  <dd className="text-sm text-foreground">
                     v{user.device_app_version}
                     {user.device_build_number ? ` (${user.device_build_number})` : ""}
                   </dd>
@@ -488,14 +488,14 @@ export function UserDetailPanel({
               )}
               {user.device_id && (
                 <div>
-                  <dt className="text-xs text-gray-500 dark:text-gray-400">Device ID</dt>
-                  <dd className="text-sm font-mono text-gray-900 dark:text-white break-all">{user.device_id}</dd>
+                  <dt className="text-xs text-muted-foreground">Device ID</dt>
+                  <dd className="text-sm font-mono text-foreground break-all">{user.device_id}</dd>
                 </div>
               )}
               {user.last_ip_address && (
                 <div>
-                  <dt className="text-xs text-gray-500 dark:text-gray-400">Last IP Address</dt>
-                  <dd className="text-sm font-mono text-gray-900 dark:text-white">{user.last_ip_address}</dd>
+                  <dt className="text-xs text-muted-foreground">Last IP Address</dt>
+                  <dd className="text-sm font-mono text-foreground">{user.last_ip_address}</dd>
                 </div>
               )}
             </dl>
@@ -512,24 +512,24 @@ export function UserDetailPanel({
           ["Accuracy", `${Number(player?.accuracy ?? 0).toFixed(1)}%`],
           ["Time Played", formatDuration(player?.total_time_ms)],
         ].map(([label, value]) => (
-          <div key={String(label)} className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
-            <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">{value}</p>
+          <div key={String(label)} className="rounded-lg border border-border bg-card p-3">
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p className="mt-1 text-lg font-bold text-foreground">{value}</p>
           </div>
         ))}
       </div>
 
       {/* Games played */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white">Games played</h3>
+      <div className="rounded-lg border border-border bg-card p-4">
+        <h3 className="text-base font-semibold text-foreground">Games played</h3>
         <div className="mt-4 space-y-4">
           {gameBreakdown.map((game) => (
             <div key={game.game_key}>
               <div className="mb-1.5 flex items-center justify-between gap-4 text-sm">
-                <span className="font-medium text-gray-800 dark:text-gray-100">{formatGameName(game.game_key)}</span>
-                <span className="text-gray-500 dark:text-gray-400">{game.sessions} sessions · {Number(game.avg_score || 0).toFixed(1)}%</span>
+                <span className="font-medium text-foreground">{formatGameName(game.game_key)}</span>
+                <span className="text-muted-foreground">{game.sessions} sessions · {Number(game.avg_score || 0).toFixed(1)}%</span>
               </div>
-              <div className="h-2.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+              <div className="h-2.5 overflow-hidden rounded-full bg-muted">
                 <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.max(4, (Number(game.sessions || 0) / maxGameSessions) * 100)}%` }} />
               </div>
             </div>
@@ -539,16 +539,16 @@ export function UserDetailPanel({
       </div>
 
       {/* Performance by game */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white">Performance by game</h3>
+      <div className="rounded-lg border border-border bg-card p-4">
+        <h3 className="text-base font-semibold text-foreground">Performance by game</h3>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-gray-200 text-left text-xs uppercase text-gray-500 dark:border-gray-700 dark:text-gray-400">
-              <tr><th className="py-3 pr-4">Game</th><th className="px-3 py-3 text-right">Accuracy</th><th className="px-3 py-3 text-right">Perfect</th><th className="py-3 pl-3 text-right">Time</th></tr>
+            <thead className="border-b border-border text-left text-xs text-muted-foreground">
+              <tr><th className="py-2.5 pr-4">Game</th><th className="px-3 py-2.5 text-right">Accuracy</th><th className="px-3 py-2.5 text-right">Perfect</th><th className="py-2.5 pl-3 text-right">Time</th></tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <tbody className="divide-y divide-border">
               {gameBreakdown.map((game) => (
-                <tr key={game.game_key}><td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">{formatGameName(game.game_key)}</td><td className="px-3 py-3 text-right">{Number(game.accuracy || 0).toFixed(1)}%</td><td className="px-3 py-3 text-right">{game.perfect_scores || 0}</td><td className="py-3 pl-3 text-right">{formatDuration(game.total_time_ms)}</td></tr>
+                <tr key={game.game_key}><td className="py-3 pr-4 font-medium text-foreground">{formatGameName(game.game_key)}</td><td className="px-3 py-3 text-right">{Number(game.accuracy || 0).toFixed(1)}%</td><td className="px-3 py-3 text-right">{game.perfect_scores || 0}</td><td className="py-3 pl-3 text-right">{formatDuration(game.total_time_ms)}</td></tr>
               ))}
             </tbody>
           </table>
@@ -556,16 +556,16 @@ export function UserDetailPanel({
       </div>
 
       {/* Recent game sessions */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="p-4">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white">Recent game sessions</h3>
+          <h3 className="text-base font-semibold text-foreground">Recent game sessions</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-gray-800 dark:text-gray-400"><tr><th className="px-4 py-3">Date</th><th className="px-4 py-3">Game</th><th className="px-4 py-3">Language</th><th className="px-4 py-3 text-right">Score</th><th className="px-4 py-3 text-right">Answers</th><th className="px-4 py-3 text-right">Duration</th></tr></thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <thead className="text-left text-xs text-muted-foreground border-b"><tr><th className="px-4 py-2.5">Date</th><th className="px-4 py-2.5">Game</th><th className="px-4 py-2.5">Language</th><th className="px-4 py-2.5 text-right">Score</th><th className="px-4 py-2.5 text-right">Answers</th><th className="px-4 py-2.5 text-right">Duration</th></tr></thead>
+            <tbody className="divide-y divide-border">
               {recentSessions.map((session) => (
-                <tr key={session.session_id}><td className="whitespace-nowrap px-4 py-3 text-gray-600 dark:text-gray-300">{formatDateTime(session.date)}</td><td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{formatGameName(session.game_key)}{session.is_perfect && <span className="ml-2 text-amber-500" title="Perfect score">★</span>}</td><td className="px-4 py-3">{session.language_name || "—"}</td><td className="px-4 py-3 text-right font-semibold">{Number(session.score || 0).toFixed(1)}%</td><td className="px-4 py-3 text-right text-emerald-600">{session.correct || 0}<span className="text-gray-400"> / </span><span className="text-red-500">{session.wrong || 0}</span></td><td className="px-4 py-3 text-right">{formatDuration(session.duration_ms)}</td></tr>
+                <tr key={session.session_id}><td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{formatDateTime(session.date)}</td><td className="px-4 py-3 font-medium text-foreground">{formatGameName(session.game_key)}{session.is_perfect && <span className="ml-2 text-amber-500" title="Perfect score">★</span>}</td><td className="px-4 py-3">{session.language_name || "—"}</td><td className="px-4 py-3 text-right font-semibold">{Number(session.score || 0).toFixed(1)}%</td><td className="px-4 py-3 text-right text-emerald-600">{session.correct || 0}<span className="text-gray-400"> / </span><span className="text-red-500">{session.wrong || 0}</span></td><td className="px-4 py-3 text-right">{formatDuration(session.duration_ms)}</td></tr>
               ))}
               {!recentSessions.length && <tr><td colSpan={6} className="px-4 py-10 text-center text-gray-500">No game sessions recorded.</td></tr>}
             </tbody>

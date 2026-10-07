@@ -132,10 +132,10 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
     return (
       <div className="space-y-6">
         {showHeader && <PageBreadCrumb pageTitle="Feature Flags & Configuration" />}
-        <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 animate-pulse">
+        <div className="p-6 bg-card border border-border rounded-lg animate-pulse">
           <div className="space-y-4">
             {[1, 2, 3, 4].map((i: any) => (
-              <div key={i} className="h-12 bg-gray-200 rounded dark:bg-gray-700"></div>
+              <div key={i} className="h-12 bg-muted rounded"></div>
             ))}
           </div>
         </div>
@@ -162,7 +162,7 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
             {showHeader && (
               <>
                 <PageBreadCrumb pageTitle="Feature Flags & Configuration" />
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Manage feature flags, limits, and dynamic configuration
                 </p>
               </>
@@ -170,7 +170,7 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700"
+            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-brand-600 rounded-lg hover:bg-brand-700"
           >
             + Create Config
           </button>
@@ -180,7 +180,7 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
 
         {categories.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter:</span>
+            <span className="text-sm font-medium text-foreground">Filter:</span>
             <button
               onClick={() => setFilterCategory("all")}
               className={`px-3 py-1 text-sm rounded-full ${
@@ -203,25 +203,25 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
           </div>
         )}
 
-        <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 overflow-hidden">
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-800">
+              <thead className="border-b">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Key</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Value</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Description</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Category</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Status</th>
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Key</th>
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Value</th>
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Description</th>
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Type</th>
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Category</th>
+                  <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+              <tbody className="divide-y divide-border">
                 {filteredConfig && filteredConfig.length > 0 ? (
                   filteredConfig.map((item: any, index: number) => (
-                    <tr key={`${item.key}-${index}`} className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${!item.is_active ? 'opacity-50' : ''}`}>
-                      <td className="px-4 py-4 whitespace-nowrap">
+                    <tr key={`${item.key}-${index}`} className={`hover:bg-muted/50 ${!item.is_active ? 'opacity-50' : ''}`}>
+                      <td className="px-4 py-2.5 whitespace-nowrap">
                         <button
                           onClick={() => toggleActive(item.key, item.is_active)}
                           className={`w-10 h-6 rounded-full transition-colors ${item.is_active ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
@@ -230,10 +230,10 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                           <div className={`w-4 h-4 bg-white rounded-full transition-transform ${item.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                         </button>
                       </td>
-                      <td className="px-4 py-4">
-                        <code className="text-xs font-mono text-gray-900 dark:text-white break-all">{item.key}</code>
+                      <td className="px-4 py-2.5">
+                        <code className="text-xs font-mono text-foreground break-all">{item.key}</code>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-2.5">
                         {editingKey === item.key ? (
                           <div className="space-y-2">
                             {item.value_type === "boolean" ? (
@@ -252,7 +252,7 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                                 step={item.value_type === "float" ? "0.1" : "1"}
                                 value={editValue ?? ""}
                                 onChange={(e) => setEditValue(e.target.value)}
-                                className="w-full px-3 py-1 text-sm border border-gray-300 rounded dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                className="w-full px-3 py-1 text-sm border border-input rounded dark:bg-gray-800 dark:text-white"
                               />
                             )}
                           </div>
@@ -261,7 +261,7 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                             const actualValue = getActualValue(item);
                             if (actualValue == null) {
                               return (
-                                <span className="text-sm font-semibold text-gray-400 dark:text-gray-500">—</span>
+                                <span className="text-sm font-semibold text-muted-foreground">—</span>
                               );
                             }
 
@@ -277,28 +277,28 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                           })()
                         )}
                       </td>
-                      <td className="px-4 py-4 max-w-xs">
+                      <td className="px-4 py-2.5 max-w-xs">
                         {editingKey === item.key ? (
                           <input
                             type="text"
                             value={editDescription}
                             onChange={(e) => setEditDescription(e.target.value)}
-                            className="w-full px-3 py-1 text-sm border border-gray-300 rounded dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                            className="w-full px-3 py-1 text-sm border border-input rounded dark:bg-gray-800 dark:text-white"
                             placeholder="Description..."
                           />
                         ) : (
-                          <span className="text-xs text-gray-500 dark:text-gray-400">{item.description || "—"}</span>
+                          <span className="text-xs text-muted-foreground">{item.description || "—"}</span>
                         )}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
+                      <td className="px-4 py-2.5 whitespace-nowrap">
                         <StatusBadge status="info" label={item.value_type} />
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
+                      <td className="px-4 py-2.5 whitespace-nowrap">
                         <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded">
                           {item.category || "general"}
                         </span>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-right">
+                      <td className="px-4 py-2.5 whitespace-nowrap text-right">
                         {editingKey === item.key ? (
                           <div className="flex items-center justify-end gap-2">
                             <button
@@ -311,7 +311,7 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                             <button
                               onClick={cancelEdit}
                               disabled={isSaving}
-                              className="px-3 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 disabled:opacity-50"
+                              className="px-3 py-1 text-xs font-medium text-foreground bg-muted rounded hover:bg-gray-300 disabled:opacity-50"
                             >
                               Cancel
                             </button>
@@ -337,7 +337,7 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
                       {filterCategory !== "all" ? `No configurations found in "${filterCategory}" category` : "No configuration items found"}
                     </td>
                   </tr>
@@ -419,14 +419,14 @@ function CreateConfigModal({ onClose, onSuccess }: { onClose: () => void; onSucc
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Create New Configuration</h3>
+      <div className="bg-card rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-semibold mb-4 text-foreground">Create New Configuration</h3>
         
         {error && <Alert variant="error" className="mb-4">{error}</Alert>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Key *</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Key *</label>
             <input
               type="text"
               required
@@ -434,7 +434,7 @@ function CreateConfigModal({ onClose, onSuccess }: { onClose: () => void; onSucc
               value={formData.key}
               onChange={(e) => setFormData({...formData, key: e.target.value})}
               placeholder="e.g., vocabulary.free_daily_limit"
-              className="w-full px-3 py-2 border border-gray-300 rounded dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="w-full px-3 py-2 border border-input rounded dark:bg-gray-800 dark:text-white"
             />
             <p className="text-xs text-gray-500 mt-1">Use lowercase, numbers, dots, underscores only</p>
           </div>
@@ -455,7 +455,7 @@ function CreateConfigModal({ onClose, onSuccess }: { onClose: () => void; onSucc
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Value *</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Value *</label>
             {formData.value_type === "boolean" ? (
               <StyledSelect
                 value={formData.value}
@@ -474,29 +474,29 @@ function CreateConfigModal({ onClose, onSuccess }: { onClose: () => void; onSucc
                 required
                 value={formData.value}
                 onChange={(e) => setFormData({...formData, value: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-input rounded dark:bg-gray-800 dark:text-white"
               />
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Category</label>
             <input
               type="text"
               value={formData.category}
               onChange={(e) => setFormData({...formData, category: e.target.value})}
               placeholder="e.g., vocabulary, offline, tts"
-              className="w-full px-3 py-2 border border-gray-300 rounded dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="w-full px-3 py-2 border border-input rounded dark:bg-gray-800 dark:text-white"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Description</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="w-full px-3 py-2 border border-input rounded dark:bg-gray-800 dark:text-white"
             />
           </div>
 
@@ -508,21 +508,21 @@ function CreateConfigModal({ onClose, onSuccess }: { onClose: () => void; onSucc
               onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
               className="rounded"
             />
-            <label htmlFor="is_active" className="text-sm text-gray-700 dark:text-gray-300">Active</label>
+            <label htmlFor="is_active" className="text-sm text-foreground">Active</label>
           </div>
 
           <div className="flex gap-2 pt-4">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded hover:bg-brand-700 disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-medium text-primary-foreground bg-brand-600 rounded hover:bg-brand-700 disabled:opacity-50"
             >
               {isSubmitting ? "Creating..." : "Create"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300"
+              className="flex-1 px-4 py-2 text-sm font-medium text-foreground bg-muted rounded hover:bg-gray-300"
             >
               Cancel
             </button>

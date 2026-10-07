@@ -7,12 +7,8 @@ import Pagination from '@/components/tables/Pagination';
 import StatusBadge from '@/components/admin/StatusBadge';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { useToast } from '@/contexts/ToastContext';
-import {
-  FaSync,
-  FaPlay,
-  FaPause,
-  FaExclamationTriangle,
-} from 'react-icons/fa';
+import { Pause as PauseIcon, Play as PlayIcon } from "lucide-react";
+import { RefreshCw, TriangleAlert } from "lucide-react";
 
 interface AudioJob {
   id: string;
@@ -106,10 +102,10 @@ function AudioPlayer({ src }: { src: string }) {
       <button
         type="button"
         onClick={toggle}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-white dark:text-gray-900 hover:bg-brand-700"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-primary-foreground hover:bg-brand-700"
         title={playing ? 'Pause' : 'Play'}
       >
-        {playing ? <FaPause className="text-xs" /> : <FaPlay className="text-xs" />}
+        {playing ? <PauseIcon className="text-xs" /> : <PlayIcon className="text-xs" />}
       </button>
       <audio ref={audioRef} src={src} preload="none" className="hidden" />
     </div>
@@ -127,17 +123,17 @@ function LogsTooltip({ logs }: { logs?: string | null }) {
         onMouseLeave={() => setShow(false)}
         onFocus={() => setShow(true)}
         onBlur={() => setShow(false)}
-        className="ml-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+        className="ml-2 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground hover:bg-muted"
       >
         Logs
       </button>
       {show && (
-        <div className="absolute bottom-full left-1/2 z-50 mb-2 w-80 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-900">
-          <div className="mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300">Generation Logs</div>
-          <pre className="max-h-48 overflow-auto whitespace-pre-wrap text-xs text-gray-600 dark:text-gray-400">
+        <div className="absolute bottom-full left-1/2 z-50 mb-2 w-80 -translate-x-1/2 rounded-lg border border-border bg-card p-3 shadow-lg">
+          <div className="mb-1 text-xs font-semibold text-foreground">Generation Logs</div>
+          <pre className="max-h-48 overflow-auto whitespace-pre-wrap text-xs text-muted-foreground">
             {logs}
           </pre>
-          <div className="absolute bottom-0 left-1/2 h-2 w-2 -translate-x-1/2 translate-y-1/2 rotate-45 border-b border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900" />
+          <div className="absolute bottom-0 left-1/2 h-2 w-2 -translate-x-1/2 translate-y-1/2 rotate-45 border-b border-r border-border bg-card" />
         </div>
       )}
     </div>
@@ -236,37 +232,37 @@ export function AudioJobsContent({ showHeader = true, isActive = true }: { showH
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{total}</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Total</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{total}</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Completed</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Completed</div>
           <div className="mt-2 text-2xl font-semibold text-green-600 dark:text-green-400">{stats.completed}</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Processing</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Processing</div>
           <div className="mt-2 text-2xl font-semibold text-blue-600 dark:text-blue-400">{stats.processing}</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Failed</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Failed</div>
           <div className="mt-2 text-2xl font-semibold text-red-600 dark:text-red-400">{stats.failed}</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Duration</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{formatDuration(stats.totalDuration)}</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Total Duration</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{formatDuration(stats.totalDuration)}</div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Audio Generation Jobs</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Monitor TTS generation jobs and their status</p>
+            <h2 className="text-lg font-semibold text-foreground">Audio Generation Jobs</h2>
+            <p className="text-sm text-muted-foreground">Monitor TTS generation jobs and their status</p>
           </div>
           <div className="flex items-center gap-3">
-            <label className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+            <label className="flex items-center text-sm text-foreground">
               <input
                 type="checkbox"
                 checked={autoRefresh}
@@ -279,16 +275,16 @@ export function AudioJobsContent({ showHeader = true, isActive = true }: { showH
               type="button"
               onClick={() => void fetchJobs()}
               disabled={loading}
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700 disabled:opacity-50"
             >
-              <FaSync className={loading ? 'animate-spin' : ''} /> Refresh
+              <RefreshCw className={loading ? 'animate-spin' : ''} /> Refresh
             </button>
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Search</label>
             <input
               aria-label="Search"
               value={filterSearch}
@@ -297,7 +293,7 @@ export function AudioJobsContent({ showHeader = true, isActive = true }: { showH
                 setPage(1);
               }}
               placeholder="Text to speak, ID, voice..."
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+              className="block h-12 w-full rounded-lg border border-input bg-background px-4 text-sm text-foreground"
             />
           </div>
           <div>
@@ -365,48 +361,48 @@ export function AudioJobsContent({ showHeader = true, isActive = true }: { showH
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3">Text</th>
-                <th className="px-3 py-3">Provider</th>
-                <th className="px-3 py-3">Content</th>
-                <th className="px-3 py-3">Queued</th>
-                <th className="px-3 py-3">Duration</th>
-                <th className="px-3 py-3">Retries</th>
-                <th className="px-3 py-3">Audio</th>
-                <th className="px-3 py-3">Actions</th>
+              <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="px-3 py-2.5">Status</th>
+                <th className="px-3 py-2.5">Text</th>
+                <th className="px-3 py-2.5">Provider</th>
+                <th className="px-3 py-2.5">Content</th>
+                <th className="px-3 py-2.5">Queued</th>
+                <th className="px-3 py-2.5">Duration</th>
+                <th className="px-3 py-2.5">Retries</th>
+                <th className="px-3 py-2.5">Audio</th>
+                <th className="px-3 py-2.5">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-10 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={9} className="px-3 py-10 text-center text-muted-foreground">
                     Loading audio jobs…
                   </td>
                 </tr>
               ) : jobs.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-10 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={9} className="px-3 py-10 text-center text-muted-foreground">
                     No audio jobs found.
                   </td>
                 </tr>
               ) : (
                 jobs.map((job) => (
-                  <tr key={job.id} className="border-b border-gray-100 align-top dark:border-gray-800">
+                  <tr key={job.id} className="border-b border-border align-top">
                     <td className="px-3 py-3">
                       <StatusCell status={job.status} />
                     </td>
                     <td className="px-3 py-3">
-                      <div className="max-w-[16rem] truncate font-medium text-gray-900 dark:text-white">
+                      <div className="max-w-[16rem] truncate font-medium text-foreground">
                         {job.text_to_speak}
                       </div>
-                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      <div className="mt-1 text-xs text-muted-foreground">
                         {job.language_code ? `Lang: ${job.language_code}` : null}
                         {job.voice_code ? ` • Voice: ${job.voice_code}` : null}
                       </div>
                       {job.error_message ? (
                         <div className="mt-1 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
-                          <FaExclamationTriangle className="text-[10px]" />
+                          <TriangleAlert className="text-[10px]" />
                           <span className="max-w-[16rem] truncate">{job.error_message}</span>
                           <LogsTooltip logs={job.logs} />
                         </div>
@@ -417,22 +413,22 @@ export function AudioJobsContent({ showHeader = true, isActive = true }: { showH
                         </div>
                       ) : null}
                     </td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">
+                    <td className="px-3 py-3 text-foreground">
                       <span className="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900 dark:text-purple-300">
                         {job.provider || '—'}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">
+                    <td className="px-3 py-3 text-foreground">
                       <div className="text-sm capitalize">{job.content_type}</div>
                       <div className="text-xs text-gray-500">{job.audio_format?.toUpperCase() || '—'}</div>
                     </td>
-                    <td className="px-3 py-3 whitespace-nowrap text-gray-700 dark:text-gray-200">
+                    <td className="px-3 py-3 whitespace-nowrap text-foreground">
                       {formatDateTime(job.queued_at)}
                     </td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">
+                    <td className="px-3 py-3 text-foreground">
                       {formatDuration(job.output_duration_sec)}
                     </td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-200">
+                    <td className="px-3 py-3 text-foreground">
                       <span className={job.retry_count >= job.max_retries ? 'text-red-600 dark:text-red-400' : ''}>
                         {job.retry_count}/{job.max_retries}
                       </span>
@@ -475,7 +471,7 @@ export function AudioJobsContent({ showHeader = true, isActive = true }: { showH
 
         {/* Pagination */}
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Showing {pageStart} to {pageEnd} of {total} jobs
           </p>
           <div className="ml-auto">

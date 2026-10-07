@@ -79,10 +79,10 @@ export default function ModalBasedAlerts() {
               </svg>
             </span>
           </div>
-          <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90 sm:text-title-sm">
+          <h4 className="mb-2 text-2xl font-semibold text-foreground sm:text-title-sm">
             Well Done!
           </h4>
-          <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">
+          <p className="text-sm leading-6 text-muted-foreground">
             Lorem ipsum dolor sit amet consectetur. Feugiat ipsum libero tempor
             felis risus nisi non. Quisque eu ut tempor curabitur.
           </p>
@@ -139,10 +139,10 @@ export default function ModalBasedAlerts() {
             </span>
           </div>
 
-          <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90 sm:text-title-sm">
+          <h4 className="mb-2 text-2xl font-semibold text-foreground sm:text-title-sm">
             Information Alert!
           </h4>
-          <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">
+          <p className="text-sm leading-6 text-muted-foreground">
             Lorem ipsum dolor sit amet consectetur. Feugiat ipsum libero tempor
             felis risus nisi non. Quisque eu ut tempor curabitur.
           </p>
@@ -199,10 +199,10 @@ export default function ModalBasedAlerts() {
             </span>
           </div>
 
-          <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90 sm:text-title-sm">
+          <h4 className="mb-2 text-2xl font-semibold text-foreground sm:text-title-sm">
             Warning Alert!
           </h4>
-          <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">
+          <p className="text-sm leading-6 text-muted-foreground">
             Lorem ipsum dolor sit amet consectetur. Feugiat ipsum libero tempor
             felis risus nisi non. Quisque eu ut tempor curabitur.
           </p>
@@ -259,10 +259,10 @@ export default function ModalBasedAlerts() {
             </span>
           </div>
 
-          <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90 sm:text-title-sm">
+          <h4 className="mb-2 text-2xl font-semibold text-foreground sm:text-title-sm">
             Danger Alert!
           </h4>
-          <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">
+          <p className="text-sm leading-6 text-muted-foreground">
             Lorem ipsum dolor sit amet consectetur. Feugiat ipsum libero tempor
             felis risus nisi non. Quisque eu ut tempor curabitur.
           </p>

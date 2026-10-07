@@ -23,10 +23,10 @@ export default function VerticallyCenteredModal() {
         className="max-w-[507px] p-6 lg:p-10"
       >
         <div className="text-center">
-          <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90 sm:text-title-sm">
+          <h4 className="mb-2 text-2xl font-semibold text-foreground sm:text-title-sm">
             All Done! Success Confirmed
           </h4>
-          <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">
+          <p className="text-sm leading-6 text-muted-foreground">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             Pellentesque euismod est quis mauris lacinia pharetra.
           </p>

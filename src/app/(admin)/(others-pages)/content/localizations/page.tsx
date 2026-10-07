@@ -120,13 +120,13 @@ export default function ContentLocalizationsPage() {
     <div>
       <PageBreadCrumb pageTitle="Content Localizations" />
 
-      <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
+      <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-lg font-semibold text-foreground">
               Generate course/unit/section translations
             </h3>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
               Machine-translates course, unit, and section titles/descriptions into French or
               Portuguese via an LLM. Writes as machine_draft only - nothing is served to users
               until you spot-check and publish below. See abidii_localisation.md.
@@ -142,7 +142,7 @@ export default function ContentLocalizationsPage() {
               type="button"
               onClick={startGeneration}
               disabled={starting || isActive}
-              className="inline-flex shrink-0 items-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex shrink-0 items-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isActive ? "Generating..." : "Generate translations"}
             </button>
@@ -150,7 +150,7 @@ export default function ContentLocalizationsPage() {
         </div>
 
         {currentJob && (
-          <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-gray-200 pt-5 dark:border-gray-800">
+          <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-border pt-5">
             <span
               className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusClass(
                 currentJob.status
@@ -159,7 +159,7 @@ export default function ContentLocalizationsPage() {
               {currentJob.status}
             </span>
             {isActive && (
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <span className="text-sm text-muted-foreground">
                 {currentJob.progress.current} / {currentJob.progress.total || "?"} fields
               </span>
             )}
@@ -176,10 +176,10 @@ export default function ContentLocalizationsPage() {
         )}
       </div>
 
-      <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
+      <div className="mt-6 rounded-xl border border-border bg-card p-5 sm:p-6">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-lg font-semibold text-foreground">
               {LOCALES.find((l) => l.value === locale)?.label} translations
             </h3>
             <StyledSelect
@@ -192,7 +192,7 @@ export default function ContentLocalizationsPage() {
                 { value: "stale", label: "Stale" },
               ]}
             />
-            <span className="text-sm text-gray-500 dark:text-gray-400">{total} rows</span>
+            <span className="text-sm text-muted-foreground">{total} rows</span>
           </div>
           <button
             type="button"
@@ -204,36 +204,36 @@ export default function ContentLocalizationsPage() {
           </button>
         </div>
 
-        <div className="mt-5 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-            <thead className="bg-gray-50 dark:bg-gray-800/40">
+        <div className="mt-5 overflow-x-auto rounded-lg border border-border">
+          <table className="min-w-full divide-y divide-border">
+            <thead className="border-b">
               <tr>
-                <th className="px-4 py-2.5 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
                   Entity
                 </th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
                   Field
                 </th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
                   Translation
                 </th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
                   Status
                 </th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400" />
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+            <tbody className="divide-y divide-border">
               {loadingRows && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">
                     Loading...
                   </td>
                 </tr>
               )}
               {!loadingRows && rows.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">
                     No rows for this locale/status.
                   </td>
                 </tr>
@@ -246,8 +246,8 @@ export default function ContentLocalizationsPage() {
                       {row.entity_id}
                     </div>
                   </td>
-                  <td className="px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400">{row.field_name}</td>
-                  <td className="px-4 py-2.5 text-sm text-gray-900 dark:text-white">{row.value}</td>
+                  <td className="px-4 py-2.5 text-sm text-muted-foreground">{row.field_name}</td>
+                  <td className="px-4 py-2.5 text-sm text-foreground">{row.value}</td>
                   <td className="px-4 py-2.5">
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${rowStatusClass(

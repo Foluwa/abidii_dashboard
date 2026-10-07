@@ -70,12 +70,12 @@ export default function Modal({
       {/* Modal Container */}
       <div className="flex min-h-screen items-center justify-center p-4">
         <div
-          className={`relative flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:bg-gray-900 ${sizeClasses[size]}`}
+          className={`relative flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-lg bg-card shadow-xl transition-all ${sizeClasses[size]}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex shrink-0 items-center justify-between border-b border-gray-200 p-6 dark:border-gray-800">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <div className="flex shrink-0 items-center justify-between border-b border-border p-6">
+            <h3 className="text-xl font-semibold text-foreground">
               {title}
             </h3>
             {showCloseButton && (

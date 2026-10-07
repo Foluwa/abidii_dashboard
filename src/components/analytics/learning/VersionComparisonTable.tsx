@@ -23,30 +23,30 @@ export default function VersionComparisonTable({
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="bg-gray-50 dark:bg-gray-800">
+        <thead className="border-b">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Version</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Sessions</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Completion</th>
+            <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Version</th>
+            <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Sessions</th>
+            <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Completion</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="divide-y divide-border">
           {rows.map((row) => (
             <tr
               key={row.blueprint_content_hash ?? 'legacy'}
               title={row.blueprint_content_hash ?? undefined}
-              className="hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="hover:bg-muted/50"
             >
-              <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
+              <td className="px-4 py-3 font-medium text-foreground">
                 {formatVersionLabel(row.blueprint_content_hash, {
                   isCurrent: currentHash != null && row.blueprint_content_hash === currentHash,
                 })}
               </td>
-              <td className="px-4 py-3 text-right text-gray-900 dark:text-white">
+              <td className="px-4 py-3 text-right text-foreground">
                 {row.sessions_started.toLocaleString()}
               </td>
               <td className="px-4 py-3 text-right">
-                <span className="font-semibold text-gray-900 dark:text-white">
+                <span className="font-semibold text-foreground">
                   {formatRate(row.session_completion_rate)}
                 </span>
                 <span className="ml-1 text-xs text-gray-400">

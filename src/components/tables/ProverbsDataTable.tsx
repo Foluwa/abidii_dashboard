@@ -6,9 +6,9 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { FiEdit, FiTrash2, FiVolume2 } from "react-icons/fi";
 import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
 import type { Proverb } from "@/types/api";
+import { SquarePen, Trash2, Volume2 } from "lucide-react";
 
 interface ProverbsDataTableProps {
   proverbs: Proverb[];
@@ -103,8 +103,8 @@ export default function ProverbsDataTable({
       processing: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
       completed: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
       failed: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200",
-      cancelled: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-      superseded: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+      cancelled: "bg-muted text-foreground",
+      superseded: "bg-muted text-foreground",
     };
 
     const providerDetail = [proverb.alignment_job_provider, proverb.alignment_job_engine].filter(Boolean).join(" / ");
@@ -172,39 +172,39 @@ export default function ProverbsDataTable({
   return (
     <>
     {/* Desktop Table View */}
-    <div className="hidden lg:block bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
+    <div className="hidden lg:block bg-card rounded-lg border border-border overflow-hidden">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               {onSelectAll && (
-                <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12">
+                <th className="px-3 py-3.5 text-left text-sm font-medium text-muted-foreground w-12">
                   <input
                     type="checkbox"
                     checked={selectedProverbs.length === proverbs.length && proverbs.length > 0}
                     onChange={onSelectAll}
-                    className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
+                    className="h-4 w-4 rounded border-input text-brand-600 focus:ring-brand-500 dark:bg-gray-800"
                   />
                 </th>
               )}
-              <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-3 py-3.5 text-left text-sm font-medium text-muted-foreground">
                 Proverb
               </th>
-              <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-3 py-3.5 text-left text-sm font-medium text-muted-foreground">
                 Category
               </th>
-              <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-3 py-3.5 text-left text-sm font-medium text-muted-foreground">
                 Alignment
               </th>
-              <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-3 py-3.5 text-left text-sm font-medium text-muted-foreground">
                 Audio
               </th>
-              <th className="px-5 py-3.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-3 py-3.5 text-right text-sm font-medium text-muted-foreground">
                 Actions
               </th>
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <TableBody className="divide-y divide-border">
             {proverbs.length > 0 ? (
               proverbs.map((proverb) => (
                 <TableRow key={proverb.id}>
@@ -214,17 +214,17 @@ export default function ProverbsDataTable({
                         type="checkbox"
                         checked={selectedProverbs.includes(proverb.id)}
                         onChange={() => onSelectProverb(proverb.id)}
-                        className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
+                        className="h-4 w-4 rounded border-input text-brand-600 focus:ring-brand-500 dark:bg-gray-800"
                       />
                     </TableCell>
                   )}
                   {/* Proverb */}
                   <TableCell className="px-5 py-4 max-w-xs">
                     <div className="space-y-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      <div className="text-sm font-medium text-foreground truncate">
                         {proverb.proverb}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      <div className="text-xs text-muted-foreground truncate">
                         {proverb.translation}
                       </div>
                     </div>
@@ -238,7 +238,7 @@ export default function ProverbsDataTable({
                           {proverb.category}
                         </span>
                       ) : (
-                        <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
+                        <span className="text-sm text-muted-foreground">-</span>
                       )}
                       {renderPublishBadge(proverb)}
                     </div>
@@ -250,7 +250,7 @@ export default function ProverbsDataTable({
                       {renderAlignmentBadge(proverb)}
                       {renderAlignmentJobBadge(proverb)}
                       {!proverb.alignment_status && !proverb.alignment_job_status && (
-                        <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
+                        <span className="text-sm text-muted-foreground">-</span>
                       )}
                     </div>
                   </TableCell>
@@ -326,7 +326,7 @@ export default function ProverbsDataTable({
                       ) : (
                         <div className="space-y-2">
                           {renderRegenerationBadge(proverb.last_regeneration_status, proverb.last_regeneration_error)}
-                          <span className="text-xs text-gray-400 dark:text-gray-600">No audio</span>
+                          <span className="text-xs text-muted-foreground">No audio</span>
                         </div>
                       )}
                   </TableCell>
@@ -346,20 +346,20 @@ export default function ProverbsDataTable({
                               : "Regenerate Audio"
                         }
                       >
-                        <FiVolume2 className="h-4 w-4" />
+                        <Volume2 className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => onEdit(proverb)}
                         className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-brand-600 transition-colors hover:bg-brand-50 hover:text-brand-700 dark:text-brand-400 dark:hover:bg-brand-900/20"
                       >
-                        <FiEdit className="h-3.5 w-3.5" />
+                        <SquarePen className="h-3.5 w-3.5" />
                         Edit
                       </button>
                       <button
                         onClick={() => onDelete(proverb.id)}
                         className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                       >
-                        <FiTrash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-3.5 w-3.5" />
                         Delete
                       </button>
                     </div>
@@ -370,11 +370,11 @@ export default function ProverbsDataTable({
               <TableRow>
                 <td
                   colSpan={onSelectAll ? 6 : 5}
-                  className="px-5 py-12 text-center text-gray-500 dark:text-gray-400"
+                  className="px-3 py-12 text-center text-muted-foreground"
                 >
                   <div className="flex flex-col items-center gap-2">
                     <p className="text-sm font-medium">No proverbs found</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       Try adjusting your filters or add a new proverb
                     </p>
                   </div>
@@ -389,23 +389,23 @@ export default function ProverbsDataTable({
     {/* Mobile Grid View */}
     <div className="lg:hidden grid grid-cols-1 gap-4">
       {isLoading ? (
-        <div className="flex items-center justify-center h-64 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
+        <div className="flex items-center justify-center h-64 bg-card rounded-lg border border-border">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
         </div>
       ) : proverbs.length > 0 ? (
         proverbs.map((proverb) => (
           <div
             key={proverb.id}
-            className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4"
+            className="bg-card rounded-lg border border-border p-4"
           >
             {/* Proverb */}
             <div className="mb-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                    <div className="text-xs font-medium text-muted-foreground uppercase mb-1">
                       Proverb
                     </div>
-                    <div className="text-base font-semibold text-gray-900 dark:text-white">
+                    <div className="text-base font-semibold text-foreground">
                       {proverb.proverb}
                     </div>
                   </div>
@@ -414,7 +414,7 @@ export default function ProverbsDataTable({
                       type="checkbox"
                       checked={selectedProverbs.includes(proverb.id)}
                       onChange={() => onSelectProverb(proverb.id)}
-                      className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
+                      className="mt-1 h-4 w-4 rounded border-input text-brand-600 focus:ring-brand-500 dark:bg-gray-800"
                     />
                   )}
               </div>
@@ -422,10 +422,10 @@ export default function ProverbsDataTable({
 
             {/* Translation */}
             <div className="mb-3">
-              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+              <div className="text-xs font-medium text-muted-foreground uppercase mb-1">
                 Translation
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="text-sm text-muted-foreground">
                 {proverb.translation}
               </div>
             </div>
@@ -433,10 +433,10 @@ export default function ProverbsDataTable({
             {/* Meaning */}
             {proverb.meaning && (
               <div className="mb-3">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                <div className="text-xs font-medium text-muted-foreground uppercase mb-1">
                   Meaning
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-muted-foreground">
                   {proverb.meaning}
                 </div>
               </div>
@@ -457,7 +457,7 @@ export default function ProverbsDataTable({
 
             {(proverb.alignment_status || proverb.alignment_job_status) && (
               <div className="mb-3">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                <div className="text-xs font-medium text-muted-foreground uppercase mb-1">
                   Alignment
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -470,7 +470,7 @@ export default function ProverbsDataTable({
             {/* Audio */}
             <div className="mb-3">
               <div className="mb-1 flex items-center gap-2">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                <div className="text-xs font-medium text-muted-foreground uppercase">
                   Audio
                 </div>
                 {getAudioFormat(proverb) && (
@@ -487,12 +487,12 @@ export default function ProverbsDataTable({
               {proverb.audio_url ? (
                 <InlineAudioPlayer src={proverb.audio_url} size="md" />
               ) : (
-                <div className="text-xs text-gray-400 dark:text-gray-600">No audio</div>
+                <div className="text-xs text-muted-foreground">No audio</div>
               )}
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
+            <div className="flex items-center gap-2 border-t border-border pt-3">
               <button
                 onClick={() => onRegenerateAudio(proverb)}
                 disabled={isRegenerationPending(proverb.last_regeneration_status)}
@@ -505,29 +505,29 @@ export default function ProverbsDataTable({
                       : "Regenerate Audio"
                 }
               >
-                <FiVolume2 className="h-4 w-4" />
+                <Volume2 className="h-4 w-4" />
               </button>
               <button
                 onClick={() => onEdit(proverb)}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/20 dark:text-brand-400"
               >
-                <FiEdit className="h-3.5 w-3.5" />
+                <SquarePen className="h-3.5 w-3.5" />
                 Edit
               </button>
               <button
                 onClick={() => onDelete(proverb.id)}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
               >
-                <FiTrash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-3.5 w-3.5" />
                 Delete
               </button>
             </div>
           </div>
         ))
       ) : (
-        <div className="flex flex-col items-center gap-2 p-12 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No proverbs found</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">
+        <div className="flex flex-col items-center gap-2 p-12 bg-card rounded-lg border border-border">
+          <p className="text-sm font-medium text-muted-foreground">No proverbs found</p>
+          <p className="text-xs text-muted-foreground">
             Try adjusting your filters or add a new proverb
           </p>
         </div>

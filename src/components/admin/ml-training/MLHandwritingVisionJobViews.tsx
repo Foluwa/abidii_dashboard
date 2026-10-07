@@ -140,8 +140,8 @@ export function MLHandwritingVisionJobsPage() {
       <PageBreadCrumb pageTitle="Vision Jobs" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Vision Jobs</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <h1 className="text-2xl font-bold text-foreground">Vision Jobs</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             LLM-assisted labeling suggestions for candidates - assist only, suggestions must be explicitly accepted
             in <Link href="/operations/ml-training/candidate-manifests" className="text-brand-500 hover:underline">Candidate Review</Link>.
           </p>
@@ -161,13 +161,13 @@ export function MLHandwritingVisionJobsPage() {
             value={model}
             onChange={(event) => setModel(event.target.value)}
             placeholder="model"
-            className="w-48 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+            className="w-48 rounded-lg border border-input bg-card px-3 py-2 text-sm dark:text-white"
           />
           <input
             value={manifestId}
             onChange={(event) => setManifestId(event.target.value)}
             placeholder="Manifest id (optional)"
-            className="w-64 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+            className="w-64 rounded-lg border border-input bg-card px-3 py-2 text-sm dark:text-white"
           />
           <StyledSelect
             value={mode}
@@ -182,10 +182,10 @@ export function MLHandwritingVisionJobsPage() {
             onChange={(event) => setMaxCandidates(event.target.value.replace(/\D/g, ""))}
             placeholder="Max candidates"
             inputMode="numeric"
-            className="w-36 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+            className="w-36 rounded-lg border border-input bg-card px-3 py-2 text-sm dark:text-white"
           />
         </div>
-        <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mb-4 text-xs text-muted-foreground">
           Targets approved candidates with no vision suggestion requested yet. Estimate cost before starting - jobs
           above the configured cost/count threshold require typing an exact confirmation phrase.
         </p>
@@ -215,9 +215,9 @@ export function MLHandwritingVisionJobsPage() {
           <LoadingBlock />
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+            <table className="min-w-full divide-y divide-border text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+                <tr className="text-left text-xs uppercase text-muted-foreground">
                   <th className="px-3 py-2">Job</th>
                   <th className="px-3 py-2">Provider / Model</th>
                   <th className="px-3 py-2">Mode</th>
@@ -228,15 +228,15 @@ export function MLHandwritingVisionJobsPage() {
                   <th className="px-3 py-2">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody className="divide-y divide-border">
                 {jobs.map((job) => (
                   <tr key={job.id}>
                     <td className="px-3 py-3">
-                      <div className="font-medium text-gray-900 dark:text-white">{job.id}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{formatDate(job.created_at)}</div>
+                      <div className="font-medium text-foreground">{job.id}</div>
+                      <div className="text-xs text-muted-foreground">{formatDate(job.created_at)}</div>
                     </td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{job.provider} / {job.model}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{job.mode}</td>
+                    <td className="px-3 py-3 text-foreground">{job.provider} / {job.model}</td>
+                    <td className="px-3 py-3 text-foreground">{job.mode}</td>
                     <td className="px-3 py-3"><StatusPill status={job.status} /></td>
                     <td className="px-3 py-3">{job.request_count}</td>
                     <td className="px-3 py-3">{job.completed_count}</td>
@@ -250,7 +250,7 @@ export function MLHandwritingVisionJobsPage() {
                 ))}
               </tbody>
             </table>
-            {jobs.length === 0 ? <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No vision jobs yet.</div> : null}
+            {jobs.length === 0 ? <div className="p-4 text-sm text-muted-foreground">No vision jobs yet.</div> : null}
           </div>
         )}
       </Panel>
@@ -332,8 +332,8 @@ export function MLHandwritingVisionJobDetailPage() {
       <PageBreadCrumb pageTitle="Vision Job Detail" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{jobId}</h1>
-          {job ? <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{job.provider} / {job.model} - {job.mode}</p> : null}
+          <h1 className="text-2xl font-bold text-foreground">{jobId}</h1>
+          {job ? <p className="mt-1 text-sm text-muted-foreground">{job.provider} / {job.model} - {job.mode}</p> : null}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
@@ -361,20 +361,20 @@ export function MLHandwritingVisionJobDetailPage() {
           {job.error_message ? <InlineError message={job.error_message} /> : null}
           <Panel title="Items">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+              <table className="min-w-full divide-y divide-border text-sm">
                 <thead>
-                  <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+                  <tr className="text-left text-xs uppercase text-muted-foreground">
                     <th className="px-3 py-2">Candidate</th>
                     <th className="px-3 py-2">Status</th>
                     <th className="px-3 py-2">Suggestion</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                <tbody className="divide-y divide-border">
                   {(job.items || []).map((item) => (
                     <tr key={item.id}>
                       <td className="px-3 py-2 font-mono text-xs">{item.candidate_id}</td>
                       <td className="px-3 py-2"><StatusPill status={item.status} /></td>
-                      <td className="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
+                      <td className="px-3 py-2 text-xs text-muted-foreground">
                         {item.parsed_suggestion
                           ? `${(item.parsed_suggestion as any).case_group || ""} ${(item.parsed_suggestion as any).predicted_label || ""}`.trim()
                           : item.error_message || "-"}
@@ -383,7 +383,7 @@ export function MLHandwritingVisionJobDetailPage() {
                   ))}
                 </tbody>
               </table>
-              {(job.items || []).length === 0 ? <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No items.</div> : null}
+              {(job.items || []).length === 0 ? <div className="p-4 text-sm text-muted-foreground">No items.</div> : null}
             </div>
           </Panel>
           <Panel title="Raw Job Payload">

@@ -83,19 +83,19 @@ export function ContentSafetyContent({ showHeader = true, isActive = true }: { s
           ].map(([label, value]) => (
             <div
               key={label as string}
-              className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+              className="rounded-xl border border-border bg-card p-4"
             >
-              <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
-              <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <p className="mt-1 text-2xl font-semibold text-foreground">
                 {value === undefined ? '…' : Number(value).toLocaleString()}
               </p>
             </div>
           ))}
         </div>
 
-        <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-border bg-card p-5">
           <div className="w-60">
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">Category</label>
+            <label className="block text-xs font-medium text-muted-foreground">Category</label>
             <div className="mt-1">
               <StyledSelect
                 options={CATEGORY_OPTIONS}
@@ -112,16 +112,16 @@ export function ContentSafetyContent({ showHeader = true, isActive = true }: { s
               type="button"
               onClick={runClassification}
               disabled={s?.classification_running}
-              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-600 disabled:opacity-50"
+              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-600 disabled:opacity-50"
             >
               {s?.classification_running ? 'Classification running…' : 'Classify unchecked words'}
             </button>
           )}
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table">
-            <thead className="bg-gray-50 dark:bg-gray-800/40">
+        <div className="overflow-x-auto rounded-xl border border-border bg-card">
+          <table className="min-w-full divide-y divide-border" role="table">
+            <thead className="border-b">
               <tr>
                 <th className={th}>Word</th>
                 <th className={th}>Meaning</th>
@@ -131,7 +131,7 @@ export function ContentSafetyContent({ showHeader = true, isActive = true }: { s
                 {isAdmin && <th className={th}>Action</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+            <tbody className="divide-y divide-border">
               {isLoading && (
                 <tr><td className={td} colSpan={6}>Loading…</td></tr>
               )}

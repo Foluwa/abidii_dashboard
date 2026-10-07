@@ -57,39 +57,39 @@ function SummaryCard({
   hint: string;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <div className="text-sm text-gray-500 dark:text-gray-400">{label}</div>
-      <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{value}</div>
-      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">{hint}</div>
+    <div className="rounded-xl border border-border bg-card p-5">
+      <div className="text-sm text-muted-foreground">{label}</div>
+      <div className="mt-2 text-2xl font-semibold text-foreground">{value}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
     </div>
   );
 }
 
 function CourseCard({ course }: { course: CurriculumReadinessCourse }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+    <div className="rounded-xl border border-border bg-card p-5">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-lg font-semibold text-foreground">
               {course.course.title}
             </h3>
             {getCourseQaBadge(course.qa_status)}
           </div>
-          <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <div className="mt-1 text-sm text-muted-foreground">
             {course.course.course_key}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
             href={`/curriculum/courses/${course.course.id}`}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-white/[0.03]"
+            className="rounded-lg border border-input px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
           >
             Open Course
           </Link>
           <Link
             href={`/curriculum/editor?courseKey=${encodeURIComponent(course.course.course_key)}`}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-white/[0.03]"
+            className="rounded-lg border border-input px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
           >
             Open Editor
           </Link>
@@ -97,39 +97,39 @@ function CourseCard({ course }: { course: CurriculumReadinessCourse }) {
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-6">
-        <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/40">
-          <div className="text-xs text-gray-500 dark:text-gray-400">Units</div>
-          <div className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="rounded-lg bg-muted/50 p-3">
+          <div className="text-xs text-muted-foreground">Units</div>
+          <div className="mt-1 text-lg font-semibold text-foreground">
             {course.unit_count}
           </div>
         </div>
-        <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/40">
-          <div className="text-xs text-gray-500 dark:text-gray-400">Sections</div>
-          <div className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="rounded-lg bg-muted/50 p-3">
+          <div className="text-xs text-muted-foreground">Sections</div>
+          <div className="mt-1 text-lg font-semibold text-foreground">
             {course.section_count}
           </div>
         </div>
-        <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/40">
-          <div className="text-xs text-gray-500 dark:text-gray-400">Blueprints</div>
-          <div className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="rounded-lg bg-muted/50 p-3">
+          <div className="text-xs text-muted-foreground">Blueprints</div>
+          <div className="mt-1 text-lg font-semibold text-foreground">
             {course.blueprint_count}
           </div>
         </div>
-        <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/40">
-          <div className="text-xs text-gray-500 dark:text-gray-400">Published</div>
-          <div className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="rounded-lg bg-muted/50 p-3">
+          <div className="text-xs text-muted-foreground">Published</div>
+          <div className="mt-1 text-lg font-semibold text-foreground">
             {course.published_blueprint_count}
           </div>
         </div>
-        <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/40">
-          <div className="text-xs text-gray-500 dark:text-gray-400">Launchable</div>
-          <div className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="rounded-lg bg-muted/50 p-3">
+          <div className="text-xs text-muted-foreground">Launchable</div>
+          <div className="mt-1 text-lg font-semibold text-foreground">
             {course.launchable_section_count}
           </div>
         </div>
-        <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/40">
-          <div className="text-xs text-gray-500 dark:text-gray-400">Missing Blueprints</div>
-          <div className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="rounded-lg bg-muted/50 p-3">
+          <div className="text-xs text-muted-foreground">Missing Blueprints</div>
+          <div className="mt-1 text-lg font-semibold text-foreground">
             {course.missing_blueprint_section_count}
           </div>
         </div>
@@ -145,12 +145,12 @@ function CourseCard({ course }: { course: CurriculumReadinessCourse }) {
         )}
       </div>
 
-      <div className="mt-4 rounded-lg border border-gray-200 dark:border-gray-800">
-        <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+      <div className="mt-4 rounded-lg border border-border">
+        <div className="border-b border-border px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="font-medium text-gray-900 dark:text-white">Validation</h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <h4 className="font-medium text-foreground">Validation</h4>
+              <p className="text-sm text-muted-foreground">
                 {course.validation.blocking_error_count} blocking errors, {course.validation.warning_count} warnings
               </p>
             </div>
@@ -160,19 +160,19 @@ function CourseCard({ course }: { course: CurriculumReadinessCourse }) {
             />
           </div>
         </div>
-        <div className="divide-y divide-gray-200 dark:divide-gray-800">
+        <div className="divide-y divide-border">
           {course.qa_checks.map((check) => (
             <div
               key={check.key}
               className="flex flex-col gap-2 px-4 py-3 md:flex-row md:items-start md:justify-between"
             >
               <div>
-                <div className="font-medium text-gray-900 dark:text-white">{check.label}</div>
+                <div className="font-medium text-foreground">{check.label}</div>
                 {check.detail ? (
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{check.detail}</div>
+                  <div className="text-sm text-muted-foreground">{check.detail}</div>
                 ) : null}
                 {(check.build_version || check.notes || check.verified_at) ? (
-                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="mt-1 text-xs text-muted-foreground">
                     {[check.build_version, check.notes, check.verified_at ? new Date(check.verified_at).toLocaleString() : null]
                       .filter(Boolean)
                       .join(' • ')}
@@ -197,7 +197,7 @@ export function PublishingReadinessContent({ showHeader = true }: { showHeader?:
         {showHeader ? (
           <div>
             <PageBreadCrumb pageTitle="Curriculum Readiness" />
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-muted-foreground">
               Backend inventory by language and course, with explicit manual QA gaps.
             </p>
           </div>
@@ -207,14 +207,14 @@ export function PublishingReadinessContent({ showHeader = true }: { showHeader?:
         <div className="flex gap-2">
           <Link
             href="/curriculum/courses"
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-white/[0.03]"
+            className="rounded-lg border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
           >
             Courses
           </Link>
           <button
             type="button"
             onClick={() => refresh()}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700"
           >
             Refresh
           </button>
@@ -224,7 +224,7 @@ export function PublishingReadinessContent({ showHeader = true }: { showHeader?:
       {isError && <Alert variant="error">{getErrorMessage(isError)}</Alert>}
 
       {isLoading && (
-        <div className="rounded-xl border border-gray-200 bg-white p-5 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+        <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
           Loading readiness matrix...
         </div>
       )}
@@ -263,14 +263,14 @@ export function PublishingReadinessContent({ showHeader = true }: { showHeader?:
             {data.languages.map((language) => (
               <section
                 key={language.target_language_id || language.target_language_code || 'unknown'}
-                className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+                className="rounded-xl border border-border bg-card p-5"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    <h2 className="text-xl font-semibold text-foreground">
                       {language.target_language_name || 'Unassigned Language'}
                     </h2>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {language.target_language_code || 'no-language-code'} - {language.course_count} course(s)
                     </p>
                   </div>

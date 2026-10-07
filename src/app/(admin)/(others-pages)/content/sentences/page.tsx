@@ -27,9 +27,9 @@ import {
   ActiveFilterChips,
   StickyBulkActionBar,
 } from '@/components/admin/layout';
-import { FiGlobe, FiBarChart2, FiCheckCircle, FiTrash2, FiVolume2 } from 'react-icons/fi';
 import InlineAudioPlayer from '@/components/ui/audio/InlineAudioPlayer';
 import { RegenerateAudioModal, RegenerateAudioTarget } from '@/components/modals/RegenerateAudioModal';
+import { ChartColumn, CircleCheck, Globe, Trash2, Volume2 } from "lucide-react";
 
 export default function SentencesPage() {
   const router = useRouter();
@@ -340,7 +340,7 @@ export default function SentencesPage() {
       key: 'translation',
       label: 'Translation',
       render: (value) => (
-        <span className="text-gray-600 dark:text-gray-400">{String(value)}</span>
+        <span className="text-muted-foreground">{String(value)}</span>
       ),
     },
     {
@@ -348,7 +348,7 @@ export default function SentencesPage() {
       label: 'Difficulty',
       align: 'center',
       render: (value) => (
-        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-800">
+        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-muted">
           Level {String(value)}
         </span>
       ),
@@ -407,7 +407,7 @@ export default function SentencesPage() {
       >
         <button
           onClick={() => { setCurrentPage(1); fetchSentences(); }}
-          className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-1"
+          className="px-3 py-2 text-sm font-medium text-foreground bg-card border border-input rounded-md hover:bg-accent transition-colors flex items-center gap-1"
           title="Refresh data"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
@@ -416,10 +416,10 @@ export default function SentencesPage() {
       </ContentPageHeader>
 
       <ContentStatsGrid cols={4}>
-        <ContentStatsCard label="Total" value={totalItems} icon={FiBarChart2} />
-        <ContentStatsCard label="Published" value={stats.published} icon={FiCheckCircle} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
-        <ContentStatsCard label="Draft" value={stats.draft} icon={FiGlobe} iconBgClass="bg-amber-100 dark:bg-amber-900/20" iconTextClass="text-amber-600 dark:text-amber-400" />
-        <ContentStatsCard label="With Audio" value={stats.withAudio} icon={FiBarChart2} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
+        <ContentStatsCard label="Total" value={totalItems} icon={ChartColumn} />
+        <ContentStatsCard label="Published" value={stats.published} icon={CircleCheck} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+        <ContentStatsCard label="Draft" value={stats.draft} icon={Globe} iconBgClass="bg-amber-100 dark:bg-amber-900/20" iconTextClass="text-amber-600 dark:text-amber-400" />
+        <ContentStatsCard label="With Audio" value={stats.withAudio} icon={ChartColumn} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
       </ContentStatsGrid>
 
       {/* Bulk Import from Google Sheets (has built-in accordion) */}
@@ -454,9 +454,9 @@ export default function SentencesPage() {
         {/* Primary Filters Row */}
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[200px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               <div className="flex items-center gap-1.5">
-                <FiGlobe className="h-3.5 w-3.5" />
+                <Globe className="h-3.5 w-3.5" />
                 Language
               </div>
             </label>
@@ -475,7 +475,7 @@ export default function SentencesPage() {
           </div>
 
           <div className="flex-1 min-w-[240px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Search
             </label>
             <input
@@ -486,12 +486,12 @@ export default function SentencesPage() {
                 setFilters({ ...filters, search: e.target.value });
               }}
               placeholder="Search text or translation..."
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+              className="block w-full rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
 
           <div className="min-w-[140px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Per Page
             </label>
             <StyledSelect
@@ -510,7 +510,7 @@ export default function SentencesPage() {
 
         {/* Advanced Filters Panel */}
         {showAdvancedFilters && (
-          <div className="mt-5 border-t border-gray-100 pt-5 dark:border-gray-800">
+          <div className="mt-5 border-t border-border pt-5">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <StyledSelect
@@ -561,7 +561,7 @@ export default function SentencesPage() {
             disabled: isDeleting,
             loading: isDeleting,
             variant: 'danger',
-            icon: <FiTrash2 className="h-4 w-4" />,
+            icon: <Trash2 className="h-4 w-4" />,
           },
         ]}
       />
@@ -584,7 +584,7 @@ export default function SentencesPage() {
               title="Regenerate Audio"
               aria-label="Regenerate Audio"
             >
-              <FiVolume2 className="h-4 w-4" />
+              <Volume2 className="h-4 w-4" />
             </button>
             <button
               onClick={() => handleEdit(item)}
@@ -604,7 +604,7 @@ export default function SentencesPage() {
 
       {/* Pagination */}
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-700 dark:text-gray-300">
+        <span className="text-sm text-foreground">
           Showing {pageStart} to {pageEnd} of {totalItems} sentences
         </span>
         <div className="ml-auto">
@@ -643,7 +643,7 @@ export default function SentencesPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Text *
             </label>
             <input
@@ -651,12 +651,12 @@ export default function SentencesPage() {
               value={(formData as any).text}
               onChange={(e) => setFormData({ ...formData, text: e.target.value })}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:border-gray-600"
+              className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Translation *
             </label>
             <input
@@ -664,7 +664,7 @@ export default function SentencesPage() {
               value={(formData as any).translation}
               onChange={(e) => setFormData({ ...formData, translation: e.target.value })}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:border-gray-600"
+              className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800"
             />
           </div>
 
@@ -683,28 +683,28 @@ export default function SentencesPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Category
               </label>
               <input
                 type="text"
                 value={(formData as any).category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:border-gray-600"
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800"
               />
             </div>
           </div>
 
           {/* Audio Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Audio File
             </label>
             <input
               type="file"
               accept="audio/*"
               onChange={handleAudioChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:border-gray-600"
+              className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800"
             />
             {audioPreview && (
               <div className="mt-3">
@@ -724,7 +724,7 @@ export default function SentencesPage() {
                 onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
                 className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
               />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-sm font-medium text-foreground">
                 Published
               </span>
             </label>

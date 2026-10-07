@@ -31,13 +31,13 @@ function FailureReasonsModal({
   return (
     <Modal isOpen onClose={onClose} title="Why did this fail?" maxWidth="md">
       <div className="space-y-4">
-        <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600 dark:bg-gray-800/60 dark:text-gray-300">
-          <p className="font-medium text-gray-900 dark:text-white">{item.title}</p>
+        <div className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">{item.title}</p>
           <p className="mt-1">{item.failed_count} of {item.target_count} recipients failed.</p>
         </div>
 
         {!hasReasons ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             No failure reason was captured for this notification — either it predates failure-reason
             tracking, or the failures came from a path that doesn&apos;t report a specific reason.
           </p>
@@ -45,19 +45,19 @@ function FailureReasonsModal({
           <div className="space-y-3">
             {Object.entries(reasons!).map(([platform, byReason]) => (
               <div key={platform}>
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {platform}
                 </p>
                 <ul className="space-y-1">
                   {Object.entries(byReason).map(([reason, count]) => (
                     <li
                       key={reason}
-                      className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700"
+                      className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm"
                     >
-                      <span className="text-gray-700 dark:text-gray-300">
+                      <span className="text-foreground">
                         {FAILURE_REASON_LABELS[reason] ?? reason}
                       </span>
-                      <span className="font-semibold text-gray-900 dark:text-white">{count}</span>
+                      <span className="font-semibold text-foreground">{count}</span>
                     </li>
                   ))}
                 </ul>
@@ -153,32 +153,32 @@ export function HistoryContent({ showHeader = true }: { showHeader?: boolean; is
       {showHeader && <PageBreadCrumb pageTitle="Notification History" />}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Sent</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalSent.toLocaleString()}</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Total Sent</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{totalSent.toLocaleString()}</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Android</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalAndroid.toLocaleString()}</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Android</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{totalAndroid.toLocaleString()}</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">iOS</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totaliOS.toLocaleString()}</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">iOS</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{totaliOS.toLocaleString()}</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Failed</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalFailed.toLocaleString()}</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Failed</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{totalFailed.toLocaleString()}</div>
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Sent Notifications</h2>
+          <h2 className="text-lg font-semibold text-foreground">Sent Notifications</h2>
           <button
             type="button"
             onClick={() => void refresh()}
             disabled={loading}
-            className="rounded-lg bg-gray-200 px-4 py-2 text-sm text-gray-800 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            className="rounded-lg bg-muted px-4 py-2 text-sm text-foreground hover:bg-gray-300 disabled:opacity-50 dark:hover:bg-gray-600"
           >
             {loading ? 'Refreshing...' : 'Refresh'}
           </button>
@@ -186,7 +186,7 @@ export function HistoryContent({ showHeader = true }: { showHeader?: boolean; is
 
         <div className="grid gap-4 md:grid-cols-3">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Search</label>
             <input
               aria-label="Search"
               value={search}
@@ -195,7 +195,7 @@ export function HistoryContent({ showHeader = true }: { showHeader?: boolean; is
                 setPage(1);
               }}
               placeholder="Title, body, or sender"
-              className="block h-12 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+              className="block h-12 w-full rounded-lg border border-input bg-background px-4 text-sm text-foreground"
             />
           </div>
           <div>
@@ -236,34 +236,34 @@ export function HistoryContent({ showHeader = true }: { showHeader?: boolean; is
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3">Title</th>
-                <th className="px-3 py-3">Body</th>
-                <th className="px-3 py-3">Target</th>
-                <th className="px-3 py-3 text-right">Android</th>
-                <th className="px-3 py-3 text-right">iOS</th>
-                <th className="px-3 py-3 text-right">Failed</th>
-                <th className="px-3 py-3">Sent By</th>
-                <th className="px-3 py-3">Date</th>
+              <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="px-3 py-2.5">Status</th>
+                <th className="px-3 py-2.5">Title</th>
+                <th className="px-3 py-2.5">Body</th>
+                <th className="px-3 py-2.5">Target</th>
+                <th className="px-3 py-2.5 text-right">Android</th>
+                <th className="px-3 py-2.5 text-right">iOS</th>
+                <th className="px-3 py-2.5 text-right">Failed</th>
+                <th className="px-3 py-2.5">Sent By</th>
+                <th className="px-3 py-2.5">Date</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
                     Loading...
                   </td>
                 </tr>
               ) : pageItems.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
                     No notification history found.
                   </td>
                 </tr>
               ) : (
                 pageItems.map((item) => (
-                  <tr key={item.id} className="border-b border-gray-100 align-top dark:border-gray-800">
+                  <tr key={item.id} className="border-b border-border align-top">
                     <td className="px-3 py-3">
                       {item.failed_count > 0 ? (
                         <StatusBadge status="error" label="Partial" />
@@ -271,23 +271,23 @@ export function HistoryContent({ showHeader = true }: { showHeader?: boolean; is
                         <StatusBadge status="success" label="Sent" />
                       )}
                     </td>
-                    <td className="max-w-[200px] truncate px-3 py-2 font-medium text-gray-900 dark:text-white">
+                    <td className="max-w-[200px] truncate px-3 py-2 font-medium text-foreground">
                       {item.title}
                     </td>
-                    <td className="max-w-[250px] truncate px-3 py-2 text-gray-700 dark:text-gray-300">
+                    <td className="max-w-[250px] truncate px-3 py-2 text-foreground">
                       {item.body}
                     </td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.target_type}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.android_sent.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.ios_sent.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">
+                    <td className="px-3 py-3 text-foreground">{item.target_type}</td>
+                    <td className="px-3 py-3 text-right text-foreground">{item.android_sent.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-foreground">{item.ios_sent.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-foreground">
                       <div className="flex items-center justify-end gap-1.5">
                         {item.failed_count.toLocaleString()}
                         {item.failed_count > 0 && (
                           <button
                             type="button"
                             onClick={() => setFailureDetailItem(item)}
-                            className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 text-[10px] font-semibold text-gray-500 hover:border-gray-400 hover:text-gray-700 dark:border-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
+                            className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-input text-[10px] font-semibold text-muted-foreground hover:border-gray-400 hover:text-foreground"
                             title="Why did this fail?"
                             aria-label="Why did this fail?"
                           >
@@ -296,8 +296,8 @@ export function HistoryContent({ showHeader = true }: { showHeader?: boolean; is
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.sent_by}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatDate(item.created_at)}</td>
+                    <td className="px-3 py-3 text-foreground">{item.sent_by}</td>
+                    <td className="px-3 py-3 text-foreground">{formatDate(item.created_at)}</td>
                   </tr>
                 ))
               )}
@@ -306,7 +306,7 @@ export function HistoryContent({ showHeader = true }: { showHeader?: boolean; is
         </div>
 
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Showing {pageStart} to {pageEnd} of {total} notifications
           </p>
           <div className="ml-auto">

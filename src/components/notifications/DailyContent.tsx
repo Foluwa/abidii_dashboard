@@ -151,8 +151,8 @@ function BreakdownChart({ dimension, label }: { dimension: OpenRateDimension; la
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">{label}</h3>
+    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <h3 className="mb-3 text-sm font-semibold text-foreground">{label}</h3>
       {loading ? (
         <div className="flex h-48 items-center justify-center text-sm text-gray-400">Loading…</div>
       ) : error ? (
@@ -239,14 +239,14 @@ function NoPushTokenStat() {
   }, []);
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">
         No Push Token
       </div>
-      <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
+      <div className="mt-2 text-2xl font-semibold text-foreground">
         {count === null ? '—' : count.toLocaleString()}
       </div>
-      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+      <p className="mt-1 text-xs text-muted-foreground">
         Proxy for &quot;never granted / revoked notification permission&quot; — the app doesn&apos;t
         report real OS permission state, this is just &quot;no active token on file.&quot;{' '}
         <Link href="/users?has_push_token=false" className="text-brand-600 hover:underline dark:text-brand-400">
@@ -306,21 +306,21 @@ function DailyContentTab({
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Days Sent</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalDays.toLocaleString()}</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Days Sent</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{totalDays.toLocaleString()}</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Recipients</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalSent.toLocaleString()}</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Total Recipients</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{totalSent.toLocaleString()}</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Opens</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalOpens.toLocaleString()}</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Total Opens</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{totalOpens.toLocaleString()}</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Open Rate</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{overallOpenRate}%</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Open Rate</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{overallOpenRate}%</div>
         </div>
       </div>
 
@@ -331,9 +331,9 @@ function DailyContentTab({
         ))}
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Daily Content Feed</h2>
+          <h2 className="text-lg font-semibold text-foreground">Daily Content Feed</h2>
           <div className="flex items-center gap-2">
             <div className="w-40">
               <StyledSelect
@@ -350,7 +350,7 @@ function DailyContentTab({
               type="button"
               onClick={onRefresh}
               disabled={loading}
-              className="rounded-lg bg-gray-200 px-4 py-2 text-sm text-gray-800 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+              className="rounded-lg bg-muted px-4 py-2 text-sm text-foreground hover:bg-gray-300 disabled:opacity-50 dark:hover:bg-gray-600"
             >
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
@@ -360,36 +360,36 @@ function DailyContentTab({
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3">Date</th>
-                <th className="px-3 py-3">Type</th>
-                <th className="px-3 py-3">Content</th>
-                <th className="px-3 py-3">Language</th>
-                <th className="px-3 py-3 text-right">Recipients</th>
-                <th className="px-3 py-3 text-right">Android</th>
-                <th className="px-3 py-3 text-right">iOS</th>
-                <th className="px-3 py-3 text-right">Failed</th>
-                <th className="px-3 py-3 text-right">Opens</th>
-                <th className="px-3 py-3 text-right">Open Rate</th>
+              <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="px-3 py-2.5">Status</th>
+                <th className="px-3 py-2.5">Date</th>
+                <th className="px-3 py-2.5">Type</th>
+                <th className="px-3 py-2.5">Content</th>
+                <th className="px-3 py-2.5">Language</th>
+                <th className="px-3 py-2.5 text-right">Recipients</th>
+                <th className="px-3 py-2.5 text-right">Android</th>
+                <th className="px-3 py-2.5 text-right">iOS</th>
+                <th className="px-3 py-2.5 text-right">Failed</th>
+                <th className="px-3 py-2.5 text-right">Opens</th>
+                <th className="px-3 py-2.5 text-right">Open Rate</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={11} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={11} className="px-3 py-8 text-center text-muted-foreground">
                     Loading...
                   </td>
                 </tr>
               ) : pageItems.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={11} className="px-3 py-8 text-center text-muted-foreground">
                     No daily content sent yet.
                   </td>
                 </tr>
               ) : (
                 pageItems.map((item) => (
-                  <tr key={item.content_log_id} className="border-b border-gray-100 align-top dark:border-gray-800">
+                  <tr key={item.content_log_id} className="border-b border-border align-top">
                     <td className="px-3 py-3">
                       {isUpcoming(item) ? (
                         <StatusBadge status="pending" label="Scheduled" />
@@ -397,16 +397,16 @@ function DailyContentTab({
                         <StatusBadge status="success" label="Sent" />
                       )}
                     </td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatDate(item.content_date)}</td>
-                    <td className="px-3 py-3 capitalize text-gray-700 dark:text-gray-300">{item.content_type}</td>
-                    <td className="px-3 py-3 font-medium text-gray-900 dark:text-white">{item.content_text || '—'}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.language_code}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.sent_count.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.android_sent.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.ios_sent.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.failed_count.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.open_count.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{openRate(item)}%</td>
+                    <td className="px-3 py-3 text-foreground">{formatDate(item.content_date)}</td>
+                    <td className="px-3 py-3 capitalize text-foreground">{item.content_type}</td>
+                    <td className="px-3 py-3 font-medium text-foreground">{item.content_text || '—'}</td>
+                    <td className="px-3 py-3 text-foreground">{item.language_code}</td>
+                    <td className="px-3 py-3 text-right text-foreground">{item.sent_count.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-foreground">{item.android_sent.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-foreground">{item.ios_sent.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-foreground">{item.failed_count.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-foreground">{item.open_count.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-foreground">{openRate(item)}%</td>
                   </tr>
                 ))
               )}
@@ -415,7 +415,7 @@ function DailyContentTab({
         </div>
 
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Showing {pageStart} to {pageEnd} of {totalDays} entries
           </p>
           <div className="ml-auto">
@@ -479,27 +479,27 @@ function TeaserQuizTab({ stats }: { stats: TeaserQuizStats | null }) {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Quizzes Sent (30d)</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{(stats?.total_sent ?? 0).toLocaleString()}</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Quizzes Sent (30d)</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{(stats?.total_sent ?? 0).toLocaleString()}</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Open Rate</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{teaserOpenRate}%</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Open Rate</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{teaserOpenRate}%</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Answered</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{(stats?.total_answered ?? 0).toLocaleString()}</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Answered</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{(stats?.total_answered ?? 0).toLocaleString()}</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Correct Rate</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{teaserCorrectRate}%</div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Correct Rate</div>
+          <div className="mt-2 text-2xl font-semibold text-foreground">{teaserCorrectRate}%</div>
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Teaser Quiz Feed</h2>
+          <h2 className="text-lg font-semibold text-foreground">Teaser Quiz Feed</h2>
           <div className="w-40">
             <StyledSelect
               value={languageFilter}
@@ -515,47 +515,47 @@ function TeaserQuizTab({ stats }: { stats: TeaserQuizStats | null }) {
             />
           </div>
         </div>
-        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mb-4 text-sm text-muted-foreground">
           Most recent first. A low correct rate or a confusing prompt here is worth investigating before more users see it.
         </p>
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                <th className="px-3 py-3">Sent</th>
-                <th className="px-3 py-3">Word</th>
-                <th className="px-3 py-3">Question</th>
-                <th className="px-3 py-3">Language</th>
-                <th className="px-3 py-3">Opened</th>
-                <th className="px-3 py-3">Answered</th>
-                <th className="px-3 py-3 text-right">XP</th>
+              <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="px-3 py-2.5">Sent</th>
+                <th className="px-3 py-2.5">Word</th>
+                <th className="px-3 py-2.5">Question</th>
+                <th className="px-3 py-2.5">Language</th>
+                <th className="px-3 py-2.5">Opened</th>
+                <th className="px-3 py-2.5">Answered</th>
+                <th className="px-3 py-2.5 text-right">XP</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
                     Loading...
                   </td>
                 </tr>
               ) : feedItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
                     No teaser quizzes sent yet.
                   </td>
                 </tr>
               ) : (
                 feedItems.map((item) => (
-                  <tr key={item.quiz_log_id} className="border-b border-gray-100 align-top dark:border-gray-800">
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{formatDateTime(item.sent_at)}</td>
-                    <td className="px-3 py-3 font-medium text-gray-900 dark:text-white">{item.word_text}</td>
-                    <td className="max-w-[280px] truncate px-3 py-2 text-gray-700 dark:text-gray-300">{item.prompt_text}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.language_code}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{item.opened_at ? '✅' : '—'}</td>
-                    <td className="px-3 py-3 text-gray-700 dark:text-gray-300">
+                  <tr key={item.quiz_log_id} className="border-b border-border align-top">
+                    <td className="px-3 py-3 text-foreground">{formatDateTime(item.sent_at)}</td>
+                    <td className="px-3 py-3 font-medium text-foreground">{item.word_text}</td>
+                    <td className="max-w-[280px] truncate px-3 py-2 text-foreground">{item.prompt_text}</td>
+                    <td className="px-3 py-3 text-foreground">{item.language_code}</td>
+                    <td className="px-3 py-3 text-foreground">{item.opened_at ? '✅' : '—'}</td>
+                    <td className="px-3 py-3 text-foreground">
                       {item.was_correct === null ? '—' : item.was_correct ? '✅ Correct' : '❌ Incorrect'}
                     </td>
-                    <td className="px-3 py-3 text-right text-gray-700 dark:text-gray-300">{item.xp_awarded}</td>
+                    <td className="px-3 py-3 text-right text-foreground">{item.xp_awarded}</td>
                   </tr>
                 ))
               )}
@@ -564,7 +564,7 @@ function TeaserQuizTab({ stats }: { stats: TeaserQuizStats | null }) {
         </div>
 
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Showing {total === 0 ? 0 : (page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} entries
           </p>
           <div className="ml-auto">
@@ -757,9 +757,9 @@ export function DailyContent({ showHeader = true }: { showHeader?: boolean; isAc
       {showHeader && <PageBreadCrumb pageTitle="Daily Content Notifications" />}
 
       {/* Schedule settings */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">Send Time</h2>
-        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <h2 className="mb-1 text-lg font-semibold text-foreground">Send Time</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
           UTC. Changes apply within 5 minutes — no restart needed. Current: {schedule?.daily_word_time ?? '—'} (daily word), {schedule?.teaser_quiz_time ?? '—'} (teaser quiz).
         </p>
         <div className="grid gap-4 sm:grid-cols-3 sm:items-end">
@@ -787,7 +787,7 @@ export function DailyContent({ showHeader = true }: { showHeader?: boolean; isAc
             type="button"
             onClick={() => void handleSaveSchedule()}
             disabled={savingSchedule}
-            className="h-11 rounded-lg bg-brand-500 px-6 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-11 rounded-lg bg-brand-500 px-6 text-sm font-medium text-primary-foreground hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {savingSchedule ? 'Saving...' : 'Save'}
           </button>
@@ -797,10 +797,10 @@ export function DailyContent({ showHeader = true }: { showHeader?: boolean; isAc
       {/* Manual daily word override */}
       <div
         ref={overrideSectionRef}
-        className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+        className="rounded-xl border border-border bg-card p-5 shadow-sm"
       >
-        <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">Override Daily Word</h2>
-        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        <h2 className="mb-1 text-lg font-semibold text-foreground">Override Daily Word</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
           Force a specific word from the dictionary for today or a future date. Past dates aren&apos;t allowed.
         </p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -831,7 +831,7 @@ export function DailyContent({ showHeader = true }: { showHeader?: boolean; isAc
             />
           </div>
           <div className="relative sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Word</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Word</label>
             <input
               type="text"
               value={selectedWord ? selectedWord.lemma : wordQuery}
@@ -840,14 +840,14 @@ export function DailyContent({ showHeader = true }: { showHeader?: boolean; isAc
                 setWordQuery(e.target.value);
               }}
               placeholder="Search the dictionary..."
-              className="block h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+              className="block h-11 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground"
             />
             {!selectedWord && wordQuery.trim() && (
-              <div className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+              <div className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-border bg-card shadow-lg">
                 {searching ? (
-                  <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">Searching...</div>
+                  <div className="px-3 py-2 text-sm text-muted-foreground">Searching...</div>
                 ) : wordResults.length === 0 ? (
-                  <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No matches found.</div>
+                  <div className="px-3 py-2 text-sm text-muted-foreground">No matches found.</div>
                 ) : (
                   wordResults.map((result) => (
                     <button
@@ -857,11 +857,11 @@ export function DailyContent({ showHeader = true }: { showHeader?: boolean; isAc
                         setSelectedWord(result);
                         setWordResults([]);
                       }}
-                      className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-accent"
                     >
-                      <span className="font-medium text-gray-900 dark:text-white">{result.lemma}</span>
+                      <span className="font-medium text-foreground">{result.lemma}</span>
                       {result.glosses.length > 0 && (
-                        <span className="ml-2 text-gray-500 dark:text-gray-400">— {result.glosses[0]}</span>
+                        <span className="ml-2 text-muted-foreground">— {result.glosses[0]}</span>
                       )}
                     </button>
                   ))
@@ -874,42 +874,42 @@ export function DailyContent({ showHeader = true }: { showHeader?: boolean; isAc
           type="button"
           onClick={() => void handleSaveOverride()}
           disabled={savingOverride || !selectedWord}
-          className="mt-4 h-11 rounded-lg bg-brand-500 px-6 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-4 h-11 rounded-lg bg-brand-500 px-6 text-sm font-medium text-primary-foreground hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {savingOverride ? 'Saving...' : 'Set Word'}
         </button>
       </div>
 
       {/* Upcoming daily words preview */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">Upcoming Daily Words (next 7 days)</h2>
-        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <h2 className="mb-1 text-lg font-semibold text-foreground">Upcoming Daily Words (next 7 days)</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
           The auto-picker only chooses a day&apos;s word when it actually runs that day — everything below
           &quot;Locked&quot; is a preview of what it would pick right now, and can still shift if the dictionary
           changes before that date arrives. Click Edit to force a different word for any day.
         </p>
         {previewLoading ? (
-          <p className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">Loading preview...</p>
+          <p className="py-6 text-center text-sm text-muted-foreground">Loading preview...</p>
         ) : preview.length === 0 ? (
-          <p className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">No eligible words found.</p>
+          <p className="py-6 text-center text-sm text-muted-foreground">No eligible words found.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-800">
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Date</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Word</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">English</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
-                  <th className="px-3 py-2 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Action</th>
+                <tr className="border-b border-border">
+                  <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Date</th>
+                  <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Word</th>
+                  <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">English</th>
+                  <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Status</th>
+                  <th className="px-3 py-2 text-right text-sm font-medium text-muted-foreground">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody className="divide-y divide-border">
                 {preview.map((item) => (
                   <tr key={item.content_date}>
-                    <td className="px-3 py-3 text-sm text-gray-900 dark:text-white">{formatDate(item.content_date)}</td>
-                    <td className="px-3 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.word_text}</td>
-                    <td className="px-3 py-3 text-sm text-gray-500 dark:text-gray-400">{item.english_lemma}</td>
+                    <td className="px-3 py-3 text-sm text-foreground">{formatDate(item.content_date)}</td>
+                    <td className="px-3 py-3 text-sm font-medium text-foreground">{item.word_text}</td>
+                    <td className="px-3 py-3 text-sm text-muted-foreground">{item.english_lemma}</td>
                     <td className="px-3 py-3">
                       <StatusBadge
                         status={item.source === 'locked' ? 'success' : 'info'}
@@ -935,10 +935,10 @@ export function DailyContent({ showHeader = true }: { showHeader?: boolean; isAc
 
       {/* Audience trend + permission-proxy stat */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Push-Eligible Audience (30 days)</h2>
+        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-5 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Push-Eligible Audience (30 days)</h2>
           {trend.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p className="py-8 text-center text-sm text-muted-foreground">
               No audience snapshots yet — the daily snapshot job populates this over time.
             </p>
           ) : (
@@ -1029,7 +1029,7 @@ export function DailyContent({ showHeader = true }: { showHeader?: boolean; isAc
       </div>
 
       {/* Daily Content / Teaser Quiz tabs */}
-      <div className="flex items-center gap-0.5 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-900 w-fit">
+      <div className="flex items-center gap-0.5 rounded-lg bg-muted p-0.5 w-fit">
         <button
           onClick={() => handleTabChange('daily')}
           className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${

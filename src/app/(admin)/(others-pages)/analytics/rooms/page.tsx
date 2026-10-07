@@ -19,7 +19,7 @@ import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils
 function HostCell({ host }: { host: RecentRoomItem["host"] }) {
   const [avatarFailed, setAvatarFailed] = useState(false);
   if (!host.id) {
-    return <span className="text-gray-400 dark:text-gray-500">—</span>;
+    return <span className="text-muted-foreground">—</span>;
   }
 
   const label = host.display_name || host.email || "Unknown user";
@@ -34,7 +34,7 @@ function HostCell({ host }: { host: RecentRoomItem["host"] }) {
           width={20}
           height={20}
           unoptimized
-          className="h-5 w-5 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
+          className="h-5 w-5 rounded-full object-cover bg-muted"
           referrerPolicy="no-referrer"
           onError={() => setAvatarFailed(true)}
         />
@@ -43,7 +43,7 @@ function HostCell({ host }: { host: RecentRoomItem["host"] }) {
           <span className="text-[9px] font-semibold text-white">{getInitials(label)}</span>
         </div>
       )}
-      <span className="truncate text-xs text-gray-700 dark:text-gray-300">{label}</span>
+      <span className="truncate text-xs text-foreground">{label}</span>
     </div>
   );
 }
@@ -150,7 +150,7 @@ export default function RoomsAnalyticsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <PageBreadCrumb pageTitle="Rooms Analytics" />
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Multiplayer room activity across standard (long-lived) rooms and instant sessions
           </p>
         </div>
@@ -165,7 +165,7 @@ export default function RoomsAnalyticsPage() {
       <AnalyticsTabs />
 
       {/* Filters */}
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
+      <div className="bg-card border border-border rounded-lg p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StyledSelect
             label="Time Period"
@@ -231,15 +231,15 @@ export default function RoomsAnalyticsPage() {
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />
+            <div key={i} className="h-24 bg-muted rounded-lg animate-pulse" />
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
           {summaryCards.map(({ label, value }) => (
-            <div key={label} className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-              <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white">{value}</p>
+            <div key={label} className="p-4 bg-card border border-border rounded-lg">
+              <p className="text-sm text-muted-foreground">{label}</p>
+              <p className="text-2xl font-semibold text-foreground">{value}</p>
             </div>
           ))}
         </div>
@@ -247,9 +247,9 @@ export default function RoomsAnalyticsPage() {
 
       {/* Charts */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
+        <div className="bg-card border border-border rounded-lg p-4">
           {isLoading ? (
-            <div className="h-[220px] bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />
+            <div className="h-[220px] bg-muted rounded-lg animate-pulse" />
           ) : (
             <RoomsTimeSeriesChart
               title="Rooms Created vs Completed"
@@ -261,9 +261,9 @@ export default function RoomsAnalyticsPage() {
             />
           )}
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
+        <div className="bg-card border border-border rounded-lg p-4">
           {isLoading ? (
-            <div className="h-[220px] bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />
+            <div className="h-[220px] bg-muted rounded-lg animate-pulse" />
           ) : (
             <RoomsTimeSeriesChart
               title="Participation"
@@ -280,54 +280,54 @@ export default function RoomsAnalyticsPage() {
 
       {/* Breakdown: type / status / game types */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Rooms by Type</h3>
+        <div className="bg-card border border-border rounded-lg p-4">
+          <h3 className="text-sm font-medium text-foreground mb-3">Rooms by Type</h3>
           <div className="space-y-2">
             {(analytics?.rooms_by_type || []).map((row) => (
               <div key={row.room_type} className="flex items-center justify-between text-sm">
-                <span className="capitalize text-gray-700 dark:text-gray-300">{row.room_type}</span>
-                <span className="text-gray-500 dark:text-gray-400">
+                <span className="capitalize text-foreground">{row.room_type}</span>
+                <span className="text-muted-foreground">
                   {row.room_count.toLocaleString()} ({row.percentage.toFixed(1)}%)
                 </span>
               </div>
             ))}
             {!analytics?.rooms_by_type?.length && !isLoading && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">No data in this period.</p>
+              <p className="text-sm text-muted-foreground">No data in this period.</p>
             )}
           </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Rooms by Status</h3>
+        <div className="bg-card border border-border rounded-lg p-4">
+          <h3 className="text-sm font-medium text-foreground mb-3">Rooms by Status</h3>
           <div className="space-y-2">
             {(analytics?.rooms_by_status || []).map((row) => (
               <div key={row.status} className="flex items-center justify-between text-sm">
-                <span className="capitalize text-gray-700 dark:text-gray-300">{row.status}</span>
-                <span className="text-gray-500 dark:text-gray-400">
+                <span className="capitalize text-foreground">{row.status}</span>
+                <span className="text-muted-foreground">
                   {row.room_count.toLocaleString()} ({row.percentage.toFixed(1)}%)
                 </span>
               </div>
             ))}
             {!analytics?.rooms_by_status?.length && !isLoading && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">No data in this period.</p>
+              <p className="text-sm text-muted-foreground">No data in this period.</p>
             )}
           </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+        <div className="bg-card border border-border rounded-lg p-4">
+          <h3 className="text-sm font-medium text-foreground mb-3">
             Popular Game Types
-            <span className="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500">(standard rooms only)</span>
+            <span className="ml-2 text-xs font-normal text-muted-foreground">(standard rooms only)</span>
           </h3>
           <div className="space-y-2">
             {(analytics?.popular_game_types || []).map((row) => (
               <div key={row.game_type} className="flex items-center justify-between text-sm">
-                <span className="text-gray-700 dark:text-gray-300">{row.game_type}</span>
-                <span className="text-gray-500 dark:text-gray-400">
+                <span className="text-foreground">{row.game_type}</span>
+                <span className="text-muted-foreground">
                   {row.games_played.toLocaleString()} played · {row.accuracy_percent.toFixed(0)}% acc.
                 </span>
               </div>
             ))}
             {!analytics?.popular_game_types?.length && !isLoading && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 No standard-room game data in this period{languageId ? " (or excluded by the language filter)" : ""}.
               </p>
             )}
@@ -336,65 +336,65 @@ export default function RoomsAnalyticsPage() {
       </div>
 
       {/* Recent rooms table */}
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 overflow-hidden">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Rooms</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{recentRooms?.total || 0} rooms match the current filters</p>
+      <div className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="p-6 border-b border-border">
+          <h3 className="text-lg font-semibold text-foreground">Recent Rooms</h3>
+          <p className="text-sm text-muted-foreground mt-1">{recentRooms?.total || 0} rooms match the current filters</p>
         </div>
 
         {isLoading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-500 dark:text-gray-400">Loading rooms...</p>
+            <p className="mt-4 text-muted-foreground">Loading rooms...</p>
           </div>
         ) : recentRooms && recentRooms.items.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-800">
+              <thead className="border-b">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Host</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Language</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Participants</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Games</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Avg Score</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Type</th>
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Status</th>
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Host</th>
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Language</th>
+                  <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Participants</th>
+                  <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Games</th>
+                  <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Avg Score</th>
+                  <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Duration</th>
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Created</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-border">
                 {recentRooms.items.map((room) => (
-                  <tr key={room.room_id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    <td className="px-4 py-4 whitespace-nowrap">
+                  <tr key={room.room_id} className="hover:bg-muted/50 transition-colors">
+                    <td className="px-4 py-2.5 whitespace-nowrap">
                       <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${ROOM_TYPE_BADGE_CLASSES[room.room_type] || "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"}`}>
                         {room.room_type}
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-4 py-2.5 whitespace-nowrap">
                       <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_BADGE_CLASSES[room.status] || "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"}`}>
                         {room.status}
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <td className="px-4 py-2.5 whitespace-nowrap text-sm text-foreground">
                       <HostCell host={room.host} />
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {room.language.name || <span className="text-gray-400 dark:text-gray-500">—</span>}
+                    <td className="px-4 py-2.5 whitespace-nowrap text-sm text-foreground">
+                      {room.language.name || <span className="text-muted-foreground">—</span>}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                    <td className="px-4 py-2.5 whitespace-nowrap text-right text-sm text-foreground">
                       {room.participant_count}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                    <td className="px-4 py-2.5 whitespace-nowrap text-right text-sm text-foreground">
                       {room.game_count}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                    <td className="px-4 py-2.5 whitespace-nowrap text-right text-sm text-foreground">
                       {room.average_score.toFixed(1)}%
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                    <td className="px-4 py-2.5 whitespace-nowrap text-right text-sm text-foreground">
                       {formatDuration(room.actual_duration_seconds)}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <td className="px-4 py-2.5 whitespace-nowrap text-sm text-muted-foreground">
                       {formatDateTime(room.created_at)}
                     </td>
                   </tr>
@@ -403,14 +403,14 @@ export default function RoomsAnalyticsPage() {
             </table>
           </div>
         ) : (
-          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+          <div className="p-8 text-center text-muted-foreground">
             No rooms found matching your filters. Try adjusting the time period or filters above.
           </div>
         )}
 
         {recentRooms && recentRooms.total > 0 && (
-          <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-700">
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex items-center justify-between border-t border-border px-6 py-4">
+            <span className="text-sm text-muted-foreground">
               Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, recentRooms.total)} of {recentRooms.total} rooms
             </span>
             <div className="ml-auto">

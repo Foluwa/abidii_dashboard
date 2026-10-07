@@ -56,10 +56,10 @@ export default function SignInForm() {
         ) : (
         <div>
           <div className="mb-5 sm:mb-8">
-            <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
+            <h1 className="mb-2 font-semibold text-foreground text-title-sm sm:text-title-md">
               Admin Sign In
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Enter your admin credentials to access the dashboard
             </p>
           </div>
@@ -114,7 +114,7 @@ export default function SignInForm() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Checkbox checked={isChecked} onChange={setIsChecked} />
-                    <span className="block font-normal text-gray-700 text-theme-sm dark:text-gray-400">
+                    <span className="block font-normal text-muted-foreground text-theme-sm">
                       Keep me logged in
                     </span>
                   </div>
@@ -128,7 +128,7 @@ export default function SignInForm() {
                 <div>
                   <button
                     type="submit"
-                    className="w-full rounded-lg bg-brand-600 px-5 py-3 text-sm font-medium text-white dark:text-gray-900 transition hover:bg-brand-700 disabled:opacity-50 dark:bg-brand-500 dark:hover:bg-brand-600"
+                    className="w-full rounded-lg bg-brand-600 px-5 py-3 text-sm font-medium text-primary-foreground transition hover:bg-brand-700 disabled:opacity-50 dark:bg-brand-500 dark:hover:bg-brand-600"
                     disabled={isLoading}
                   >
                     {isLoading ? "Signing in..." : "Sign In"}

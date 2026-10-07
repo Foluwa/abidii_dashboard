@@ -71,7 +71,7 @@ export function AlertsContent({ showHeader = true }: { showHeader?: boolean }) {
         {showHeader && (
           <>
             <PageBreadCrumb pageTitle="Alert History" />
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-muted-foreground">
               View system alerts and notifications (auto-refreshes every 60 seconds)
             </p>
           </>
@@ -84,7 +84,7 @@ export function AlertsContent({ showHeader = true }: { showHeader?: boolean }) {
         </Alert>
       )}
 
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-lg border border-border bg-card p-4">
         <div className="flex flex-wrap gap-4">
           <StyledSelect
             label="Level"
@@ -131,7 +131,7 @@ export function AlertsContent({ showHeader = true }: { showHeader?: boolean }) {
                   setCategory(undefined);
                   setPage(1);
                 }}
-                className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="rounded-lg bg-muted px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
               >
                 Clear Filters
               </button>
@@ -140,55 +140,55 @@ export function AlertsContent({ showHeader = true }: { showHeader?: boolean }) {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         {isLoading ? (
           <div className="p-6">
             <div className="space-y-3">
               {Array.from({ length: 8 }, (_, idx) => (
-                <div key={idx} className="h-11 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+                <div key={idx} className="h-11 animate-pulse rounded bg-muted" />
               ))}
             </div>
           </div>
         ) : sortedItems.length === 0 ? (
-          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+          <div className="p-8 text-center text-muted-foreground">
             No alerts found
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-              <thead className="bg-gray-50 dark:bg-gray-800/70">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="border-b">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
                     Sent At
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
                     Level
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
                     Category
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
                     Delivery
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
                     Message
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
+                  <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
                     Error
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+              <tbody className="divide-y divide-border">
                 {sortedItems.map((alert: AlertHistoryItem) => (
                   <tr key={alert.id} className="align-top hover:bg-gray-50 dark:hover:bg-gray-800/60">
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-muted-foreground">
                       {formatTimestamp(alert.sent_at)}
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={getLevelBadgeStatus(alert.alert_level)} label={alert.alert_level} />
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex rounded px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-300">
+                      <span className="inline-flex rounded px-2 py-1 text-xs font-medium text-foreground bg-muted">
                         {alert.alert_category}
                       </span>
                     </td>
@@ -203,7 +203,7 @@ export function AlertsContent({ showHeader = true }: { showHeader?: boolean }) {
                         {alert.sent_successfully ? "Sent" : "Failed"}
                       </span>
                     </td>
-                    <td className="max-w-xl px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+                    <td className="max-w-xl px-4 py-3 text-sm text-foreground">
                       <div
                         className="space-y-1 break-words"
                         dangerouslySetInnerHTML={{ __html: sanitizeMessageHtml(alert.message) }}
@@ -220,9 +220,9 @@ export function AlertsContent({ showHeader = true }: { showHeader?: boolean }) {
         )}
 
         {!isLoading && total > limit && (
-          <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-800">
+          <div className="border-t border-border px-4 py-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
+              <p className="text-sm text-foreground">
                 Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} alerts
               </p>
               <div className="ml-auto">

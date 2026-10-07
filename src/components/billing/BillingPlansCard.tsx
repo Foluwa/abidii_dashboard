@@ -11,13 +11,13 @@ function PlanDetails({ plan }: { plan: BillingPlan }) {
   return (
     <div className="pt-3">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          <div className="font-medium text-gray-700 dark:text-white/80">Apple</div>
+        <div className="text-xs text-muted-foreground">
+          <div className="font-medium text-foreground">Apple</div>
           <div className="mt-0.5">Price: <span className="font-mono">{plan.apple_price_display || "—"}</span></div>
           <div className="font-mono break-all">{plan.apple_product_id || "—"}</div>
         </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          <div className="font-medium text-gray-700 dark:text-white/80">Google</div>
+        <div className="text-xs text-muted-foreground">
+          <div className="font-medium text-foreground">Google</div>
           <div className="mt-0.5">Price: <span className="font-mono">{plan.google_price_display || "—"}</span></div>
           <div className="font-mono break-all">{plan.google_product_id || "—"}</div>
           <div className="font-mono break-all">{plan.google_base_plan_id || "—"}</div>
@@ -25,7 +25,7 @@ function PlanDetails({ plan }: { plan: BillingPlan }) {
       </div>
 
       {plan.features?.length ? (
-        <ul className="mt-3 list-disc pl-5 text-xs text-gray-600 dark:text-gray-300 space-y-1">
+        <ul className="mt-3 list-disc pl-5 text-xs text-muted-foreground space-y-1">
           {plan.features.map((feature) => (
             <li key={feature}>{feature}</li>
           ))}
@@ -76,20 +76,20 @@ export default function BillingPlansCard() {
   const [expandedPlanId, setExpandedPlanId] = React.useState<string | null>(null);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-      <div className="border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-gray-800 dark:bg-gray-800/40">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card">
+      <div className="border-b border-border bg-muted/40 px-5 py-3">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-sm font-semibold text-foreground">
               Billing Plans
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Live from <span className="font-mono break-all">{plansUrl}</span>
             </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-end">
-              <label className="text-[11px] text-gray-500 dark:text-gray-400">Country</label>
+              <label className="text-[11px] text-muted-foreground">Country</label>
               <StyledSelect
                 value={selectedCountry}
                 onChange={(e) => setSelectedCountry(e.target.value)}
@@ -124,7 +124,7 @@ export default function BillingPlansCard() {
               {isError?.response?.status ? ` (HTTP ${isError.response.status})` : ""}
             </p>
             {isError?.message && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md text-center">
+              <p className="text-xs text-muted-foreground max-w-md text-center">
                 {isError.message}
               </p>
             )}
@@ -137,7 +137,7 @@ export default function BillingPlansCard() {
           </div>
         ) : plans.length === 0 ? (
           <div className="flex items-center justify-center h-[160px]">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               No billing plans returned by the API.
             </p>
           </div>
@@ -150,7 +150,7 @@ export default function BillingPlansCard() {
               return (
                 <div
                   key={plan.plan_id}
-                  className="rounded-lg border border-gray-200 bg-gray-50/50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/40"
+                  className="rounded-lg border border-border bg-muted/40 px-4 py-3"
                 >
                   <button
                     type="button"
@@ -161,7 +161,7 @@ export default function BillingPlansCard() {
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                        <div className="text-sm font-semibold text-foreground truncate">
                           {plan.name}
                         </div>
                         {plan.is_popular && (
@@ -170,8 +170,8 @@ export default function BillingPlansCard() {
                           </Badge>
                         )}
                       </div>
-                      <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                        <span className="font-medium text-gray-700 dark:text-white/80">{plan.plan_id}</span>
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground">{plan.plan_id}</span>
                         {plan.billing_period ? ` • ${plan.billing_period}` : ""}
                       </div>
                     </div>
@@ -179,30 +179,30 @@ export default function BillingPlansCard() {
                     <div className="shrink-0 flex items-center gap-2">
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Apple</div>
-                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Apple</div>
+                          <div className="text-sm font-semibold text-foreground">
                             {plan.apple_price_display || "—"}
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Google</div>
-                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Google</div>
+                          <div className="text-sm font-semibold text-foreground">
                             {plan.google_price_display || "—"}
                           </div>
                         </div>
                         {!plan.apple_price_display && !plan.google_price_display ? (
                           <div className="text-right">
-                            <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Fallback</div>
-                            <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Fallback</div>
+                            <div className="text-sm font-semibold text-foreground">
                               {plan.price_display}
                             </div>
                           </div>
                         ) : null}
                       </div>
                       <ChevronDownIcon
-                        className={`h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform ${
-                          isExpanded ? "rotate-180" : "rotate-0"
-                        }`}
+                        className={`h-4 w-4 text-muted-foreground transition-transform ${
+ isExpanded ? "rotate-180" : "rotate-0"
+ }`}
                       />
                     </div>
                   </button>

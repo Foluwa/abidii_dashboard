@@ -122,15 +122,15 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-muted/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         {showHeader && (
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-3xl font-bold text-foreground">
               Phase 2 Enforcement Observability
             </h1>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            <p className="mt-2 text-sm text-muted-foreground">
               Monitor enforcement flag states, events, and system metrics. Read-only view. (Slice 2.8 + 2.9)
             </p>
           </div>
@@ -138,7 +138,7 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
 
         {/* Enforcement Flags Section */}
         <section className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-xl font-semibold text-foreground mb-4">
             Enforcement Flags
           </h2>
           {flagsLoading && <div className="text-gray-600">Loading flags...</div>}
@@ -161,7 +161,7 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                        <h3 className="font-semibold text-foreground">
                           {flag.flag_name}
                         </h3>
                         <span
@@ -174,10 +174,10 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
                           {flag.enabled ? "ON" : "OFF"}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <p className="text-sm text-muted-foreground mb-2">
                         {flag.description}
                       </p>
-                      <div className="flex gap-4 text-xs text-gray-500 dark:text-gray-500">
+                      <div className="flex gap-4 text-xs text-muted-foreground">
                         <span>
                           <strong>Category:</strong> {flag.category}
                         </span>
@@ -187,7 +187,7 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
                       </div>
                     </div>
                   </div>
-                  <div className="mt-2 text-xs text-gray-500 dark:text-gray-500 font-mono">
+                  <div className="mt-2 text-xs text-muted-foreground font-mono">
                     {flag.flag_name}
                   </div>
                 </div>
@@ -195,7 +195,7 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
             </div>
           )}
           {flagsData && (
-            <div className="mt-4 text-xs text-gray-500 dark:text-gray-500">
+            <div className="mt-4 text-xs text-muted-foreground">
               Last updated: {new Date(flagsData.timestamp).toLocaleString()}
             </div>
           )}
@@ -203,7 +203,7 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
 
         {/* Quick Metrics Section */}
         <section className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-xl font-semibold text-foreground mb-4">
             Quick Metrics (24h)
           </h2>
           {metricsLoading && <div className="text-gray-600">Loading metrics...</div>}
@@ -214,41 +214,41 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
           )}
           {metricsData && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+              <div className="bg-card p-4 rounded-lg border border-border">
+                <div className="text-sm text-muted-foreground mb-1">
                   Publish Rejections
                 </div>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                <div className="text-3xl font-bold text-foreground">
                   {metricsData.publish_rejections_24h}
                 </div>
               </div>
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+              <div className="bg-card p-4 rounded-lg border border-border">
+                <div className="text-sm text-muted-foreground mb-1">
                   Runtime Downgrades
                 </div>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                <div className="text-3xl font-bold text-foreground">
                   {metricsData.runtime_downgrades_24h}
                 </div>
               </div>
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+              <div className="bg-card p-4 rounded-lg border border-border">
+                <div className="text-sm text-muted-foreground mb-1">
                   Available Blueprints
                 </div>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                <div className="text-3xl font-bold text-foreground">
                   {metricsData.available_blueprints}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                <div className="text-xs text-muted-foreground mt-1">
                   of {metricsData.total_blueprints} total
                 </div>
               </div>
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+              <div className="bg-card p-4 rounded-lg border border-border">
+                <div className="text-sm text-muted-foreground mb-1">
                   Coming Soon
                 </div>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                <div className="text-3xl font-bold text-foreground">
                   {metricsData.coming_soon_blueprints}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                <div className="text-xs text-muted-foreground mt-1">
                   {((metricsData.coming_soon_blueprints / metricsData.total_blueprints) * 100).toFixed(1)}%
                 </div>
               </div>
@@ -259,36 +259,36 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
         {/* Schema Version Distribution */}
         {metricsData && metricsData.schema_version_distribution.length > 0 && (
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <h2 className="text-xl font-semibold text-foreground mb-4">
               Schema Version Distribution
             </h2>
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <div className="bg-card p-4 rounded-lg border border-border">
+              <table className="min-w-full divide-y divide-border">
                 <thead>
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
                       Version
                     </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
                       Count
                     </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
                       Percentage
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-border">
                   {metricsData.schema_version_distribution.map((dist) => (
                     <tr key={dist.version}>
-                      <td className="px-4 py-2 text-sm text-gray-900 dark:text-white font-mono">
+                      <td className="px-4 py-2 text-sm text-foreground font-mono">
                         v{dist.version}
                       </td>
-                      <td className="px-4 py-2 text-sm text-gray-900 dark:text-white">
+                      <td className="px-4 py-2 text-sm text-foreground">
                         {dist.count}
                       </td>
-                      <td className="px-4 py-2 text-sm text-gray-900 dark:text-white">
+                      <td className="px-4 py-2 text-sm text-foreground">
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded h-2">
+                          <div className="flex-1 bg-muted rounded h-2">
                             <div
                               className="bg-blue-600 dark:bg-blue-500 h-2 rounded"
                               style={{ width: `${dist.percentage}%` }}
@@ -308,7 +308,7 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
         {/* Enforcement Events Section */}
         <section className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-foreground">
               Enforcement Events
             </h2>
             <div className="flex gap-2">
@@ -335,12 +335,12 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
           )}
           {eventsData && (
             <>
-              <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+              <div className="mb-4 text-sm text-muted-foreground">
                 Showing {eventsData.total_events} events in the last {eventsData.time_period_hours} hours
               </div>
               {eventsData.summaries.length === 0 ? (
-                <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-lg border border-gray-200 dark:border-gray-700 text-center">
-                  <p className="text-gray-600 dark:text-gray-400">
+                <div className="bg-muted/50 p-8 rounded-lg border border-border text-center">
+                  <p className="text-muted-foreground">
                     No enforcement events in the selected time period.
                   </p>
                 </div>
@@ -349,48 +349,48 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
                   {eventsData.summaries.map((summary, idx) => (
                     <div
                       key={idx}
-                      className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700"
+                      className="bg-card p-4 rounded-lg border border-border"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <h3 className="font-semibold text-gray-900 dark:text-white">
+                          <h3 className="font-semibold text-foreground">
                             {summary.event_type.replace(/_/g, " ").toUpperCase()}
                           </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-sm text-muted-foreground">
                             Flag: <span className="font-mono">{summary.flag_name}</span>
                           </p>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                          <div className="text-2xl font-bold text-foreground">
                             {summary.count}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-500">events</div>
+                          <div className="text-xs text-muted-foreground">events</div>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <span className="text-gray-600 dark:text-gray-400">Lessons Affected:</span>
-                          <span className="ml-2 font-semibold text-gray-900 dark:text-white">
+                          <span className="text-muted-foreground">Lessons Affected:</span>
+                          <span className="ml-2 font-semibold text-foreground">
                             {summary.lesson_count}
                           </span>
                         </div>
                         <div>
-                          <span className="text-gray-600 dark:text-gray-400">Last Occurrence:</span>
-                          <span className="ml-2 font-mono text-xs text-gray-900 dark:text-white">
+                          <span className="text-muted-foreground">Last Occurrence:</span>
+                          <span className="ml-2 font-mono text-xs text-foreground">
                             {new Date(summary.last_occurrence).toLocaleString()}
                           </span>
                         </div>
                       </div>
                       {summary.sample_lesson_keys.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                          <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                        <div className="mt-3 pt-3 border-t border-border">
+                          <div className="text-xs text-muted-foreground mb-2">
                             Sample Lessons:
                           </div>
                           <div className="flex flex-wrap gap-1">
                             {summary.sample_lesson_keys.slice(0, 5).map((key) => (
                               <span
                                 key={key}
-                                className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-xs font-mono rounded"
+                                className="px-2 py-1 bg-muted text-xs font-mono rounded"
                               >
                                 {key}
                               </span>

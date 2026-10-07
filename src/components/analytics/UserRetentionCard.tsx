@@ -40,10 +40,10 @@ function formatPercent(rate: number | null): string {
 
 function KpiSkeleton() {
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50/50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/40">
-      <div className="h-3 w-12 animate-pulse rounded bg-gray-200 dark:bg-white/10" />
-      <div className="mt-2 h-6 w-14 animate-pulse rounded bg-gray-200 dark:bg-white/10" />
-      <div className="mt-2 h-2.5 w-20 animate-pulse rounded bg-gray-200 dark:bg-white/10" />
+    <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
+      <div className="h-3 w-12 animate-pulse rounded bg-muted" />
+      <div className="mt-2 h-6 w-14 animate-pulse rounded bg-muted" />
+      <div className="mt-2 h-2.5 w-20 animate-pulse rounded bg-muted" />
     </div>
   );
 }
@@ -58,18 +58,18 @@ function RetentionKpi({
   const unavailable = stat.eligible_users === 0;
   return (
     <div
-      className="rounded-lg border border-gray-200 bg-gray-50/50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/40"
+      className="rounded-lg border border-border bg-muted/40 px-4 py-3"
       title={
         unavailable
           ? "Not enough user history to calculate this metric"
           : `${stat.retained_users} of ${stat.eligible_users} eligible users returned exactly ${label.toLowerCase()} after signing up`
       }
     >
-      <div className="text-xs text-gray-500 dark:text-gray-400">{label}</div>
-      <div className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-1 text-xl font-semibold text-foreground">
         {formatPercent(stat.rate)}
       </div>
-      <div className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
+      <div className="mt-0.5 text-[11px] text-muted-foreground">
         {unavailable
           ? "Not enough data"
           : `${stat.retained_users} of ${stat.eligible_users} eligible users`}
@@ -108,7 +108,7 @@ export default function UserRetentionCard({
       ? "text-green-600 dark:text-green-400"
       : change < 0
         ? "text-red-600 dark:text-red-400"
-        : "text-gray-500 dark:text-gray-400";
+        : "text-muted-foreground";
   const changeArrow = change > 0 ? "↑" : change < 0 ? "↓" : "→";
   const changeLabel = change > 0 ? "increase" : change < 0 ? "decrease" : "no change";
 

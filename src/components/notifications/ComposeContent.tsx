@@ -23,10 +23,10 @@ const TargetOption: React.FC<{
     type="button"
     onClick={onClick}
     className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-      active
-        ? 'bg-brand-500 text-white dark:text-gray-900 shadow-sm'
-        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-    }`}
+ active
+ ? 'bg-brand-500 text-primary-foreground shadow-sm'
+ : 'bg-gray-100 text-muted-foreground hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600'
+ }`}
   >
     <span>{icon}</span>
     <span>{label}</span>
@@ -38,10 +38,10 @@ const SectionCard: React.FC<{
   title: string;
   children: React.ReactNode;
 }> = ({ icon, title, children }) => (
-  <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800/50">
+  <div className="rounded-xl border border-border bg-white p-5 dark:bg-gray-800/50">
     <div className="mb-4 flex items-center gap-2">
       <span className="text-lg">{icon}</span>
-      <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
         {title}
       </h3>
     </div>
@@ -167,14 +167,14 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
       <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-3">
         {/* Compose Column */}
         <div className="space-y-6 lg:col-span-2">
-          <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="rounded-xl border border-border bg-card p-6">
+            <h2 className="mb-6 text-lg font-semibold text-foreground">
               Compose Notification
             </h2>
 
             {/* Target Pills */}
             <div className="mb-6">
-              <label className="mb-3 block text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <label className="mb-3 block text-sm font-medium text-muted-foreground uppercase tracking-wider">
                 Audience
               </label>
               <div className="flex flex-wrap gap-2">
@@ -208,7 +208,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                   onChange={(e) => setTitle(e.target.value)}
                   maxLength={100}
                   placeholder="Notification title"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
                 />
                 <p className="mt-1 text-right text-xs text-gray-400">{title.length}/100</p>
               </div>
@@ -219,7 +219,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                   maxLength={200}
                   rows={3}
                   placeholder="Notification body text"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
                 />
                 <p className="mt-1 text-right text-xs text-gray-400">{body.length}/200</p>
               </div>
@@ -229,7 +229,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                   value={dataPayload}
                   onChange={(e) => setDataPayload(e.target.value)}
                   placeholder='{"route": "/lesson/abc"}'
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-xs text-gray-900 placeholder:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground"
                 />
                 <p className="mt-1 text-xs text-gray-400">
                   Optional JSON deep link payload
@@ -241,7 +241,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
             <SectionCard icon="🎯" title="Targeting">
               {targetMode === 'selected' && (
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label className="mb-1 block text-sm font-medium text-foreground">
                     Select Users ({selectedUsers.length} chosen)
                   </label>
 
@@ -274,10 +274,10 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                     value={userSearchInput}
                     onChange={(e) => setUserSearchInput(e.target.value)}
                     placeholder="Search by name or email..."
-                    className="mb-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                    className="mb-2 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
                   />
 
-                  <div className="h-48 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-600">
+                  <div className="h-48 overflow-y-auto rounded-lg border border-input">
                     {usersLoading ? (
                       <p className="p-3 text-sm text-gray-400">Searching...</p>
                     ) : userList.length === 0 ? (
@@ -291,7 +291,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                         return (
                           <label
                             key={user.id}
-                            className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700"
+                            className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent"
                           >
                             <input
                               type="checkbox"
@@ -327,7 +327,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label className="mb-1 block text-sm font-medium text-foreground">
                       Language Code
                     </label>
                     <input
@@ -335,7 +335,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                       value={languageCode}
                       onChange={(e) => setLanguageCode(e.target.value)}
                       placeholder="yor, eng, etc."
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
                     />
                   </div>
                 </div>
@@ -348,7 +348,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                 type="button"
                 onClick={() => doSend(false)}
                 disabled={sending}
-                className="rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                className="rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
               >
                 {sending ? 'Sending...' : 'Send Notification'}
               </button>
@@ -356,7 +356,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                 type="button"
                 onClick={() => doSend(true)}
                 disabled={sending}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors"
+                className="rounded-lg border border-input bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
               >
                 🧪 Test Send
               </button>
@@ -384,8 +384,8 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
 
         {/* Preview Column */}
         <div className="space-y-6">
-          <div className="sticky top-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+          <div className="sticky top-6 rounded-xl border border-border bg-card p-5">
+            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               <span>📱</span> Mobile Preview
             </h3>
 
@@ -394,7 +394,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
               {/* Notch */}
               <div className="mx-auto h-6 w-28 rounded-b-2xl bg-gray-900" />
               {/* Screen */}
-              <div className="rounded-2xl border-2 border-gray-900 bg-gray-100 p-3 dark:bg-gray-900">
+              <div className="rounded-2xl border-2 border-gray-900 bg-muted p-3">
                 {/* Status bar */}
                 <div className="mb-4 flex items-center justify-between text-[10px] text-gray-500">
                   <span>9:41</span>
@@ -402,29 +402,29 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                 </div>
 
                 {/* Notification card */}
-                <div className="rounded-xl bg-white p-3 shadow-sm dark:bg-gray-800">
+                <div className="rounded-xl bg-card p-3 shadow-sm">
                   <div className="mb-1 flex items-start gap-2">
-                    <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-md bg-brand-500 text-[10px] text-white dark:text-gray-900">
+                    <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-md bg-brand-500 text-[10px] text-primary-foreground">
                       A
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-gray-900 dark:text-white">
+                        <span className="text-[10px] font-semibold text-foreground">
                           Abidii
                         </span>
                         <span className="text-[10px] text-gray-400">now</span>
                       </div>
-                      <p className="mt-0.5 text-[11px] font-semibold text-gray-900 dark:text-white">
+                      <p className="mt-0.5 text-[11px] font-semibold text-foreground">
                         {title || 'Notification Title'}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-gray-600 dark:text-gray-400">
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">
                         {body || 'Body text appears here...'}
                       </p>
                     </div>
                   </div>
                   {dataPayload !== '{}' && dataPayload.trim() && (
-                    <div className="mt-1 rounded-md bg-gray-50 p-1 dark:bg-gray-700">
-                      <code className="text-[9px] text-gray-500 dark:text-gray-400">
+                    <div className="mt-1 rounded-md bg-muted p-1">
+                      <code className="text-[9px] text-muted-foreground">
                         {dataPayload.length > 60
                           ? dataPayload.slice(0, 60) + '...'
                           : dataPayload}

@@ -25,7 +25,7 @@ import { createTimePhraseJob, type AdminJob } from "@/lib/adminJobsApi";
 import { useAdminJob } from "@/hooks/useAdminJob";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Pagination from "@/components/tables/Pagination";
-import { FiClock, FiTrash2, FiEdit2, FiVolume2, FiChevronDown, FiChevronUp, FiCheckSquare, FiSquare, FiBarChart2, FiCheckCircle, FiGitMerge, FiGlobe } from "react-icons/fi";
+import { ChartColumn, ChevronDown, ChevronUp, CircleCheck, Clock, GitMerge, Globe, Pencil, Square, SquareCheck, Trash2, Volume2 } from "lucide-react";
 
 interface TimePhrase {
   id: string;
@@ -227,8 +227,8 @@ function renderAlignmentJobBadge(phrase: TimePhrase) {
     processing: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
     completed: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
     failed: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200",
-    cancelled: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-    superseded: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    cancelled: "bg-muted text-foreground",
+    superseded: "bg-muted text-foreground",
   };
 
   const label = phrase.alignment_job_status.charAt(0).toUpperCase() + phrase.alignment_job_status.slice(1);
@@ -1238,10 +1238,10 @@ export default function TimePhrasesPage() {
       />
 
       <ContentStatsGrid cols={4}>
-        <ContentStatsCard label="Total" value={stats.total} icon={FiBarChart2} />
-        <ContentStatsCard label="Ready" value={stats.ready} icon={FiCheckCircle} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
-        <ContentStatsCard label="Audio Generated" value={stats.withAudio} icon={FiVolume2} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
-        <ContentStatsCard label="Aligned" value={stats.aligned} icon={FiGitMerge} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
+        <ContentStatsCard label="Total" value={stats.total} icon={ChartColumn} />
+        <ContentStatsCard label="Ready" value={stats.ready} icon={CircleCheck} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+        <ContentStatsCard label="Audio Generated" value={stats.withAudio} icon={Volume2} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
+        <ContentStatsCard label="Aligned" value={stats.aligned} icon={GitMerge} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
       </ContentStatsGrid>
 
       {/* Bulk Import from Google Sheets */}
@@ -1275,9 +1275,9 @@ export default function TimePhrasesPage() {
           {/* Primary Filters Row */}
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-[200px]">
-              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-2 block text-xs font-medium text-foreground">
                 <div className="flex items-center gap-1.5">
-                  <FiGlobe className="h-3.5 w-3.5" />
+                  <Globe className="h-3.5 w-3.5" />
                   Language
                 </div>
               </label>
@@ -1299,7 +1299,7 @@ export default function TimePhrasesPage() {
             </div>
 
             <div className="flex-1 min-w-[240px]">
-              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-2 block text-xs font-medium text-foreground">
                 Search
               </label>
               <input
@@ -1307,12 +1307,12 @@ export default function TimePhrasesPage() {
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Search phrase or translation..."
-                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+                className="block w-full rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               />
             </div>
 
             <div className="min-w-[140px]">
-              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-2 block text-xs font-medium text-foreground">
                 Per Page
               </label>
               <StyledSelect
@@ -1333,7 +1333,7 @@ export default function TimePhrasesPage() {
 
           {/* Advanced Filters Panel */}
           {showAdvancedFilters && (
-            <div className="mt-5 border-t border-gray-100 pt-5 dark:border-gray-800">
+            <div className="mt-5 border-t border-border pt-5">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div>
                   <StyledSelect
@@ -1394,7 +1394,7 @@ export default function TimePhrasesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Starts With
                   </label>
                   <input
@@ -1402,12 +1402,12 @@ export default function TimePhrasesPage() {
                     value={startsWithFilter}
                     onChange={(e) => { setStartsWithFilter(e.target.value); setPage(1); }}
                     placeholder="e.g., Àárọ̀"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-900 dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Ends With
                   </label>
                   <input
@@ -1415,12 +1415,12 @@ export default function TimePhrasesPage() {
                     value={endsWithFilter}
                     onChange={(e) => { setEndsWithFilter(e.target.value); setPage(1); }}
                     placeholder="e.g., ọ̀sán"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-900 dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Contains
                   </label>
                   <input
@@ -1428,7 +1428,7 @@ export default function TimePhrasesPage() {
                     value={containsFilter}
                     onChange={(e) => { setContainsFilter(e.target.value); setPage(1); }}
                     placeholder="Search within phrase..."
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-900 dark:text-white"
                   />
                 </div>
 
@@ -1470,23 +1470,23 @@ export default function TimePhrasesPage() {
 
       {/* Time Phrase Jobs Accordion */}
       {selectedLanguage && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
           <button
             type="button"
             onClick={() => setShowJobsAccordion(!showJobsAccordion)}
             className="flex w-full items-center justify-between px-5 py-3 text-left"
           >
-            <span className="text-sm font-semibold text-gray-900 dark:text-white">▶ Time Phrase Jobs</span>
-            {showJobsAccordion ? <FiChevronUp className="h-4 w-4 text-gray-500" /> : <FiChevronDown className="h-4 w-4 text-gray-500" />}
+            <span className="text-sm font-semibold text-foreground">▶ Time Phrase Jobs</span>
+            {showJobsAccordion ? <ChevronUp className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
           </button>
           {showJobsAccordion && (
-            <div className="border-t border-gray-100 px-5 py-4 dark:border-gray-800">
+            <div className="border-t border-border px-5 py-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-200">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">
                     Time Phrase Jobs
                   </h2>
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Preview readiness, queue missing audio, or queue alignment jobs through the admin job system.
                   </p>
                 </div>
@@ -1501,7 +1501,7 @@ export default function TimePhrasesPage() {
                         type="button"
                         onClick={() => void queueTimePhraseAdminJob(jobType, true)}
                         disabled={timePhraseJobLoading}
-                        className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200"
+                        className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground disabled:opacity-60"
                       >
                         {label} Preview
                       </button>
@@ -1510,7 +1510,7 @@ export default function TimePhrasesPage() {
                           type="button"
                           onClick={() => setTimePhraseApplyConfirm(jobType)}
                           disabled={timePhraseJobLoading}
-                          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white dark:text-gray-900 disabled:opacity-60"
+                          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
                         >
                           Apply
                         </button>
@@ -1521,7 +1521,7 @@ export default function TimePhrasesPage() {
               </div>
 
               {currentTimePhraseAdminJob ? (
-                <div className="mt-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                <div className="mt-4 rounded-lg bg-muted/50 p-3 text-sm text-foreground">
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="font-mono text-xs">{currentTimePhraseAdminJob.id.slice(0, 8)}</span>
                     <span className="font-medium">{currentTimePhraseAdminJob.status}</span>
@@ -1537,9 +1537,9 @@ export default function TimePhrasesPage() {
                         ["Skipped", currentTimePhraseAdminJob.result.skipped ?? 0],
                         ["Failed", currentTimePhraseAdminJob.result.failed ?? 0],
                       ] as Array<[string, unknown]>).map(([label, value]) => (
-                        <div key={label} className="rounded-lg border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-950">
-                          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</div>
-                          <div className="mt-1 font-semibold text-gray-900 dark:text-white">{String(value)}</div>
+                        <div key={label} className="rounded-lg border border-border bg-background p-2">
+                          <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+                          <div className="mt-1 font-semibold text-foreground">{String(value)}</div>
                         </div>
                       ))}
                     </div>
@@ -1562,7 +1562,7 @@ export default function TimePhrasesPage() {
             disabled: isBulkRegenerating,
             loading: isBulkRegenerating,
             variant: 'primary',
-            icon: <FiVolume2 className="h-4 w-4" />,
+            icon: <Volume2 className="h-4 w-4" />,
           },
         ]}
       />
@@ -1571,7 +1571,7 @@ export default function TimePhrasesPage() {
       {selectedLanguage && (
         <>
           {loading ? (
-            <div className="flex items-center justify-center h-64 bg-white dark:bg-gray-800 rounded-lg shadow">
+            <div className="flex items-center justify-center h-64 bg-card rounded-lg shadow">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
           ) : timePhrases.length === 0 ? (
@@ -1582,74 +1582,74 @@ export default function TimePhrasesPage() {
             />
           ) : (
             <div className="space-y-4">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+              <div className="bg-card rounded-lg shadow overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-900/50">
+                    <thead className="border-b">
                       <tr>
-                        <th className="px-4 py-3 text-left">
+                        <th className="px-4 py-2.5 text-left">
                           <button onClick={handleSelectAll} className="text-gray-500 hover:text-gray-700">
                             {selectedPhrases.length === timePhrases.length ? 
-                              <FiCheckSquare className="w-5 h-5" /> : 
-                              <FiSquare className="w-5 h-5" />
+                              <SquareCheck className="w-5 h-5" /> : 
+                              <Square className="w-5 h-5" />
                             }
                           </button>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                           Time Phrase
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                           Translation
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                           Audio
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                           Status
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                           Alignment
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="bg-card divide-y divide-border">
                       {timePhrases.map((phrase) => (
-                        <tr key={phrase.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                          <td className="px-4 py-4">
+                        <tr key={phrase.id} className="hover:bg-accent">
+                          <td className="px-4 py-2.5">
                             <button 
                               onClick={() => handleSelectPhrase(phrase.id)}
                               className="text-gray-500 hover:text-gray-700"
                             >
                               {selectedPhrases.includes(phrase.id) ? 
-                                <FiCheckSquare className="w-5 h-5" /> : 
-                                <FiSquare className="w-5 h-5" />
+                                <SquareCheck className="w-5 h-5" /> : 
+                                <Square className="w-5 h-5" />
                               }
                             </button>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-2.5">
                             <div className="flex items-center">
-                              <FiClock className="mr-2 text-blue-500" />
+                              <Clock className="mr-2 text-blue-500" />
                               <div>
-                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                <div className="text-sm font-medium text-foreground">
                                   {phrase.phrase}
                                 </div>
                                 {phrase.romanization && (
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  <div className="text-xs text-muted-foreground">
                                     {phrase.romanization}
                                   </div>
                                 )}
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-gray-700 dark:text-gray-300">
+                          <td className="px-3 py-2.5">
+                            <div className="text-sm text-foreground">
                               {phrase.translation}
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-2.5">
                             <div className="flex items-center gap-3">
                               <InlineAudioPlayer src={phrase.audio_url} />
                               {phrase.audio_url ? (
@@ -1659,7 +1659,7 @@ export default function TimePhrasesPage() {
                                   title="Regenerate Audio"
                                   aria-label="Regenerate Audio"
                                 >
-                                  <FiVolume2 className="w-4 h-4" />
+                                  <Volume2 className="w-4 h-4" />
                                 </button>
                               ) : (
                                 <button
@@ -1667,13 +1667,13 @@ export default function TimePhrasesPage() {
                                   className="flex items-center gap-1 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
                                   title="Generate Audio"
                                 >
-                                  <FiVolume2 className="w-4 h-4" />
+                                  <Volume2 className="w-4 h-4" />
                                   <span className="text-xs">Generate Audio</span>
                                 </button>
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-2.5 whitespace-nowrap">
                             <div className="flex flex-col gap-1">
                               <span
                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -1690,29 +1690,29 @@ export default function TimePhrasesPage() {
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-2.5 whitespace-nowrap">
                             <div className="flex flex-col items-start gap-1">
                               {renderAlignmentBadge(phrase)}
                               {renderAlignmentJobBadge(phrase)}
                               {!phrase.alignment_status && !phrase.alignment_job_status && (
-                                <span className="text-sm text-gray-400 dark:text-gray-600">-</span>
+                                <span className="text-sm text-muted-foreground">-</span>
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <td className="px-3 py-2.5 whitespace-nowrap text-right text-sm font-medium">
                             <button
                               onClick={() => void openEditModal(phrase)}
                               className="text-blue-600 hover:text-blue-800 mr-3"
                               title="Edit and align"
                             >
-                              <FiEdit2 className="w-4 h-4" />
+                              <Pencil className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => setDeleteConfirm({ id: phrase.id, phrase: phrase.phrase })}
                               className="text-red-600 hover:text-red-800"
                               title="Delete"
                             >
-                              <FiTrash2 className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </td>
                         </tr>
@@ -1724,8 +1724,8 @@ export default function TimePhrasesPage() {
 
             </div>
           )}
-          <div className="mt-4 flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <div className="text-sm text-gray-700 dark:text-gray-300">
+          <div className="mt-4 flex items-center justify-between px-4 py-3 bg-card border border-border rounded-lg">
+            <div className="text-sm text-foreground">
               Showing {total === 0 ? 0 : (page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} phrases
             </div>
             <div className="ml-auto">
@@ -1742,7 +1742,7 @@ export default function TimePhrasesPage() {
           onClose={closeModal}
           className="max-w-6xl"
         >
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-xl font-bold text-foreground mb-4">
             {editingPhrase ? "Edit Time Phrase" : "Add Time Phrase"}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -1759,7 +1759,7 @@ export default function TimePhrasesPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Yoruba Phrase *
               </label>
               <input
@@ -1768,12 +1768,12 @@ export default function TimePhrasesPage() {
                 onChange={(e) => setFormData({ ...formData, phrase: e.target.value })}
                 required
                 placeholder="e.g., Àárọ̀ mẹ́ta"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-input rounded-lg dark:bg-gray-800 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Translation *
               </label>
               <input
@@ -1782,12 +1782,12 @@ export default function TimePhrasesPage() {
                 onChange={(e) => setFormData({ ...formData, translation: e.target.value })}
                 required
                 placeholder="e.g., 3 o'clock in the morning"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-input rounded-lg dark:bg-gray-800 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Romanization
               </label>
               <input
@@ -1795,12 +1795,12 @@ export default function TimePhrasesPage() {
                 value={formData.romanization}
                 onChange={(e) => setFormData({ ...formData, romanization: e.target.value })}
                 placeholder="e.g., aarọ meta"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-input rounded-lg dark:bg-gray-800 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Usage Context
               </label>
               <textarea
@@ -1808,7 +1808,7 @@ export default function TimePhrasesPage() {
                 onChange={(e) => setFormData({ ...formData, usage_context: e.target.value })}
                 rows={2}
                 placeholder="When and how this time phrase is typically used..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-input rounded-lg dark:bg-gray-800 dark:text-white"
               />
             </div>
 
@@ -1820,17 +1820,17 @@ export default function TimePhrasesPage() {
                 onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
                 className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              <label htmlFor="is_published" className="text-sm text-gray-700 dark:text-gray-300">
+              <label htmlFor="is_published" className="text-sm text-foreground">
                 Published
               </label>
             </div>
 
             {editingPhrase && (
-              <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/30 p-4 space-y-4">
+              <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Time Phrase Alignment</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    <h3 className="text-sm font-semibold text-foreground">Time Phrase Alignment</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
                       Review the phrase timing first, then refine word timings for karaoke playback.
                     </p>
                   </div>
@@ -1839,7 +1839,7 @@ export default function TimePhrasesPage() {
 
                 {(alignmentError || alignmentLoading) && (
                   alignmentLoading ? (
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Loading alignment...</div>
+                    <div className="text-sm text-muted-foreground">Loading alignment...</div>
                   ) : (
                     <Alert variant="error" title="Error" message={alignmentError} />
                   )
@@ -1849,7 +1849,7 @@ export default function TimePhrasesPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     {renderAlignmentJobBadge(editingPhrase)}
                     {editingPhrase.alignment_job_updated_at && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="text-xs text-muted-foreground">
                         Updated {new Date(editingPhrase.alignment_job_updated_at).toLocaleString()}
                       </div>
                     )}
@@ -1865,7 +1865,7 @@ export default function TimePhrasesPage() {
                 )}
 
                 {alignmentRecord && ((alignmentRecord.provider_used && alignmentRecord.provider_used.trim()) || (alignmentRecord.engine_used && alignmentRecord.engine_used.trim()) || alignmentRecord.confidence !== null) && (
-                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                  <div className="text-xs text-muted-foreground">
                     {[
                       [alignmentRecord.provider_used?.trim(), alignmentRecord.engine_used?.trim()].filter(Boolean).join(" / "),
                       alignmentRecord.confidence != null ? `confidence ${alignmentRecord.confidence.toFixed(2)}` : "",
@@ -1882,16 +1882,16 @@ export default function TimePhrasesPage() {
                 )}
 
                 {formData.audio_url ? (
-                  <AudioWaveform src={formData.audio_url} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3" />
+                  <AudioWaveform src={formData.audio_url} className="rounded-lg border border-border bg-card p-3" />
                 ) : (
-                  <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="rounded-lg border border-dashed border-input p-4 text-sm text-muted-foreground">
                     Regenerate audio first to preview the waveform and save timings.
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Segment Start (ms)
                     </label>
                     <input
@@ -1903,12 +1903,12 @@ export default function TimePhrasesPage() {
                         text: formData.phrase,
                         start_ms: Number(e.target.value || 0),
                       }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Segment End (ms)
                     </label>
                     <input
@@ -1920,27 +1920,27 @@ export default function TimePhrasesPage() {
                         text: formData.phrase,
                         end_ms: Number(e.target.value || 0),
                       }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                     />
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2">
-                  <div className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+                <div className="rounded-lg bg-card border border-border px-3 py-2">
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
                     Transcript
                   </div>
-                  <div className="text-sm text-gray-900 dark:text-white">{formData.phrase || "Phrase text will appear here"}</div>
+                  <div className="text-sm text-foreground">{formData.phrase || "Phrase text will appear here"}</div>
                 </div>
 
-                <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-3">
+                <div className="rounded-lg border border-border bg-card p-4 space-y-3">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">Optional Word Timings</div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      <div className="text-sm font-medium text-foreground">Optional Word Timings</div>
+                      <div className="text-xs text-muted-foreground mt-1">
                         Use this second pass when you want karaoke-grade highlighting.
                       </div>
                     </div>
-                    <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <label className="inline-flex items-center gap-2 text-sm text-foreground">
                       <input
                         type="checkbox"
                         checked={wordTimingsEnabled}
@@ -1958,7 +1958,7 @@ export default function TimePhrasesPage() {
                   </div>
 
                   {(wordTimingsEnabled || alignmentRecord?.word_timing_reliable || alignmentWords.length > 0) && (
-                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <div className="text-xs text-muted-foreground">
                       {wordTimingsEnabled
                         ? alignmentConfidence >= DEFAULT_WORD_ALIGNMENT_CONFIDENCE
                           ? "Saving now will mark these word timings reliable."
@@ -1973,7 +1973,7 @@ export default function TimePhrasesPage() {
                     <>
                       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          <label className="block text-sm font-medium text-foreground mb-1">
                             Word Timing Confidence
                           </label>
                           <div className="flex items-center gap-3">
@@ -1986,7 +1986,7 @@ export default function TimePhrasesPage() {
                               onChange={(e) => setAlignmentConfidence(Number(e.target.value))}
                               className="w-full"
                             />
-                            <span className="min-w-12 text-sm font-medium text-gray-900 dark:text-white">
+                            <span className="min-w-12 text-sm font-medium text-foreground">
                               {alignmentConfidence.toFixed(2)}
                             </span>
                           </div>
@@ -2007,61 +2007,61 @@ export default function TimePhrasesPage() {
                         <button type="button" onClick={() => void syncWordsFromTranscript()} className="px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
                           Split From Transcript
                         </button>
-                        <button type="button" onClick={() => void addAlignmentWord()} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <button type="button" onClick={() => void addAlignmentWord()} className="px-3 py-2 rounded-lg border border-input text-foreground hover:bg-accent">
                           Add Word
                         </button>
-                        <button type="button" onClick={() => void redistributeAlignmentWords()} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <button type="button" onClick={() => void redistributeAlignmentWords()} className="px-3 py-2 rounded-lg border border-input text-foreground hover:bg-accent">
                           Redistribute Evenly
                         </button>
                       </div>
 
-                      <div className="text-xs text-gray-600 dark:text-gray-400">
+                      <div className="text-xs text-muted-foreground">
                         Use the waveform as the anchor, then nudge, expand, snap edges, or preview one word clip at a time.
                       </div>
 
                       <div className="space-y-3">
                         {alignmentWords.length === 0 ? (
-                          <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="rounded-lg border border-dashed border-input p-3 text-sm text-muted-foreground">
                             No word timings yet. Use “Split From Transcript” to seed them from the time phrase.
                           </div>
                         ) : alignmentWords.map((word, index) => (
-                          <div key={`${index}-${word.word}`} className="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 dark:border-gray-700 p-3 xl:grid-cols-[minmax(0,2fr)_120px_120px_minmax(0,320px)_auto] xl:items-end">
+                          <div key={`${index}-${word.word}`} className="grid grid-cols-1 gap-3 rounded-lg border border-border p-3 xl:grid-cols-[minmax(0,2fr)_120px_120px_minmax(0,320px)_auto] xl:items-end">
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Word {index + 1}</label>
+                              <label className="block text-sm font-medium text-foreground mb-1">Word {index + 1}</label>
                               <input
                                 type="text"
                                 value={word.word}
                                 onChange={(e) => updateAlignmentWord(index, "word", e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start (ms)</label>
+                              <label className="block text-sm font-medium text-foreground mb-1">Start (ms)</label>
                               <input
                                 type="number"
                                 min={0}
                                 value={word.start_ms}
                                 onChange={(e) => updateAlignmentWord(index, "start_ms", Number(e.target.value || 0))}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End (ms)</label>
+                              <label className="block text-sm font-medium text-foreground mb-1">End (ms)</label>
                               <input
                                 type="number"
                                 min={0}
                                 value={word.end_ms}
                                 onChange={(e) => updateAlignmentWord(index, "end_ms", Number(e.target.value || 0))}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Snap Helpers</label>
+                              <label className="block text-sm font-medium text-foreground mb-1">Snap Helpers</label>
                               <div className="flex flex-wrap gap-2">
-                                <button type="button" onClick={() => shiftAlignmentWord(index, -wordSnapStepMs)} className="px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">-{wordSnapStepMs} ms</button>
-                                <button type="button" onClick={() => shiftAlignmentWord(index, wordSnapStepMs)} className="px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Shift +</button>
-                                <button type="button" onClick={() => expandAlignmentWord(index, wordSnapStepMs, "left")} className="px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Expand Left</button>
-                                <button type="button" onClick={() => expandAlignmentWord(index, wordSnapStepMs, "right")} className="px-2.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Expand Right</button>
+                                <button type="button" onClick={() => shiftAlignmentWord(index, -wordSnapStepMs)} className="px-2.5 py-2 rounded-lg border border-input text-xs text-foreground hover:bg-accent">-{wordSnapStepMs} ms</button>
+                                <button type="button" onClick={() => shiftAlignmentWord(index, wordSnapStepMs)} className="px-2.5 py-2 rounded-lg border border-input text-xs text-foreground hover:bg-accent">Shift +</button>
+                                <button type="button" onClick={() => expandAlignmentWord(index, wordSnapStepMs, "left")} className="px-2.5 py-2 rounded-lg border border-input text-xs text-foreground hover:bg-accent">Expand Left</button>
+                                <button type="button" onClick={() => expandAlignmentWord(index, wordSnapStepMs, "right")} className="px-2.5 py-2 rounded-lg border border-input text-xs text-foreground hover:bg-accent">Expand Right</button>
                                 <button type="button" onClick={() => snapAlignmentWordEdge(index, "start")} className="px-2.5 py-2 rounded-lg border border-indigo-300 text-xs text-indigo-700 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-900/20">Snap Start</button>
                                 <button type="button" onClick={() => snapAlignmentWordEdge(index, "end")} className="px-2.5 py-2 rounded-lg border border-indigo-300 text-xs text-indigo-700 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-900/20">Snap End</button>
                                 <button type="button" onClick={() => snapAlignmentWordToBounds(index)} className="px-2.5 py-2 rounded-lg border border-indigo-300 text-xs text-indigo-700 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-900/20">Snap To Bounds</button>
@@ -2101,7 +2101,7 @@ export default function TimePhrasesPage() {
                     Approve
                   </button>
                   {alignmentRecord && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-xs text-muted-foreground">
                       Version {alignmentRecord.version} · Updated {new Date(alignmentRecord.updated_at).toLocaleString()}
                     </div>
                   )}
@@ -2119,7 +2119,7 @@ export default function TimePhrasesPage() {
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                className="px-4 py-2 border border-input rounded-lg hover:bg-accent text-foreground"
               >
                 Cancel
               </button>

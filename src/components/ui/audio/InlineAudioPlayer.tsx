@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { FiPlay, FiPause } from 'react-icons/fi';
+import { Pause as PauseIcon, Play as PlayIcon } from "lucide-react";
 
 interface InlineAudioPlayerProps {
   src?: string | null;
@@ -38,7 +38,7 @@ export default function InlineAudioPlayer({ src, size = 'sm' }: InlineAudioPlaye
   }, []);
 
   if (!src) {
-    return <span className="text-xs text-gray-400 dark:text-gray-500">—</span>;
+    return <span className="text-xs text-muted-foreground">—</span>;
   }
 
   const btnSize = size === 'sm' ? 'h-7 w-7' : 'h-8 w-8';
@@ -49,14 +49,14 @@ export default function InlineAudioPlayer({ src, size = 'sm' }: InlineAudioPlaye
       <button
         type="button"
         onClick={toggle}
-        className={`inline-flex ${btnSize} items-center justify-center rounded-full bg-brand-600 text-white dark:text-gray-900 hover:bg-brand-700 transition-colors`}
+        className={`inline-flex ${btnSize} items-center justify-center rounded-full bg-brand-600 text-primary-foreground hover:bg-brand-700 transition-colors`}
         title={playing ? 'Pause' : 'Play'}
         aria-label={playing ? 'Pause' : 'Play'}
       >
         {playing ? (
-          <FiPause className={iconSize} />
+          <PauseIcon className={iconSize} />
         ) : (
-          <FiPlay className={`${iconSize} ml-0.5`} />
+          <PlayIcon className={`${iconSize} ml-0.5`} />
         )}
       </button>
       {/* key={src} forces a remount when the URL changes (e.g. after a

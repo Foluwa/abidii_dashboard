@@ -102,88 +102,88 @@ export function IdempotencyContent({ showHeader = true }: { showHeader?: boolean
       </div>
 
       {loading ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-lg border border-border bg-card p-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {Array.from({ length: 3 }, (_, idx) => (
-              <div key={idx} className="h-28 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+              <div key={idx} className="h-28 animate-pulse rounded bg-muted" />
             ))}
           </div>
         </div>
       ) : !stats ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
           No idempotency metrics available for the selected range.
         </div>
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+            <div className="rounded-lg bg-card p-6 shadow">
               <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Keys</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Total Keys</h3>
               </div>
-              <p className="text-3xl font-bold text-gray-800 dark:text-white">{stats.total_keys.toLocaleString()}</p>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Unique request keys</p>
+              <p className="text-3xl font-bold text-foreground">{stats.total_keys.toLocaleString()}</p>
+              <p className="mt-1 text-sm text-muted-foreground">Unique request keys</p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+            <div className="rounded-lg bg-card p-6 shadow">
               <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Keys</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Active Keys</h3>
               </div>
               <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                 {stats.active_keys.toLocaleString()}
               </p>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Currently cached</p>
+              <p className="mt-1 text-sm text-muted-foreground">Currently cached</p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+            <div className="rounded-lg bg-card p-6 shadow">
               <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Duplicate Attempts</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Duplicate Attempts</h3>
               </div>
               <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
                 {stats.recent_duplicate_attempts.toLocaleString()}
               </p>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Prevented duplicates</p>
+              <p className="mt-1 text-sm text-muted-foreground">Prevented duplicates</p>
             </div>
           </div>
 
-          <div className="rounded-lg bg-white shadow dark:bg-gray-800">
-            <div className="border-b border-gray-200 p-6 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Idempotency Performance</h3>
+          <div className="rounded-lg bg-card shadow">
+            <div className="border-b border-border p-6">
+              <h3 className="text-lg font-semibold text-foreground">Idempotency Performance</h3>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
-                  <h4 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Hit Rate</h4>
+                  <h4 className="mb-3 text-sm font-medium text-foreground">Hit Rate</h4>
                   <div className="flex items-center gap-4">
-                    <div className="h-4 flex-1 rounded-full bg-gray-200 dark:bg-gray-700">
+                    <div className="h-4 flex-1 rounded-full bg-muted">
                       <div
                         className="h-4 rounded-full bg-green-600 transition-all"
                         style={{ width: `${stats.hit_rate}%` }}
                       />
                     </div>
-                    <span className="text-lg font-semibold text-gray-800 dark:text-white">
+                    <span className="text-lg font-semibold text-foreground">
                       {stats.hit_rate.toFixed(1)}%
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Requests served from cache</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Requests served from cache</p>
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Average TTL</h4>
+                  <h4 className="mb-3 text-sm font-medium text-foreground">Average TTL</h4>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Seconds:</span>
-                    <span className="text-sm font-medium text-gray-800 dark:text-white">
+                    <span className="text-sm text-muted-foreground">Seconds:</span>
+                    <span className="text-sm font-medium text-foreground">
                       {stats.avg_ttl_seconds.toFixed(0)}s
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Minutes:</span>
-                    <span className="text-sm font-medium text-gray-800 dark:text-white">
+                    <span className="text-sm text-muted-foreground">Minutes:</span>
+                    <span className="text-sm font-medium text-foreground">
                       {(stats.avg_ttl_seconds / 60).toFixed(1)}m
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Expired Keys:</span>
-                    <span className="text-sm font-medium text-gray-800 dark:text-white">
+                    <span className="text-sm text-muted-foreground">Expired Keys:</span>
+                    <span className="text-sm font-medium text-foreground">
                       {stats.expired_keys.toLocaleString()}
                     </span>
                   </div>

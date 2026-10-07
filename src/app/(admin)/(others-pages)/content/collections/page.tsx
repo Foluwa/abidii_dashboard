@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { FiVolume2, FiLock } from "react-icons/fi";
 import { apiClient } from "@/lib/api";
 import FormModal from "@/components/admin/FormModal";
 import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
@@ -11,6 +10,7 @@ import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { StickyBulkActionBar } from "@/components/admin/layout";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { useToast } from "@/contexts/ToastContext";
+import { Lock, Volume2 } from "lucide-react";
 
 type Language = { id: string; iso_639_3: string; name: string; native_name?: string };
 type Collection = {
@@ -476,7 +476,7 @@ export default function CollectionsPage() {
     <div className="space-y-5">
       {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
 
-      <div className="grid gap-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 md:grid-cols-3">
+      <div className="grid gap-4 rounded-xl border border-border bg-card p-4 md:grid-cols-3">
         <StyledSelect
           label="Collection"
           value={selected}
@@ -502,7 +502,7 @@ export default function CollectionsPage() {
 
       {selectedCollection && (
         <div className="flex flex-wrap items-center gap-3 text-sm">
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700 dark:bg-gray-800 dark:text-white">{selectedCollection.status}</span>
+          <span className="rounded-full bg-muted px-3 py-1 text-foreground">{selectedCollection.status}</span>
           {coverage.map((entry) => (
             <span key={entry.iso_639_3} className="rounded-full bg-brand-50 px-3 py-1 text-brand-700 dark:bg-brand-950/30 dark:text-brand-300">
               {entry.name}: {entry.translated_items}/{entry.total_items}
@@ -512,26 +512,26 @@ export default function CollectionsPage() {
       )}
 
       <div className="flex flex-wrap justify-end gap-2">
-        {selected && <button onClick={() => setShowBulkImport((current) => !current)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-white">Bulk Import from Google Sheets</button>}
-        {selectedCollection && <button onClick={startEditingCollection} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-white">Edit collection</button>}
+        {selected && <button onClick={() => setShowBulkImport((current) => !current)} className="rounded-lg border border-input px-4 py-2 text-sm font-medium text-foreground">Bulk Import from Google Sheets</button>}
+        {selectedCollection && <button onClick={startEditingCollection} className="rounded-lg border border-input px-4 py-2 text-sm font-medium text-foreground">Edit collection</button>}
         {selectedCollection && <button onClick={() => toggleCollectionPublished().catch((reason) => setError(reason?.response?.data?.detail || "Could not update collection"))} className="rounded-lg border border-brand-500 px-4 py-2 text-sm font-medium text-brand-600 dark:text-brand-300">{selectedCollection.status === "published" ? "Return to draft" : "Publish collection"}</button>}
-        {selected && <button onClick={() => setShowAddItem(true)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-white">New item</button>}
-        <button onClick={() => setShowCreateCollection(true)} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white dark:text-gray-900">New collection</button>
+        {selected && <button onClick={() => setShowAddItem(true)} className="rounded-lg border border-input px-4 py-2 text-sm font-medium text-foreground">New item</button>}
+        <button onClick={() => setShowCreateCollection(true)} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-primary-foreground">New collection</button>
       </div>
 
       {showBulkImport && (
-        <form onSubmit={importFromGoogleSheet} className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <div><h3 className="font-semibold text-gray-900 dark:text-white">Bulk Import from Google Sheets</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Required columns: concept_key, learning_term, translation. Optional: category_key, image_url. Existing concept keys are updated safely.</p></div>
+        <form onSubmit={importFromGoogleSheet} className="space-y-4 rounded-xl border border-border bg-card p-5">
+          <div><h3 className="font-semibold text-foreground">Bulk Import from Google Sheets</h3><p className="mt-1 text-sm text-muted-foreground">Required columns: concept_key, learning_term, translation. Optional: category_key, image_url. Existing concept keys are updated safely.</p></div>
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-gray-700 dark:text-gray-300">Google Sheet URL or ID<input required value={sheetReference} onChange={(event) => setSheetReference(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
-            <label className="text-sm text-gray-700 dark:text-gray-300">Worksheet name<input required value={worksheetTitle} onChange={(event) => setWorksheetTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
+            <label className="text-sm text-foreground">Google Sheet URL or ID<input required value={sheetReference} onChange={(event) => setSheetReference(event.target.value)} className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-foreground" /></label>
+            <label className="text-sm text-foreground">Worksheet name<input required value={worksheetTitle} onChange={(event) => setWorksheetTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-foreground" /></label>
           </div>
-          <div className="flex items-center gap-3"><button disabled={isImporting} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 disabled:opacity-50">{isImporting ? "Importing…" : "Import sheet"}</button>{importSummary && <span className="text-sm text-emerald-600 dark:text-emerald-400">{importSummary}</span>}</div>
+          <div className="flex items-center gap-3"><button disabled={isImporting} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">{isImporting ? "Importing…" : "Import sheet"}</button>{importSummary && <span className="text-sm text-emerald-600 dark:text-emerald-400">{importSummary}</span>}</div>
         </form>
       )}
 
-      <div className="grid gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 md:grid-cols-4">
-        <label className="text-sm text-gray-600 dark:text-gray-300">Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Concept, term or translation" className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
+      <div className="grid gap-3 rounded-xl border border-border bg-card p-4 md:grid-cols-4">
+        <label className="text-sm text-muted-foreground">Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Concept, term or translation" className="mt-1 w-full rounded-lg border border-input bg-background p-2 text-foreground" /></label>
         <StyledSelect label="Category" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} options={[{ value: "all", label: "All categories" }, ...categories.map((category) => ({ value: category, label: category }))]} fullWidth />
         <StyledSelect label="Status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} options={[{ value: "all", label: "All statuses" }, ...["draft", "published", "review", "stale"].map((status) => ({ value: status, label: status }))]} fullWidth />
         <StyledSelect label="Rows per page" value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))} options={[10, 25, 50, 100].map((size) => ({ value: size, label: String(size) }))} fullWidth />
@@ -547,16 +547,16 @@ export default function CollectionsPage() {
             onClick: () => setShowBulkRegenerateConfirm(true),
             disabled: isBulkRegenerating,
             loading: isBulkRegenerating,
-            icon: <FiVolume2 className="h-4 w-4" />,
+            icon: <Volume2 className="h-4 w-4" />,
           },
         ]}
       />
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-white">
+      <div className="overflow-hidden rounded-xl border border-border bg-background text-foreground">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
-            <thead className="bg-gray-50 dark:bg-gray-900"><tr>
-              <th className="px-4 py-3 text-left">
+          <table className="min-w-full divide-y divide-border text-sm">
+            <thead className="border-b"><tr>
+              <th className="px-4 py-2.5 text-left">
                 <input
                   type="checkbox"
                   checked={visibleItems.length > 0 && visibleItems.every((item) => selectedItems.includes(item.concept_key))}
@@ -564,10 +564,10 @@ export default function CollectionsPage() {
                   aria-label="Select all visible items"
                 />
               </th>
-              {['Order', 'Image', 'Audio', 'Concept', 'Learning term', 'Translation', 'Category', 'Status'].map((heading) => <th key={heading} className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-300">{heading}</th>)}
+              {['Order', 'Image', 'Audio', 'Concept', 'Learning term', 'Translation', 'Category', 'Status'].map((heading) => <th key={heading} className="px-4 py-2.5 text-left font-medium text-muted-foreground">{heading}</th>)}
             </tr></thead>
-            <tbody className="divide-y divide-gray-100 bg-white dark:divide-gray-800 dark:bg-gray-950">
-              {visibleItems.map((item) => <tr key={item.id} onClick={() => startEditing(item)} className="cursor-pointer text-gray-800 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-900">
+            <tbody className="divide-y divide-border bg-background">
+              {visibleItems.map((item) => <tr key={item.id} onClick={() => startEditing(item)} className="cursor-pointer text-foreground hover:bg-muted/50">
                 <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
                   <input
                     type="checkbox"
@@ -588,16 +588,16 @@ export default function CollectionsPage() {
                       title="Regenerate Audio"
                       aria-label="Regenerate Audio"
                     >
-                      <FiVolume2 className="w-4 h-4" />
+                      <Volume2 className="w-4 h-4" />
                     </button>
                     {item.human_recorded && (
                       <span title="Human-recorded - locked against regeneration" className="text-emerald-600 dark:text-emerald-400">
-                        <FiLock className="w-3.5 h-3.5" />
+                        <Lock className="w-3.5 h-3.5" />
                       </span>
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-300">{item.concept_key}</td>
+                <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{item.concept_key}</td>
                 <td className="px-4 py-3 font-medium">{item.learning_term || 'Missing'}</td>
                 <td className="px-4 py-3">{item.translation || 'Missing'}</td>
                 <td className="px-4 py-3">{item.category_key || '—'}</td>
@@ -608,7 +608,7 @@ export default function CollectionsPage() {
           </table>
         </div>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-gray-500 dark:text-gray-400"><span>{filteredItems.length ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, filteredItems.length)} of ${filteredItems.length}` : "0 items"}</span><div className="flex items-center gap-2"><button type="button" disabled={page <= 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-gray-300 px-3 py-2 disabled:opacity-40 dark:border-gray-700">Previous</button><span>Page {page} of {totalPages}</span><button type="button" disabled={page >= totalPages} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-gray-300 px-3 py-2 disabled:opacity-40 dark:border-gray-700">Next</button></div></div>
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground"><span>{filteredItems.length ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, filteredItems.length)} of ${filteredItems.length}` : "0 items"}</span><div className="flex items-center gap-2"><button type="button" disabled={page <= 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-input px-3 py-2 disabled:opacity-40">Previous</button><span>Page {page} of {totalPages}</span><button type="button" disabled={page >= totalPages} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-input px-3 py-2 disabled:opacity-40">Next</button></div></div>
 
       <FormModal
         isOpen={showCreateCollection}
@@ -618,10 +618,10 @@ export default function CollectionsPage() {
         submitLabel="Create draft"
         isSubmitting={isCreatingCollection}
       >
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">English title
-          <input required value={newTitle} onChange={(event) => { setNewTitle(event.target.value); setNewKey(slugifyKey(event.target.value)); }} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+        <label className="block text-sm font-medium text-foreground">English title
+          <input required value={newTitle} onChange={(event) => { setNewTitle(event.target.value); setNewKey(slugifyKey(event.target.value)); }} className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" />
         </label>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Generated collection key<input readOnly value={newKey} className="mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 font-mono text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" /></label>
+        <label className="block text-sm font-medium text-foreground">Generated collection key<input readOnly value={newKey} className="mt-1 w-full rounded-lg border border-input bg-muted/50 p-2.5 font-mono text-muted-foreground" /></label>
       </FormModal>
 
       <FormModal
@@ -632,11 +632,11 @@ export default function CollectionsPage() {
         submitLabel="Save"
         isSubmitting={isSavingCollection}
       >
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Title
-          <input required value={editCollectionTitle} onChange={(event) => setEditCollectionTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+        <label className="block text-sm font-medium text-foreground">Title
+          <input required value={editCollectionTitle} onChange={(event) => setEditCollectionTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" />
         </label>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description
-          <textarea value={editCollectionDescription} onChange={(event) => setEditCollectionDescription(event.target.value)} rows={3} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+        <label className="block text-sm font-medium text-foreground">Description
+          <textarea value={editCollectionDescription} onChange={(event) => setEditCollectionDescription(event.target.value)} rows={3} className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" />
         </label>
       </FormModal>
 
@@ -665,16 +665,16 @@ export default function CollectionsPage() {
             options={[{ value: "", label: "Uncategorised" }, ...categories.map((category) => ({ value: category, label: category }))]}
             fullWidth
           />
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Item key<input required pattern="[a-z0-9][a-z0-9_.-]+" value={newConceptKey} onChange={(event) => setNewConceptKey(slugifyKey(event.target.value))} placeholder="lion" className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{learningLanguage} term
-            <input required value={newLearningTerm} onChange={(event) => setNewLearningTerm(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+          <label className="text-sm font-medium text-foreground">Item key<input required pattern="[a-z0-9][a-z0-9_.-]+" value={newConceptKey} onChange={(event) => setNewConceptKey(slugifyKey(event.target.value))} placeholder="lion" className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" /></label>
+          <label className="text-sm font-medium text-foreground">{learningLanguage} term
+            <input required value={newLearningTerm} onChange={(event) => setNewLearningTerm(event.target.value)} className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" />
           </label>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{translationLanguage} translation
-            <input required value={newTranslation} onChange={(event) => setNewTranslation(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+          <label className="text-sm font-medium text-foreground">{translationLanguage} translation
+            <input required value={newTranslation} onChange={(event) => setNewTranslation(event.target.value)} className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" />
           </label>
         </div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Primary image URL
-          <input value={newImageUrl} onChange={(event) => setNewImageUrl(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+        <label className="block text-sm font-medium text-foreground">Primary image URL
+          <input value={newImageUrl} onChange={(event) => setNewImageUrl(event.target.value)} className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" />
         </label>
       </FormModal>
 
@@ -689,15 +689,15 @@ export default function CollectionsPage() {
       >
         {editing && (
           <>
-            <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-950">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white dark:bg-gray-900">
+            <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/50 p-4">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-card">
                 {editImageUrl ? <Image src={editImageUrl} alt={editTranslation || editLearningTerm} width={80} height={80} unoptimized className="h-full w-full object-contain" /> : <span className="text-xs text-gray-400">No image</span>}
               </div>
               <div className="min-w-0 space-y-2">
-                <p className="truncate font-mono text-xs text-gray-500 dark:text-gray-400">{editing.concept_key}</p>
+                <p className="truncate font-mono text-xs text-muted-foreground">{editing.concept_key}</p>
                 <div className="flex items-center gap-3">
                   <InlineAudioPlayer src={editing.audio_url} size="md" />
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Play {learningLanguage} pronunciation</span>
+                  <span className="text-sm text-muted-foreground">Play {learningLanguage} pronunciation</span>
                   <button
                     type="button"
                     onClick={() => editing && handleRegenerateAudio(editing)}
@@ -705,27 +705,27 @@ export default function CollectionsPage() {
                     title="Regenerate Audio"
                     aria-label="Regenerate Audio"
                   >
-                    <FiVolume2 className="w-3.5 h-3.5" />
+                    <Volume2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{learningLanguage} term<input required value={editLearningTerm} onChange={(event) => setEditLearningTerm(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{translationLanguage} translation<input required value={editTranslation} onChange={(event) => setEditTranslation(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
+              <label className="text-sm font-medium text-foreground">{learningLanguage} term<input required value={editLearningTerm} onChange={(event) => setEditLearningTerm(event.target.value)} className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" /></label>
+              <label className="text-sm font-medium text-foreground">{translationLanguage} translation<input required value={editTranslation} onChange={(event) => setEditTranslation(event.target.value)} className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" /></label>
             </div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Primary image URL<input value={editImageUrl} onChange={(event) => setEditImageUrl(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium text-foreground">Primary image URL<input value={editImageUrl} onChange={(event) => setEditImageUrl(event.target.value)} className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" /></label>
+            <label className="block text-sm font-medium text-foreground">
               Alternate names ({learningLanguage}), comma-separated
               <input
                 value={editAliases}
                 onChange={(event) => setEditAliases(event.target.value)}
                 placeholder="e.g. Egbin, Olúbe, Èsúró"
-                className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+                className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               />
             </label>
             {(editing.aliases || []).length > 0 && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 Audio: {(editing.aliases || []).map((alias) => (
                   <span key={alias} className="mr-2">
                     {alias} {editing.alias_audio?.[alias] ? "✓" : "(none yet)"}

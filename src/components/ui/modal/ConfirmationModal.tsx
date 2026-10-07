@@ -74,7 +74,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         </div>
 
         {/* Message */}
-        <p className="text-center text-gray-700 dark:text-gray-300 mb-6">
+        <p className="text-center text-foreground mb-6">
           {message}
         </p>
 
@@ -84,7 +84,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="flex-1 px-4 py-2.5 border border-input text-foreground rounded-lg hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           >
             {cancelText}
           </button>

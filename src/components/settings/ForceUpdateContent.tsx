@@ -132,10 +132,10 @@ export function ForceUpdateContent({ showHeader = true }: { showHeader?: boolean
     return (
       <div className="space-y-6">
         {showHeader && <PageBreadCrumb pageTitle="Force Update" />}
-        <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 animate-pulse">
+        <div className="p-6 bg-card border border-border rounded-lg animate-pulse">
           <div className="space-y-4">
             {[1, 2].map((i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded dark:bg-gray-700"></div>
+              <div key={i} className="h-32 bg-muted rounded"></div>
             ))}
           </div>
         </div>
@@ -176,7 +176,7 @@ export function ForceUpdateContent({ showHeader = true }: { showHeader?: boolean
         {showHeader && (
           <>
             <PageBreadCrumb pageTitle="Force Update" />
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-muted-foreground">
               Require users below a given build number to update before continuing to use the app.
               Set independently per platform - App Store review and Play Store rollouts don&apos;t
               always land at the same time, so one platform can be required to update without
@@ -195,11 +195,11 @@ export function ForceUpdateContent({ showHeader = true }: { showHeader?: boolean
           return (
             <div
               key={platform}
-              className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 overflow-hidden"
+              className="bg-card border border-border rounded-lg overflow-hidden"
             >
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {PLATFORM_LABELS[platform]}
                   </h3>
                   <span
@@ -215,7 +215,7 @@ export function ForceUpdateContent({ showHeader = true }: { showHeader?: boolean
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Version number
                     </label>
                     <input
@@ -223,16 +223,16 @@ export function ForceUpdateContent({ showHeader = true }: { showHeader?: boolean
                       value={drafts[platform].versionNumber}
                       onChange={(e) => updateDraft(platform, "versionNumber", e.target.value)}
                       placeholder="e.g. 1.4.0"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Human-readable, for reference only - the build number below is what
                       actually gates the app.
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Minimum build number
                     </label>
                     <input
@@ -240,15 +240,15 @@ export function ForceUpdateContent({ showHeader = true }: { showHeader?: boolean
                       value={drafts[platform].minBuildNumber}
                       onChange={(e) => updateDraft(platform, "minBuildNumber", e.target.value)}
                       placeholder="e.g. 1788710700"
-                      className="w-full px-3 py-2 text-sm font-mono border border-gray-300 rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm font-mono border border-input rounded-lg dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Leave blank to not require an update on {PLATFORM_LABELS[platform]}.
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Message (optional)
                     </label>
                     <textarea
@@ -256,7 +256,7 @@ export function ForceUpdateContent({ showHeader = true }: { showHeader?: boolean
                       onChange={(e) => updateDraft(platform, "message", e.target.value)}
                       rows={2}
                       placeholder="Shown instead of the default update-prompt copy"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -270,12 +270,12 @@ export function ForceUpdateContent({ showHeader = true }: { showHeader?: boolean
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="px-4 py-2 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium text-primary-foreground bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? "Saving..." : "Save Changes"}
         </button>
         {existingRow && (
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-muted-foreground">
             Last updated: {new Date(existingRow.updated_at).toLocaleString()}
           </span>
         )}

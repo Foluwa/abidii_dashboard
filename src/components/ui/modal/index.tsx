@@ -67,7 +67,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   const contentClasses = isFullscreen
     ? "w-full h-full"
-    : `relative w-full ${maxWidthClasses[maxWidth]} mx-4 my-8 rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900`;
+    : `relative w-full ${maxWidthClasses[maxWidth]} mx-4 my-8 rounded-xl border border-border bg-card shadow-2xl`;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999 p-4">
@@ -85,7 +85,7 @@ export const Modal: React.FC<ModalProps> = ({
         {showCloseButton && (
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 z-999 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-all hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+            className="absolute right-4 top-4 z-999 flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
             aria-label="Close modal"
           >
             <svg
@@ -106,8 +106,8 @@ export const Modal: React.FC<ModalProps> = ({
         )}
         <div className="relative">
           {title && (
-            <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-800">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="px-6 py-5 border-b border-border">
+              <h3 className="text-lg font-semibold text-foreground">
                 {title}
               </h3>
             </div>

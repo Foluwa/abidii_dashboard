@@ -12,15 +12,8 @@ import { ContentPattern, ContentPatternCreate, ContentPatternUpdate } from '@/ty
 import { Language } from '@/types/common';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
-import { 
-  FiPlus, 
-  FiEdit2, 
-  FiTrash2,
-  FiChevronDown,
-  FiChevronUp,
-  FiInfo,
-  FiLayers,
-} from 'react-icons/fi';
+import { ChevronDown, ChevronUp, Info, Pencil, Plus, Trash2 } from "lucide-react";
+import { Layers } from "lucide-react";
 
 const CATEGORIES = [
   { value: 'number_formation', label: 'Number Formation' },
@@ -216,28 +209,28 @@ export default function PatternsPage() {
       <div className="mb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
+            <h1 className="text-2xl font-semibold text-foreground">
               Content Patterns
             </h1>
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-muted-foreground">
               Manage learning patterns (number formation rules, grammar patterns, etc.)
             </p>
           </div>
           <button
             onClick={handleCreate}
             disabled={!selectedLanguage}
-            className="flex items-center justify-center gap-2 px-4 py-2 text-white dark:text-gray-900 bg-brand-500 rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center gap-2 px-4 py-2 text-primary-foreground bg-brand-500 rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <FiPlus />
+            <Plus />
             Add Pattern
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-4 p-4 mb-6 bg-white rounded-lg shadow-sm dark:bg-gray-800 sm:flex-row">
+      <div className="flex flex-col gap-4 p-4 mb-6 bg-card rounded-lg shadow-sm sm:flex-row">
         <div className="flex-1">
-          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="block mb-1 text-sm font-medium text-foreground">
             Language
           </label>
           <StyledSelect
@@ -248,7 +241,7 @@ export default function PatternsPage() {
           />
         </div>
         <div className="flex-1">
-          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="block mb-1 text-sm font-medium text-foreground">
             Category
           </label>
           <StyledSelect
@@ -266,8 +259,8 @@ export default function PatternsPage() {
             <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : patterns.length === 0 ? (
-          <div className="py-12 text-center text-gray-500 dark:text-gray-400">
-            <FiLayers className="mx-auto mb-3 text-4xl" />
+          <div className="py-12 text-center text-muted-foreground">
+            <Layers className="mx-auto mb-3 text-4xl" />
             <p>No patterns found</p>
             <p className="text-sm">Create your first pattern to get started</p>
           </div>
@@ -275,11 +268,11 @@ export default function PatternsPage() {
           patterns.map((pattern) => (
             <div
               key={pattern.id}
-              className="bg-white rounded-lg shadow-sm dark:bg-gray-800 overflow-hidden"
+              className="bg-card rounded-lg shadow-sm overflow-hidden"
             >
               {/* Pattern Header */}
               <div
-                className="flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="flex items-center gap-4 p-4 cursor-pointer hover:bg-accent"
                 onClick={() => toggleExpanded(pattern.id)}
               >
                 <div className="flex-shrink-0">
@@ -288,42 +281,42 @@ export default function PatternsPage() {
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-800 dark:text-white truncate">
+                  <h3 className="font-semibold text-foreground truncate">
                     {pattern.title}
                   </h3>
                   {pattern.subtitle && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                    <p className="text-sm text-muted-foreground truncate">
                       {pattern.subtitle}
                     </p>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="hidden sm:inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded dark:bg-gray-700 dark:text-gray-300">
+                  <span className="hidden sm:inline-flex px-2 py-1 text-xs font-medium bg-muted text-muted-foreground rounded">
                     {pattern.pattern_key}
                   </span>
                   <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-600 rounded dark:bg-blue-900 dark:text-blue-300">
                     {pattern.category || 'uncategorized'}
                   </span>
-                  {expandedId === pattern.id ? <FiChevronUp /> : <FiChevronDown />}
+                  {expandedId === pattern.id ? <ChevronUp /> : <ChevronDown />}
                 </div>
               </div>
 
               {/* Expanded Content */}
               {expandedId === pattern.id && (
-                <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
+                <div className="px-4 pb-4 border-t border-border">
                   <div className="mt-4">
                     {pattern.description && (
-                      <p className="mb-4 text-gray-600 dark:text-gray-300">
+                      <p className="mb-4 text-muted-foreground">
                         {pattern.description}
                       </p>
                     )}
                     
                     {pattern.config && Object.keys(pattern.config).length > 0 && (
                       <div className="mb-4">
-                        <h4 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <h4 className="mb-2 text-sm font-medium text-foreground">
                           Configuration
                         </h4>
-                        <pre className="p-3 text-xs bg-gray-50 rounded-lg dark:bg-gray-900 overflow-x-auto">
+                        <pre className="p-3 text-xs bg-muted/50 rounded-lg overflow-x-auto">
                           {JSON.stringify(pattern.config, null, 2)}
                         </pre>
                       </div>
@@ -337,7 +330,7 @@ export default function PatternsPage() {
                         }}
                         className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 rounded hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                       >
-                        <FiEdit2 className="text-xs" />
+                        <Pencil className="text-xs" />
                         Edit
                       </button>
                       <button
@@ -347,7 +340,7 @@ export default function PatternsPage() {
                         }}
                         className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                       >
-                        <FiTrash2 className="text-xs" />
+                        <Trash2 className="text-xs" />
                         Delete
                       </button>
                     </div>
@@ -362,9 +355,9 @@ export default function PatternsPage() {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-xl dark:bg-gray-800">
-            <div className="sticky top-0 z-10 flex items-center justify-between p-4 bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-card rounded-xl shadow-xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between p-4 bg-card border-b dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-foreground">
                 {editingPattern ? 'Edit Pattern' : 'Create Pattern'}
               </h2>
               <button
@@ -378,7 +371,7 @@ export default function PatternsPage() {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label className="block mb-1 text-sm font-medium text-foreground">
                     Pattern Key *
                   </label>
                   <input
@@ -403,7 +396,7 @@ export default function PatternsPage() {
               </div>
 
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="block mb-1 text-sm font-medium text-foreground">
                   Title *
                 </label>
                 <input
@@ -418,7 +411,7 @@ export default function PatternsPage() {
               </div>
 
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="block mb-1 text-sm font-medium text-foreground">
                   Subtitle
                 </label>
                 <input
@@ -432,7 +425,7 @@ export default function PatternsPage() {
               </div>
 
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="block mb-1 text-sm font-medium text-foreground">
                   Description
                 </label>
                 <textarea
@@ -456,7 +449,7 @@ export default function PatternsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label className="block mb-1 text-sm font-medium text-foreground">
                     Sort Order
                   </label>
                   <input
@@ -474,14 +467,14 @@ export default function PatternsPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  className="px-4 py-2 text-muted-foreground bg-muted rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 text-white dark:text-gray-900 bg-brand-500 rounded-lg hover:bg-brand-600 disabled:opacity-50"
+                  className="px-4 py-2 text-primary-foreground bg-brand-500 rounded-lg hover:bg-brand-600 disabled:opacity-50"
                 >
                   {isSubmitting ? 'Saving...' : editingPattern ? 'Update' : 'Create'}
                 </button>

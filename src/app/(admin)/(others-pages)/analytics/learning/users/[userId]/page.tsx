@@ -58,7 +58,7 @@ export default function LearnerJourneyPage() {
             &larr; Back to Learning Analytics
           </Link>
           <PageBreadCrumb pageTitle="Learner Journey" />
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 font-mono">{userId}</p>
+          <p className="mt-1 text-sm text-muted-foreground font-mono">{userId}</p>
         </div>
         <button
           onClick={() => refresh()}
@@ -68,7 +68,7 @@ export default function LearnerJourneyPage() {
         </button>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
+      <div className="bg-card border border-border rounded-lg p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StyledSelect
             id="learner-journey-date-range"
@@ -97,9 +97,9 @@ export default function LearnerJourneyPage() {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Session Timeline</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+      <div className="bg-card border border-border rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-1">Session Timeline</h3>
+        <p className="text-sm text-muted-foreground mb-4">
           Sessions in the order they occurred (started_at). This chronology is never re-derived from
           lesson_attempt_number, which is informational only.
         </p>

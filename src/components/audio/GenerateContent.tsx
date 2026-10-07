@@ -227,10 +227,10 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
       {/* Header */}
       {showHeader && (
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-foreground">
             🎙️ TTS Audio Generation
           </h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-sm text-muted-foreground">
             Generate text-to-speech audio for words using multiple providers (Spitch, Google, ElevenLabs)
           </p>
         </div>
@@ -240,8 +240,8 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
         {/* Left Column: Configuration */}
         <div className="lg:col-span-2 space-y-6">
           {/* Word Selection */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
               1. Select Word
             </h2>
             
@@ -274,7 +274,7 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label className="mb-2 block text-sm font-medium text-foreground">
                     Text to Speak (optional override)
                   </label>
                   <input
@@ -282,7 +282,7 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
                     value={customText}
                     onChange={(e) => setCustomText(e.target.value)}
                     placeholder="e.g., Ẹ kú àárọ̀"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground focus:border-primary focus:ring-primary"
                   />
                   <p className="mt-1 text-xs text-gray-500">
                     Leave empty to use the word itself
@@ -293,8 +293,8 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
           </div>
 
           {/* Provider & Voice Selection */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
               2. Select Provider & Voice
             </h2>
 
@@ -327,7 +327,7 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
                 {/* Voice Selection */}
                 {selectedProvider && (
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label className="mb-2 block text-sm font-medium text-foreground">
                       Voice
                     </label>
                     {isLoadingVoices ? (
@@ -359,8 +359,8 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
           </div>
 
           {/* Generate Button */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
               3. Generate Preview
             </h2>
 
@@ -381,7 +381,7 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
 
             {selectedLemma && selectedProvider && selectedVoice && (
               <div className="mt-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-700/50">
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   <strong>Preview Configuration:</strong>
                   <br />
                   Word: <span className="font-mono">{customText || selectedLemma.word}</span>
@@ -400,8 +400,8 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
           <div className="sticky top-6 space-y-6">
             {/* Audio Preview */}
             {previewUrl && previewData && (
-              <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+                <h2 className="mb-4 text-lg font-semibold text-foreground">
                   🎧 Preview
                 </h2>
 
@@ -465,7 +465,7 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
                       setPreviewUrl(null);
                       setPreviewData(null);
                     }}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 font-medium hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground font-medium hover:bg-accent transition-colors"
                   >
                     🔄 Generate New Preview
                   </button>
@@ -475,11 +475,11 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
 
             {/* Instructions */}
             {!previewUrl && (
-              <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+                <h2 className="mb-4 text-lg font-semibold text-foreground">
                   📋 Instructions
                 </h2>
-                <ol className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                <ol className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-start">
                     <span className="mr-2 font-bold">1.</span>
                     <span>Select a word/lemma to generate audio for</span>
@@ -512,8 +512,8 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
 
             {/* Provider Info */}
             {!isLoadingProviders && providers.length > 0 && (
-              <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+                <h2 className="mb-4 text-lg font-semibold text-foreground">
                   Available Providers
                 </h2>
                 <div className="space-y-2">
@@ -522,7 +522,7 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
                       key={provider.name}
                       className="flex items-center justify-between text-sm"
                     >
-                      <span className="text-gray-700 dark:text-gray-300">
+                      <span className="text-foreground">
                         {provider.display_name}
                       </span>
                       <span

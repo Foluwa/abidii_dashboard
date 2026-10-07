@@ -145,10 +145,10 @@ function CurriculumDragLayer() {
             <div className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-600 dark:text-brand-300">
               Moving unit
             </div>
-            <div className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">
+            <div className="mt-2 text-sm font-semibold text-foreground">
               {(item as UnitDragItem).title}
             </div>
-            <div className="mt-1 flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-1 flex items-center justify-between gap-3 text-xs text-muted-foreground">
               <span className="font-mono">{(item as UnitDragItem).unitKey}</span>
               <span>{(item as UnitDragItem).sectionCount} sections</span>
             </div>
@@ -158,10 +158,10 @@ function CurriculumDragLayer() {
             <div className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-600 dark:text-sky-300">
               Moving section
             </div>
-            <div className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">
+            <div className="mt-2 text-sm font-semibold text-foreground">
               {(item as SectionDragItem).title}
             </div>
-            <div className="mt-1 flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-1 flex items-center justify-between gap-3 text-xs text-muted-foreground">
               <span className="font-mono">{(item as SectionDragItem).sectionKey}</span>
               <span>{(item as SectionDragItem).playable ? 'Playable' : 'Coming soon'}</span>
             </div>
@@ -281,13 +281,13 @@ function UnitRow({
   return (
     <div
       ref={attachContainerRef}
-      className={`rounded-xl border bg-white transition-all dark:bg-gray-900 ${
-        isDragging
-          ? 'scale-[0.99] border-brand-200 opacity-50 shadow-lg dark:border-brand-800'
-          : isOverUnitDrop
-          ? 'border-brand-300 shadow-md shadow-brand-900/5 dark:border-brand-700'
-          : 'border-gray-200 dark:border-gray-800'
-      }`}
+      className={`rounded-xl border bg-card transition-all ${
+ isDragging
+ ? 'scale-[0.99] border-brand-200 opacity-50 shadow-lg dark:border-brand-800'
+ : isOverUnitDrop
+ ? 'border-brand-300 shadow-md shadow-brand-900/5 dark:border-brand-700'
+ : 'border-gray-200 dark:border-gray-800'
+ }`}
     >
       <div
         className={`flex items-center justify-between gap-3 rounded-t-xl px-4 py-3 transition-colors ${
@@ -299,12 +299,12 @@ function UnitRow({
           ref={attachDragRef}
           title="Drag to move this unit"
         >
-          <span className="rounded-md border border-gray-200 bg-white px-2 py-1 text-sm text-gray-400 shadow-sm dark:border-gray-700 dark:bg-gray-950">
+          <span className="rounded-md border border-border bg-background px-2 py-1 text-sm text-gray-400 shadow-sm">
             ==
           </span>
           <div>
-            <div className="text-sm font-semibold text-gray-900 dark:text-white">{unit.title}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">{unit.unit_key}</div>
+            <div className="text-sm font-semibold text-foreground">{unit.title}</div>
+            <div className="text-xs text-muted-foreground font-mono">{unit.unit_key}</div>
           </div>
         </div>
         <StatusBadge
@@ -319,7 +319,7 @@ function UnitRow({
         />
       </div>
 
-      <div className="flex flex-wrap gap-2 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
+      <div className="flex flex-wrap gap-2 border-b border-border px-4 py-3">
         <button
           onClick={() => onCreateSection(unit)}
           disabled={isMutating}
@@ -330,7 +330,7 @@ function UnitRow({
         <button
           onClick={() => onEditUnit(unit)}
           disabled={isMutating}
-          className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+          className="rounded-lg border border-input px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
         >
           Edit Unit
         </button>
@@ -483,15 +483,15 @@ function SectionRow({
         className="flex cursor-grab select-none items-center gap-3 active:cursor-grabbing"
         title="Drag to move this section"
       >
-        <span className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-400 shadow-sm dark:border-gray-700 dark:bg-gray-950">
+        <span className="rounded-md border border-border bg-background px-2 py-1 text-xs text-gray-400 shadow-sm">
           ::
         </span>
         <div>
-          <div className="font-medium text-gray-900 dark:text-white">{section.title}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">{section.section_key}</div>
+          <div className="font-medium text-foreground">{section.title}</div>
+          <div className="text-xs text-muted-foreground font-mono">{section.section_key}</div>
         </div>
       </div>
-      <div className="text-xs text-gray-500 dark:text-gray-400">
+      <div className="text-xs text-muted-foreground">
         {getSectionAvailabilityLabel(section)}
       </div>
       <div className="flex flex-wrap gap-2">
@@ -505,7 +505,7 @@ function SectionRow({
         <button
           onClick={() => onEditSection(unitKey, section)}
           disabled={isMutating}
-          className="rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+          className="rounded-lg border border-input px-2 py-1 text-xs font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
         >
           Edit
         </button>
@@ -1041,7 +1041,7 @@ export default function CurriculumEditorPage() {
       <div className="flex items-center justify-between">
         <div>
           <PageBreadCrumb pageTitle="Curriculum Editor" />
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Drag units and sections to set the learning path order.
           </p>
         </div>
@@ -1055,23 +1055,23 @@ export default function CurriculumEditorPage() {
           </button>
           <button
             onClick={copyJson}
-            className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200"
+            className="px-3 py-2 text-sm font-medium text-foreground border border-border rounded-lg hover:bg-gray-50"
           >
             Copy JSON
           </button>
           <button
             onClick={saveChanges}
             disabled={isSaving || isStructureMutating}
-            className="px-4 py-2 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50"
           >
             {isSaving ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-lg border border-border bg-card p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <label htmlFor="courseKey" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+          <label htmlFor="courseKey" className="text-sm font-medium text-foreground">
             Course
           </label>
           <Combobox
@@ -1097,7 +1097,7 @@ export default function CurriculumEditorPage() {
       )}
 
       {curriculumLoading && (
-        <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+        <div className="flex items-center gap-3 text-muted-foreground">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-brand-600" />
           <span>Loading curriculum…</span>
         </div>
@@ -1107,16 +1107,16 @@ export default function CurriculumEditorPage() {
         <DndProvider backend={HTML5Backend}>
           <CurriculumDragLayer />
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(440px,560px)] xl:grid-cols-[minmax(0,1fr)_minmax(500px,620px)]">
-            <section className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 lg:sticky lg:top-6 lg:h-[calc(100vh-10rem)] lg:overflow-hidden">
-              <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+            <section className="rounded-lg border border-border bg-card shadow-sm lg:sticky lg:top-6 lg:h-[calc(100vh-10rem)] lg:overflow-hidden">
+              <div className="border-b border-border px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Units</h3>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <h3 className="text-sm font-semibold text-foreground">Units</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
                       The curriculum tree stays scrollable here while preview remains visible on the right.
                     </p>
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-muted-foreground">
                     {draftUnits.length} unit{draftUnits.length === 1 ? '' : 's'}
                   </div>
                 </div>
@@ -1161,19 +1161,19 @@ export default function CurriculumEditorPage() {
                   />
                 ))}
                 {draftUnits.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-800">
+                  <div className="rounded-lg border border-dashed border-border p-4 text-sm text-gray-500">
                     No units found for this course.
                   </div>
                 )}
               </div>
             </section>
 
-            <section className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 lg:sticky lg:top-6 lg:h-[calc(100vh-10rem)] lg:overflow-hidden">
-              <div className="border-b border-gray-200 p-4 dark:border-gray-800">
+            <section className="rounded-lg border border-border bg-card shadow-sm lg:sticky lg:top-6 lg:h-[calc(100vh-10rem)] lg:overflow-hidden">
+              <div className="border-b border-border p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">Learner Preview</h3>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <h3 className="text-base font-semibold text-foreground">Learner Preview</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Select a section to inspect the content and flow the learner will receive.
                     </p>
                   </div>
@@ -1198,11 +1198,11 @@ export default function CurriculumEditorPage() {
               <div className="space-y-4 p-4 lg:h-[calc(100%-5.5rem)] lg:overflow-y-auto lg:pr-3">
                 {selectedPreviewContext ? (
                   <>
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950">
-                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <div className="rounded-lg border border-border bg-muted/50 p-3">
+                      <div className="text-sm font-semibold text-foreground">
                         {selectedPreviewContext.section.title}
                       </div>
-                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      <div className="mt-1 text-xs text-muted-foreground">
                         {selectedPreviewContext.unit.title} • {selectedPreviewContext.unit.unit_key}/
                         {selectedPreviewContext.section.section_key}
                       </div>
@@ -1214,7 +1214,7 @@ export default function CurriculumEditorPage() {
                         preview.
                       </div>
                     ) : isPreviewLoading ? (
-                      <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
                         <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-brand-600" />
                         <span>Loading learner preview…</span>
                       </div>
@@ -1229,14 +1229,14 @@ export default function CurriculumEditorPage() {
                         compact
                       />
                     ) : (
-                      <div className="rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                      <div className="rounded-lg border border-dashed border-input px-3 py-4 text-sm text-muted-foreground">
                         Select a section to load its blueprint preview.
                       </div>
                     )}
 
-                    <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-950">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Tips</h3>
-                      <ul className="mt-3 space-y-2 text-xs text-gray-600 dark:text-gray-400">
+                    <div className="rounded-lg border border-border bg-background p-4 text-sm">
+                      <h3 className="text-sm font-semibold text-foreground">Tips</h3>
+                      <ul className="mt-3 space-y-2 text-xs text-muted-foreground">
                         <li>Drag a unit header to reorder the overall learning path.</li>
                         <li>Drag a section card and follow the floating preview under your cursor.</li>
                         <li>Hover above or below a row before you drop to place it precisely.</li>
@@ -1247,13 +1247,13 @@ export default function CurriculumEditorPage() {
                   </>
                 ) : (
                   <>
-                    <div className="rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                    <div className="rounded-lg border border-dashed border-input px-3 py-4 text-sm text-muted-foreground">
                       Select a section from the curriculum list to inspect its learner-facing content.
                     </div>
 
-                    <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-950">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Tips</h3>
-                      <ul className="mt-3 space-y-2 text-xs text-gray-600 dark:text-gray-400">
+                    <div className="rounded-lg border border-border bg-background p-4 text-sm">
+                      <h3 className="text-sm font-semibold text-foreground">Tips</h3>
+                      <ul className="mt-3 space-y-2 text-xs text-muted-foreground">
                         <li>Drag a unit header to reorder the overall learning path.</li>
                         <li>Drag a section card and follow the floating preview under your cursor.</li>
                         <li>Hover above or below a row before you drop to place it precisely.</li>
@@ -1293,52 +1293,52 @@ export default function CurriculumEditorPage() {
           >
             <div className="grid gap-4">
               <div>
-                <label htmlFor="unit-key" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                <label htmlFor="unit-key" className="mb-1 block text-sm font-medium text-foreground">
                   Unit key
                 </label>
                 <input
                   id="unit-key"
                   value={unitEditor.unitKey}
                   onChange={(e) => setUnitEditor({ ...unitEditor, unitKey: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground"
                 />
               </div>
               <div>
-                <label htmlFor="unit-title" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                <label htmlFor="unit-title" className="mb-1 block text-sm font-medium text-foreground">
                   Unit title
                 </label>
                 <input
                   id="unit-title"
                   value={unitEditor.title}
                   onChange={(e) => setUnitEditor({ ...unitEditor, title: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground"
                 />
               </div>
               <div>
-                <label htmlFor="unit-subtitle" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                <label htmlFor="unit-subtitle" className="mb-1 block text-sm font-medium text-foreground">
                   Unit subtitle
                 </label>
                 <input
                   id="unit-subtitle"
                   value={unitEditor.subtitle}
                   onChange={(e) => setUnitEditor({ ...unitEditor, subtitle: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground"
                 />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
+            <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
               <button
                 type="button"
                 onClick={() => setUnitEditor(null)}
                 disabled={isStructureMutating}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                className="rounded-lg border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isStructureMutating}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:opacity-50"
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700 disabled:opacity-50"
               >
                 {isStructureMutating ? 'Saving…' : unitEditor.mode === 'edit' ? 'Save changes' : 'Create unit'}
               </button>
@@ -1384,41 +1384,41 @@ export default function CurriculumEditorPage() {
                 />
               </div>
               <div>
-                <label htmlFor="section-key" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                <label htmlFor="section-key" className="mb-1 block text-sm font-medium text-foreground">
                   Section key
                 </label>
                 <input
                   id="section-key"
                   value={sectionEditor.sectionKey}
                   onChange={(e) => setSectionEditor({ ...sectionEditor, sectionKey: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground"
                 />
               </div>
               <div>
-                <label htmlFor="section-title" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                <label htmlFor="section-title" className="mb-1 block text-sm font-medium text-foreground">
                   Section title
                 </label>
                 <input
                   id="section-title"
                   value={sectionEditor.title}
                   onChange={(e) => setSectionEditor({ ...sectionEditor, title: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground"
                 />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
+            <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
               <button
                 type="button"
                 onClick={() => setSectionEditor(null)}
                 disabled={isStructureMutating}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                className="rounded-lg border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isStructureMutating}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:bg-brand-700 disabled:opacity-50"
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700 disabled:opacity-50"
               >
                 {isStructureMutating ? 'Saving…' : sectionEditor.mode === 'edit' ? 'Save changes' : 'Create section'}
               </button>

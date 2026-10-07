@@ -21,7 +21,7 @@ import {
   ActiveFilterChips,
   StickyBulkActionBar,
 } from '@/components/admin/layout';
-import { FiBarChart2, FiVolume2, FiCheckCircle, FiGitMerge } from "react-icons/fi";
+import { ChartColumn, CircleCheck, GitMerge, Volume2 } from "lucide-react";
 
 interface Number {
   id: string;
@@ -534,7 +534,7 @@ export default function NumbersPage() {
       >
         <button
           onClick={() => { setPage(1); fetchNumbers(); }}
-          className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-foreground bg-card border border-input rounded-lg hover:bg-accent transition-colors"
           title="Refresh data"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
@@ -551,10 +551,10 @@ export default function NumbersPage() {
       )}
 
       <ContentStatsGrid cols={4}>
-        <ContentStatsCard label="Total" value={stats.total} icon={FiBarChart2} />
-        <ContentStatsCard label="With Audio" value={stats.withAudio} icon={FiVolume2} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
-        <ContentStatsCard label="Aligned" value={stats.aligned} icon={FiCheckCircle} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
-        <ContentStatsCard label="Compound" value={stats.compound} icon={FiGitMerge} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
+        <ContentStatsCard label="Total" value={stats.total} icon={ChartColumn} />
+        <ContentStatsCard label="With Audio" value={stats.withAudio} icon={Volume2} iconBgClass="bg-green-100 dark:bg-green-900/20" iconTextClass="text-green-600 dark:text-green-400" />
+        <ContentStatsCard label="Aligned" value={stats.aligned} icon={CircleCheck} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
+        <ContentStatsCard label="Compound" value={stats.compound} icon={GitMerge} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
       </ContentStatsGrid>
 
       {/* Bulk Import from Google Sheets (has built-in accordion) */}
@@ -599,7 +599,7 @@ export default function NumbersPage() {
         {/* Primary Filters Row */}
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[200px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Language
             </label>
             <StyledSelect
@@ -621,7 +621,7 @@ export default function NumbersPage() {
           </div>
 
           <div className="flex-1 min-w-[240px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Search
             </label>
             <input
@@ -632,12 +632,12 @@ export default function NumbersPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+              className="block w-full rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
 
           <div className="min-w-[140px]">
-            <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Per Page
             </label>
             <StyledSelect
@@ -658,9 +658,9 @@ export default function NumbersPage() {
 
         {/* Advanced Filters */}
         {showAdvancedFilters && (
-          <div className="mt-4 flex flex-wrap gap-4 border-t border-gray-100 pt-4 dark:border-gray-800">
+          <div className="mt-4 flex flex-wrap gap-4 border-t border-border pt-4">
             <div className="min-w-[160px]">
-              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">Compound</label>
+              <label className="mb-2 block text-xs font-medium text-foreground">Compound</label>
               <StyledSelect
                 value={filterCompound}
                 onChange={(e) => { setFilterCompound(e.target.value); setPage(1); }}
@@ -673,7 +673,7 @@ export default function NumbersPage() {
               />
             </div>
             <div className="min-w-[160px]">
-              <label className="mb-2 block text-xs font-medium text-gray-700 dark:text-gray-300">Difficulty</label>
+              <label className="mb-2 block text-xs font-medium text-foreground">Difficulty</label>
               <StyledSelect
                 value={filterDifficulty}
                 onChange={(e) => { setFilterDifficulty(e.target.value); setPage(1); }}
@@ -705,7 +705,7 @@ export default function NumbersPage() {
             disabled: isBulkRegenerating || isLoadingVoices,
             loading: isBulkRegenerating || isLoadingVoices,
             variant: 'primary',
-            icon: <FiVolume2 className="h-4 w-4" />,
+            icon: <Volume2 className="h-4 w-4" />,
           },
         ]}
       />
@@ -730,7 +730,7 @@ export default function NumbersPage() {
 
       {/* Pagination */}
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-gray-700 dark:text-gray-300">
+        <p className="text-sm text-foreground">
           Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} numbers
         </p>
         <div className="ml-auto">
@@ -754,7 +754,7 @@ export default function NumbersPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Provider *
             </label>
             <StyledSelect
@@ -785,7 +785,7 @@ export default function NumbersPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Voice *
             </label>
             <StyledSelect
@@ -808,7 +808,7 @@ export default function NumbersPage() {
               placeholder={bulkRegenerateProvider ? "Select voice" : "Select provider first"}
               fullWidth
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-muted-foreground">
               Provider and voice are required for bulk regeneration.
             </p>
           </div>
@@ -818,7 +818,7 @@ export default function NumbersPage() {
               type="button"
               onClick={confirmBulkRegenerateAudio}
               disabled={isBulkRegenerating || !bulkRegenerateProvider || !bulkRegenerateVoiceId}
-              className="flex-1 px-4 py-2 text-sm font-semibold text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 text-sm font-semibold text-primary-foreground bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isBulkRegenerating ? "Regenerating..." : "Regenerate"}
             </button>
@@ -834,7 +834,7 @@ export default function NumbersPage() {
                 }
               }}
               disabled={isBulkRegenerating}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-medium text-foreground bg-muted rounded-lg hover:bg-gray-200 disabled:opacity-50"
             >
               Cancel
             </button>
@@ -876,7 +876,7 @@ export default function NumbersPage() {
 
               {/* Number Value */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Number Value *
                 </label>
                 <input
@@ -885,7 +885,7 @@ export default function NumbersPage() {
                   min="1"
                   value={formData.number_value}
                   onChange={(e) => setFormData({ ...formData, number_value: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-4 py-3 rounded-lg border border-input bg-card text-foreground focus:border-brand-500 focus:ring-2 focus:ring-brand-500"
                 />
               </div>
             </div>
@@ -893,7 +893,7 @@ export default function NumbersPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Word */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Word *
                 </label>
                 <input
@@ -901,13 +901,13 @@ export default function NumbersPage() {
                   required
                   value={formData.word}
                   onChange={(e) => setFormData({ ...formData, word: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-4 py-3 rounded-lg border border-input bg-card text-foreground focus:border-brand-500 focus:ring-2 focus:ring-brand-500"
                 />
               </div>
 
               {/* Word Normalized */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Normalized *
                 </label>
                 <input
@@ -915,7 +915,7 @@ export default function NumbersPage() {
                   required
                   value={formData.word_normalized}
                   onChange={(e) => setFormData({ ...formData, word_normalized: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-4 py-3 rounded-lg border border-input bg-card text-foreground focus:border-brand-500 focus:ring-2 focus:ring-brand-500"
                 />
               </div>
             </div>
@@ -938,7 +938,7 @@ export default function NumbersPage() {
 
               {/* Difficulty */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Difficulty (1-5) *
                 </label>
                 <input
@@ -948,49 +948,49 @@ export default function NumbersPage() {
                   max="5"
                   value={formData.difficulty_level}
                   onChange={(e) => setFormData({ ...formData, difficulty_level: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-4 py-3 rounded-lg border border-input bg-card text-foreground focus:border-brand-500 focus:ring-2 focus:ring-brand-500"
                 />
               </div>
             </div>
 
             {/* IPA Pronunciation */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 IPA Pronunciation
               </label>
               <input
                 type="text"
                 value={formData.ipa_pronunciation}
                 onChange={(e) => setFormData({ ...formData, ipa_pronunciation: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500"
+                className="w-full px-4 py-3 rounded-lg border border-input bg-card text-foreground focus:border-brand-500 focus:ring-2 focus:ring-brand-500"
               />
             </div>
 
             {/* Usage Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Usage Notes
               </label>
               <textarea
                 rows={3}
                 value={formData.usage_notes}
                 onChange={(e) => setFormData({ ...formData, usage_notes: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500"
+                className="w-full px-4 py-3 rounded-lg border border-input bg-card text-foreground focus:border-brand-500 focus:ring-2 focus:ring-brand-500"
               />
             </div>
 
             {/* Submit Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-border">
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-600 transition-colors"
+                className="px-6 py-2.5 text-sm font-medium text-foreground bg-card border border-input rounded-lg hover:bg-accent focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-600 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 text-sm font-medium text-white dark:text-gray-900 bg-brand-600 rounded-lg hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-300 dark:focus:ring-brand-800 transition-colors"
+                className="px-6 py-2.5 text-sm font-medium text-primary-foreground bg-brand-600 rounded-lg hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-300 dark:focus:ring-brand-800 transition-colors"
               >
                 {editingNumber ? "Update Number" : "Create Number"}
               </button>

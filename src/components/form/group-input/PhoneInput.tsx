@@ -35,13 +35,13 @@ function CountrySelect({
           "focus:ring-0",
           "dark:text-gray-400",
           position === "start"
-            ? "rounded-l-lg border-r border-gray-200 dark:border-gray-800"
-            : "rounded-r-lg border-l border-gray-200 dark:border-gray-800",
+            ? "rounded-l-lg border-r border-border"
+            : "rounded-r-lg border-l border-border",
         )}
       >
         <SelectPrimitive.Value />
         <SelectPrimitive.Icon asChild>
-          <ChevronDownIcon className="size-4 text-gray-400 dark:text-gray-500" />
+          <ChevronDownIcon className="size-4 text-muted-foreground" />
         </SelectPrimitive.Icon>
       </SelectPrimitive.Trigger>
 
@@ -49,7 +49,7 @@ function CountrySelect({
         <SelectPrimitive.Content
           position="popper"
           sideOffset={4}
-          className="z-50 max-h-64 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-900"
+          className="z-50 max-h-64 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-border bg-card p-1 shadow-lg"
         >
           <SelectPrimitive.Viewport className="p-1">
             {countries.map((country) => (

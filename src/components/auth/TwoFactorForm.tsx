@@ -132,11 +132,11 @@ export default function TwoFactorForm({
   return (
     <div>
       <div className="mb-5 sm:mb-8">
-        <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
+        <h1 className="mb-2 font-semibold text-foreground text-title-sm sm:text-title-md">
           Check your email
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Enter the six-digit code sent to <span className="font-medium text-gray-700 dark:text-gray-300">{email}</span>.
+        <p className="text-sm text-muted-foreground">
+          Enter the six-digit code sent to <span className="font-medium text-foreground">{email}</span>.
         </p>
       </div>
 
@@ -145,7 +145,7 @@ export default function TwoFactorForm({
 
       <form onSubmit={handleVerify} className="space-y-6">
         <div>
-          <span id="admin-2fa-label" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span id="admin-2fa-label" className="mb-2 block text-sm font-medium text-foreground">
             Verification code
           </span>
           <div role="group" aria-labelledby="admin-2fa-label" className="flex justify-between gap-2">
@@ -166,11 +166,11 @@ export default function TwoFactorForm({
                 disabled={isLoading || secondsLeft === 0}
                 aria-label={`Digit ${index + 1} of ${OTP_LENGTH}`}
                 aria-describedby="admin-2fa-expiry"
-                className="h-14 w-full rounded-lg border border-gray-300 bg-transparent text-center font-mono text-2xl text-gray-800 outline-none transition focus:border-brand-500 focus:ring-3 focus:ring-brand-500/10 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                className="h-14 w-full rounded-lg border border-input bg-transparent text-center font-mono text-2xl text-foreground outline-none transition focus:border-brand-500 focus:ring-3 focus:ring-brand-500/10 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-900"
               />
             ))}
           </div>
-          <p id="admin-2fa-expiry" className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
+          <p id="admin-2fa-expiry" className="mt-2 text-center text-xs text-muted-foreground">
             {secondsLeft > 0 ? `Code expires in ${minutes}:${seconds}` : "This code has expired. Resend a new code."}
           </p>
         </div>
@@ -178,13 +178,13 @@ export default function TwoFactorForm({
         <button
           type="submit"
           disabled={isLoading || secondsLeft === 0 || code.length !== 6}
-          className="w-full rounded-lg bg-brand-600 px-5 py-3 text-sm font-medium text-white dark:text-gray-900 transition hover:bg-brand-700 disabled:opacity-50 dark:bg-brand-500 dark:hover:bg-brand-600"
+          className="w-full rounded-lg bg-brand-600 px-5 py-3 text-sm font-medium text-primary-foreground transition hover:bg-brand-700 disabled:opacity-50 dark:bg-brand-500 dark:hover:bg-brand-600"
         >
           {isLoading ? "Verifying..." : "Verify and sign in"}
         </button>
 
         <div className="flex items-center justify-between text-sm">
-          <button type="button" onClick={onBack} disabled={isLoading} className="text-gray-500 hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-200">
+          <button type="button" onClick={onBack} disabled={isLoading} className="text-muted-foreground hover:text-foreground disabled:opacity-50">
             Wrong email? Go back
           </button>
           <button type="button" onClick={handleResend} disabled={isLoading} className="font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50 dark:text-brand-400">

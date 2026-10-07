@@ -67,7 +67,7 @@ export default function RecentActivityFeed({
           {isError?.response?.status ? ` (HTTP ${isError.response.status})` : ""}
         </p>
         {isError?.message && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center max-w-md">
+          <p className="text-xs text-muted-foreground text-center max-w-md">
             {isError.message}
           </p>
         )}
@@ -78,7 +78,7 @@ export default function RecentActivityFeed({
   if (!items || items.length === 0) {
     return (
       <div className="flex items-center justify-center h-[350px]">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Activity feed will be displayed here once user actions are tracked.
         </p>
       </div>
@@ -95,19 +95,19 @@ export default function RecentActivityFeed({
           return (
             <div
               key={`${item.source}:${item.id}`}
-              className="rounded-lg border border-gray-200 bg-gray-50/50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/40"
+              className="rounded-lg border border-border bg-muted/40 px-4 py-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  <div className="text-sm font-medium text-foreground truncate">
                     {summarize(item)}
                   </div>
-                  <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 truncate">
+                  <div className="mt-0.5 text-xs text-muted-foreground truncate">
                     {actor}
                     {item.target_type ? ` • ${item.target_type}` : ""}
                   </div>
                 </div>
-                <div className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                <div className="shrink-0 text-xs text-muted-foreground">
                   {formatTimestamp(item.timestamp)}
                 </div>
               </div>

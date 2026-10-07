@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="relative p-6 bg-white z-1 dark:bg-gray-900 sm:p-0">
+    <div className="relative p-6 bg-card z-1 sm:p-0">
       <div className="relative flex lg:flex-row w-full h-screen justify-center flex-col dark:bg-gray-900 sm:p-0">
         <SignInForm />
         <div className="lg:w-1/2 w-full h-full bg-brand-950 dark:bg-white/5 lg:grid items-center hidden">

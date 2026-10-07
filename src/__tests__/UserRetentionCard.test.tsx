@@ -136,7 +136,7 @@ describe("UserRetentionCard", () => {
     render(<UserRetentionCard />);
 
     const changeSpan = screen.getByText(/vs last month/);
-    expect(changeSpan.className).toContain("text-gray-500");
+    expect(changeSpan.className).toContain("text-muted-foreground");
     expect(changeSpan.className).not.toContain("text-green-600");
     expect(changeSpan.className).not.toContain("text-red-600");
   });
