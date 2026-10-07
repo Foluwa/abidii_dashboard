@@ -175,17 +175,21 @@ describe('CurriculumCoursesListPage', () => {
     });
   });
 
-  it('deletes a course from the list actions', async () => {
-    const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+  it('deletes a course from the list actions after confirming', async () => {
     render(<CurriculumCoursesListPage />);
 
     await userEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
+
+    // Deleting now goes through the shared confirmation modal (it used to
+    // be window.confirm); nothing is deleted until it's confirmed.
+    expect(await screen.findByText('Delete course')).toBeInTheDocument();
+    expect(mockDeleteAdminCourse).not.toHaveBeenCalled();
+    const deleteButtons = screen.getAllByRole('button', { name: 'Delete' });
+    await userEvent.click(deleteButtons[deleteButtons.length - 1]);
 
     await waitFor(() => {
       expect(mockDeleteAdminCourse).toHaveBeenCalledWith('c1');
       expect(mockRefresh).toHaveBeenCalled();
     });
-
-    confirmSpy.mockRestore();
   });
 });

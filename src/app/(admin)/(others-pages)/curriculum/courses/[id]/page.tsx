@@ -339,8 +339,8 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
     return (
       <div className="space-y-6">
         <PageBreadCrumb pageTitle="Course" />
-        <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
-          <div className="w-6 h-6 border-2 border-gray-200 border-t-brand-600 rounded-full animate-spin" />
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <div className="w-6 h-6 border-2 border-input border-t-brand-600 rounded-full animate-spin" />
           <span>Loading course…</span>
         </div>
       </div>
@@ -352,7 +352,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
       <div className="flex items-start justify-between gap-4">
         <div>
           <PageBreadCrumb pageTitle="Course" />
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Course validation and publishing (server-authoritative)
           </p>
         </div>
@@ -361,14 +361,14 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
           <button
             onClick={() => setIsCourseEditorOpen(true)}
             disabled={isValidating || isPublishing || isUnpublishing || isCourseSaving}
-            className="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-white/[0.03]"
+            className="px-4 py-2 text-sm font-medium text-foreground bg-card border border-input rounded-lg hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Edit Course
           </button>
           <button
             onClick={handleValidate}
             disabled={isValidating || isPublishing || isUnpublishing}
-            className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-brand-500 dark:hover:bg-brand-600"
+            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-brand-500 dark:hover:bg-brand-600"
           >
             {isValidating ? 'Validating…' : 'Validate'}
           </button>
@@ -423,12 +423,12 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Publish Blockers</h2>
-              <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+              <h2 className="text-base font-semibold text-foreground">Publish Blockers</h2>
+              <p className="mt-1 text-sm text-foreground">
                 {blockingSections.length} section{blockingSections.length === 1 ? '' : 's'} cannot publish because
                 there is no published blueprint and the section is not explicitly configured as coming soon.
               </p>
-              <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+              <p className="mt-2 text-xs text-muted-foreground">
                 Fast rule: either publish a blueprint for the section, or mark the section as coming soon
                 (`published` + `disabled`).
               </p>
@@ -437,7 +437,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
             <div className="flex flex-wrap gap-2">
               <Link
                 href={`/curriculum/editor?courseKey=${encodeURIComponent(course.course_key)}`}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+                className="rounded-lg border border-input bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
               >
                 Open Curriculum Editor
               </Link>
@@ -461,14 +461,14 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
               return (
                 <div
                   key={row.section.id}
-                  className="rounded-lg border border-amber-200 bg-white p-3 dark:border-amber-900/60 dark:bg-gray-900"
+                  className="rounded-lg border border-amber-200 bg-card p-3 dark:border-amber-900/60"
                 >
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                      <div className="text-sm font-semibold text-foreground">
                         {row.unit.title} / {row.section.title}
                       </div>
-                      <div className="mt-1 text-xs font-mono text-gray-600 dark:text-gray-400">
+                      <div className="mt-1 text-xs font-mono text-muted-foreground">
                         {row.unit.unit_key}.{row.section.section_key}
                       </div>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -487,7 +487,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                           <StatusBadge status="warning" label="No blueprint" />
                         )}
                       </div>
-                      <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                      <p className="mt-2 text-xs text-muted-foreground">
                         {row.hasDraftOrArchivedBlueprint
                           ? 'A blueprint exists, but it is not published yet.'
                           : 'This section does not have any published blueprint yet.'}
@@ -504,7 +504,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                       <button
                         onClick={() => handleMarkSectionsComingSoon([row.section.id])}
                         disabled={isPending || pendingSectionIds.length > 0}
-                        className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-900 dark:bg-gray-900 dark:text-amber-300 dark:hover:bg-amber-950/30"
+                        className="rounded-lg border border-amber-300 bg-card px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-900 dark:text-amber-300 dark:hover:bg-amber-950/30"
                       >
                         {isPending ? 'Saving…' : 'Mark Coming Soon'}
                       </button>
@@ -519,51 +519,51 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
 
       {/* Course summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">Details</h2>
+        <div className="p-4 bg-card border border-border rounded-lg">
+          <h2 className="text-base font-semibold text-foreground">Details</h2>
           <dl className="mt-3 space-y-2 text-sm">
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Course Key</dt>
-              <dd className="text-gray-900 dark:text-white font-mono break-all">{course?.course_key}</dd>
+              <dt className="text-muted-foreground">Course Key</dt>
+              <dd className="text-foreground font-mono break-all">{course?.course_key}</dd>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Title</dt>
-              <dd className="text-gray-900 dark:text-white">{course?.title}</dd>
+              <dt className="text-muted-foreground">Title</dt>
+              <dd className="text-foreground">{course?.title}</dd>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Status</dt>
+              <dt className="text-muted-foreground">Status</dt>
               <dd>{statusBadge}</dd>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Enabled</dt>
+              <dt className="text-muted-foreground">Enabled</dt>
               <dd>{enabledBadge}</dd>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Availability</dt>
+              <dt className="text-muted-foreground">Availability</dt>
               <dd>{availabilityBadge}</dd>
             </div>
           </dl>
           {isLoadingCurriculum && (
-            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Loading curriculum overview…</p>
+            <p className="mt-3 text-xs text-muted-foreground">Loading curriculum overview…</p>
           )}
         </div>
 
-        <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">IDs</h2>
+        <div className="p-4 bg-card border border-border rounded-lg">
+          <h2 className="text-base font-semibold text-foreground">IDs</h2>
           <dl className="mt-3 space-y-2 text-sm">
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Course ID</dt>
-              <dd className="text-gray-900 dark:text-white font-mono break-all">{course?.id}</dd>
+              <dt className="text-muted-foreground">Course ID</dt>
+              <dd className="text-foreground font-mono break-all">{course?.id}</dd>
             </div>
           </dl>
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-lg border border-border bg-card p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Manual QA Workflow</h2>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            <h2 className="text-base font-semibold text-foreground">Manual QA Workflow</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Persistent publish signoff for device verification. Publish now requires both server validation and these manual checks.
             </p>
           </div>
@@ -571,7 +571,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
         </div>
 
         {manualQaChecks.length === 0 ? (
-          <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+          <div className="mt-4 text-sm text-muted-foreground">
             No manual QA checks are currently defined for this course.
           </div>
         ) : (
@@ -583,24 +583,24 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
               return (
                 <div
                   key={check.key}
-                  className="rounded-lg border border-gray-200 p-3 dark:border-gray-800"
+                  className="rounded-lg border border-border p-3"
                 >
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                        <div className="text-sm font-semibold text-foreground">
                           {check.label}
                         </div>
                         {getQaStatusBadge(check.status)}
                       </div>
-                      <div className="mt-1 text-xs font-mono text-gray-500 dark:text-gray-400">
+                      <div className="mt-1 text-xs font-mono text-muted-foreground">
                         {check.key}
                       </div>
                       {check.detail && (
-                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{check.detail}</p>
+                        <p className="mt-2 text-sm text-muted-foreground">{check.detail}</p>
                       )}
                       {check.verified_at && (
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <p className="mt-2 text-xs text-muted-foreground">
                           Verified at {new Date(check.verified_at).toLocaleString()}
                           {check.verified_by ? ` by ${check.verified_by}` : ''}
                         </p>
@@ -620,7 +620,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                           }))
                         }
                         placeholder="Build / device label"
-                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200"
+                        className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
                       />
                       <textarea
                         value={draft.notes}
@@ -635,7 +635,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                         }
                         placeholder="Verification notes"
                         rows={2}
-                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200"
+                        className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
                       />
                       <div className="flex flex-wrap gap-2">
                         <button
@@ -648,7 +648,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                         <button
                           onClick={() => handleQaUpdate(check, 'pending_manual')}
                           disabled={disabled}
-                          className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                          className="rounded-lg border border-input px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Reset Pending
                         </button>
@@ -672,29 +672,29 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
       <ValidationResultViewer validation={validation} />
 
       {/* Minimal units/sections overview */}
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Units & Sections</h3>
-          <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+      <div className="bg-card border border-border rounded-lg">
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground">Units & Sections</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
             Publish-readiness view: raw section state, public availability, blueprint state, and direct actions
           </p>
         </div>
 
         <div className="p-4">
           {!curriculum ? (
-            <div className="text-sm text-gray-600 dark:text-gray-400">No curriculum data available.</div>
+            <div className="text-sm text-muted-foreground">No curriculum data available.</div>
           ) : curriculum.units.length === 0 ? (
-            <div className="text-sm text-gray-600 dark:text-gray-400">No units found.</div>
+            <div className="text-sm text-muted-foreground">No units found.</div>
           ) : (
             <div className="space-y-4">
               {curriculum.units.map((unit) => (
-                <div key={unit.id} className="border border-gray-200 dark:border-gray-800 rounded-lg">
-                  <div className="p-3 bg-gray-50 dark:bg-gray-800 flex items-center justify-between gap-3">
+                <div key={unit.id} className="border border-border rounded-lg">
+                  <div className="p-3 bg-muted/50 flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                      <div className="text-sm font-semibold text-foreground">
                         {unit.title}
                       </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400 font-mono">{unit.unit_key}</div>
+                      <div className="text-xs text-muted-foreground font-mono">{unit.unit_key}</div>
                     </div>
                     <StatusBadge
                       status={
@@ -710,24 +710,24 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
 
                   <div className="p-3">
                     {unit.sections.length === 0 ? (
-                      <div className="text-sm text-gray-600 dark:text-gray-400">No sections.</div>
+                      <div className="text-sm text-muted-foreground">No sections.</div>
                     ) : (
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
-                            <tr className="text-left text-gray-600 dark:text-gray-400">
+                            <tr className="text-left text-muted-foreground">
                               <th className="py-2">Section</th>
                               <th className="py-2">Publish State</th>
                               <th className="py-2">Blueprint</th>
                               <th className="py-2">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                          <tbody className="divide-y divide-border">
                             {unit.sections.map((section) => (
-                              <tr key={section.id} className="text-gray-900 dark:text-white">
+                              <tr key={section.id} className="text-foreground">
                                 <td className="py-2">
                                   <div className="font-medium">{section.title}</div>
-                                  <div className="text-xs text-gray-600 dark:text-gray-400 font-mono">
+                                  <div className="text-xs text-muted-foreground font-mono">
                                     {section.section_key}
                                   </div>
                                 </td>
@@ -769,7 +769,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                                         />
                                       )}
                                       {section.blueprint_key && (
-                                        <div className="text-xs text-gray-600 dark:text-gray-400 font-mono break-all">
+                                        <div className="text-xs text-muted-foreground font-mono break-all">
                                           {section.blueprint_key}
                                         </div>
                                       )}
@@ -786,7 +786,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                                           ? `/curriculum/lesson-blueprints/${section.lesson_blueprint_id}`
                                           : `/curriculum/lesson-blueprints/new?courseKey=${encodeURIComponent(curriculum.course_key)}&sectionId=${encodeURIComponent(section.id)}`
                                       }
-                                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                      className="rounded-lg border border-input px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/50"
                                     >
                                       {section.lesson_blueprint_id ? 'Open Blueprint' : 'Create Blueprint'}
                                     </Link>

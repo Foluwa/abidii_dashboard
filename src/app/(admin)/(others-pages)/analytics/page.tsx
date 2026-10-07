@@ -45,7 +45,7 @@ export default function GameAnalyticsPage() {
         </Alert>
         <button
           onClick={() => refresh()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           Retry
         </button>
@@ -59,13 +59,13 @@ export default function GameAnalyticsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <PageBreadCrumb pageTitle="Game Analytics" />
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Track game performance, error patterns, and player progress across all games
           </p>
         </div>
         <button
           onClick={() => refresh()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           Refresh Data
         </button>
@@ -74,7 +74,7 @@ export default function GameAnalyticsPage() {
       <AnalyticsTabs />
 
       {/* Filters */}
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-4">
+      <div className="bg-card border border-border rounded-lg p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <StyledSelect
@@ -124,7 +124,7 @@ export default function GameAnalyticsPage() {
                 setSelectedGame('');
                 setDays(30);
               }}
-              className="w-full px-4 py-2 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="w-full px-4 py-2 text-muted-foreground border border-input rounded-lg hover:bg-muted/50"
             >
               Reset Filters
             </button>
@@ -136,54 +136,54 @@ export default function GameAnalyticsPage() {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />
+            <div key={i} className="h-32 bg-muted rounded-lg animate-pulse" />
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Sessions</p>
-            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
-              {analytics?.overview.total_sessions?.toLocaleString() || '0'}
+          <div className="p-6 bg-card border border-border rounded-lg">
+            <p className="text-sm font-medium text-muted-foreground">Total Sessions</p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">
+              {analytics?.overview?.total_sessions?.toLocaleString() || '0'}
             </p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {analytics?.overview.unique_users?.toLocaleString() || '0'} unique users
-            </p>
-          </div>
-          <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Overall Accuracy</p>
-            <p className={`mt-2 text-3xl font-semibold ${
-              (analytics?.overview.accuracy || 0) >= 80 ? 'text-green-600 dark:text-green-400' :
-              (analytics?.overview.accuracy || 0) >= 60 ? 'text-yellow-600 dark:text-yellow-400' :
-              'text-red-600 dark:text-red-400'
-            }`}>
-              {analytics?.overview.accuracy || 0}%
-            </p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {analytics?.overview.correct_answers?.toLocaleString() || '0'} / {analytics?.overview.total_rounds?.toLocaleString() || '0'} correct
+            <p className="mt-1 text-xs text-muted-foreground">
+              {analytics?.overview?.unique_users?.toLocaleString() || '0'} unique users
             </p>
           </div>
-          <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Average Score</p>
+          <div className="p-6 bg-card border border-border rounded-lg">
+            <p className="text-sm font-medium text-muted-foreground">Overall Accuracy</p>
             <p className={`mt-2 text-3xl font-semibold ${
-              (analytics?.overview.avg_score || 0) >= 80 ? 'text-green-600 dark:text-green-400' :
-              (analytics?.overview.avg_score || 0) >= 60 ? 'text-yellow-600 dark:text-yellow-400' :
+              (analytics?.overview?.accuracy || 0) >= 80 ? 'text-green-600 dark:text-green-400' :
+              (analytics?.overview?.accuracy || 0) >= 60 ? 'text-yellow-600 dark:text-yellow-400' :
               'text-red-600 dark:text-red-400'
             }`}>
-              {analytics?.overview.avg_score || 0}%
+              {analytics?.overview?.accuracy || 0}%
             </p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-muted-foreground">
+              {analytics?.overview?.correct_answers?.toLocaleString() || '0'} / {analytics?.overview?.total_rounds?.toLocaleString() || '0'} correct
+            </p>
+          </div>
+          <div className="p-6 bg-card border border-border rounded-lg">
+            <p className="text-sm font-medium text-muted-foreground">Average Score</p>
+            <p className={`mt-2 text-3xl font-semibold ${
+              (analytics?.overview?.avg_score || 0) >= 80 ? 'text-green-600 dark:text-green-400' :
+              (analytics?.overview?.avg_score || 0) >= 60 ? 'text-yellow-600 dark:text-yellow-400' :
+              'text-red-600 dark:text-red-400'
+            }`}>
+              {analytics?.overview?.avg_score || 0}%
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
               Average session score
             </p>
           </div>
-          <div className="p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Perfect Scores</p>
+          <div className="p-6 bg-card border border-border rounded-lg">
+            <p className="text-sm font-medium text-muted-foreground">Perfect Scores</p>
             <p className="mt-2 text-3xl font-semibold text-green-600 dark:text-green-400">
-              {analytics?.overview.perfect_scores?.toLocaleString() || '0'}
+              {analytics?.overview?.perfect_scores?.toLocaleString() || '0'}
             </p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {analytics?.overview.total_sessions > 0
-                ? ((analytics?.overview.perfect_scores / analytics?.overview.total_sessions) * 100).toFixed(1)
+            <p className="mt-1 text-xs text-muted-foreground">
+              {analytics?.overview?.total_sessions > 0
+                ? ((analytics?.overview?.perfect_scores / analytics?.overview?.total_sessions) * 100).toFixed(1)
                 : 0}% of sessions
             </p>
           </div>
@@ -193,31 +193,31 @@ export default function GameAnalyticsPage() {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Game Type Breakdown */}
-        <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Performance by Game</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-2">Performance by Game</h3>
+          <p className="text-sm text-muted-foreground mb-4">
             Compare stats across different game types
           </p>
           {isLoading ? (
-            <div className="h-64 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+            <div className="h-64 bg-muted rounded animate-pulse" />
           ) : analytics?.by_game_type?.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-800">
+                <thead className="border-b">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Game</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Sessions</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Accuracy</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Perfect</th>
+                    <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Game</th>
+                    <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Sessions</th>
+                    <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Accuracy</th>
+                    <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Perfect</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-border">
                   {analytics?.by_game_type.map((game: any) => (
-                    <tr key={game.game_key} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                    <tr key={game.game_key} className="hover:bg-muted/50">
+                      <td className="px-4 py-3 font-medium text-foreground">
                         {formatGameName(game.game_key)}
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-900 dark:text-white">
+                      <td className="px-4 py-3 text-right text-foreground">
                         {game.total_sessions.toLocaleString()}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -229,7 +229,7 @@ export default function GameAnalyticsPage() {
                           {game.accuracy}%
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-900 dark:text-white">
+                      <td className="px-4 py-3 text-right text-foreground">
                         {game.perfect_scores}
                       </td>
                     </tr>
@@ -238,27 +238,27 @@ export default function GameAnalyticsPage() {
               </table>
             </div>
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">No game data available for this period</p>
+            <p className="text-muted-foreground text-center py-8">No game data available for this period</p>
           )}
         </div>
 
         {/* Error Categories */}
-        <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Error Categories</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-2">Error Categories</h3>
+          <p className="text-sm text-muted-foreground mb-4">
             Where players are struggling the most
           </p>
           {isLoading ? (
-            <div className="h-64 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+            <div className="h-64 bg-muted rounded animate-pulse" />
           ) : analytics?.error_categories?.length > 0 ? (
             <div className="space-y-3">
               {analytics?.error_categories.map((cat: any, idx: number) => (
                 <div key={idx} className="flex items-center gap-3">
-                  <div className="w-24 text-sm font-medium text-gray-900 dark:text-white truncate" title={cat.category}>
+                  <div className="w-24 text-sm font-medium text-foreground truncate" title={cat.category}>
                     {cat.category}
                   </div>
                   <div className="flex-1">
-                    <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-5 overflow-hidden">
+                    <div className="bg-muted rounded-full h-5 overflow-hidden">
                       <div
                         className={`h-5 rounded-full flex items-center justify-end px-2 text-xs text-white font-medium ${
                           idx === 0 ? 'bg-red-500' : idx === 1 ? 'bg-orange-500' : 'bg-blue-500'
@@ -269,56 +269,56 @@ export default function GameAnalyticsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="w-14 text-right text-sm text-gray-500 dark:text-gray-400">
+                  <div className="w-14 text-right text-sm text-muted-foreground">
                     {cat.count}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">No error data available</p>
+            <p className="text-muted-foreground text-center py-8">No error data available</p>
           )}
         </div>
       </div>
 
       {/* Most Challenging Content - Full Width */}
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Most Challenging Content</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+      <div className="bg-card border border-border rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-2">Most Challenging Content</h3>
+        <p className="text-sm text-muted-foreground mb-4">
           Items where all players are struggling - focus teaching efforts here
         </p>
         {isLoading ? (
-          <div className="h-96 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+          <div className="h-96 bg-muted rounded animate-pulse" />
         ) : analytics?.most_missed?.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-800">
+              <thead className="border-b">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Content</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Type</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Misses</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Attempts</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Accuracy</th>
+                  <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">Content</th>
+                  <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">Type</th>
+                  <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">Misses</th>
+                  <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">Total Attempts</th>
+                  <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">Accuracy</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-border">
                 {analytics?.most_missed.slice(0, 15).map((item: any, idx: number) => (
-                  <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white max-w-[300px] truncate" title={item.prompt_display}>
+                  <tr key={idx} className="hover:bg-muted/50">
+                    <td className="px-3 py-2.5 font-medium text-foreground max-w-[300px] truncate" title={item.prompt_display}>
                       {item.prompt_display || 'N/A'}
                     </td>
-                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
-                      <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">
+                    <td className="px-3 py-2.5 text-muted-foreground">
+                      <span className="px-2 py-1 bg-muted rounded text-xs">
                         {item.content_type}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right text-red-600 dark:text-red-400 font-semibold">
+                    <td className="px-3 py-2.5 text-right text-red-600 dark:text-red-400 font-semibold">
                       {item.miss_count}
                     </td>
-                    <td className="px-6 py-4 text-right text-gray-900 dark:text-white">
+                    <td className="px-3 py-2.5 text-right text-foreground">
                       {item.total_attempts}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-3 py-2.5 text-right">
                       <span className={`font-semibold ${
                         item.accuracy >= 70 ? 'text-yellow-600 dark:text-yellow-400' :
                         'text-red-600 dark:text-red-400'
@@ -332,38 +332,38 @@ export default function GameAnalyticsPage() {
             </table>
           </div>
         ) : (
-          <p className="text-gray-500 dark:text-gray-400 text-center py-8">No missed content data available</p>
+          <p className="text-muted-foreground text-center py-8">No missed content data available</p>
         )}
       </div>
 
       {/* Daily Trend */}
-      <div className="bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Daily Activity Trend</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+      <div className="bg-card border border-border rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-2">Daily Activity Trend</h3>
+        <p className="text-sm text-muted-foreground mb-4">
           Sessions and performance over time
         </p>
         {isLoading ? (
-          <div className="h-64 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+          <div className="h-64 bg-muted rounded animate-pulse" />
         ) : analytics?.daily_trend?.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-800">
+              <thead className="border-b">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Sessions</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Correct</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Wrong</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Avg Score</th>
+                  <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">Date</th>
+                  <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">Sessions</th>
+                  <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">Correct</th>
+                  <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">Wrong</th>
+                  <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">Avg Score</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-border">
                 {analytics?.daily_trend.slice(-14).reverse().map((day: any, idx: number) => (
-                  <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{day.date}</td>
-                    <td className="px-6 py-4 text-right text-gray-900 dark:text-white">{day.sessions}</td>
-                    <td className="px-6 py-4 text-right text-green-600 dark:text-green-400">{day.correct}</td>
-                    <td className="px-6 py-4 text-right text-red-600 dark:text-red-400">{day.wrong}</td>
-                    <td className="px-6 py-4 text-right">
+                  <tr key={idx} className="hover:bg-muted/50">
+                    <td className="px-3 py-2.5 font-medium text-foreground">{day.date}</td>
+                    <td className="px-3 py-2.5 text-right text-foreground">{day.sessions}</td>
+                    <td className="px-3 py-2.5 text-right text-green-600 dark:text-green-400">{day.correct}</td>
+                    <td className="px-3 py-2.5 text-right text-red-600 dark:text-red-400">{day.wrong}</td>
+                    <td className="px-3 py-2.5 text-right">
                       <span className={`font-semibold ${
                         day.avg_score >= 80 ? 'text-green-600 dark:text-green-400' :
                         day.avg_score >= 60 ? 'text-yellow-600 dark:text-yellow-400' :
@@ -378,7 +378,7 @@ export default function GameAnalyticsPage() {
             </table>
           </div>
         ) : (
-          <p className="text-gray-500 dark:text-gray-400 text-center py-8">No daily trend data available</p>
+          <p className="text-muted-foreground text-center py-8">No daily trend data available</p>
         )}
       </div>
     </div>

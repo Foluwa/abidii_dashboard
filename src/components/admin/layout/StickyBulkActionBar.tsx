@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { FiTrash2, FiVolume2, FiX } from 'react-icons/fi';
+import { Trash2, Volume2, X } from "lucide-react";
 
 export interface BulkAction {
   label: string;
@@ -33,15 +33,15 @@ export function StickyBulkActionBar({
   const itemLabel = selectedCount === 1 ? itemName : `${itemName}s`;
 
   return (
-    <div className="sticky top-4 z-30 rounded-xl border border-gray-200 bg-white/95 p-4 shadow-lg backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/95">
+    <div className="sticky top-4 z-30 rounded-xl border border-border bg-white/95 p-4 shadow-lg backdrop-blur-sm dark:bg-gray-900/95">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span className="text-sm font-medium text-foreground">
           {selectedCount} {itemLabel} selected
         </span>
         <div className="flex items-center gap-2">
           <button
             onClick={onClear}
-            className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
           >
             Clear
           </button>
@@ -51,7 +51,7 @@ export function StickyBulkActionBar({
               'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900';
             const colorClasses = isDanger
               ? 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500'
-              : 'bg-brand-600 text-white hover:bg-brand-700 focus:ring-brand-500';
+              : 'bg-brand-600 text-white dark:text-gray-900 hover:bg-brand-700 focus:ring-brand-500';
 
             return (
               <button

@@ -17,25 +17,25 @@ export default function ExerciseAccuracyTable({
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="bg-gray-50 dark:bg-gray-800">
+        <thead className="border-b">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Step</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Type</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">First Attempt</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Eventual</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Attempts to Correct</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Attempts (n)</th>
+            <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Step</th>
+            <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">Type</th>
+            <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">First Attempt</th>
+            <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Eventual</th>
+            <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Attempts to Correct</th>
+            <th className="px-4 py-2.5 text-right text-sm font-medium text-muted-foreground">Attempts (n)</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="divide-y divide-border">
           {rows.map((row) => (
-            <tr key={row.exercise_key} title={`exercise_key: ${row.exercise_key}`} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-              <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
+            <tr key={row.exercise_key} title={`exercise_key: ${row.exercise_key}`} className="hover:bg-muted/50">
+              <td className="px-4 py-3 font-medium text-foreground">
                 {row.exercise_index !== null ? `Step ${row.exercise_index + 1}` : '—'}
               </td>
-              <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{row.exercise_type ?? '—'}</td>
+              <td className="px-4 py-3 text-muted-foreground">{row.exercise_type ?? '—'}</td>
               <td className="px-4 py-3 text-right">
-                <span className="font-semibold text-gray-900 dark:text-white">
+                <span className="font-semibold text-foreground">
                   {formatRate(row.first_attempt_accuracy)}
                 </span>
                 <span className="ml-1 text-xs text-gray-400">
@@ -43,19 +43,19 @@ export default function ExerciseAccuracyTable({
                 </span>
               </td>
               <td className="px-4 py-3 text-right">
-                <span className="font-semibold text-gray-900 dark:text-white">
+                <span className="font-semibold text-foreground">
                   {formatRate(row.eventual_accuracy)}
                 </span>
                 <span className="ml-1 text-xs text-gray-400">
                   ({row.eventual_correct_count}/{row.first_attempt_count})
                 </span>
               </td>
-              <td className="px-4 py-3 text-right text-gray-900 dark:text-white">
+              <td className="px-4 py-3 text-right text-foreground">
                 {row.eventual_correct_count > 0 && row.mean_attempts_to_correct !== null
                   ? row.mean_attempts_to_correct.toFixed(1)
                   : '—'}
               </td>
-              <td className="px-4 py-3 text-right text-gray-500 dark:text-gray-400">
+              <td className="px-4 py-3 text-right text-muted-foreground">
                 {row.raw_attempt_rows.toLocaleString()}
               </td>
             </tr>

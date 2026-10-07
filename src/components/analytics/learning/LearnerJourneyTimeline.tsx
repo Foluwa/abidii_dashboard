@@ -42,15 +42,15 @@ export default function LearnerJourneyTimeline({ sessions }: { sessions: Analyti
         return (
           <li
             key={session.session_id}
-            className="relative rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+            className="relative rounded-lg border border-border bg-card p-4"
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <p className="text-xs text-gray-400 dark:text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   #{idx + 1} · {new Date(session.started_at).toLocaleString()}
                 </p>
-                <p className="font-medium text-gray-900 dark:text-white">{session.blueprint_key}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{session.lesson_kind}</p>
+                <p className="font-medium text-foreground">{session.blueprint_key}</p>
+                <p className="text-xs text-muted-foreground">{session.lesson_kind}</p>
               </div>
               <span
                 className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -69,40 +69,40 @@ export default function LearnerJourneyTimeline({ sessions }: { sessions: Analyti
 
             <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
               <div>
-                <dt className="text-xs text-gray-400 dark:text-gray-500">Final score</dt>
-                <dd className="text-gray-900 dark:text-white">{session.final_score ?? '—'}</dd>
+                <dt className="text-xs text-muted-foreground">Final score</dt>
+                <dd className="text-foreground">{session.final_score ?? '—'}</dd>
               </div>
               <div>
-                <dt className="text-xs text-gray-400 dark:text-gray-500">Exercises</dt>
-                <dd className="text-gray-900 dark:text-white">
+                <dt className="text-xs text-muted-foreground">Exercises</dt>
+                <dd className="text-foreground">
                   {session.completed_steps ?? '—'} / {session.total_steps ?? '—'}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-gray-400 dark:text-gray-500">Attempts</dt>
-                <dd className="text-gray-900 dark:text-white">{session.attempt_count}</dd>
+                <dt className="text-xs text-muted-foreground">Attempts</dt>
+                <dd className="text-foreground">{session.attempt_count}</dd>
               </div>
               <div>
-                <dt className="text-xs text-gray-400 dark:text-gray-500">First-attempt accuracy</dt>
-                <dd className="text-gray-900 dark:text-white">{formatRate(session.first_attempt_accuracy)}</dd>
+                <dt className="text-xs text-muted-foreground">First-attempt accuracy</dt>
+                <dd className="text-foreground">{formatRate(session.first_attempt_accuracy)}</dd>
               </div>
               <div>
-                <dt className="text-xs text-gray-400 dark:text-gray-500">Duration</dt>
-                <dd className="text-gray-900 dark:text-white">{formatDurationMs(sessionDurationMs(session))}</dd>
+                <dt className="text-xs text-muted-foreground">Duration</dt>
+                <dd className="text-foreground">{formatDurationMs(sessionDurationMs(session))}</dd>
               </div>
               <div>
-                <dt className="text-xs text-gray-400 dark:text-gray-500">Content version</dt>
-                <dd className="text-gray-900 dark:text-white" title={session.blueprint_content_hash ?? undefined}>
+                <dt className="text-xs text-muted-foreground">Content version</dt>
+                <dd className="text-foreground" title={session.blueprint_content_hash ?? undefined}>
                   {formatVersionLabel(session.blueprint_content_hash)}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-gray-400 dark:text-gray-500">App version</dt>
-                <dd className="text-gray-900 dark:text-white">{session.app_version ?? '—'}</dd>
+                <dt className="text-xs text-muted-foreground">App version</dt>
+                <dd className="text-foreground">{session.app_version ?? '—'}</dd>
               </div>
               <div>
-                <dt className="text-xs text-gray-400 dark:text-gray-500">Platform</dt>
-                <dd className="text-gray-900 dark:text-white">{session.platform ?? '—'}</dd>
+                <dt className="text-xs text-muted-foreground">Platform</dt>
+                <dd className="text-foreground">{session.platform ?? '—'}</dd>
               </div>
             </dl>
           </li>

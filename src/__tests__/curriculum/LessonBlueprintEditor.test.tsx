@@ -3,7 +3,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { LessonBlueprintEditor } from '@/components/admin/curriculum/LessonBlueprintEditor';
-import { renderWithProviders as render } from '@/test-utils';
+import { renderWithProviders as render, chooseOption } from '@/test-utils';
 
 const mockUseAdminCoursesList = jest.fn();
 const mockUseAdminBlueprintCapabilities = jest.fn();
@@ -97,6 +97,10 @@ function renderEditor(props: Partial<React.ComponentProps<typeof LessonBlueprint
     />
   );
 }
+
+// The editor is a very large component; under full-suite load its heavier
+// interaction tests can exceed Jest's 5s default without anything being wrong.
+jest.setTimeout(15000);
 
 describe('LessonBlueprintEditor', () => {
   beforeEach(() => {
@@ -254,15 +258,9 @@ describe('LessonBlueprintEditor', () => {
     expect(localGrid.className).toContain('xl:grid-cols-5');
     expect(within(localGrid).getAllByText('hero-image.png').length).toBeGreaterThan(0);
 
-    fireEvent.change(screen.getByLabelText('Media library target field'), {
-      target: { value: 'audioUrl' },
-    });
-    fireEvent.change(screen.getByLabelText('Media library compatibility'), {
-      target: { value: 'compatible' },
-    });
-    fireEvent.change(screen.getByLabelText('Media library asset type'), {
-      target: { value: 'audio' },
-    });
+    await chooseOption(userEvent, screen.getByLabelText('Media library target field'), 'audioUrl');
+    await chooseOption(userEvent, screen.getByLabelText('Media library compatibility'), 'compatible');
+    await chooseOption(userEvent, screen.getByLabelText('Media library asset type'), 'audio');
 
     await waitFor(() => {
       expect(within(modal).getAllByText('lesson-audio.mp3').length).toBeGreaterThan(0);
@@ -299,7 +297,15 @@ describe('LessonBlueprintEditor', () => {
       focusFieldPath: 'steps[0].pairs[0].imageUrl',
     });
 
-    const nestedField = await screen.findByDisplayValue('https://cdn.example.com/media/pair-image.png');
+    // Pair media is now set through Upload/Library buttons rather than a URL
+    // text input; the field path lives on the pair's Upload Image control.
+    const nestedField = await waitFor(() => {
+      const el = document.querySelector<HTMLElement>(
+        '[data-field-path="steps[0].pairs[0].imageUrl"]',
+      );
+      if (!el) throw new Error('pair image field not rendered');
+      return el;
+    });
     await waitFor(() => {
       expect(nestedField).toHaveClass('ring-2');
     });

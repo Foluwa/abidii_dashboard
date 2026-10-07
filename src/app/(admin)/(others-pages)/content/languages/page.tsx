@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { useLanguages } from "@/hooks/useApi";
+import { useAdminLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import type { Language } from "@/types/api";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
@@ -9,10 +9,11 @@ import Toast from "@/components/ui/toast/Toast";
 import Alert from "@/components/ui/alert/Alert";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
-import { FiGlobe, FiUsers, FiBook, FiMusic } from "react-icons/fi";
+import { Book, Globe, Music, Users } from "lucide-react";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 export default function LanguagesPage() {
-  const { languages, isLoading, isError, refresh } = useLanguages();
+  const { languages, isLoading, isError, refresh } = useAdminLanguages();
   const [showModal, setShowModal] = useState(false);
   const [editingLanguage, setEditingLanguage] = useState<Language | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
@@ -37,7 +38,7 @@ export default function LanguagesPage() {
   useEffect(() => {
     if (!showModal) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeModal();
+      if (event.key === "Escape" && !event.defaultPrevented) closeModal();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -148,95 +149,95 @@ export default function LanguagesPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Languages</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Languages</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Manage available languages in the platform
           </p>
         </div>
         <button
           onClick={openCreateModal}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           + Add Language
         </button>
       </div>
 
       {/* Languages Table - Desktop Only */}
-      <div className="hidden lg:block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+      <div className="hidden lg:block bg-card border border-border rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <thead className="border-b border-border">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                   Language
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                   Code
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-3 py-2.5 text-center text-sm font-medium text-muted-foreground">
                   Letters
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-3 py-2.5 text-center text-sm font-medium text-muted-foreground">
                   Phonics
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-3 py-2.5 text-center text-sm font-medium text-muted-foreground">
                   Learners
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-3 py-2.5 text-center text-sm font-medium text-muted-foreground">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-3 py-2.5 text-right text-sm font-medium text-muted-foreground">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-border">
               {languages.map((language: Language) => (
-                <tr key={language.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                  <td className="px-6 py-4">
+                <tr key={language.id} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-3 py-2.5">
                     <div className="flex items-center space-x-3">
                       <span className="text-2xl">{language.flag_emoji || "🌐"}</span>
                       <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        <div className="text-sm font-medium text-foreground">
                           {language.name}
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                        <div className="text-sm text-muted-foreground">
                           {language.native_name}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 uppercase">
-                      <FiGlobe className="mr-1" />
+                  <td className="px-3 py-2.5">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground uppercase">
+                      <Globe className="mr-1" />
                       {language.iso_639_3}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-2.5 text-center">
                     <div className="flex items-center justify-center space-x-1">
-                      <FiBook className="text-gray-400" size={14} />
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      <Book className="text-gray-400" size={14} />
+                      <span className="text-sm font-semibold text-foreground">
                         {language.total_letters || 0}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-2.5 text-center">
                     <div className="flex items-center justify-center space-x-1">
-                      <FiMusic className="text-gray-400" size={14} />
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      <Music className="text-gray-400" size={14} />
+                      <span className="text-sm font-semibold text-foreground">
                         {language.total_phonics || 0}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-2.5 text-center">
                     <div className="flex items-center justify-center space-x-1">
-                      <FiUsers className="text-gray-400" size={14} />
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      <Users className="text-gray-400" size={14} />
+                      <span className="text-sm font-semibold text-foreground">
                         {language.total_learners ?? language.user_count ?? 0}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-2.5 text-center">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         !language.is_deleted
@@ -247,7 +248,7 @@ export default function LanguagesPage() {
                       {!language.is_deleted ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-3 py-2.5 text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         onClick={() => openEditModal(language)}
@@ -275,16 +276,16 @@ export default function LanguagesPage() {
         {languages.map((language: Language) => (
           <div
             key={language.id}
-            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 hover:shadow-md transition-shadow"
+            className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center space-x-3">
                 <span className="text-3xl">{language.flag_emoji || "🌐"}</span>
                 <div>
-                  <div className="text-base font-semibold text-gray-900 dark:text-white">
+                  <div className="text-base font-semibold text-foreground">
                     {language.name}
                   </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <div className="text-sm text-muted-foreground">
                     {language.native_name}
                   </div>
                 </div>
@@ -300,41 +301,41 @@ export default function LanguagesPage() {
               </span>
             </div>
             <div className="flex items-center space-x-2 mb-3">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 uppercase">
-                <FiGlobe className="mr-1" />
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground uppercase">
+                <Globe className="mr-1" />
                 {language.iso_639_3}
               </span>
             </div>
             <div className="grid grid-cols-3 gap-3 mb-3">
               <div className="text-center">
                 <div className="flex items-center justify-center space-x-1 mb-1">
-                  <FiBook className="text-gray-400" size={14} />
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <Book className="text-gray-400" size={14} />
+                  <span className="text-sm font-semibold text-foreground">
                     {language.total_letters || 0}
                   </span>
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Letters</div>
+                <div className="text-xs text-muted-foreground">Letters</div>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center space-x-1 mb-1">
-                  <FiMusic className="text-gray-400" size={14} />
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <Music className="text-gray-400" size={14} />
+                  <span className="text-sm font-semibold text-foreground">
                     {language.total_phonics || 0}
                   </span>
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Phonics</div>
+                <div className="text-xs text-muted-foreground">Phonics</div>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center space-x-1 mb-1">
-                  <FiUsers className="text-gray-400" size={14} />
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <Users className="text-gray-400" size={14} />
+                  <span className="text-sm font-semibold text-foreground">
                     {language.total_learners ?? language.user_count ?? 0}
                   </span>
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Learners</div>
+                <div className="text-xs text-muted-foreground">Learners</div>
               </div>
             </div>
-            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-border">
               <button
                 onClick={() => openEditModal(language)}
                 className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
@@ -354,11 +355,11 @@ export default function LanguagesPage() {
 
       {languages.length === 0 && (
         <div className="text-center py-12">
-          <FiGlobe className="mx-auto text-gray-400 text-5xl mb-4" />
-          <p className="text-gray-500 dark:text-gray-400">No languages found</p>
+          <Globe className="mx-auto text-gray-400 text-5xl mb-4" />
+          <p className="text-muted-foreground">No languages found</p>
           <button
             onClick={openCreateModal}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             Add Your First Language
           </button>
@@ -373,13 +374,12 @@ export default function LanguagesPage() {
             if (e.target === e.currentTarget) closeModal();
           }}
         >
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full m-4 max-h-[90vh] overflow-y-auto"
+          <DialogPanel
+            aria-labelledby="language-dialog-title"
+            className="bg-card rounded-lg shadow-xl max-w-md w-full m-4 max-h-[90vh] overflow-y-auto"
           >
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <div className="p-6 border-b border-border">
+              <h2 id="language-dialog-title" className="text-xl font-semibold text-foreground">
                 {editingLanguage ? "Edit Language" : "Add Language"}
               </h2>
             </div>
@@ -390,42 +390,42 @@ export default function LanguagesPage() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Language Name *
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2.5 border border-input rounded-lg bg-background text-foreground"
                   required
                   placeholder="e.g., Yoruba"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Native Name *
                 </label>
                 <input
                   type="text"
                   value={formData.native_name}
                   onChange={(e) => setFormData({ ...formData, native_name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2.5 border border-input rounded-lg bg-background text-foreground"
                   required
                   placeholder="e.g., Èdè Yorùbá"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   ISO 639-3 Code *
                 </label>
                 <input
                   type="text"
                   value={formData.iso_639_3}
                   onChange={(e) => setFormData({ ...formData, iso_639_3: e.target.value.toLowerCase() })}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white uppercase"
+                  className="w-full px-4 py-2.5 border border-input rounded-lg bg-background text-foreground uppercase"
                   required
                   maxLength={3}
                   placeholder="e.g., yor"
@@ -433,14 +433,14 @@ export default function LanguagesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Flag Emoji
                 </label>
                 <input
                   type="text"
                   value={formData.flag_emoji}
                   onChange={(e) => setFormData({ ...formData, flag_emoji: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2.5 border border-input rounded-lg bg-background text-foreground"
                   placeholder="🇳🇬"
                 />
               </div>
@@ -464,9 +464,9 @@ export default function LanguagesPage() {
                   id="is_active"
                   checked={!formData.is_deleted}
                   onChange={(e) => setFormData({ ...formData, is_deleted: !e.target.checked })}
-                  className="h-4 w-4 text-blue-600 rounded border-gray-300 dark:border-gray-600"
+                  className="h-4 w-4 text-blue-600 rounded border-input"
                 />
-                <label htmlFor="is_active" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                <label htmlFor="is_active" className="ml-2 text-sm text-foreground">
                   Active (visible to users)
                 </label>
               </div>
@@ -475,19 +475,19 @@ export default function LanguagesPage() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="flex-1 px-4 py-2 border border-input text-foreground rounded-lg hover:bg-accent transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                 >
                   {editingLanguage ? "Update" : "Create"}
                 </button>
               </div>
             </form>
-          </div>
+          </DialogPanel>
         </div>
       )}
 

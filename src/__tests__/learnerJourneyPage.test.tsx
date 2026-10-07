@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders as render } from '@/test-utils';
 
 import LearnerJourneyPage from '@/app/(admin)/(others-pages)/analytics/learning/users/[userId]/page';
+import { chooseOption } from '@/test-utils';
 
 const mockUseLearnerJourney = jest.fn();
 const mockUseAdminCoursesList = jest.fn();
@@ -110,7 +111,7 @@ describe('LearnerJourneyPage', () => {
 
   it('passes the selected course filter through to the hook', async () => {
     render(<LearnerJourneyPage />);
-    await userEvent.selectOptions(screen.getByLabelText('Course'), 'c1');
+    await chooseOption(userEvent, screen.getByLabelText('Course'), 'c1');
     const lastCall = mockUseLearnerJourney.mock.calls.at(-1)?.[1];
     expect(lastCall.courseId).toBe('c1');
   });

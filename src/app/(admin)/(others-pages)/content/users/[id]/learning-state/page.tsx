@@ -20,10 +20,10 @@ function ProgressBar({ pct }: { pct: number }) {
     clamped >= 100 ? 'bg-green-500' : clamped >= 50 ? 'bg-blue-500' : 'bg-amber-400';
   return (
     <div className="flex items-center gap-2" title={`${clamped.toFixed(1)}%`}>
-      <div className="h-2 w-32 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+      <div className="h-2 w-32 rounded-full bg-muted overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${clamped}%` }} />
       </div>
-      <span className="text-xs text-gray-600 dark:text-gray-400">{clamped.toFixed(1)}%</span>
+      <span className="text-xs text-muted-foreground">{clamped.toFixed(1)}%</span>
     </div>
   );
 }
@@ -79,15 +79,15 @@ function LessonStatusBadge({ status }: { status: LessonProgress['status'] }) {
 
 function LessonRow({ lesson }: { lesson: LessonProgress }) {
   return (
-    <div className="flex flex-col gap-1 border-b border-gray-100 py-2 last:border-b-0 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-1 border-b border-border py-2 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <span className="truncate text-sm text-gray-800 dark:text-gray-200">
+          <span className="truncate text-sm text-foreground">
             {lesson.section_title ?? lesson.section_key ?? lesson.section_id}
           </span>
           <LessonStatusBadge status={lesson.status} />
         </div>
-        <div className="mt-0.5 flex flex-wrap gap-x-3 text-[11px] text-gray-500 dark:text-gray-400">
+        <div className="mt-0.5 flex flex-wrap gap-x-3 text-[11px] text-muted-foreground">
           {lesson.started_at && <span>Started {formatDate(lesson.started_at)}</span>}
           {lesson.completed_at && <span>Completed {formatDate(lesson.completed_at)}</span>}
           {!lesson.completed_at && lesson.last_activity_at && (
@@ -122,7 +122,7 @@ function LessonProgressPanel({ userId, courseId }: { userId: string; courseId: s
   const units: UnitLessonProgress[] = progress?.units ?? [];
 
   if (isLoading) {
-    return <p className="text-xs text-gray-500 dark:text-gray-400">Loading lesson progress…</p>;
+    return <p className="text-xs text-muted-foreground">Loading lesson progress…</p>;
   }
   if (isError) {
     return (
@@ -135,17 +135,17 @@ function LessonProgressPanel({ userId, courseId }: { userId: string; courseId: s
     );
   }
   if (units.length === 0) {
-    return <p className="text-xs text-gray-500 dark:text-gray-400">No units found for this course.</p>;
+    return <p className="text-xs text-muted-foreground">No units found for this course.</p>;
   }
 
   return (
     <div className="space-y-4">
       {units.map((unit) => (
         <div key={unit.unit_id}>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {unit.unit_title ?? unit.unit_key ?? unit.unit_id}
           </p>
-          <div className="rounded-lg border border-gray-100 px-3 dark:border-gray-800">
+          <div className="rounded-lg border border-border px-3">
             {unit.sections.map((lesson) => (
               <LessonRow key={lesson.section_id} lesson={lesson} />
             ))}
@@ -229,15 +229,15 @@ function CourseCard({
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+    <div className="rounded-xl border border-border p-4">
       {/* Course header */}
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="font-semibold text-gray-800 dark:text-white">
+          <p className="font-semibold text-foreground">
             {course.course_title ?? course.course_key ?? course.course_id}
           </p>
           {course.course_key && (
-            <p className="font-mono text-xs text-gray-500 dark:text-gray-400">{course.course_key}</p>
+            <p className="font-mono text-xs text-muted-foreground">{course.course_key}</p>
           )}
         </div>
         <span
@@ -259,40 +259,40 @@ function CourseCard({
       {/* Detail grid */}
       <dl className="mb-4 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
         <div>
-          <dt className="text-gray-500 dark:text-gray-400">Enrolled</dt>
-          <dd className="text-gray-800 dark:text-gray-200">{formatDate(course.enrolled_at)}</dd>
+          <dt className="text-muted-foreground">Enrolled</dt>
+          <dd className="text-foreground">{formatDate(course.enrolled_at)}</dd>
         </div>
         <div>
-          <dt className="text-gray-500 dark:text-gray-400">Last Active</dt>
-          <dd className="text-gray-800 dark:text-gray-200">{formatDate(course.last_active_at)}</dd>
+          <dt className="text-muted-foreground">Last Active</dt>
+          <dd className="text-foreground">{formatDate(course.last_active_at)}</dd>
         </div>
         {course.is_completed && (
           <div>
-            <dt className="text-gray-500 dark:text-gray-400">Completed</dt>
-            <dd className="text-gray-800 dark:text-gray-200">{formatDate(course.completed_at)}</dd>
+            <dt className="text-muted-foreground">Completed</dt>
+            <dd className="text-foreground">{formatDate(course.completed_at)}</dd>
           </div>
         )}
         {course.current_unit_id && (
           <div className="col-span-2 sm:col-span-3">
-            <dt className="text-gray-500 dark:text-gray-400">Current Unit</dt>
-            <dd className="font-mono text-gray-800 dark:text-gray-200">{course.current_unit_id}</dd>
+            <dt className="text-muted-foreground">Current Unit</dt>
+            <dd className="font-mono text-foreground">{course.current_unit_id}</dd>
           </div>
         )}
         {course.current_section_id && (
           <div className="col-span-2 sm:col-span-3">
-            <dt className="text-gray-500 dark:text-gray-400">Current Section</dt>
-            <dd className="font-mono text-gray-800 dark:text-gray-200">{course.current_section_id}</dd>
+            <dt className="text-muted-foreground">Current Section</dt>
+            <dd className="font-mono text-foreground">{course.current_section_id}</dd>
           </div>
         )}
         <div className="col-span-2 sm:col-span-3">
-          <dt className="text-gray-500 dark:text-gray-400">Course ID</dt>
-          <dd className="font-mono text-gray-800 dark:text-gray-200">{course.course_id}</dd>
+          <dt className="text-muted-foreground">Course ID</dt>
+          <dd className="font-mono text-foreground">{course.course_id}</dd>
         </div>
       </dl>
 
       {/* Admin actions */}
-      <div className="border-t border-gray-100 pt-3 dark:border-gray-700">
-        <p className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">Admin actions</p>
+      <div className="border-t border-border pt-3">
+        <p className="mb-2 text-xs font-medium text-muted-foreground">Admin actions</p>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={handleReset}
@@ -303,20 +303,20 @@ function CourseCard({
           </button>
           <button
             onClick={() => setShowPointerForm((v) => !v)}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="rounded-lg border border-input px-3 py-1.5 text-xs text-foreground hover:bg-muted/50"
           >
             Set Pointer
           </button>
           <button
             onClick={() => setShowLessons((v) => !v)}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="rounded-lg border border-input px-3 py-1.5 text-xs text-foreground hover:bg-muted/50"
           >
             {showLessons ? 'Hide Lesson Progress' : 'View Lesson Progress'}
           </button>
         </div>
 
         {showLessons && (
-          <div className="mt-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+          <div className="mt-3 rounded-lg border border-border p-3">
             <LessonProgressPanel userId={userId} courseId={course.course_id} />
           </div>
         )}
@@ -324,42 +324,42 @@ function CourseCard({
           <p className="mt-1 text-xs text-red-600 dark:text-red-400">{resetError}</p>
         )}
         {showPointerForm && (
-          <div className="mt-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-            <p className="mb-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+          <div className="mt-3 rounded-lg border border-border p-3">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
               Set current pointer (leave blank to keep existing)
             </p>
             <div className="space-y-2">
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400">Unit ID (UUID)</label>
+                <label className="block text-xs text-muted-foreground">Unit ID (UUID)</label>
                 <input
                   type="text"
                   value={pointerUnit}
                   onChange={(e) => setPointerUnit(e.target.value)}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  className="mt-0.5 w-full rounded border border-gray-300 bg-white px-2 py-1 font-mono text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                  className="mt-0.5 w-full rounded border border-input bg-card px-2 py-1 font-mono text-xs dark:text-gray-200"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400">Section ID (UUID)</label>
+                <label className="block text-xs text-muted-foreground">Section ID (UUID)</label>
                 <input
                   type="text"
                   value={pointerSection}
                   onChange={(e) => setPointerSection(e.target.value)}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  className="mt-0.5 w-full rounded border border-gray-300 bg-white px-2 py-1 font-mono text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                  className="mt-0.5 w-full rounded border border-input bg-card px-2 py-1 font-mono text-xs dark:text-gray-200"
                 />
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={handleSetPointer}
                   disabled={pointerState === 'loading' || (!pointerUnit && !pointerSection)}
-                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700 disabled:opacity-40"
+                  className="rounded-lg bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
                 >
                   {pointerState === 'loading' ? 'Saving…' : pointerState === 'success' ? '✓ Saved' : 'Save'}
                 </button>
                 <button
                   onClick={() => setShowPointerForm(false)}
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400"
+                  className="rounded-lg border border-input px-3 py-1.5 text-xs text-muted-foreground hover:bg-gray-50"
                 >
                   Cancel
                 </button>
@@ -434,27 +434,27 @@ export default function UserLearningStatePage() {
         </div>
       )}
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+      <div className="rounded-xl border border-border bg-card p-6">
         {/* Header row */}
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-800 dark:text-white">
+            <h1 className="text-xl font-semibold text-foreground">
               Learning State
             </h1>
             {userId && (
-              <p className="mt-0.5 font-mono text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-0.5 font-mono text-xs text-muted-foreground">
                 user_id: {userId}
               </p>
             )}
           </div>
           <div className="flex items-center gap-2">
             {/* Phase 18: active-learner filter */}
-            <label className="flex cursor-pointer items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+            <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
               <input
                 type="checkbox"
                 checked={activeOnly}
                 onChange={(e) => setActiveOnly(e.target.checked)}
-                className="h-3.5 w-3.5 rounded border-gray-300 text-blue-600"
+                className="h-3.5 w-3.5 rounded border-input text-blue-600"
                 aria-label="Show active learners only"
               />
               Active only
@@ -462,7 +462,7 @@ export default function UserLearningStatePage() {
             {userId && (
               <Link
                 href={`/analytics/learning/users/${userId}`}
-                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="rounded-lg border border-input px-3 py-1.5 text-sm text-foreground hover:bg-muted/50"
               >
                 View Learning Journey
               </Link>
@@ -470,7 +470,7 @@ export default function UserLearningStatePage() {
             <button
               onClick={handleCopyJson}
               disabled={isLoading || !state}
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="rounded-lg border border-input px-3 py-1.5 text-sm text-foreground hover:bg-muted/50 disabled:opacity-40"
             >
               {copyStatus === 'copied'
                 ? '✓ Copied'
@@ -480,7 +480,7 @@ export default function UserLearningStatePage() {
             </button>
             <button
               onClick={() => refresh()}
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="rounded-lg border border-input px-3 py-1.5 text-sm text-foreground hover:bg-muted/50"
             >
               Refresh
             </button>
@@ -489,7 +489,7 @@ export default function UserLearningStatePage() {
 
         {/* Loading */}
         {isLoading && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+          <p className="text-sm text-muted-foreground">Loading…</p>
         )}
 
         {/* Error */}
@@ -506,7 +506,7 @@ export default function UserLearningStatePage() {
 
         {/* Empty */}
         {!isLoading && !isError && courses.length === 0 && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             {activeOnly && allCourses.length > 0
               ? 'No active course enrollments (all courses at 0% progress).'
               : 'No course enrollments found for this user.'}

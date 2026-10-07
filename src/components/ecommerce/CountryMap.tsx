@@ -75,7 +75,7 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
           {isError?.response?.status ? ` (HTTP ${isError.response.status})` : ""}
         </p>
         {isError?.message && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center max-w-md">
+          <p className="text-xs text-muted-foreground text-center max-w-md">
             {isError.message}
           </p>
         )}
@@ -85,7 +85,7 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
 
   if (!isLoading && !hasRegionData) {
     return (
-      <div className="flex h-[320px] items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+      <div className="flex h-[320px] items-center justify-center text-sm text-muted-foreground">
         No geographic distribution data available
       </div>
     );

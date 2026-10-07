@@ -13,10 +13,11 @@
 
 import React, { useState } from 'react';
 import { useWordDetail, useExampleGeneration, useExampleManagement } from '@/hooks/useWordManagement';
-import { FiX, FiVolume2, FiPlus, FiEdit2, FiTrash2, FiLoader, FiSave, FiRefreshCw, FiEye, FiEyeOff } from 'react-icons/fi';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
+import { Eye, EyeOff, Loader, Pencil, Plus, RefreshCw, Save as SaveIcon, Trash2, Volume2, X } from "lucide-react";
+import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 interface WordDetailModalProps {
   wordId: string;
@@ -289,8 +290,8 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
   if (isLoading || !wordDetail) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-8">
-          <FiLoader className="animate-spin text-brand-600 w-8 h-8" />
+        <div className="bg-card rounded-lg p-8" role="status" aria-label="Loading word">
+          <Loader className="animate-spin text-brand-600 w-8 h-8" />
         </div>
       </div>
     );
@@ -300,9 +301,9 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-gray-900 rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogPanel className="bg-card rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClose={onClose} aria-label="Word details">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div className="flex-1">
             {isEditingLemma ? (
               <div className="flex items-center gap-2">
@@ -310,49 +311,49 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                   type="text"
                   value={editedLemma}
                   onChange={(e) => setEditedLemma(e.target.value)}
-                  className="text-2xl font-bold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-3 py-1 text-gray-900 dark:text-white"
+                  className="text-2xl font-bold bg-card border border-input rounded px-3 py-1 text-foreground"
                   autoFocus
                 />
                 <button
                   onClick={handleUpdateLemma}
                   className="p-2 bg-green-600 hover:bg-green-700 text-white rounded"
                 >
-                  <FiSave size={18} />
+                  <SaveIcon size={18} />
                 </button>
                 <button
                   onClick={() => setIsEditingLemma(false)}
-                  className="p-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded"
+                  className="p-2 bg-muted-foreground/30 hover:bg-gray-400 dark:hover:bg-gray-500 text-foreground rounded"
                 >
-                  <FiX size={18} />
+                  <X size={18} />
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h2 className="text-2xl font-bold text-foreground">
                   {word.lemma}
                 </h2>
                 <button
                   onClick={startEditLemma}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="text-gray-400 hover:text-foreground"
                 >
-                  <FiEdit2 size={18} />
+                  <Pencil size={18} />
                 </button>
               </div>
             )}
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {word.pos} · {word.language_name}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="text-gray-400 hover:text-foreground"
           >
-            <FiX size={24} />
+            <X size={24} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 dark:border-gray-700 px-6">
+        <div className="border-b border-border px-6">
           <div className="flex gap-4">
             {['overview', 'examples', 'audio'].map((tab) => (
               <button
@@ -361,7 +362,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                 className={`py-3 px-4 border-b-2 font-medium text-sm ${
                   activeTab === tab
                     ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    : 'border-transparent text-muted-foreground hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -377,17 +378,17 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
               {/* Senses and Glosses */}
               {wordDetail.senses.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
                     Definitions
                   </h3>
                   <div className="space-y-4">
                     {wordDetail.senses.map((sense, idx) => (
                       <div
                         key={sense.id}
-                        className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4"
+                        className="bg-muted/50 rounded-lg p-4"
                       >
                         <div className="flex items-start gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 bg-brand-600 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                          <span className="flex-shrink-0 w-6 h-6 bg-brand-600 text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
                             {idx + 1}
                           </span>
                           <div className="flex-1 space-y-2">
@@ -399,25 +400,25 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                                       type="text"
                                       value={editedGloss}
                                       onChange={(e) => setEditedGloss(e.target.value)}
-                                      className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-gray-900 dark:text-white"
+                                      className="flex-1 bg-background border border-input rounded px-3 py-2 text-foreground"
                                       autoFocus
                                     />
                                     <button
                                       onClick={() => handleUpdateGloss(gloss.id)}
                                       className="p-2 bg-green-600 hover:bg-green-700 text-white rounded"
                                     >
-                                      <FiSave size={16} />
+                                      <SaveIcon size={16} />
                                     </button>
                                     <button
                                       onClick={() => setEditingGlossId(null)}
-                                      className="p-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded"
+                                      className="p-2 bg-muted-foreground/30 hover:bg-gray-400 dark:hover:bg-gray-500 text-foreground rounded"
                                     >
-                                      <FiX size={16} />
+                                      <X size={16} />
                                     </button>
                                   </div>
                                 ) : (
                                   <div className="flex items-start justify-between gap-2">
-                                    <p className="flex-1 text-gray-900 dark:text-white">
+                                    <p className="flex-1 text-foreground">
                                       {gloss.definition}
                                     </p>
                                     <div className="flex items-center gap-1">
@@ -428,22 +429,22 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                                         title="Generate audio for this translation"
                                       >
                                         {generatingGlossId === gloss.id ? (
-                                          <FiLoader className="animate-spin" size={14} />
+                                          <Loader className="animate-spin" size={14} />
                                         ) : (
-                                          <FiVolume2 size={14} />
+                                          <Volume2 size={14} />
                                         )}
                                       </button>
                                       <button
                                         onClick={() => startEditGloss(gloss.id, gloss.definition)}
-                                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                        className="text-gray-400 hover:text-foreground"
                                       >
-                                        <FiEdit2 size={14} />
+                                        <Pencil size={14} />
                                       </button>
                                     </div>
                                   </div>
                                 )}
                                 {sense.glosses.length > 1 && (
-                                  <span className="inline-block mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                  <span className="inline-block mt-1 text-xs text-muted-foreground">
                                     Variant {glossIdx + 1}
                                   </span>
                                 )}
@@ -472,20 +473,20 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
               {/* Pronunciations */}
               {wordDetail.pronunciations.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
                     Pronunciations
                   </h3>
                   <div className="space-y-2">
                     {wordDetail.pronunciations.map((pron) => (
                       <div
                         key={pron.id}
-                        className="flex items-center gap-3 text-gray-700 dark:text-gray-300"
+                        className="flex items-center gap-3 text-foreground"
                       >
-                        <span className="font-mono text-sm bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded">
+                        <span className="font-mono text-sm bg-muted px-3 py-1 rounded">
                           {pron.ipa}
                         </span>
                         {pron.dialect && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted-foreground">
                             ({pron.dialect})
                           </span>
                         )}
@@ -498,14 +499,14 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
               {/* Forms */}
               {wordDetail.forms.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
                     Forms
                   </h3>
                   <div className="space-y-3">
                     {wordDetail.forms.map((form) => (
                       <div key={form.id}>
                         {editingFormId === form.id ? (
-                          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
+                          <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                             <div>
                               <StyledSelect
                                 label="Form Type"
@@ -521,14 +522,14 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              <label className="block text-sm font-medium text-foreground mb-1">
                                 Form Text
                               </label>
                               <input
                                 type="text"
                                 value={editedForm}
                                 onChange={(e) => setEditedForm(e.target.value)}
-                                className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-gray-900 dark:text-white"
+                                className="w-full bg-background border border-input rounded px-3 py-2 text-foreground"
                               />
                             </div>
                             <div className="flex gap-2">
@@ -536,24 +537,24 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                                 onClick={() => handleUpdateForm(form.id)}
                                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2"
                               >
-                                <FiSave />
+                                <SaveIcon />
                                 Save
                               </button>
                               <button
                                 onClick={() => setEditingFormId(null)}
-                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-lg"
+                                className="px-4 py-2 bg-muted-foreground/30 hover:bg-gray-400 dark:hover:bg-gray-500 text-foreground rounded-lg"
                               >
                                 Cancel
                               </button>
                             </div>
                           </div>
                         ) : (
-                          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 flex items-center justify-between">
+                          <div className="bg-muted/50 rounded-lg p-3 flex items-center justify-between">
                             <div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                              <div className="text-sm text-muted-foreground">
                                 {form.form_type}
                               </div>
-                              <div className="font-medium text-gray-900 dark:text-white">
+                              <div className="font-medium text-foreground">
                                 {form.form}
                               </div>
                             </div>
@@ -561,7 +562,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                               onClick={() => startEditForm(form)}
                               className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
                             >
-                              <FiEdit2 />
+                              <Pencil />
                             </button>
                           </div>
                         )}
@@ -574,16 +575,16 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
               {/* Related Terms */}
               {wordDetail.related_terms.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
                     Related Terms
                   </h3>
                   <div className="space-y-2">
                     {wordDetail.related_terms.map((rel) => (
                       <div
                         key={rel.id}
-                        className="flex items-center gap-3 text-gray-700 dark:text-gray-300"
+                        className="flex items-center gap-3 text-foreground"
                       >
-                        <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">
+                        <span className="text-xs text-muted-foreground uppercase">
                           {rel.relationship_type}:
                         </span>
                         <span className="font-medium">{rel.related_word}</span>
@@ -598,7 +599,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
           {activeTab === 'examples' && (
             <>
               <div className="flex items-center justify-between gap-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-foreground">
                   Usage Examples ({wordDetail.examples.length})
                 </h3>
                 <div className="flex items-center gap-3">
@@ -608,7 +609,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                     max="10"
                     value={exampleCount}
                     onChange={(e) => setExampleCount(parseInt(e.target.value) || 1)}
-                    className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-center text-sm"
+                    className="w-16 px-3 py-2 border border-input rounded-lg bg-card text-foreground text-center text-sm"
                     placeholder="Count"
                   />
                   <button
@@ -617,22 +618,22 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                       setPromptMessagesPreview(null);
                     } : handlePreviewExamplesPrompt}
                     disabled={isPreviewingPrompt}
-                    className="px-3 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-60 text-gray-800 dark:text-gray-200 rounded-lg flex items-center gap-2 text-sm"
+                    className="px-3 py-2 bg-muted hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-60 text-foreground rounded-lg flex items-center gap-2 text-sm"
                     title="Preview the exact prompt sent to OpenAI"
                   >
                     {promptPreview ? (
                       <>
-                        <FiEyeOff />
+                        <EyeOff />
                         Hide Prompt
                       </>
                     ) : isPreviewingPrompt ? (
                       <>
-                        <FiLoader className="animate-spin" />
+                        <Loader className="animate-spin" />
                         Previewing...
                       </>
                     ) : (
                       <>
-                        <FiEye />
+                        <Eye />
                         Preview Prompt
                       </>
                     )}
@@ -640,16 +641,16 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                   <button
                     onClick={handleGenerateExamples}
                     disabled={isGenerating}
-                    className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-gray-400 text-white rounded-lg flex items-center gap-2 text-sm"
+                    className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-gray-400 text-primary-foreground rounded-lg flex items-center gap-2 text-sm"
                   >
                     {isGenerating ? (
                       <>
-                        <FiLoader className="animate-spin" />
+                        <Loader className="animate-spin" />
                         Generating...
                       </>
                     ) : (
                       <>
-                        <FiPlus />
+                        <Plus />
                         Generate Examples
                       </>
                     )}
@@ -658,24 +659,24 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
               </div>
 
               {promptPreview && (
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                <div className="bg-muted/50 rounded-lg p-4 border border-border">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <div className="text-sm font-semibold text-foreground">
                       Prompt Preview
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-xs text-muted-foreground">
                       Includes meaning/gloss + constraints
                     </div>
                   </div>
-                  <pre className="text-xs whitespace-pre-wrap text-gray-800 dark:text-gray-200 max-h-56 overflow-auto">
+                  <pre className="text-xs whitespace-pre-wrap text-foreground max-h-56 overflow-auto">
                     {promptPreview}
                   </pre>
                   {promptMessagesPreview && (
                     <details className="mt-3">
-                      <summary className="cursor-pointer text-xs text-gray-600 dark:text-gray-300">
+                      <summary className="cursor-pointer text-xs text-muted-foreground">
                         Show messages JSON
                       </summary>
-                      <pre className="mt-2 text-xs whitespace-pre-wrap text-gray-700 dark:text-gray-200 max-h-56 overflow-auto">
+                      <pre className="mt-2 text-xs whitespace-pre-wrap text-foreground max-h-56 overflow-auto">
                         {JSON.stringify(promptMessagesPreview, null, 2)}
                       </pre>
                     </details>
@@ -684,7 +685,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
               )}
 
               {wordDetail.examples.length === 0 ? (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-12 text-muted-foreground">
                   No examples yet. Click &quot;Generate Examples&quot; to create some.
                 </div>
               ) : (
@@ -692,30 +693,30 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                   {wordDetail.examples.map((example) => (
                     <div
                       key={example.id}
-                      className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4"
+                      className="bg-muted/50 rounded-lg p-4"
                     >
                       {editingExampleId === example.id ? (
                         <div className="space-y-3">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="block text-sm font-medium text-foreground mb-1">
                               {wordDetail?.word?.language_name || 'Text'}
                             </label>
                             <input
                               type="text"
                               value={editedExampleYoruba}
                               onChange={(e) => setEditedExampleYoruba(e.target.value)}
-                              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-gray-900 dark:text-white"
+                              className="w-full bg-background border border-input rounded px-3 py-2 text-foreground"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="block text-sm font-medium text-foreground mb-1">
                               English
                             </label>
                             <input
                               type="text"
                               value={editedExampleEnglish}
                               onChange={(e) => setEditedExampleEnglish(e.target.value)}
-                              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-gray-900 dark:text-white"
+                              className="w-full bg-background border border-input rounded px-3 py-2 text-foreground"
                             />
                           </div>
                           <div className="flex gap-2">
@@ -723,12 +724,12 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                               onClick={() => handleUpdateExample(example.id)}
                               className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2"
                             >
-                              <FiSave />
+                              <SaveIcon />
                               Save
                             </button>
                             <button
                               onClick={() => setEditingExampleId(null)}
-                              className="px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-lg"
+                              className="px-4 py-2 bg-muted-foreground/30 hover:bg-gray-400 dark:hover:bg-gray-500 text-foreground rounded-lg"
                             >
                               Cancel
                             </button>
@@ -738,19 +739,19 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 space-y-2">
                             <div>
-                              <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-0.5">
+                              <div className="text-[11px] font-medium text-muted-foreground mb-0.5">
                                 {wordDetail?.word?.language_name || 'Text'}
                               </div>
-                              <p className="text-gray-900 dark:text-white font-medium">
+                              <p className="text-foreground font-medium">
                                 {example.example_yoruba}
                               </p>
                             </div>
                             {example.example_english && (
                               <div>
-                                <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-0.5">
+                                <div className="text-[11px] font-medium text-muted-foreground mb-0.5">
                                   English
                                 </div>
-                                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                                <p className="text-muted-foreground text-sm">
                                   {example.example_english}
                                 </p>
                               </div>
@@ -760,7 +761,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                                 onClick={() => playAudio(example.audio_url!, `example-${example.id}`)}
                                 className="text-brand-600 hover:text-brand-700 dark:text-brand-400 flex items-center gap-2 text-sm"
                               >
-                                <FiVolume2 />
+                                <Volume2 />
                                 {playingAudio === `example-${example.id}` ? 'Playing...' : 'Play Audio'}
                               </button>
                             )}
@@ -770,14 +771,14 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                               onClick={() => startEditExample(example)}
                               className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
                             >
-                              <FiEdit2 />
+                              <Pencil />
                             </button>
                             <button
                               onClick={() => handleDeleteExample(example.id)}
                               disabled={isSubmitting}
                               className="text-red-600 hover:text-red-700 dark:text-red-400"
                             >
-                              <FiTrash2 />
+                              <Trash2 />
                             </button>
                           </div>
                         </div>
@@ -794,7 +795,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
               <div className="space-y-4">
                 {/* Custom Audio Generation Section */}
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                  <h4 className="text-sm font-semibold text-foreground mb-3">
                     Generate Custom Audio
                   </h4>
                   <div className="space-y-3">
@@ -804,21 +805,21 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                         value={customTTSText}
                         onChange={(e) => setCustomTTSText(e.target.value)}
                         placeholder="Enter text for audio generation"
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                        className="flex-1 px-3 py-2 border border-input rounded-lg bg-card text-foreground text-sm"
                       />
                       <button
                         onClick={handleGenerateCustomAudio}
                         disabled={isGeneratingAudio || !customTTSText.trim()}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg flex items-center gap-2 text-sm whitespace-nowrap"
+                        className="px-4 py-2 bg-primary hover:bg-primary/90 disabled:bg-gray-400 text-primary-foreground rounded-lg flex items-center gap-2 text-sm whitespace-nowrap"
                       >
                         {isGeneratingAudio ? (
                           <>
-                            <FiLoader className="animate-spin" />
+                            <Loader className="animate-spin" />
                             Generating...
                           </>
                         ) : (
                           <>
-                            <FiVolume2 />
+                            <Volume2 />
                             Generate
                           </>
                         )}
@@ -826,16 +827,16 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                     </div>
 
                     {generatedAudioUrl && (
-                      <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                      <div className="bg-card rounded-lg p-3 border border-border">
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-3 flex-1">
                             <button
                               onClick={() => playAudio(generatedAudioUrl, 'generated-audio')}
                               className="text-brand-600 hover:text-brand-700 dark:text-brand-400"
                             >
-                              <FiVolume2 size={20} />
+                              <Volume2 size={20} />
                             </button>
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                            <span className="text-sm text-muted-foreground">
                               Preview generated audio
                             </span>
                           </div>
@@ -862,22 +863,22 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                 {/* Existing Audio Files */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 className="text-lg font-semibold text-foreground">
                       Audio Files ({wordDetail.audio_files?.length ?? 0})
                     </h3>
                     <button
                       onClick={handleRegenerateAudio}
                       disabled={isRegeneratingAudio}
-                      className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-gray-400 text-white rounded-lg flex items-center gap-2 text-sm"
+                      className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-gray-400 text-primary-foreground rounded-lg flex items-center gap-2 text-sm"
                     >
                       {isRegeneratingAudio ? (
                         <>
-                          <FiLoader className="animate-spin" />
+                          <Loader className="animate-spin" />
                           Regenerating...
                         </>
                       ) : (
                         <>
-                          <FiRefreshCw />
+                          <RefreshCw />
                           Regenerate Audio
                         </>
                       )}
@@ -885,7 +886,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                   </div>
 
                   {(wordDetail.audio_files?.length ?? 0) === 0 ? (
-                    <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                    <div className="text-center py-12 text-muted-foreground">
                       No audio files available. Click &quot;Regenerate Audio&quot; to create audio for this word.
                     </div>
                   ) : (
@@ -893,15 +894,15 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                       {wordDetail.audio_files?.map((audio) => (
                         <div
                           key={audio.id}
-                          className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 flex items-center justify-between"
+                          className="bg-muted/50 rounded-lg p-4 flex items-center justify-between"
                         >
                           <div className="flex-1">
                             <div className="flex items-center gap-3">
-                              <span className="font-medium text-gray-900 dark:text-white">
+                              <span className="font-medium text-foreground">
                                 {audio.provider}
                               </span>
                               {audio.voice_name && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-xs text-muted-foreground">
                               {audio.voice_name}
                             </span>
                           )}
@@ -910,13 +911,13 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                       {audio.audio_url ? (
                         <button
                           onClick={() => playAudio(audio.audio_url!, `audio-${audio.id}`)}
-                          className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg flex items-center gap-2 text-sm"
+                          className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-primary-foreground rounded-lg flex items-center gap-2 text-sm"
                         >
-                          <FiVolume2 />
+                          <Volume2 />
                           {playingAudio === `audio-${audio.id}` ? 'Playing...' : 'Play'}
                         </button>
                       ) : (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-muted-foreground">
                           No audio URL
                         </span>
                       )}
@@ -931,7 +932,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-between">
+        <div className="px-6 py-4 border-t border-border flex justify-between">
           <button
             onClick={handleTogglePublish}
             className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
@@ -942,24 +943,24 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
           >
             {wordDetail.word.is_published ? (
               <>
-                <FiEdit2 />
+                <Pencil />
                 Unpublish (Draft)
               </>
             ) : (
               <>
-                <FiSave />
+                <SaveIcon />
                 Publish
               </>
             )}
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg"
+            className="px-4 py-2 bg-muted hover:bg-gray-300 dark:hover:bg-gray-600 text-foreground rounded-lg"
           >
             Close
           </button>
         </div>
-      </div>
+      </DialogPanel>
     </div>
   );
 }

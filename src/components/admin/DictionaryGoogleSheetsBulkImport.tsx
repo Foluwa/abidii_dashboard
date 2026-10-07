@@ -91,31 +91,31 @@ function RowPreviewTable({ rows }: { rows: DictionaryImportRowPreviewPayload[] }
   return (
     <div className="mt-4">
       <div className="mb-2 flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Row Preview</h4>
-        <span className="text-xs text-gray-500 dark:text-gray-400">{rows.length} row(s)</span>
+        <h4 className="text-sm font-semibold text-foreground">Row Preview</h4>
+        <span className="text-xs text-muted-foreground">{rows.length} row(s)</span>
       </div>
-      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-900/40">
+          <thead className="border-b">
             <tr>
-              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Action</th>
-              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Row</th>
-              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Key</th>
-              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Lemma</th>
-              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">POS</th>
-              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Gloss</th>
-              <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Status</th>
+              <th className="px-3 py-2 text-left font-medium text-muted-foreground">Action</th>
+              <th className="px-3 py-2 text-left font-medium text-muted-foreground">Row</th>
+              <th className="px-3 py-2 text-left font-medium text-muted-foreground">Key</th>
+              <th className="px-3 py-2 text-left font-medium text-muted-foreground">Lemma</th>
+              <th className="px-3 py-2 text-left font-medium text-muted-foreground">POS</th>
+              <th className="px-3 py-2 text-left font-medium text-muted-foreground">Gloss</th>
+              <th className="px-3 py-2 text-left font-medium text-muted-foreground">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="divide-y divide-border">
             {display.map((row, idx) => (
               <tr key={`${row.source_row_key}-${idx}`} className={row.row_action === 'skip' ? 'opacity-60' : undefined}>
                 <td className="px-3 py-2"><RowActionBadge action={row.row_action} /></td>
-                <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{row.row_number}</td>
-                <td className="px-3 py-2 font-mono text-xs text-gray-600 dark:text-gray-400">{row.source_row_key}</td>
-                <td className="px-3 py-2 text-gray-900 dark:text-white">{row.lemma}</td>
-                <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{row.pos}</td>
-                <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{row.gloss_text}</td>
+                <td className="px-3 py-2 text-foreground">{row.row_number}</td>
+                <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{row.source_row_key}</td>
+                <td className="px-3 py-2 text-foreground">{row.lemma}</td>
+                <td className="px-3 py-2 text-foreground">{row.pos}</td>
+                <td className="px-3 py-2 text-foreground">{row.gloss_text}</td>
                 <td className="px-3 py-2">
                   {row.applyable ? (
                     <span className="text-xs text-green-700 dark:text-green-300">Ready</span>
@@ -351,16 +351,16 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
 
   const totalChanges = (validation?.counters.would_insert ?? 0) + (validation?.counters.would_update ?? 0);
   return (
-    <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+    <div className="rounded-lg border border-border bg-card">
       {/* Accordion Header */}
       <button
         type="button"
         onClick={toggleExpanded}
         className="flex w-full items-center justify-between p-6 text-left hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors"
       >
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Bulk Import from Google Sheets</h2>
+        <h2 className="text-lg font-semibold text-foreground">Bulk Import from Google Sheets</h2>
         <svg
-          className={`h-5 w-5 text-gray-500 transition-transform dark:text-gray-400 ${isExpanded ? 'rotate-180' : ''}`}
+          className={`h-5 w-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -383,15 +383,15 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
       </div>
 
       {showColumnInfo && (
-        <div className="mb-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
-          <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Expected columns in your Google Sheet:</p>
-          <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+        <div className="mb-4 rounded-lg bg-muted p-4">
+          <p className="mb-2 text-sm font-medium text-foreground">Expected columns in your Google Sheet:</p>
+          <ul className="space-y-1 text-sm text-muted-foreground">
             {expectedColumns.map((col) => (
               <li key={col.name}>
                 <span className="rounded bg-gray-200 px-1 font-mono text-xs dark:bg-gray-600">{col.name}</span>
                 {col.required && <span className="ml-1 text-red-600 dark:text-red-400">*required</span>}
                 : {col.description}
-                {col.example && <span className="ml-1 text-gray-500">(e.g., {col.example})</span>}
+                {col.example && <span className="ml-1 text-muted-foreground">(e.g., {col.example})</span>}
               </li>
             ))}
           </ul>
@@ -400,33 +400,33 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="md:col-span-2">
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Google Sheet URL or Spreadsheet ID</label>
+          <label className="mb-1 block text-sm font-medium text-foreground">Google Sheet URL or Spreadsheet ID</label>
           <input
             type="text"
             value={sheetReference}
             onChange={(event) => setSheetReference(event.target.value)}
             placeholder="https://docs.google.com/spreadsheets/d/... or just the ID"
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground"
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Worksheet Title</label>
+          <label className="mb-1 block text-sm font-medium text-foreground">Worksheet Title</label>
           <input
             type="text"
             value={worksheetTitle}
             onChange={(event) => setWorksheetTitle(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground"
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Pair Code <span className="text-xs text-gray-500">(e.g. eng_yor)</span>
+          <label className="mb-1 block text-sm font-medium text-foreground">
+            Pair Code <span className="text-xs text-muted-foreground">(e.g. eng_yor)</span>
           </label>
           <input
             type="text"
             value={pairCode}
             onChange={(event) => setPairCode(event.target.value)}
-            className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
+            className={`w-full rounded-lg border bg-background px-3 py-2 text-foreground dark:border-gray-600 ${
               pairCode && !PAIR_CODE_REGEX.test(pairCode.trim().toLowerCase())
                 ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                 : 'border-gray-300 focus:border-blue-500'
@@ -439,13 +439,13 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
           )}
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Header Row</label>
+          <label className="mb-1 block text-sm font-medium text-foreground">Header Row</label>
           <input
             type="number"
             min={1}
             value={headerRow}
             onChange={(event) => setHeaderRow(Number(event.target.value) || 1)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground"
           />
         </div>
       </div>
@@ -455,7 +455,7 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
           type="button"
           onClick={handleValidate}
           disabled={validating || applying}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {validating ? 'Validating...' : 'Validate'}
         </button>
@@ -472,14 +472,14 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
       </div>
 
       {validation && (
-        <div className="mt-4 rounded-lg bg-gray-50 p-3 dark:bg-gray-700">
+        <div className="mt-4 rounded-lg bg-muted p-3">
           <div className="flex flex-wrap items-center gap-3 text-sm">
             {renderStatus(validation.status)}
-            <span className="text-gray-700 dark:text-gray-300">
+            <span className="text-foreground">
               {validation.counters.would_insert} insert, {validation.counters.would_update} update, {validation.summary.errors} errors, {validation.summary.warnings} warnings
             </span>
             {validation.batch_id && (
-              <span className="font-mono text-xs text-gray-500">{validation.batch_id}</span>
+              <span className="font-mono text-xs text-muted-foreground">{validation.batch_id}</span>
             )}
           </div>
 
@@ -536,7 +536,7 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
 
       <div className="mt-6">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Batch History</h3>
+          <h3 className="text-sm font-semibold text-foreground">Batch History</h3>
           <button
             type="button"
             onClick={() => void refreshHistory()}
@@ -546,25 +546,25 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
             {loadingHistory ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
-        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="overflow-x-auto rounded-lg border border-border">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-900/40">
+            <thead className="border-b">
               <tr>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Status</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Batch</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Pair</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Started</th>
-                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Ins</th>
-                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Upd</th>
-                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Skip</th>
-                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Err</th>
-                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Warn</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground">Status</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground">Batch</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground">Pair</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground">Started</th>
+                <th className="px-3 py-2 text-right font-medium text-muted-foreground">Ins</th>
+                <th className="px-3 py-2 text-right font-medium text-muted-foreground">Upd</th>
+                <th className="px-3 py-2 text-right font-medium text-muted-foreground">Skip</th>
+                <th className="px-3 py-2 text-right font-medium text-muted-foreground">Err</th>
+                <th className="px-3 py-2 text-right font-medium text-muted-foreground">Warn</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-border">
               {history.length === 0 ? (
                 <tr>
-                   <td colSpan={9} className="px-3 py-4 text-gray-600 dark:text-gray-300">No dictionary import batches found.</td>
+                   <td colSpan={9} className="px-3 py-2.5 text-muted-foreground">No dictionary import batches found.</td>
                 </tr>
               ) : (
                 history.map((batch) => (
@@ -575,13 +575,13 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
                         {batch.id.slice(0, 8)}
                       </Link>
                     </td>
-                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{batch.pair_code ?? '-'}</td>
-                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{formatDate(batch.started_at)}</td>
-                     <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{(batch as any).inserted_count ?? 0}</td>
-                     <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{(batch as any).updated_count ?? 0}</td>
-                     <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{(batch as any).skipped_count ?? 0}</td>
-                     <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{(batch as any).error_count ?? 0}</td>
-                     <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">{(batch as any).warning_count ?? 0}</td>
+                    <td className="px-3 py-2 text-foreground">{batch.pair_code ?? '-'}</td>
+                    <td className="px-3 py-2 text-foreground">{formatDate(batch.started_at)}</td>
+                     <td className="px-3 py-2 text-right text-foreground">{(batch as any).inserted_count ?? 0}</td>
+                     <td className="px-3 py-2 text-right text-foreground">{(batch as any).updated_count ?? 0}</td>
+                     <td className="px-3 py-2 text-right text-foreground">{(batch as any).skipped_count ?? 0}</td>
+                     <td className="px-3 py-2 text-right text-foreground">{(batch as any).error_count ?? 0}</td>
+                     <td className="px-3 py-2 text-right text-foreground">{(batch as any).warning_count ?? 0}</td>
                   </tr>
                 ))
               )}

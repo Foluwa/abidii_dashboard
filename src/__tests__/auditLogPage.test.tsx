@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 
 import AdminAuditLogPage from '@/app/(admin)/(others-pages)/content/audit-log/page';
 import { renderWithProviders as render } from '@/test-utils';
+import { chooseOption } from '@/test-utils';
 
 const mockUseAdminAuditLogList = jest.fn();
 
@@ -83,7 +84,7 @@ describe('AdminAuditLogPage', () => {
     const lastCall1 = mockUseAdminAuditLogList.mock.calls.at(-1)?.[0] as any;
     expect(lastCall1.q).toBe('publish');
 
-    await user.selectOptions(screen.getByLabelText('Time window'), '24h');
+    await chooseOption(user, screen.getByLabelText('Time window'), '24h');
 
     const lastCall2 = mockUseAdminAuditLogList.mock.calls.at(-1)?.[0] as any;
     expect(lastCall2.from_ts).toBe(new Date('2026-02-07T00:00:00.000Z').toISOString());

@@ -26,18 +26,18 @@ export default function FullScreenModal() {
         isFullscreen={true}
         showCloseButton={true}
       >
-        <div className="fixed top-0 left-0 flex flex-col justify-between w-full h-screen p-6 overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900 lg:p-10">
+        <div className="fixed top-0 left-0 flex flex-col justify-between w-full h-screen p-6 overflow-x-hidden overflow-y-auto bg-card lg:p-10">
           <div>
-            <h4 className="font-semibold text-gray-800 mb-7 text-title-sm dark:text-white/90">
+            <h4 className="font-semibold text-foreground mb-7 text-title-sm">
               Modal Heading
             </h4>
-            <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">
+            <p className="text-sm leading-6 text-muted-foreground">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit.
               Pellentesque euismod est quis mauris lacinia pharetra. Sed a
               ligula ac odio condimentum aliquet a nec nulla. Aliquam bibendum
               ex sit amet ipsum rutrum feugiat ultrices enim quam.
             </p>
-            <p className="mt-5 text-sm leading-6 text-gray-500 dark:text-gray-400">
+            <p className="mt-5 text-sm leading-6 text-muted-foreground">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit.
               Pellentesque euismod est quis mauris lacinia pharetra. Sed a
               ligula ac odio condimentum aliquet a nec nulla. Aliquam bibendum
@@ -45,7 +45,7 @@ export default function FullScreenModal() {
               condimentum aliquet a nec nulla pellentesque euismod est quis
               mauris lacinia pharetra.
             </p>
-            <p className="mt-5 text-sm leading-6 text-gray-500 dark:text-gray-400">
+            <p className="mt-5 text-sm leading-6 text-muted-foreground">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit.
               Pellentesque euismod est quis mauris lacinia pharetra.
             </p>

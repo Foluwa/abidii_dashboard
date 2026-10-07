@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders as render } from '@/test-utils';
 
 import LearningAnalyticsOverviewPage from '@/app/(admin)/(others-pages)/analytics/learning/page';
+import { chooseOption } from '@/test-utils';
 
 const mockUseLearningAnalyticsOverview = jest.fn();
 const mockUseAdminCoursesList = jest.fn();
@@ -114,7 +115,7 @@ describe('LearningAnalyticsOverviewPage', () => {
 
   it('passes the selected date preset through to the hook as an ISO dateFrom', async () => {
     render(<LearningAnalyticsOverviewPage />);
-    await userEvent.selectOptions(screen.getByLabelText('Date Range'), 'Last 7 days');
+    await chooseOption(userEvent, screen.getByLabelText('Date Range'), 'Last 7 days');
     const lastCall = mockUseLearningAnalyticsOverview.mock.calls.at(-1)?.[0];
     expect(lastCall.dateFrom).toEqual(expect.any(String));
   });

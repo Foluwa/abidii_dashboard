@@ -44,24 +44,26 @@ export default function ContentLibraryPage() {
     <div className="space-y-6">
       <div>
         <PageBreadCrumb pageTitle="Content Library" />
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Browse and manage all editorial content types from one workspace
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+      <div className="border-b border-border overflow-x-auto">
         <nav className="flex -mb-px space-x-8 w-max">
           {TABS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`
+                
                 py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap
                 ${activeTab === tab.key
                   ? "border-brand-500 text-brand-600 dark:text-brand-400"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+                  : "border-transparent text-muted-foreground hover:text-gray-700 hover:border-gray-300 dark:hover:text-gray-300"
                 }
+
               `}
             >
               {tab.label}

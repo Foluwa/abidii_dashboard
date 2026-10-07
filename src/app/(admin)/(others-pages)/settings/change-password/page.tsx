@@ -56,7 +56,7 @@ export default function ChangePasswordPage() {
       {/* Header */}
       <div>
         <PageBreadCrumb pageTitle="Change Password" />
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Update your admin account password
         </p>
       </div>
@@ -66,14 +66,14 @@ export default function ChangePasswordPage() {
       {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
 
       {/* Change Password Form */}
-      <div className="max-w-2xl p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-        <h3 className="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
+      <div className="max-w-2xl p-6 bg-card border border-border rounded-lg">
+        <h3 className="mb-6 text-lg font-semibold text-foreground">
           Change Your Password
         </h3>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Current Password *
             </label>
             <input
@@ -83,12 +83,12 @@ export default function ChangePasswordPage() {
                 setFormData({ ...formData, current_password: e.target.value })
               }
               required
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-800 dark:text-white"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               New Password *
             </label>
             <input
@@ -99,15 +99,15 @@ export default function ChangePasswordPage() {
               }
               required
               minLength={12}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-800 dark:text-white"
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-muted-foreground">
               Must be at least 12 characters long
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Confirm New Password *
             </label>
             <input
@@ -118,7 +118,7 @@ export default function ChangePasswordPage() {
               }
               required
               minLength={12}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="w-full px-3 py-2 text-sm border border-input rounded-lg dark:bg-gray-800 dark:text-white"
             />
           </div>
 
@@ -126,7 +126,7 @@ export default function ChangePasswordPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-brand-500 dark:hover:bg-brand-600"
+              className="w-full px-4 py-2 text-sm font-medium text-primary-foreground bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-brand-500 dark:hover:bg-brand-600"
             >
               {isLoading ? "Changing Password..." : "Change Password"}
             </button>

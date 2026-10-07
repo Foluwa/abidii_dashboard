@@ -1,5 +1,7 @@
 "use client";
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useId } from "react";
+import { X } from "lucide-react";
+import { useDialogFocus } from "./useDialogFocus";
 
 interface ModalProps {
   isOpen: boolean;
@@ -23,10 +25,14 @@ export const Modal: React.FC<ModalProps> = ({
   maxWidth = "2xl",
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+
+  useDialogFocus(isOpen, modalRef);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      // A nested Radix menu that handled Escape marks it defaultPrevented.
+      if (event.key === "Escape" && !event.defaultPrevented) {
         onClose();
       }
     };
@@ -67,7 +73,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   const contentClasses = isFullscreen
     ? "w-full h-full"
-    : `relative w-full ${maxWidthClasses[maxWidth]} mx-4 my-8 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl`;
+    : `relative w-full ${maxWidthClasses[maxWidth]} mx-4 my-8 rounded-xl border border-border bg-card shadow-2xl`;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999 p-4">
@@ -79,37 +85,29 @@ export const Modal: React.FC<ModalProps> = ({
       )}
       <div
         ref={modalRef}
-        className={`${contentClasses} ${className}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        tabIndex={-1}
+        className={`${contentClasses} ${className ?? ""} outline-none`}
         onClick={(e) => e.stopPropagation()}
       >
         {showCloseButton && (
           <button
+            type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 z-999 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-all hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-            aria-label="Close modal"
+            className="absolute right-4 top-4 z-10 inline-flex size-8 items-center justify-center rounded-md text-muted-foreground opacity-70 transition-opacity hover:bg-accent hover:opacity-100 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            aria-label="Close dialog"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M6.04289 16.5413C5.65237 16.9318 5.65237 17.565 6.04289 17.9555C6.43342 18.346 7.06658 18.346 7.45711 17.9555L11.9987 13.4139L16.5408 17.956C16.9313 18.3466 17.5645 18.3466 17.955 17.956C18.3455 17.5655 18.3455 16.9323 17.955 16.5418L13.4129 11.9997L17.955 7.4576C18.3455 7.06707 18.3455 6.43391 17.955 6.04338C17.5645 5.65286 16.9313 5.65286 16.5408 6.04338L11.9987 10.5855L7.45711 6.0439C7.06658 5.65338 6.43342 5.65338 6.04289 6.0439C5.65237 6.43442 5.65237 7.06759 6.04289 7.45811L10.5845 11.9997L6.04289 16.5413Z"
-                fill="currentColor"
-              />
-            </svg>
+            <X className="size-4" />
           </button>
         )}
         <div className="relative">
           {title && (
-            <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <div className="px-6 pt-6 pr-14">
+              <h2 id={titleId} className="text-lg font-semibold leading-none text-foreground">
                 {title}
-              </h3>
+              </h2>
             </div>
           )}
           <div className={title ? "p-6" : ""}>{children}</div>
