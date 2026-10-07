@@ -391,7 +391,7 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
                 <span className="rounded bg-gray-200 px-1 font-mono text-xs dark:bg-gray-600">{col.name}</span>
                 {col.required && <span className="ml-1 text-red-600 dark:text-red-400">*required</span>}
                 : {col.description}
-                {col.example && <span className="ml-1 text-gray-500">(e.g., {col.example})</span>}
+                {col.example && <span className="ml-1 text-muted-foreground">(e.g., {col.example})</span>}
               </li>
             ))}
           </ul>
@@ -420,7 +420,7 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-foreground">
-            Pair Code <span className="text-xs text-gray-500">(e.g. eng_yor)</span>
+            Pair Code <span className="text-xs text-muted-foreground">(e.g. eng_yor)</span>
           </label>
           <input
             type="text"
@@ -479,7 +479,7 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
               {validation.counters.would_insert} insert, {validation.counters.would_update} update, {validation.summary.errors} errors, {validation.summary.warnings} warnings
             </span>
             {validation.batch_id && (
-              <span className="font-mono text-xs text-gray-500">{validation.batch_id}</span>
+              <span className="font-mono text-xs text-muted-foreground">{validation.batch_id}</span>
             )}
           </div>
 

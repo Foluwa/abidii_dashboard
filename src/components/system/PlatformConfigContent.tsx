@@ -438,7 +438,7 @@ function CreateConfigModal({ onClose, onSuccess }: { onClose: () => void; onSucc
               placeholder="e.g., vocabulary.free_daily_limit"
               className="w-full px-3 py-2 border border-input rounded dark:bg-gray-800 dark:text-white"
             />
-            <p className="text-xs text-gray-500 mt-1">Use lowercase, numbers, dots, underscores only</p>
+            <p className="text-xs text-muted-foreground mt-1">Use lowercase, numbers, dots, underscores only</p>
           </div>
 
           <div>

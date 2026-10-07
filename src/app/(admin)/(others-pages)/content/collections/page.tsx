@@ -472,7 +472,7 @@ export default function CollectionsPage() {
     await loadCollections();
   }
 
-  if (loading) return <div className="py-12 text-sm text-gray-500">Loading collections…</div>;
+  if (loading) return <div className="py-12 text-sm text-muted-foreground">Loading collections…</div>;
 
   return (
     <div className="space-y-5">
@@ -612,7 +612,7 @@ export default function CollectionsPage() {
                 <td className="px-4 py-3">{item.category_key || '—'}</td>
                 <td className="px-4 py-3">{item.learning_status || 'missing'} / {item.translation_status || 'missing'}</td>
               </tr>)}
-              {!visibleItems.length && <tr><td colSpan={9} className="px-4 py-10 text-center text-gray-500">No items match these filters.</td></tr>}
+              {!visibleItems.length && <tr><td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">No items match these filters.</td></tr>}
             </tbody>
           </table>
         </div>

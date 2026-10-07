@@ -141,7 +141,7 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
           <h2 className="text-xl font-semibold text-foreground mb-4">
             Enforcement Flags
           </h2>
-          {flagsLoading && <div className="text-gray-600">Loading flags...</div>}
+          {flagsLoading && <div className="text-muted-foreground">Loading flags...</div>}
           {flagsError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
               Error: {flagsError.message}
@@ -206,7 +206,7 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
           <h2 className="text-xl font-semibold text-foreground mb-4">
             Quick Metrics (24h)
           </h2>
-          {metricsLoading && <div className="text-gray-600">Loading metrics...</div>}
+          {metricsLoading && <div className="text-muted-foreground">Loading metrics...</div>}
           {metricsError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
               Error: {metricsError.message}
@@ -327,7 +327,7 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
               ))}
             </div>
           </div>
-          {eventsLoading && <div className="text-gray-600">Loading events...</div>}
+          {eventsLoading && <div className="text-muted-foreground">Loading events...</div>}
           {eventsError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
               Error: {eventsError.message}
@@ -396,7 +396,7 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
                               </span>
                             ))}
                             {summary.sample_lesson_keys.length > 5 && (
-                              <span className="px-2 py-1 text-xs text-gray-500">
+                              <span className="px-2 py-1 text-xs text-muted-foreground">
                                 +{summary.sample_lesson_keys.length - 5} more
                               </span>
                             )}

@@ -713,7 +713,7 @@ export default function SentencesPage() {
               </div>
             )}
             {uploadingAudio && (
-              <p className="mt-2 text-sm text-gray-500">Uploading audio...</p>
+              <p className="mt-2 text-sm text-muted-foreground">Uploading audio...</p>
             )}
           </div>
 
@@ -723,7 +723,7 @@ export default function SentencesPage() {
                 type="checkbox"
                 checked={(formData as any).is_published}
                 onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-                className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
+                className="w-4 h-4 text-brand-600 border-input rounded focus:ring-brand-500"
               />
               <span className="text-sm font-medium text-foreground">
                 Published

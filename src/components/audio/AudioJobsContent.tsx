@@ -267,7 +267,7 @@ export function AudioJobsContent({ showHeader = true, isActive = true }: { showH
                 type="checkbox"
                 checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="mr-2 h-4 w-4 rounded border-gray-300 text-brand-600"
+                className="mr-2 h-4 w-4 rounded border-input text-brand-600"
               />
               Auto-refresh (10s)
             </label>
@@ -420,7 +420,7 @@ export function AudioJobsContent({ showHeader = true, isActive = true }: { showH
                     </td>
                     <td className="px-3 py-3 text-foreground">
                       <div className="text-sm capitalize">{job.content_type}</div>
-                      <div className="text-xs text-gray-500">{job.audio_format?.toUpperCase() || '—'}</div>
+                      <div className="text-xs text-muted-foreground">{job.audio_format?.toUpperCase() || '—'}</div>
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-foreground">
                       {formatDateTime(job.queued_at)}

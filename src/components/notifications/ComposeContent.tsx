@@ -299,7 +299,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                               type="checkbox"
                               checked={checked}
                               onChange={() => toggleUser(user.id, label)}
-                              className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                              className="rounded border-input text-brand-500 focus:ring-brand-500"
                             />
                             <span className="flex-1 truncate">{label}</span>
                             {user.email && user.display_name && (
@@ -398,7 +398,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
               {/* Screen */}
               <div className="rounded-2xl border-2 border-gray-900 bg-muted p-3">
                 {/* Status bar */}
-                <div className="mb-4 flex items-center justify-between text-[10px] text-gray-500">
+                <div className="mb-4 flex items-center justify-between text-[10px] text-muted-foreground">
                   <span>9:41</span>
                   <span>🔋 📶</span>
                 </div>

@@ -302,14 +302,14 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
                       <td className="px-3 py-2.5 text-sm text-foreground">
                         {voice.language_code}
                         {voice.language_name && (
-                          <div className="text-xs text-gray-500">{voice.language_name}</div>
+                          <div className="text-xs text-muted-foreground">{voice.language_name}</div>
                         )}
                       </td>
                       <td className="px-3 py-2.5 text-sm text-foreground">
                         {voice.gender && <div>Gender: {voice.gender}</div>}
                         {voice.accent && <div>Accent: {voice.accent}</div>}
                         {voice.style_tags.length > 0 && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-muted-foreground">
                             {voice.style_tags.join(", ")}
                           </div>
                         )}
@@ -490,7 +490,7 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
                     id="is_active"
                     checked={formData.is_active}
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                    className="h-4 w-4 text-blue-600 rounded border-input"
                   />
                   <label htmlFor="is_active" className="ml-2 text-sm text-foreground">
                     Active (available for TTS generation)

@@ -250,7 +250,7 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
             {isLoadingLemmas ? (
               <div className="text-center py-4">
                 <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-primary border-r-transparent"></div>
-                <p className="mt-2 text-sm text-gray-500">Loading words...</p>
+                <p className="mt-2 text-sm text-muted-foreground">Loading words...</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -286,7 +286,7 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
                     placeholder="e.g., Ẹ kú àárọ̀"
                     className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground focus:border-primary focus:ring-primary"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Leave empty to use the word itself
                   </p>
                 </div>
@@ -303,7 +303,7 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
             {isLoadingProviders ? (
               <div className="text-center py-4">
                 <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-primary border-r-transparent"></div>
-                <p className="mt-2 text-sm text-gray-500">Loading providers...</p>
+                <p className="mt-2 text-sm text-muted-foreground">Loading providers...</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -352,7 +352,7 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
                         fullWidth
                       />
                     ) : (
-                      <p className="text-sm text-gray-500">No voices available for this provider</p>
+                      <p className="text-sm text-muted-foreground">No voices available for this provider</p>
                     )}
                   </div>
                 )}
@@ -422,19 +422,19 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
                   {/* Metadata */}
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Duration:</span>
+                      <span className="text-muted-foreground">Duration:</span>
                       <span className="font-medium">{previewData.duration_sec.toFixed(2)}s</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Format:</span>
+                      <span className="text-muted-foreground">Format:</span>
                       <span className="font-medium uppercase">{previewData.format}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Sample Rate:</span>
+                      <span className="text-muted-foreground">Sample Rate:</span>
                       <span className="font-medium">{previewData.sample_rate} Hz</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Provider:</span>
+                      <span className="text-muted-foreground">Provider:</span>
                       <span className="font-medium capitalize">{previewData.provider}</span>
                     </div>
                   </div>

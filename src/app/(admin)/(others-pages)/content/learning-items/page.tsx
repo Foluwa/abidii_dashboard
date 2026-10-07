@@ -566,7 +566,7 @@ export default function LearningItemsPage() {
       render: (_, item: LearningItem) => (
         <div className="text-sm">
           <div>{item.level}</div>
-          <div className="text-xs text-gray-500">{item.difficulty}</div>
+          <div className="text-xs text-muted-foreground">{item.difficulty}</div>
         </div>
       ),
     },
@@ -597,7 +597,7 @@ export default function LearningItemsPage() {
             ) : (
               <>
                 <ToggleLeft className="text-gray-400" size={20} />
-                <span className="text-gray-500">Inactive</span>
+                <span className="text-muted-foreground">Inactive</span>
               </>
             )}
           </button>
@@ -887,7 +887,7 @@ export default function LearningItemsPage() {
         </>
       ) : (
         <div className="rounded-lg bg-card p-8 text-center shadow">
-          <p className="text-gray-500">Please select a language to view learning items</p>
+          <p className="text-muted-foreground">Please select a language to view learning items</p>
         </div>
       )}
 
@@ -1029,7 +1029,7 @@ export default function LearningItemsPage() {
               options={IMAGE_FIT_OPTIONS}
               fullWidth
             />
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-muted-foreground">
               Choose whether the app crops the image to fill the card or shows the full image.
             </p>
           </div>
@@ -1119,7 +1119,7 @@ export default function LearningItemsPage() {
               placeholder={formData.item_type === 'lesson' ? 'structuredLesson' : 'e.g., game'}
               disabled={formData.item_type === 'lesson'}
             />
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-muted-foreground">
               {formData.item_type === 'lesson'
                 ? 'Lesson items always launch the backend-driven structured lesson runtime.'
                 : 'Game items use a game route key such as game, numbers-hub, or /games/spelling-bee.'}

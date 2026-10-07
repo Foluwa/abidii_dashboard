@@ -3165,7 +3165,7 @@ export function LessonBlueprintEditor({
                   type="checkbox"
                   checked={getBoolean(editablePayload.includeCultureTip)}
                   onChange={(event) => updateTopLevelField('includeCultureTip', event.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300"
+                  className="h-4 w-4 rounded border-input"
                 />
                 <label htmlFor="include-culture-tip" className="text-sm text-foreground">
                   Include culture tip
@@ -4225,7 +4225,7 @@ export function LessonBlueprintEditor({
                                              (pairSearchLoading || pairSearchResults.length > 0 || pairSearchError) && (
                                              <div className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-border bg-card shadow-lg">
                                                {pairSearchLoading && (
-                                                 <div className="px-3 py-2 text-xs text-gray-500">Searching…</div>
+                                                 <div className="px-3 py-2 text-xs text-muted-foreground">Searching…</div>
                                                )}
                                                {pairSearchError && (
                                                  <div className="px-3 py-2 text-xs text-red-500">{pairSearchError}</div>

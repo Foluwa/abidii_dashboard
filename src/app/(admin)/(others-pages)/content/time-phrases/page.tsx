@@ -1478,7 +1478,7 @@ export default function TimePhrasesPage() {
             className="flex w-full items-center justify-between px-5 py-3 text-left"
           >
             <span className="text-sm font-semibold text-foreground">▶ Time Phrase Jobs</span>
-            {showJobsAccordion ? <ChevronUp className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
+            {showJobsAccordion ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
           </button>
           {showJobsAccordion && (
             <div className="border-t border-border px-5 py-4">
@@ -1589,7 +1589,7 @@ export default function TimePhrasesPage() {
                     <thead className="border-b">
                       <tr>
                         <th className="px-4 py-2.5 text-left">
-                          <button onClick={handleSelectAll} className="text-gray-500 hover:text-gray-700">
+                          <button onClick={handleSelectAll} className="text-muted-foreground hover:text-foreground">
                             {selectedPhrases.length === timePhrases.length ? 
                               <SquareCheck className="w-5 h-5" /> : 
                               <Square className="w-5 h-5" />
@@ -1622,7 +1622,7 @@ export default function TimePhrasesPage() {
                           <td className="px-4 py-2.5">
                             <button 
                               onClick={() => handleSelectPhrase(phrase.id)}
-                              className="text-gray-500 hover:text-gray-700"
+                              className="text-muted-foreground hover:text-foreground"
                             >
                               {selectedPhrases.includes(phrase.id) ? 
                                 <SquareCheck className="w-5 h-5" /> : 
@@ -1687,7 +1687,7 @@ export default function TimePhrasesPage() {
                               </span>
                               {renderRegenerationBadge(phrase.last_regeneration_status, phrase.last_regeneration_error)}
                               {phrase.difficulty_level && (
-                                <span className="text-xs text-gray-500">Lvl {phrase.difficulty_level}</span>
+                                <span className="text-xs text-muted-foreground">Lvl {phrase.difficulty_level}</span>
                               )}
                             </div>
                           </td>
@@ -1819,7 +1819,7 @@ export default function TimePhrasesPage() {
                 id="is_published"
                 checked={formData.is_published}
                 onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-                className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-input rounded"
               />
               <label htmlFor="is_published" className="text-sm text-foreground">
                 Published
@@ -1952,7 +1952,7 @@ export default function TimePhrasesPage() {
                             void syncWordsFromTranscript();
                           }
                         }}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                        className="h-4 w-4 rounded border-input text-blue-600"
                       />
                       Enable word timings
                     </label>

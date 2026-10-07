@@ -1443,7 +1443,7 @@ export default function PhrasesPage() {
                           type="checkbox"
                           checked={allVisiblePhrasesSelected}
                           onChange={toggleSelectAllVisiblePhrases}
-                          className="h-4 w-4 rounded border-gray-300 text-brand-600"
+                          className="h-4 w-4 rounded border-input text-brand-600"
                           aria-label="Select all visible phrases"
                         />
                       </th>
@@ -1482,7 +1482,7 @@ export default function PhrasesPage() {
                             checked={selectedPhrases.includes(phrase.id)}
                             disabled={isRegenerationBlocked(phrase)}
                             onChange={() => togglePhraseSelection(phrase.id)}
-                            className="h-4 w-4 rounded border-gray-300 text-brand-600 disabled:opacity-40"
+                            className="h-4 w-4 rounded border-input text-brand-600 disabled:opacity-40"
                             aria-label={`Select phrase ${phrase.phrase}`}
                           />
                         </td>
@@ -1594,7 +1594,7 @@ export default function PhrasesPage() {
                       checked={selectedPhrases.includes(phrase.id)}
                       disabled={isRegenerationBlocked(phrase)}
                       onChange={() => togglePhraseSelection(phrase.id)}
-                      className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-600 disabled:opacity-40"
+                      className="mt-1 h-4 w-4 rounded border-input text-brand-600 disabled:opacity-40"
                       aria-label={`Select phrase ${phrase.phrase}`}
                     />
                   </div>
@@ -1824,7 +1824,7 @@ export default function PhrasesPage() {
                     id="is_published"
                     checked={formData.is_published}
                     onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-                    className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                    className="h-4 w-4 text-blue-600 rounded border-input"
                   />
                   <label htmlFor="is_published" className="ml-2 text-sm text-foreground">
                     Published (visible to users)
@@ -1958,7 +1958,7 @@ export default function PhrasesPage() {
                               syncWordsFromTranscript();
                             }
                           }}
-                          className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                          className="h-4 w-4 rounded border-input text-blue-600"
                         />
                         Enable word timings
                       </label>

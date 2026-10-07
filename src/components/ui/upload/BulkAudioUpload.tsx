@@ -269,7 +269,7 @@ export const BulkAudioUpload: React.FC<BulkAudioUploadProps> = ({
                   <p className="text-sm font-medium text-foreground truncate">
                     {file.name}
                   </p>
-                  <span className="text-xs text-gray-500 ml-2">
+                  <span className="text-xs text-muted-foreground ml-2">
                     {(file.size / 1024).toFixed(1)} KB
                   </span>
                 </div>

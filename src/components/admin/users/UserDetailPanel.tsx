@@ -542,7 +542,7 @@ export function UserDetailPanel({
               </div>
             </div>
           ))}
-          {!gameBreakdown.length && <p className="py-8 text-center text-sm text-gray-500">No game activity recorded.</p>}
+          {!gameBreakdown.length && <p className="py-8 text-center text-sm text-muted-foreground">No game activity recorded.</p>}
         </div>
       </div>
 
@@ -575,7 +575,7 @@ export function UserDetailPanel({
               {recentSessions.map((session) => (
                 <tr key={session.session_id}><td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{formatDateTime(session.date)}</td><td className="px-4 py-3 font-medium text-foreground">{formatGameName(session.game_key)}{session.is_perfect && <span className="ml-2 text-amber-500" title="Perfect score">★</span>}</td><td className="px-4 py-3">{session.language_name || "—"}</td><td className="px-4 py-3 text-right font-semibold">{Number(session.score || 0).toFixed(1)}%</td><td className="px-4 py-3 text-right text-emerald-600">{session.correct || 0}<span className="text-gray-400"> / </span><span className="text-red-500">{session.wrong || 0}</span></td><td className="px-4 py-3 text-right">{formatDuration(session.duration_ms)}</td></tr>
               ))}
-              {!recentSessions.length && <tr><td colSpan={6} className="px-4 py-10 text-center text-gray-500">No game sessions recorded.</td></tr>}
+              {!recentSessions.length && <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">No game sessions recorded.</td></tr>}
             </tbody>
           </table>
         </div>

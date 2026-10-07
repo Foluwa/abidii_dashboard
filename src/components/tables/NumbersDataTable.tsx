@@ -151,7 +151,7 @@ const NumbersDataTable: React.FC<Props> = ({
                 type="checkbox"
                 checked={allVisibleNumbersSelected}
                 onChange={onToggleSelectAll}
-                className="h-4 w-4 rounded border-gray-300 text-brand-600"
+                className="h-4 w-4 rounded border-input text-brand-600"
                 aria-label="Select all visible numbers"
               />
             </th>
@@ -179,7 +179,7 @@ const NumbersDataTable: React.FC<Props> = ({
                   checked={selectedNumbers.includes(number.id)}
                   disabled={isRegenerationPending(number.last_regeneration_status)}
                   onChange={() => onToggleSelect(number.id)}
-                  className="h-4 w-4 rounded border-gray-300 text-brand-600 disabled:opacity-40"
+                  className="h-4 w-4 rounded border-input text-brand-600 disabled:opacity-40"
                   aria-label={`Select number ${number.word}`}
                 />
               </td>
@@ -340,7 +340,7 @@ const NumbersDataTable: React.FC<Props> = ({
               checked={selectedNumbers.includes(number.id)}
               disabled={isRegenerationPending(number.last_regeneration_status)}
               onChange={() => onToggleSelect(number.id)}
-              className="h-4 w-4 rounded border-gray-300 text-brand-600 disabled:opacity-40"
+              className="h-4 w-4 rounded border-input text-brand-600 disabled:opacity-40"
               aria-label={`Select number ${number.word}`}
             />
           </div>

@@ -275,7 +275,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
           </label>
 
           {isLoadingVoices ? (
-            <div className="text-sm text-gray-500">Loading voices...</div>
+            <div className="text-sm text-muted-foreground">Loading voices...</div>
           ) : filteredVoices.length === 0 ? (
             <div className="text-sm text-red-600">
               No compatible voices available for {target.languageCode}{selectedProvider !== "all" ? ` using ${selectedProvider}` : ""}

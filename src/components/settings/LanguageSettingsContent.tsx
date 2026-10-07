@@ -228,7 +228,7 @@ export function LanguageSettingsContent({ showHeader = true }: { showHeader?: bo
                       {effectiveMax > 0 ? effectiveMax.toLocaleString() : '-'}
                     </span>
                     {hasCustomLimit && (
-                      <span className="ml-2 text-xs text-gray-500">(limited)</span>
+                      <span className="ml-2 text-xs text-muted-foreground">(limited)</span>
                     )}
                   </td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-right text-sm">

@@ -1692,7 +1692,7 @@ export default function ProverbsPage() {
                   type="checkbox"
                   checked={formData.is_published}
                   onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                  className="h-4 w-4 rounded border-input text-blue-600"
                 />
                 <span>Publish this proverb</span>
               </label>
@@ -2024,7 +2024,7 @@ export default function ProverbsPage() {
                               : seedAlignmentWords(alignmentPrimarySegment.text, alignmentPrimarySegment, []);
                             setGameSplitAnswerStartIndex(nextWords.length > 1 ? 1 : null);
                           }}
-                          className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                          className="h-4 w-4 rounded border-input text-blue-600"
                         />
                         Enable completion split
                       </label>
@@ -2103,7 +2103,7 @@ export default function ProverbsPage() {
                               setAlignmentWords(seedAlignmentWords(alignmentPrimarySegment.text, alignmentPrimarySegment, []));
                             }
                           }}
-                          className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                          className="h-4 w-4 rounded border-input text-blue-600"
                         />
                         Enable word timings
                       </label>

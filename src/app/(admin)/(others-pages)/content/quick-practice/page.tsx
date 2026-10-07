@@ -127,13 +127,13 @@ export default function QuickPracticePage() {
                     <button onClick={() => handleReorder(item.item_id, 1)} className="p-1 hover:bg-muted rounded">
                       <ArrowDown className="w-3 h-3" />
                     </button>
-                    <span className="ml-2 text-gray-500 text-xs">{item.sort_order}</span>
+                    <span className="ml-2 text-muted-foreground text-xs">{item.sort_order}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 font-mono text-xs text-foreground">{item.item_id}</td>
                 <td className="px-4 py-3 font-medium text-foreground">{item.title}</td>
                 <td className="px-4 py-3 font-mono text-xs">{item.icon}</td>
-                <td className="px-4 py-3 text-gray-500 text-xs">{item.subtitle || "-"}</td>
+                <td className="px-4 py-3 text-muted-foreground text-xs">{item.subtitle || "-"}</td>
                 <td className="px-4 py-3 text-center">
                   <button onClick={() => handleToggle(item)}
                     className={`px-2 py-1 text-xs font-medium rounded-full ${item.enabled ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>

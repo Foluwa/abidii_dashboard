@@ -1128,7 +1128,7 @@ export default function WordsPage() {
                   </div>
                 )}
                 {uploadingAudio && (
-                  <p className="mt-2 text-sm text-gray-500">Uploading audio...</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Uploading audio...</p>
                 )}
               </div>
 

@@ -340,7 +340,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
       <div className="space-y-6">
         <PageBreadCrumb pageTitle="Course" />
         <div className="flex items-center gap-3 text-muted-foreground">
-          <div className="w-6 h-6 border-2 border-gray-200 border-t-brand-600 rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-input border-t-brand-600 rounded-full animate-spin" />
           <span>Loading course…</span>
         </div>
       </div>

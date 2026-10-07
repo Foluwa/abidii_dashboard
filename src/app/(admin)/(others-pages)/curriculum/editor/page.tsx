@@ -1084,9 +1084,9 @@ export default function CurriculumEditorPage() {
             className="min-w-[240px]"
           />
           {coursesLoading && (
-            <span className="text-xs text-gray-500">Loading courses…</span>
+            <span className="text-xs text-muted-foreground">Loading courses…</span>
           )}
-          <span className="text-xs text-gray-500">{title}</span>
+          <span className="text-xs text-muted-foreground">{title}</span>
         </div>
       </div>
 
@@ -1098,7 +1098,7 @@ export default function CurriculumEditorPage() {
 
       {curriculumLoading && (
         <div className="flex items-center gap-3 text-muted-foreground">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-brand-600" />
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-input border-t-brand-600" />
           <span>Loading curriculum…</span>
         </div>
       )}
@@ -1161,7 +1161,7 @@ export default function CurriculumEditorPage() {
                   />
                 ))}
                 {draftUnits.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-border p-4 text-sm text-gray-500">
+                  <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
                     No units found for this course.
                   </div>
                 )}
@@ -1215,7 +1215,7 @@ export default function CurriculumEditorPage() {
                       </div>
                     ) : isPreviewLoading ? (
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-brand-600" />
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-input border-t-brand-600" />
                         <span>Loading learner preview…</span>
                       </div>
                     ) : previewError ? (

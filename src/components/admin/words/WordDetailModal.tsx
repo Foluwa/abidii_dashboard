@@ -486,7 +486,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                           {pron.ipa}
                         </span>
                         {pron.dialect && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted-foreground">
                             ({pron.dialect})
                           </span>
                         )}
