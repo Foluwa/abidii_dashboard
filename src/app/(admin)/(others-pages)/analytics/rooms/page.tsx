@@ -272,7 +272,7 @@ export default function RoomsAnalyticsPage() {
                 { name: "Joins", data: (analytics?.participation_by_day || []).map((d) => d.joins) },
                 { name: "Unique Participants", data: (analytics?.participation_by_day || []).map((d) => d.unique_participants) },
               ]}
-              colors={["#12B76A", "#465FFF"]}
+              colors={["#34d399", "#38bdf8"]}
             />
           )}
         </div>

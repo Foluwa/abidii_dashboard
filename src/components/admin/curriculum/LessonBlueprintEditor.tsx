@@ -9,6 +9,7 @@ import { RegenerateAudioModal, type RegenerateAudioTarget } from '@/components/m
 import { LessonRuntimePreview } from '@/components/admin/curriculum/LessonRuntimePreview';
 import ValidationResultViewer from '@/components/admin/curriculum/ValidationResultViewer';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
+import { Combobox } from '@/components/ui/form/Combobox';
 import { Modal } from '@/components/ui/modal';
 import { useToast } from '@/contexts/ToastContext';
 import { apiClient } from '@/lib/api';
@@ -2226,7 +2227,7 @@ export function LessonBlueprintEditor({
 
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Course</label>
-              <StyledSelect
+              <Combobox
                 value={selectedCourseKey}
                 onChange={(event) => setSelectedCourseKey(event.target.value)}
                 options={courses.map((course) => ({
@@ -2238,8 +2239,9 @@ export function LessonBlueprintEditor({
                     ? 'Loading courses…'
                     : courses.length === 0
                     ? 'No courses available — check permissions'
-                    : ''
+                    : 'Select course'
                 }
+                searchPlaceholder="Search courses..."
                 fullWidth
               />
             </div>
@@ -2444,8 +2446,8 @@ export function LessonBlueprintEditor({
                       <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Supporting context</div>
                       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                         <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Context type</label>
-                          <select
+                          <StyledSelect
+                            label="Context type"
                             {...getFieldPathAttributes('supportingContext.contextRef.contentType')}
                             value={getString(getContentRef(readingSupportingContext.contextRef)?.contentType) || 'phrase'}
                             onChange={(event) =>
@@ -2454,11 +2456,12 @@ export function LessonBlueprintEditor({
                                 getString(getContentRef(readingSupportingContext.contextRef)?.contentId)
                               )
                             }
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                          >
-                            <option value="phrase">Phrase</option>
-                            <option value="phrase_set">Phrase set (transitional)</option>
-                          </select>
+                            options={[
+                              { value: 'phrase', label: 'Phrase' },
+                              { value: 'phrase_set', label: 'Phrase set (transitional)' },
+                            ]}
+                            fullWidth
+                          />
                         </div>
                         <div>
                           <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Context id</label>
@@ -2529,16 +2532,17 @@ export function LessonBlueprintEditor({
                           const currentFieldPath = getReadingMediaRefFieldPath(readingMediaRefs[item.key]);
                           return (
                             <div key={item.key} className="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
-                              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">{item.label}</label>
-                              <select
+                              <StyledSelect
+                                label={item.label}
                                 {...getFieldPathAttributes(`mediaRefs.${item.key}.fieldPath`)}
                                 value={currentFieldPath}
                                 onChange={(event) => updateReadingMediaRef(item.key, event.target.value)}
-                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                              >
-                                <option value="">No managed asset</option>
-                                <option value={item.suggestedFieldPath}>{item.suggestedFieldPath}</option>
-                              </select>
+                                options={[
+                                  { value: '', label: 'No managed asset' },
+                                  { value: item.suggestedFieldPath, label: item.suggestedFieldPath },
+                                ]}
+                                fullWidth
+                              />
                               <div className="mt-3 flex flex-wrap gap-2">
                                 <button
                                   type="button"
@@ -3459,7 +3463,7 @@ export function LessonBlueprintEditor({
                       <div>
                         <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Reusable library</h4>
                         <Link
-                          href="/audio/voices"
+                          href="/audio?tab=voices"
                           className="mt-1 inline-flex text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200"
                         >
                           Browse audio assets
@@ -4289,6 +4293,7 @@ export function LessonBlueprintEditor({
                                              <div className="flex flex-wrap gap-2">
                                                <button
                                                  type="button"
+                                                 {...getFieldPathAttributes(pairAudioFieldPath)}
                                                  onClick={() => openAssetPicker(pairAudioFieldPath, 'audio/*', 'Audio')}
                                                  disabled={uploadingFieldPath === pairAudioFieldPath}
                                                  className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
@@ -4344,6 +4349,7 @@ export function LessonBlueprintEditor({
                                               <div className="flex flex-wrap gap-2">
                                                 <button
                                                   type="button"
+                                                  {...getFieldPathAttributes(pairImageFieldPath)}
                                                   onClick={() => openAssetPicker(pairImageFieldPath, 'image/*', 'Image')}
                                                   disabled={uploadingFieldPath === pairImageFieldPath}
                                                   className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-950/30"
@@ -4502,7 +4508,7 @@ export function LessonBlueprintEditor({
 
           <details className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <summary className="flex cursor-pointer items-center justify-between gap-3">
-              <span className="text-base font-semibold text-gray-900 dark:text-white">Raw Payload JSON</span>
+              <span id="raw-payload-json-label" className="text-base font-semibold text-gray-900 dark:text-white">Raw Payload JSON</span>
               <div className="flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
                 <button
                   type="button"
@@ -4524,6 +4530,7 @@ export function LessonBlueprintEditor({
 
             <textarea
               id="raw-payload-json"
+              aria-labelledby="raw-payload-json-label"
               value={payloadText}
               onChange={(event) => handlePayloadTextChange(event.target.value)}
               spellCheck={false}

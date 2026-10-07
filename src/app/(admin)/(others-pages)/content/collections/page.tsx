@@ -9,6 +9,7 @@ import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
 import { RegenerateAudioModal, RegenerateAudioTarget } from "@/components/modals/RegenerateAudioModal";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { StickyBulkActionBar } from "@/components/admin/layout";
+import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { useToast } from "@/contexts/ToastContext";
 
 type Language = { id: string; iso_639_3: string; name: string; native_name?: string };
@@ -476,21 +477,27 @@ export default function CollectionsPage() {
       {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
 
       <div className="grid gap-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 md:grid-cols-3">
-        <label className="text-sm text-gray-600 dark:text-gray-300">Collection
-          <select value={selected} onChange={(event) => setSelected(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
-            {collections.map((collection) => <option key={collection.collection_key} value={collection.collection_key}>{collection.title} ({collection.item_count})</option>)}
-          </select>
-        </label>
-        <label className="text-sm text-gray-600 dark:text-gray-300">Learning language
-          <select value={learningLanguage} onChange={(event) => setLearningLanguage(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
-            {languages.map((language) => <option key={language.id} value={language.iso_639_3}>{language.name}</option>)}
-          </select>
-        </label>
-        <label className="text-sm text-gray-600 dark:text-gray-300">Translation language
-          <select value={translationLanguage} onChange={(event) => setTranslationLanguage(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
-            {languages.map((language) => <option key={language.id} value={language.iso_639_3}>{language.name}</option>)}
-          </select>
-        </label>
+        <StyledSelect
+          label="Collection"
+          value={selected}
+          onChange={(event) => setSelected(event.target.value)}
+          options={collections.map((collection) => ({ value: collection.collection_key, label: `${collection.title} (${collection.item_count})` }))}
+          fullWidth
+        />
+        <StyledSelect
+          label="Learning language"
+          value={learningLanguage}
+          onChange={(event) => setLearningLanguage(event.target.value)}
+          options={languages.map((language) => ({ value: language.iso_639_3, label: language.name }))}
+          fullWidth
+        />
+        <StyledSelect
+          label="Translation language"
+          value={translationLanguage}
+          onChange={(event) => setTranslationLanguage(event.target.value)}
+          options={languages.map((language) => ({ value: language.iso_639_3, label: language.name }))}
+          fullWidth
+        />
       </div>
 
       {selectedCollection && (
@@ -525,9 +532,9 @@ export default function CollectionsPage() {
 
       <div className="grid gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 md:grid-cols-4">
         <label className="text-sm text-gray-600 dark:text-gray-300">Search<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Concept, term or translation" className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
-        <label className="text-sm text-gray-600 dark:text-gray-300">Category<select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"><option value="all">All categories</option>{categories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
-        <label className="text-sm text-gray-600 dark:text-gray-300">Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"><option value="all">All statuses</option>{["draft", "published", "review", "stale"].map((status) => <option key={status} value={status}>{status}</option>)}</select></label>
-        <label className="text-sm text-gray-600 dark:text-gray-300">Rows per page<select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white">{[10, 25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}</select></label>
+        <StyledSelect label="Category" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} options={[{ value: "all", label: "All categories" }, ...categories.map((category) => ({ value: category, label: category }))]} fullWidth />
+        <StyledSelect label="Status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} options={[{ value: "all", label: "All statuses" }, ...["draft", "published", "review", "stale"].map((status) => ({ value: status, label: status }))]} fullWidth />
+        <StyledSelect label="Rows per page" value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))} options={[10, 25, 50, 100].map((size) => ({ value: size, label: String(size) }))} fullWidth />
       </div>
 
       <StickyBulkActionBar
@@ -643,12 +650,21 @@ export default function CollectionsPage() {
         isSubmitting={isAddingItem}
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Entity
-            <select required value={newEntityKey} onChange={(event) => setNewEntityKey(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white">{entityKeys.map((entity) => <option key={entity} value={entity}>{entity}</option>)}</select>
-          </label>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category key
-            <select value={newCategoryKey} onChange={(event) => setNewCategoryKey(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white"><option value="">Uncategorised</option>{categories.map((category) => <option key={category} value={category}>{category}</option>)}</select>
-          </label>
+          <StyledSelect
+            label="Entity"
+            required
+            value={newEntityKey}
+            onChange={(event) => setNewEntityKey(event.target.value)}
+            options={entityKeys.map((entity) => ({ value: entity, label: entity }))}
+            fullWidth
+          />
+          <StyledSelect
+            label="Category key"
+            value={newCategoryKey}
+            onChange={(event) => setNewCategoryKey(event.target.value)}
+            options={[{ value: "", label: "Uncategorised" }, ...categories.map((category) => ({ value: category, label: category }))]}
+            fullWidth
+          />
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Item key<input required pattern="[a-z0-9][a-z0-9_.-]+" value={newConceptKey} onChange={(event) => setNewConceptKey(slugifyKey(event.target.value))} placeholder="lion" className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" /></label>
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{learningLanguage} term
             <input required value={newLearningTerm} onChange={(event) => setNewLearningTerm(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />

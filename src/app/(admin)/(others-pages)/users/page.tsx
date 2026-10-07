@@ -13,7 +13,7 @@ import Alert from "@/components/ui/alert/SimpleAlert";
 import StatusBadge from "@/components/admin/StatusBadge";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import Pagination from "@/components/tables/Pagination";
-import { FaApple, FaGoogle, FaGlobe, FaMobileAlt, FaEnvelope } from "react-icons/fa";
+import { FaApple, FaGlobe, FaMobileAlt, FaEnvelope } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { FiAward, FiEye, FiTrash2, FiUserCheck, FiUserX, FiAlertOctagon } from "react-icons/fi";
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
@@ -26,8 +26,7 @@ import {
   type AdminCourseLearningState,
   type UserLearningPosition,
 } from "@/lib/user-learning-position";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { UserDetailPanel } from "@/components/admin/users/UserDetailPanel";
+import { UserDetailsSheet } from "@/components/admin/users/UserDetailsSheet";
 
 type TabRole = "all" | UserRole;
 type ActionType = "deactivate" | "reactivate" | "delete" | "purge";
@@ -392,7 +391,7 @@ export default function UsersPage() {
       case "ios":
         return <FaApple className={commonClassName} aria-label="Apple (iOS)" />;
       case "android":
-        return <FaGoogle className={commonClassName} aria-label="Google (Android)" />;
+        return <FcGoogle className={commonClassName} aria-label="Google (Android)" />;
       case "web":
         return <FaGlobe className={commonClassName} aria-label="Web" />;
       default:
@@ -939,8 +938,9 @@ export default function UsersPage() {
                                 </div>
                               )
                             ) : (
-                              <div className="border-t border-gray-100 pt-1.5 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
-                                Loading current lesson…
+                              <div className="space-y-1.5 border-t border-gray-100 pt-1.5 dark:border-gray-700">
+                                <div className="h-2.5 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                                <div className="h-2.5 w-28 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
                               </div>
                             )}
                           </div>
@@ -988,7 +988,12 @@ export default function UsersPage() {
                             </button>
                             {user.is_active ? (
                               <button
-                                onClick={() => setActionConfirm({ userId: user.id, action: "deactivate", userName: user.display_name || user.email })}
+                                onClick={(e) => {
+                                  // The row itself opens the user drawer; without this the
+                                  // drawer opened too and locked the confirmation dialog.
+                                  e.stopPropagation();
+                                  setActionConfirm({ userId: user.id, action: "deactivate", userName: user.display_name || user.email });
+                                }}
                                 aria-label={`Deactivate ${user.display_name || user.email || "user"}`}
                                 title="Deactivate user"
                                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-orange-600 hover:bg-orange-50 hover:text-orange-900 dark:text-orange-400 dark:hover:bg-orange-900/30 dark:hover:text-orange-300"
@@ -997,7 +1002,12 @@ export default function UsersPage() {
                               </button>
                             ) : (
                               <button
-                                onClick={() => setActionConfirm({ userId: user.id, action: "reactivate", userName: user.display_name || user.email })}
+                                onClick={(e) => {
+                                  // The row itself opens the user drawer; without this the
+                                  // drawer opened too and locked the confirmation dialog.
+                                  e.stopPropagation();
+                                  setActionConfirm({ userId: user.id, action: "reactivate", userName: user.display_name || user.email });
+                                }}
                                 aria-label={`Reactivate ${user.display_name || user.email || "user"}`}
                                 title="Reactivate user"
                                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-green-600 hover:bg-green-50 hover:text-green-900 dark:text-green-400 dark:hover:bg-green-900/30 dark:hover:text-green-300"
@@ -1006,7 +1016,12 @@ export default function UsersPage() {
                               </button>
                             )}
                             <button
-                              onClick={() => setActionConfirm({ userId: user.id, action: "delete", userName: user.display_name || user.email })}
+                              onClick={(e) => {
+                                  // The row itself opens the user drawer; without this the
+                                  // drawer opened too and locked the confirmation dialog.
+                                  e.stopPropagation();
+                                  setActionConfirm({ userId: user.id, action: "delete", userName: user.display_name || user.email });
+                                }}
                               aria-label={`Delete ${user.display_name || user.email || "user"}`}
                               title="Soft delete (deactivates account, data kept, reversible in the DB)"
                               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-600 hover:bg-red-50 hover:text-red-900 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
@@ -1097,24 +1112,16 @@ export default function UsersPage() {
       )}
 
       {/* User detail side panel */}
-      <Sheet open={!!selectedUserId} onOpenChange={(open) => !open && setSelectedUserId(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
-          <SheetHeader>
-            <SheetTitle>User Details</SheetTitle>
-          </SheetHeader>
-          {selectedUserId && (
-            <UserDetailPanel
-              userId={selectedUserId}
-              onActionComplete={(action) => {
-                if (action === "delete" || action === "purge") {
-                  setSelectedUserId(null);
-                }
-                refresh();
-              }}
-            />
-          )}
-        </SheetContent>
-      </Sheet>
+      <UserDetailsSheet
+        userId={selectedUserId}
+        onClose={() => setSelectedUserId(null)}
+        onActionComplete={(action) => {
+          if (action === "delete" || action === "purge") {
+            setSelectedUserId(null);
+          }
+          refresh();
+        }}
+      />
     </div>
   );
 }

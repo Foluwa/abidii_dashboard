@@ -1,26 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
+import { UrlTabs, type UrlTab } from "@/components/ui/url-tabs";
 
-// Import the three existing page components
-import PlatformConfigPage from "@/app/(admin)/(others-pages)/system/config/page";
-import AppConfigPage from "@/app/(admin)/(others-pages)/settings/app-config/page";
-import LanguageSettingsPage from "@/app/(admin)/(others-pages)/settings/language-settings/page";
-import ForceUpdateConfigPage from "@/app/(admin)/(others-pages)/settings/force-update/page";
+// Import the extracted content components
+import { PlatformConfigContent } from "@/components/system/PlatformConfigContent";
+import { AppConfigContent } from "@/components/settings/AppConfigContent";
+import { LanguageSettingsContent } from "@/components/settings/LanguageSettingsContent";
+import { ForceUpdateContent } from "@/components/settings/ForceUpdateContent";
+import { EmailTemplatesContent } from "@/components/system/EmailTemplatesContent";
 
-type ConfigTab = "platform" | "application" | "language" | "force-update";
-
-const TABS: { key: ConfigTab; label: string }[] = [
+const TABS: UrlTab[] = [
   { key: "platform", label: "Feature Flags" },
   { key: "application", label: "App Settings" },
   { key: "language", label: "Language" },
   { key: "force-update", label: "Force Update" },
+  { key: "email", label: "Email Templates" },
 ];
 
 export default function ConfigurationPage() {
-  const [activeTab, setActiveTab] = useState<ConfigTab>("platform");
-
   return (
     <div className="space-y-6">
       <div>
@@ -30,32 +29,25 @@ export default function ConfigurationPage() {
         </p>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex -mb-px space-x-8">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`
-                py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                ${activeTab === tab.key
-                  ? "border-brand-500 text-brand-600 dark:text-brand-400"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
-                }
-              `}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === "platform" && <PlatformConfigPage />}
-      {activeTab === "application" && <AppConfigPage />}
-      {activeTab === "language" && <LanguageSettingsPage />}
-      {activeTab === "force-update" && <ForceUpdateConfigPage />}
+      <UrlTabs
+        tabs={TABS}
+        defaultKey="platform"
+        renderTab={(key) => {
+          if (key === "application") {
+            return <AppConfigContent showHeader={false} />;
+          }
+          if (key === "language") {
+            return <LanguageSettingsContent showHeader={false} />;
+          }
+          if (key === "force-update") {
+            return <ForceUpdateContent showHeader={false} />;
+          }
+          if (key === "email") {
+            return <EmailTemplatesContent showHeader={false} />;
+          }
+          return <PlatformConfigContent showHeader={false} />;
+        }}
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { apiClient } from "@/lib/api";
 import { useToast } from "@/contexts/ToastContext";
 import { Modal } from "@/components/ui/modal";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
+import { Combobox } from "@/components/ui/form/Combobox";
 import { FiVolume2, FiCheck, FiRefreshCw, FiX } from "react-icons/fi";
 import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
 import { useAudioJob, acceptAudioJob } from "@/hooks/useAudioJob";
@@ -280,7 +281,7 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
               No compatible voices available for {target.languageCode}{selectedProvider !== "all" ? ` using ${selectedProvider}` : ""}
             </div>
           ) : (
-            <StyledSelect
+            <Combobox
               value={selectedVoiceId}
               onChange={(e) => setSelectedVoiceId(e.target.value)}
               required
@@ -288,6 +289,8 @@ export function RegenerateAudioModal({ isOpen, onClose, target, onSuccess }: Reg
                 value: voice.id,
                 label: `${getVoiceLabel(voice)} (${voice.provider})`,
               }))}
+              placeholder="Select voice"
+              searchPlaceholder="Search voices..."
               fullWidth
             />
           )}

@@ -14,7 +14,7 @@ import { screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import UsersPage from '@/app/(admin)/(others-pages)/users/page';
 
-import { renderWithProviders as render } from '@/test-utils';
+import { chooseOption, renderWithProviders as render } from '@/test-utils';
 
 // Mock the useUsers hook
 const mockRefresh = jest.fn();
@@ -28,6 +28,12 @@ jest.mock('@/hooks/useApi', () => ({
     isLoading: false,
     isError: false,
   }),
+  // Filter-option hooks added to the Users page after this test was
+  // written (app-version and course-progress filters).
+  useUserAppVersions: () => ({ appVersions: [], isLoading: false, isError: false }),
+  useUserProgressOptions: () => ({ progressUnits: [], isLoading: false, isError: false }),
+  useUserDetail: () => ({ user: null, isLoading: false, isError: false }),
+  usePlayerDetail: () => ({ data: null, isLoading: false, isError: false }),
 }));
 
 jest.mock('@/lib/api', () => ({
@@ -219,12 +225,12 @@ describe('UsersPage', () => {
 
       // Change status filter
       const statusLabel = screen.getByText('Status', { selector: 'label' });
-      const statusSelect = statusLabel.parentElement?.querySelector('select');
+      const statusSelect = statusLabel.parentElement?.querySelector<HTMLElement>('[role="combobox"]');
       expect(statusSelect).toBeTruthy();
-      if (!(statusSelect instanceof HTMLSelectElement)) {
+      if (!(statusSelect instanceof HTMLElement)) {
         throw new Error('Status select not found');
       }
-      await userEvent.selectOptions(statusSelect, 'active');
+      await chooseOption(userEvent, statusSelect, 'active');
 
       // Check that useUsers was called with the filter
       expect(mockUseUsers).toHaveBeenCalledWith(
@@ -238,12 +244,12 @@ describe('UsersPage', () => {
       render(<UsersPage />);
 
       const providerLabel = screen.getByText('Provider', { selector: 'label' });
-      const providerSelect = providerLabel.parentElement?.querySelector('select');
+      const providerSelect = providerLabel.parentElement?.querySelector<HTMLElement>('[role="combobox"]');
       expect(providerSelect).toBeTruthy();
-      if (!(providerSelect instanceof HTMLSelectElement)) {
+      if (!(providerSelect instanceof HTMLElement)) {
         throw new Error('Provider select not found');
       }
-      await userEvent.selectOptions(providerSelect, 'google');
+      await chooseOption(userEvent, providerSelect, 'google');
 
       expect(mockUseUsers).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -256,18 +262,18 @@ describe('UsersPage', () => {
       render(<UsersPage />);
 
       const languageLabel = screen.getByText('Language', { selector: 'label' });
-      const languageSelect = languageLabel.parentElement?.querySelector('select');
-      if (!(languageSelect instanceof HTMLSelectElement)) {
+      const languageSelect = languageLabel.parentElement?.querySelector<HTMLElement>('[role="combobox"]');
+      if (!(languageSelect instanceof HTMLElement)) {
         throw new Error('Language select not found');
       }
-      await userEvent.selectOptions(languageSelect, 'yor');
+      await chooseOption(userEvent, languageSelect, 'yor');
 
       const appLanguageLabel = screen.getByText('App Language', { selector: 'label' });
-      const appLanguageSelect = appLanguageLabel.parentElement?.querySelector('select');
-      if (!(appLanguageSelect instanceof HTMLSelectElement)) {
+      const appLanguageSelect = appLanguageLabel.parentElement?.querySelector<HTMLElement>('[role="combobox"]');
+      if (!(appLanguageSelect instanceof HTMLElement)) {
         throw new Error('App Language select not found');
       }
-      await userEvent.selectOptions(appLanguageSelect, 'pt');
+      await chooseOption(userEvent, appLanguageSelect, 'pt');
 
       // Both filters must be usable together - learning Yoruba, app in
       // Portuguese - see abidii_app_language.md §6.4.
@@ -303,11 +309,11 @@ describe('UsersPage', () => {
 
       // Set the App Language filter alongside the advanced filters.
       const appLanguageLabel = screen.getByText('App Language', { selector: 'label' });
-      const appLanguageSelect = appLanguageLabel.parentElement?.querySelector('select');
-      if (!(appLanguageSelect instanceof HTMLSelectElement)) {
+      const appLanguageSelect = appLanguageLabel.parentElement?.querySelector<HTMLElement>('[role="combobox"]');
+      if (!(appLanguageSelect instanceof HTMLElement)) {
         throw new Error('App Language select not found');
       }
-      await userEvent.selectOptions(appLanguageSelect, 'yo');
+      await chooseOption(userEvent, appLanguageSelect, 'yo');
 
       // Show advanced filters
       const moreFiltersBtn = screen.getByText('More Filters');

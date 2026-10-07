@@ -15,6 +15,7 @@ import {
   useLearningAnalyticsOverview,
 } from '@/hooks/useApi';
 import { formatCount, formatDurationMs, formatRate } from '@/lib/formatAnalytics';
+import { StyledSelect } from '@/components/ui/form/StyledSelect';
 
 type DatePreset = '7' | '30' | '90' | 'all';
 
@@ -70,16 +71,16 @@ export default function LessonAnalyticsDetailPage() {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <select
+          <StyledSelect
             value={preset}
             onChange={(e) => setPreset(e.target.value as DatePreset)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-          >
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 90 days</option>
-            <option value="all">All time</option>
-          </select>
+            options={[
+              { value: '7', label: 'Last 7 days' },
+              { value: '30', label: 'Last 30 days' },
+              { value: '90', label: 'Last 90 days' },
+              { value: 'all', label: 'All time' },
+            ]}
+          />
           <button
             onClick={() => refresh()}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

@@ -392,19 +392,13 @@ export default function PatternsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Category
-                  </label>
-                  <select
-                    name="category"
+                  <StyledSelect
+                    label="Category"
                     value={formData.category || ''}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  >
-                    {CATEGORIES.map(cat => (
-                      <option key={cat.value} value={cat.value}>{cat.label}</option>
-                    ))}
-                  </select>
+                    onChange={(e) => handleInputChange({ target: { name: 'category', value: e.target.value } } as React.ChangeEvent<HTMLInputElement>)}
+                    options={CATEGORIES}
+                    fullWidth
+                  />
                 </div>
               </div>
 
@@ -453,19 +447,13 @@ export default function PatternsPage() {
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Difficulty
-                  </label>
-                  <select
-                    name="difficulty"
+                  <StyledSelect
+                    label="Difficulty"
                     value={formData.difficulty || 1}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  >
-                    {DIFFICULTIES.map(d => (
-                      <option key={d.value} value={d.value}>{d.label}</option>
-                    ))}
-                  </select>
+                    onChange={(e) => handleInputChange({ target: { name: 'difficulty', value: e.target.value } } as React.ChangeEvent<HTMLInputElement>)}
+                    options={DIFFICULTIES}
+                    fullWidth
+                  />
                 </div>
                 <div>
                   <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">

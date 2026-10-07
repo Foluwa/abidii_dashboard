@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { useLanguages } from "@/hooks/useApi";
+import { useAdminLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import type { Language } from "@/types/api";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
@@ -12,7 +12,7 @@ import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { FiGlobe, FiUsers, FiBook, FiMusic } from "react-icons/fi";
 
 export default function LanguagesPage() {
-  const { languages, isLoading, isError, refresh } = useLanguages();
+  const { languages, isLoading, isError, refresh } = useAdminLanguages();
   const [showModal, setShowModal] = useState(false);
   const [editingLanguage, setEditingLanguage] = useState<Language | null>(null);
   const [successMessage, setSuccessMessage] = useState("");

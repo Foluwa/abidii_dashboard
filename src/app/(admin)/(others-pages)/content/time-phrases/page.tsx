@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useLanguages } from "@/hooks/useApi";
+import { useAdminLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import { useToast } from "@/contexts/ToastContext";
 import {
@@ -271,7 +271,7 @@ export default function TimePhrasesPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { languages } = useLanguages();
+  const { languages } = useAdminLanguages();
 
   // Basic state
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
@@ -1336,67 +1336,61 @@ export default function TimePhrasesPage() {
             <div className="mt-5 border-t border-gray-100 pt-5 dark:border-gray-800">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    Difficulty
-                  </label>
-                  <select
+                  <StyledSelect
+                    label="Difficulty"
                     value={difficultyFilter ?? ""}
                     onChange={(e) => { setDifficultyFilter(e.target.value ? Number(e.target.value) : undefined); setPage(1); }}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                  >
-                    <option value="">All Levels</option>
-                    {[1, 2, 3, 4, 5].map(level => (
-                      <option key={level} value={level}>Level {level}</option>
-                    ))}
-                  </select>
+                    options={[
+                      { value: "", label: "All Levels" },
+                      ...[1, 2, 3, 4, 5].map(level => ({ value: level, label: `Level ${level}` })),
+                    ]}
+                    fullWidth
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    Published Status
-                  </label>
-                  <select
+                  <StyledSelect
+                    label="Published Status"
                     value={publishedFilter === undefined ? "" : publishedFilter.toString()}
                     onChange={(e) => { setPublishedFilter(e.target.value === "" ? undefined : e.target.value === "true"); setPage(1); }}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                  >
-                    <option value="">All</option>
-                    <option value="true">Published</option>
-                    <option value="false">Draft</option>
-                  </select>
+                    options={[
+                      { value: "", label: "All" },
+                      { value: "true", label: "Published" },
+                      { value: "false", label: "Draft" },
+                    ]}
+                    fullWidth
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    Alignment Status
-                  </label>
-                  <select
+                  <StyledSelect
+                    label="Alignment Status"
                     value={alignmentFilter ?? ""}
                     onChange={(e) => { setAlignmentFilter(e.target.value || undefined); setPage(1); }}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                  >
-                    <option value="">All</option>
-                    <option value="draft">Draft</option>
-                    <option value="reviewed">Reviewed</option>
-                    <option value="approved">Approved</option>
-                    <option value="stale">Stale</option>
-                    <option value="none">No Alignment</option>
-                  </select>
+                    options={[
+                      { value: "", label: "All" },
+                      { value: "draft", label: "Draft" },
+                      { value: "reviewed", label: "Reviewed" },
+                      { value: "approved", label: "Approved" },
+                      { value: "stale", label: "Stale" },
+                      { value: "none", label: "No Alignment" },
+                    ]}
+                    fullWidth
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    Has Audio
-                  </label>
-                  <select
+                  <StyledSelect
+                    label="Has Audio"
                     value={hasAudio === undefined ? "" : hasAudio.toString()}
                     onChange={(e) => { setHasAudio(e.target.value === "" ? undefined : e.target.value === "true"); setPage(1); }}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                  >
-                    <option value="">All</option>
-                    <option value="true">Yes</option>
-                    <option value="false">No</option>
-                  </select>
+                    options={[
+                      { value: "", label: "All" },
+                      { value: "true", label: "Yes" },
+                      { value: "false", label: "No" },
+                    ]}
+                    fullWidth
+                  />
                 </div>
 
                 <div>
@@ -1439,34 +1433,32 @@ export default function TimePhrasesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    Sort By
-                  </label>
-                  <select
+                  <StyledSelect
+                    label="Sort By"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                  >
-                    <option value="time">Time (12:00 AM →)</option>
-                    <option value="phrase">Phrase</option>
-                    <option value="translation">Translation</option>
-                    <option value="created_at">Created Date</option>
-                    <option value="updated_at">Updated Date</option>
-                  </select>
+                    options={[
+                      { value: "time", label: "Time (12:00 AM →)" },
+                      { value: "phrase", label: "Phrase" },
+                      { value: "translation", label: "Translation" },
+                      { value: "created_at", label: "Created Date" },
+                      { value: "updated_at", label: "Updated Date" },
+                    ]}
+                    fullWidth
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    Direction
-                  </label>
-                  <select
+                  <StyledSelect
+                    label="Direction"
                     value={sortDir}
                     onChange={(e) => setSortDir(e.target.value as 'asc' | 'desc')}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                  >
-                    <option value="asc">Ascending</option>
-                    <option value="desc">Descending</option>
-                  </select>
+                    options={[
+                      { value: "asc", label: "Ascending" },
+                      { value: "desc", label: "Descending" },
+                    ]}
+                    fullWidth
+                  />
                 </div>
               </div>
             </div>
@@ -1756,20 +1748,13 @@ export default function TimePhrasesPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Difficulty Level *
-                </label>
-                <select
+                <StyledSelect
+                  label="Difficulty Level *"
                   value={formData.difficulty_level}
                   onChange={(e) => setFormData({ ...formData, difficulty_level: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                >
-                  {[1, 2, 3, 4, 5].map((level) => (
-                    <option key={level} value={level}>
-                      Level {level}
-                    </option>
-                  ))}
-                </select>
+                  options={[1, 2, 3, 4, 5].map((level) => ({ value: level, label: `Level ${level}` }))}
+                  fullWidth
+                />
               </div>
             </div>
 

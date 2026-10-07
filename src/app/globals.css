@@ -216,13 +216,15 @@
 
 /* Raw chart-series variables (read by the shadcn chart wrapper via
    `var(--chart-N)`). Bright, colour-distinct series palette — intentionally
-   NOT derived from the neutral primary/sidebar tokens. */
+   NOT derived from the neutral primary/sidebar tokens. Light theme uses
+   deeper (600-level) variants for contrast against white cards; dark mode
+   overrides to the brighter (400-level) variants. */
 :root {
-  --chart-1: #38bdf8; /* sky blue */
-  --chart-2: #34d399; /* emerald */
-  --chart-3: #fbbf24; /* amber */
-  --chart-4: #a78bfa; /* violet */
-  --chart-5: #fb7185; /* coral */
+  --chart-1: #0284c7; /* sky-600 */
+  --chart-2: #059669; /* emerald-600 */
+  --chart-3: #d97706; /* amber-600 */
+  --chart-4: #7c3aed; /* violet-600 */
+  --chart-5: #e11d48; /* rose-600 */
 }
 
 /*
@@ -299,6 +301,13 @@
   --color-sidebar-accent-foreground: oklch(0.985 0 0);
   --color-sidebar-border: oklch(1 0 0 / 10%);
   --color-sidebar-ring: oklch(0.556 0 0);
+
+  /* Brighter (400-level) chart series for dark backgrounds. */
+  --chart-1: #38bdf8;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #a78bfa;
+  --chart-5: #fb7185;
 
   /* Neutralize the blue focus ring + date-picker shadow in dark mode. */
   --shadow-focus-ring: 0px 0px 0px 4px oklch(0.556 0 0 / 0.12);

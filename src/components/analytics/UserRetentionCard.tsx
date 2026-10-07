@@ -78,8 +78,22 @@ function RetentionKpi({
   );
 }
 
-export default function UserRetentionCard() {
-  const { data, isLoading, isError, refresh } = useUserRetention(4);
+/**
+ * Day 1/7/30 retention is cohort-based (users who signed up early enough to
+ * have completed that window) and is NOT filtered by the dashboard range -
+ * incomplete cohorts are never shown as finished. When `range` is set it
+ * only sets how many completed weeks the returning-users chart covers.
+ */
+export default function UserRetentionCard({
+  weeks = 4,
+  range,
+  rangeText,
+}: {
+  weeks?: number;
+  range?: string;
+  rangeText?: string;
+}) {
+  const { data, isLoading, isError, refresh } = useUserRetention(weeks, range);
 
   const chartData = (data?.weekly_returning_users || []).map((item) => ({
     date: `${item.week_start}T00:00:00Z`,
@@ -103,7 +117,8 @@ export default function UserRetentionCard() {
       <CardHeader>
         <CardTitle>User Retention</CardTitle>
         <CardDescription>
-          Percentage of new users who return after signing up
+          Day 1/7/30 return rates by signup cohort (completed windows only)
+          {rangeText ? ` · weekly returning users: ${rangeText}` : ""}
         </CardDescription>
         <CardAction>
           <button

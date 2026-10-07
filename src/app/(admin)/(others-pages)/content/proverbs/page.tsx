@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useProverbs, useLanguages } from "@/hooks/useApi";
+import { useProverbs, useAdminLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import type { Proverb } from "@/types/api";
 import {
@@ -367,7 +367,7 @@ export default function ProverbsPage() {
     page, 
     limit 
   });
-  const { languages } = useLanguages();
+  const { languages } = useAdminLanguages();
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   // Deduplicate proverbs to prevent duplicate key errors
@@ -2040,23 +2040,19 @@ export default function ProverbsPage() {
                     ) : (
                       <>
                         <div>
-                          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Answer Starts At
-                          </label>
-                          <select
+                          <StyledSelect
+                            label="Answer Starts At"
                             value={gameSplitAnswerStartIndex ?? ""}
                             onChange={(e) => setGameSplitAnswerStartIndex(Number(e.target.value))}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
-                          >
-                            {alignmentWords.slice(1).map((word, index) => {
+                            options={alignmentWords.slice(1).map((word, index) => {
                               const answerStartIndex = index + 1;
-                              return (
-                                <option key={`${word.word}-${answerStartIndex}`} value={answerStartIndex}>
-                                  Word {answerStartIndex + 1}: {word.word}
-                                </option>
-                              );
+                              return {
+                                value: answerStartIndex,
+                                label: `Word ${answerStartIndex + 1}: ${word.word}`,
+                              };
                             })}
-                          </select>
+                            fullWidth
+                          />
                           <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
                             Words before this point become the prompt. This word and everything after it become the completion answer.
                           </p>
@@ -2268,20 +2264,19 @@ export default function ProverbsPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Language
-            </label>
-            <select
+            <StyledSelect
+              label="Language"
               value={bulkRegenerateLanguage}
               onChange={(e) => {
                 setBulkRegenerateLanguage(e.target.value);
                 setBulkRegenerateVoiceId("");
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-            >
-              <option value="yoruba">Yoruba</option>
-              <option value="english">English</option>
-            </select>
+              options={[
+                { value: "yoruba", label: "Yoruba" },
+                { value: "english", label: "English" },
+              ]}
+              fullWidth
+            />
           </div>
 
           <div>
@@ -2291,24 +2286,23 @@ export default function ProverbsPage() {
             {isLoadingVoices ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">Loading voices...</div>
             ) : (
-              <select
+              <StyledSelect
                 value={bulkRegenerateVoiceId}
                 onChange={(e) => setBulkRegenerateVoiceId(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              >
-                <option value="">Use default voice for language</option>
-                {availableVoices
-                  .filter((voice) => {
-                    const langCode = bulkRegenerateLanguage === "yoruba" ? "yo" : "en";
-                    return voice.language_code === langCode || voice.language_code.startsWith(langCode);
-                  })
-                  .map((voice) => (
-                    <option key={voice.id} value={voice.id}>
-                      {voice.display_name || voice.voice_name} ({voice.provider})
-                      {voice.gender ? ` - ${voice.gender}` : ""}
-                    </option>
-                  ))}
-              </select>
+                options={[
+                  { value: "", label: "Use default voice for language" },
+                  ...availableVoices
+                    .filter((voice) => {
+                      const langCode = bulkRegenerateLanguage === "yoruba" ? "yo" : "en";
+                      return voice.language_code === langCode || voice.language_code.startsWith(langCode);
+                    })
+                    .map((voice) => ({
+                      value: voice.id,
+                      label: `${voice.display_name || voice.voice_name} (${voice.provider})${voice.gender ? ` - ${voice.gender}` : ""}`,
+                    })),
+                ]}
+                fullWidth
+              />
             )}
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Leave empty to use the default active voice for the selected language.

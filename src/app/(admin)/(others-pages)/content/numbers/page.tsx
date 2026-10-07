@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useState, useMemo } from "react";
-import { useLanguages } from "@/hooks/useApi";
+import { useAdminLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import type { Language } from "@/types/api";
 import Toast from "@/components/ui/toast/Toast";
@@ -129,7 +129,7 @@ export default function NumbersPage() {
   const [filterDifficulty, setFilterDifficulty] = useState<string>('');
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  const { languages } = useLanguages();
+  const { languages } = useAdminLanguages();
 
   // Stats
   const stats = useMemo(() => {
@@ -757,16 +757,13 @@ export default function NumbersPage() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Provider *
             </label>
-            <select
+            <StyledSelect
               value={bulkRegenerateProvider}
               onChange={(e) => {
                 setBulkRegenerateProvider(e.target.value);
                 setBulkRegenerateVoiceId("");
               }}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-            >
-              <option value="">Select provider</option>
-              {Array.from(
+              options={Array.from(
                 new Set(
                   availableVoices
                     .filter((voice) => (
@@ -781,26 +778,21 @@ export default function NumbersPage() {
                 )
               )
                 .sort((a, b) => voiceProviderPriority(a) - voiceProviderPriority(b) || a.localeCompare(b))
-                .map((provider) => (
-                  <option key={provider} value={provider}>
-                    {provider}
-                  </option>
-                ))}
-            </select>
+                .map((provider) => ({ value: provider, label: provider }))}
+              placeholder="Select provider"
+              fullWidth
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Voice *
             </label>
-            <select
+            <StyledSelect
               value={bulkRegenerateVoiceId}
               onChange={(e) => setBulkRegenerateVoiceId(e.target.value)}
               disabled={!bulkRegenerateProvider}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50"
-            >
-              <option value="">{bulkRegenerateProvider ? "Select voice" : "Select provider first"}</option>
-              {availableVoices
+              options={availableVoices
                 .filter((voice) => (
                   typeof voice.language_code === "string"
                   && voice.provider === bulkRegenerateProvider
@@ -809,12 +801,13 @@ export default function NumbersPage() {
                     || voice.language_code.startsWith(`${bulkVoiceLanguagePrefix}-`)
                   )
                 ))
-                .map((voice) => (
-                  <option key={voice.id} value={voice.id}>
-                    {(voice.display_name || voice.voice_name || voice.voice_code || "Unknown Voice")} ({voice.provider})
-                  </option>
-                ))}
-            </select>
+                .map((voice) => ({
+                  value: voice.id,
+                  label: `${voice.display_name || voice.voice_name || voice.voice_code || "Unknown Voice"} (${voice.provider})`,
+                }))}
+              placeholder={bulkRegenerateProvider ? "Select voice" : "Select provider first"}
+              fullWidth
+            />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Provider and voice are required for bulk regeneration.
             </p>

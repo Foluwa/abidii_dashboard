@@ -14,6 +14,7 @@ import {
   type ContentLocalizationRow,
 } from "@/lib/adminJobsApi";
 import { useAdminJob } from "@/hooks/useAdminJob";
+import { StyledSelect } from "@/components/ui/form/StyledSelect";
 
 const LOCALES: { value: ContentLocalizationLocale; label: string }[] = [
   { value: "fr", label: "French" },
@@ -132,17 +133,11 @@ export default function ContentLocalizationsPage() {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <select
+            <StyledSelect
               value={locale}
               onChange={(e) => setLocale(e.target.value as ContentLocalizationLocale)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
-            >
-              {LOCALES.map((l) => (
-                <option key={l.value} value={l.value}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
+              options={LOCALES}
+            />
             <button
               type="button"
               onClick={startGeneration}
@@ -187,16 +182,16 @@ export default function ContentLocalizationsPage() {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               {LOCALES.find((l) => l.value === locale)?.label} translations
             </h3>
-            <select
+            <StyledSelect
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
-            >
-              <option value="">All statuses</option>
-              <option value="machine_draft">Draft (unpublished)</option>
-              <option value="published">Published</option>
-              <option value="stale">Stale</option>
-            </select>
+              options={[
+                { value: "", label: "All statuses" },
+                { value: "machine_draft", label: "Draft (unpublished)" },
+                { value: "published", label: "Published" },
+                { value: "stale", label: "Stale" },
+              ]}
+            />
             <span className="text-sm text-gray-500 dark:text-gray-400">{total} rows</span>
           </div>
           <button

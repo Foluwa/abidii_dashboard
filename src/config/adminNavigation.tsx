@@ -88,6 +88,16 @@ export const mainNavigationItems: AdminNavItem[] = [
         name: "Patterns",
         path: "/content/patterns",
       },
+      {
+        name: "Content Ops",
+        path: "/content/ops",
+        activePaths: [
+          "/content/audit-log",
+          "/content/audit-log/orphan-assets",
+          "/content/reports",
+          "/content/content-safety",
+        ],
+      },
     ],
   },
   {
@@ -104,35 +114,23 @@ export const mainNavigationItems: AdminNavItem[] = [
       {
         name: "Lesson Blueprints",
         path: "/curriculum/lesson-blueprints",
-      },
-      {
-        name: "Lesson Import",
-        path: "/curriculum/lesson-import",
-      },
-      {
-        name: "Blueprint Assets",
-        path: "/curriculum/assets",
+        activePaths: ["/curriculum/lesson-import", "/curriculum/assets"],
       },
     ],
   },
   {
-    name: "Media",
+    name: "Audio",
     icon: <AudioLines className="size-5" />,
-    subItems: [
-      { name: "Voices", path: "/audio/voices", permission: "audio:read" },
-      { name: "Audio Jobs", path: "/audio/jobs", permission: "audio:read" },
-      { name: "Audio Generate", path: "/audio/generate", permission: "audio:read" },
-    ],
+    path: "/audio",
+    activePaths: ["/audio/voices", "/audio/generate", "/audio/jobs"],
+    permission: "audio:read",
   },
   {
     name: "Notifications",
     icon: <Bell className="size-5" />,
+    path: "/notifications",
+    activePaths: ["/notifications/history", "/notifications/daily"],
     permission: "users:read",
-    subItems: [
-      { name: "Compose", path: "/notifications" },
-      { name: "History", path: "/notifications/history" },
-      { name: "Daily Content", path: "/notifications/daily" },
-    ],
   },
   {
     name: "System",
@@ -141,42 +139,46 @@ export const mainNavigationItems: AdminNavItem[] = [
       {
         name: "Infrastructure",
         subItems: [
-          { name: "Status", path: "/system/status", permission: "system:read" },
-          { name: "Metrics", path: "/system/metrics", permission: "system:read" },
+          {
+            name: "Health",
+            path: "/system/health",
+            activePaths: ["/system/status", "/system/metrics", "/system/idempotency"],
+            permission: "system:read",
+          },
           {
             name: "Alerts",
             path: "/system/alerts-hub",
             activePaths: ["/system/alerts", "/system/testing"],
             permission: "system:read",
           },
-          { name: "Idempotency", path: "/system/idempotency", permission: "system:read" },
-          { name: "Enforcement", path: "/enforcement", permission: "system:read" },
-          { name: "Security Exceptions", path: "/system/security-exceptions", permission: "system:read" },
+          {
+            name: "Security",
+            path: "/system/security",
+            activePaths: ["/enforcement", "/system/security-exceptions"],
+            permission: "system:read",
+          },
         ],
       },
       {
         name: "Jobs",
         subItems: [
-          { name: "Cron Jobs", path: "/system/cron", permission: "system:read" },
-          { name: "Admin Jobs", path: "/admin/jobs", permission: "system:read" },
+          {
+            name: "Jobs",
+            path: "/system/jobs",
+            activePaths: ["/system/cron", "/admin/jobs"],
+            permission: "system:read",
+          },
           { name: "ML Training", path: "/operations/ml-training", permission: "system:read" },
-          { name: "Candidate Review", path: "/operations/ml-training/candidate-manifests", permission: "system:read" },
         ],
       },
       {
         name: "Platform",
         subItems: [
-          { name: "Configuration", path: "/system/configuration" },
-          { name: "Email Templates", path: "/system/email-templates" },
-        ],
-      },
-      {
-        name: "Content Ops",
-        subItems: [
-          { name: "Audit Log", path: "/content/audit-log", permission: "content:read" },
-          { name: "Orphan Assets", path: "/content/audit-log/orphan-assets", permission: "content:read" },
-          { name: "Content Reports", path: "/content/reports", permission: "content:read" },
-          { name: "Content Safety", path: "/content/content-safety", permission: "content:read" },
+          {
+            name: "Configuration",
+            path: "/system/configuration",
+            activePaths: ["/system/email-templates"],
+          },
         ],
       },
     ],

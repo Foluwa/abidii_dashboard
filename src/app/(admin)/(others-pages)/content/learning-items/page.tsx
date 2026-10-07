@@ -1036,26 +1036,21 @@ export default function LearningItemsPage() {
           </div>
 
           <div>
-            <label className={formLabelClassName}>Image Fit</label>
-            <select
+            <StyledSelect
+              label="Image Fit"
               value={formData.image_fit || 'cover'}
               onChange={(e) => setFormData({ ...formData, image_fit: e.target.value as 'cover' | 'contain' })}
-              className={formControlClassName}
-            >
-              {IMAGE_FIT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              options={IMAGE_FIT_OPTIONS}
+              fullWidth
+            />
             <p className="mt-2 text-xs text-gray-500">
               Choose whether the app crops the image to fill the card or shows the full image.
             </p>
           </div>
           
           <div>
-            <label className={formLabelClassName}>Type *</label>
-            <select
+            <StyledSelect
+              label="Type *"
               value={formData.item_type || 'game'}
               onChange={(e) => {
                 const nextType = e.target.value as 'game' | 'lesson';
@@ -1065,11 +1060,12 @@ export default function LearningItemsPage() {
                   launch_route: normalizeLaunchRoute(nextType, formData.launch_route),
                 });
               }}
-              className={formControlClassName}
-            >
-              <option value="game">Game</option>
-              <option value="lesson">Lesson</option>
-            </select>
+              options={[
+                { value: 'game', label: 'Game' },
+                { value: 'lesson', label: 'Lesson' },
+              ]}
+              fullWidth
+            />
           </div>
           
           <div>

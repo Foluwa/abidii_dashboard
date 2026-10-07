@@ -12,6 +12,7 @@ import StatusBadge from '@/components/admin/StatusBadge';
 import { Modal } from '@/components/ui/modal';
 import { ConfirmationModal } from '@/components/ui/modal/ConfirmationModal';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
+import { Combobox } from '@/components/ui/form/Combobox';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminCoursesList, useAdminCourseCurriculumByKey, useConfig } from '@/hooks/useApi';
 import type { CurriculumSection, CurriculumUnit, PublicLessonBlueprintResponse } from '@/types/curriculum';
@@ -1073,11 +1074,13 @@ export default function CurriculumEditorPage() {
           <label htmlFor="courseKey" className="text-sm font-medium text-gray-700 dark:text-gray-200">
             Course
           </label>
-          <StyledSelect
+          <Combobox
             id="courseKey"
             value={selectedCourseKey}
             onChange={(e) => setSelectedCourseKey(e.target.value)}
             options={courseOptions.map((course) => ({ value: course.course_key, label: course.title }))}
+            placeholder="Select course"
+            searchPlaceholder="Search courses..."
             className="min-w-[240px]"
           />
           {coursesLoading && (

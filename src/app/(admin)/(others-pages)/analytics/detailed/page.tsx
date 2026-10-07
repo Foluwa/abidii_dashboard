@@ -1,8 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import dynamic from "next/dynamic";
-import { ApexOptions } from "apexcharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import AnalyticsTabs from "@/components/analytics/AnalyticsTabs";
 import Pagination from "@/components/tables/Pagination";
@@ -18,8 +29,6 @@ import {
   useSubscriptionChurn,
   useGeoDistributionActiveUsers,
 } from "@/hooks/useApi";
-
-const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 type TimeRange = "24h" | "7d" | "30d" | "6m" | "all";
 
@@ -48,15 +57,6 @@ const FLUENCY_LABELS: Record<string, string> = {
   confident: "Confident",
   fluent: "Fluent",
   unknown: "Not set",
-};
-
-const FLUENCY_COLORS: Record<string, string> = {
-  new: "#94a3b8",
-  beginner: "#465FFF",
-  basic: "#0BA5EC",
-  confident: "#F79009",
-  fluent: "#12B76A",
-  unknown: "#d1d5db",
 };
 
 function formatMs(ms: number): string {
@@ -101,33 +101,69 @@ function FluencyPieChart({ timeRange }: { timeRange: TimeRange }) {
   if (isLoading) return <Card title="Fluency Distribution"><LoadingBlock /></Card>;
   if (!data.length) return <Card title="Fluency Distribution"><EmptyBlock /></Card>;
 
-  const labels = data.map((d: { proficiency_level: string }) => FLUENCY_LABELS[d.proficiency_level] || d.proficiency_level);
-  const series = data.map((d: { count: number }) => d.count);
-  const colors = data.map((d: { proficiency_level: string }) => FLUENCY_COLORS[d.proficiency_level] || "#64748b");
+  const fluencyFill = (level: string) => {
+    switch (level) {
+      case "new": return "#94a3b8";
+      case "beginner": return c.colors[0];
+      case "basic": return c.colors[3];
+      case "confident": return c.colors[2];
+      case "fluent": return c.colors[1];
+      default: return "#d1d5db"; // unknown
+    }
+  };
 
-  const options: ApexOptions = {
-    colors,
-    chart: { fontFamily: c.fontFamily, type: "donut", height: 280 },
-    labels,
-    legend: { position: "bottom", labels: { colors: c.text } },
-    plotOptions: {
-      pie: {
-        donut: {
-          size: "65%",
-          labels: {
-            show: true,
-            total: { show: true, label: "Users", fontSize: "14px", color: c.text, formatter: () => String(total) },
-          },
-        },
-      },
-    },
-    dataLabels: { enabled: false },
-    tooltip: { y: { formatter: (val: number) => `${val} users` } },
+  const pieData: { name: string; value: number; fill: string }[] = data.map(
+    (d: { proficiency_level: string; count: number }) => ({
+    name: FLUENCY_LABELS[d.proficiency_level] || d.proficiency_level,
+    value: d.count,
+    fill: fluencyFill(d.proficiency_level),
+    }),
+  );
+
+  const tooltipStyle = {
+    background: theme === "dark" ? "#18181b" : "#ffffff",
+    border: `1px solid ${c.grid}`,
+    borderRadius: 8,
+    fontFamily: c.fontFamily,
+    fontSize: 12,
   };
 
   return (
     <Card title="Fluency Distribution" subtitle="Self-reported Yoruba fluency at onboarding">
-      <ReactApexChart options={options} series={series} type="donut" height={280} />
+      <div className="relative h-[280px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={pieData}
+              dataKey="value"
+              nameKey="name"
+              innerRadius="58%"
+              outerRadius="85%"
+              paddingAngle={2}
+              stroke="none"
+            >
+              {pieData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={tooltipStyle}
+              itemStyle={{ color: c.text }}
+              formatter={(value, name) => [`${value} users`, String(name)]}
+            />
+            <Legend
+              verticalAlign="bottom"
+              iconType="circle"
+              iconSize={8}
+              formatter={(value: string) => <span style={{ color: c.text, fontSize: 12 }}>{value}</span>}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-col items-center justify-center" style={{ height: "calc(100% - 36px)" }}>
+          <span className="text-xs text-gray-500 dark:text-gray-400">Users</span>
+          <span className="text-2xl font-semibold text-gray-900 dark:text-white">{total.toLocaleString()}</span>
+        </div>
+      </div>
     </Card>
   );
 }
@@ -254,23 +290,53 @@ function ActivityByHourChart({ timeRange }: { timeRange: TimeRange }) {
 
   if (isLoading) return <Card title="Activity by Hour of Day"><LoadingBlock /></Card>;
 
-  const categories = data.map((d: { hour: number }) => `${d.hour}:00`);
-  const series = [{ name: "Sessions", data: data.map((d: { session_count: number }) => d.session_count) }];
+  const chartData = data.map((d: { hour: number; session_count: number }) => ({
+    hour: `${d.hour}:00`,
+    sessions: d.session_count,
+  }));
 
-  const options: ApexOptions = {
-    chart: { fontFamily: c.fontFamily, type: "bar", height: 260, toolbar: { show: false } },
-    colors: ["#465FFF"],
-    plotOptions: { bar: { borderRadius: 3, columnWidth: "60%" } },
-    dataLabels: { enabled: false },
-    xaxis: { categories, labels: { style: { colors: c.text }, rotate: -45 } },
-    yaxis: { labels: { style: { colors: c.text } } },
-    grid: { borderColor: c.grid },
-    tooltip: { y: { formatter: (val: number) => `${val} sessions` } },
+  const tooltipStyle = {
+    background: theme === "dark" ? "#18181b" : "#ffffff",
+    border: `1px solid ${c.grid}`,
+    borderRadius: 8,
+    fontFamily: c.fontFamily,
+    fontSize: 12,
   };
 
   return (
     <Card title="Activity by Hour of Day (UTC)" subtitle={basis}>
-      <ReactApexChart options={options} series={series} type="bar" height={260} />
+      <div className="h-[260px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="4" vertical={false} stroke={c.grid} />
+            <XAxis
+              dataKey="hour"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: c.text, fontSize: 11, fontFamily: c.fontFamily }}
+              angle={-45}
+              textAnchor="end"
+              height={44}
+              interval={1}
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: c.text, fontSize: 12, fontFamily: c.fontFamily }}
+              width={40}
+              allowDecimals={false}
+            />
+            <Tooltip
+              cursor={{ fill: theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)" }}
+              contentStyle={tooltipStyle}
+              labelStyle={{ color: c.heading }}
+              itemStyle={{ color: c.text }}
+              formatter={(value) => [`${value} sessions`, "Sessions"]}
+            />
+            <Bar dataKey="sessions" fill={c.colors[0]} radius={[3, 3, 0, 0]} maxBarSize={28} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </Card>
   );
 }
@@ -283,21 +349,55 @@ function FeatureUsageChart({ timeRange }: { timeRange: TimeRange }) {
   if (isLoading) return <Card title="Most-Used Features"><LoadingBlock /></Card>;
   if (!data.length) return <Card title="Most-Used Features"><EmptyBlock /></Card>;
 
-  const categories = data.map((d: { feature: string }) => d.feature.replace("game:", ""));
-  const series = [{ name: "Uses", data: data.map((d: { count: number }) => d.count) }];
+  const chartData = data.map((d: { feature: string; count: number }) => ({
+    feature: d.feature.replace("game:", ""),
+    uses: d.count,
+  }));
 
-  const options: ApexOptions = {
-    chart: { fontFamily: c.fontFamily, type: "bar", height: 280, toolbar: { show: false } },
-    colors: ["#12B76A"],
-    plotOptions: { bar: { borderRadius: 3, horizontal: true } },
-    dataLabels: { enabled: false },
-    xaxis: { categories, labels: { style: { colors: c.text } } },
-    grid: { borderColor: c.grid },
+  const tooltipStyle = {
+    background: theme === "dark" ? "#18181b" : "#ffffff",
+    border: `1px solid ${c.grid}`,
+    borderRadius: 8,
+    fontFamily: c.fontFamily,
+    fontSize: 12,
   };
 
   return (
     <Card title="Most-Used Features" subtitle={basis}>
-      <ReactApexChart options={options} series={series} type="bar" height={280} />
+      <div className="h-[280px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={chartData}
+            layout="vertical"
+            margin={{ top: 8, right: 16, left: 8, bottom: 0 }}
+          >
+            <CartesianGrid strokeDasharray="4" horizontal={false} stroke={c.grid} />
+            <XAxis
+              type="number"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: c.text, fontSize: 12, fontFamily: c.fontFamily }}
+              allowDecimals={false}
+            />
+            <YAxis
+              type="category"
+              dataKey="feature"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: c.text, fontSize: 12, fontFamily: c.fontFamily }}
+              width={140}
+            />
+            <Tooltip
+              cursor={{ fill: theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)" }}
+              contentStyle={tooltipStyle}
+              labelStyle={{ color: c.heading }}
+              itemStyle={{ color: c.text }}
+              formatter={(value) => [`${value} uses`, "Uses"]}
+            />
+            <Bar dataKey="uses" fill={c.colors[1]} radius={[0, 3, 3, 0]} maxBarSize={24} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </Card>
   );
 }

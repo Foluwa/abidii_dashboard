@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useWords, useLanguages } from "@/hooks/useApi";
+import { useWords, useAdminLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import { useToast } from "@/contexts/ToastContext";
 import type { Word } from "@/types/api";
@@ -254,7 +254,7 @@ export default function WordsPage() {
     sort_by: sortBy,
     sort_dir: sortDir,
   });
-  const { languages } = useLanguages();
+  const { languages } = useAdminLanguages();
   // The lemma pool is English-anchored — there is exactly one valid
   // source language for creating/editing an entry.
   const englishLanguage = languages?.find((lang: any) => lang.iso_639_3 === 'eng');

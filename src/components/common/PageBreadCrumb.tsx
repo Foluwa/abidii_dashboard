@@ -1,50 +1,36 @@
-import Link from "next/link";
 import React from "react";
 
-interface BreadcrumbProps {
+interface PageHeaderProps {
   pageTitle: string;
+  /** One-line summary under the title (muted). */
+  description?: React.ReactNode;
+  /** Page-level actions, aligned right on wide screens. */
+  actions?: React.ReactNode;
+  /** Optional element shown before the title (e.g. a back link). */
+  eyebrow?: React.ReactNode;
 }
 
-const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle }) => {
+/**
+ * Page header in the Studio Admin layout: large tracking-tight title,
+ * muted description and right-aligned actions. Named PageBreadcrumb for
+ * backwards compatibility with existing pages.
+ */
+const PageBreadcrumb: React.FC<PageHeaderProps> = ({
+  pageTitle,
+  description,
+  actions,
+  eyebrow,
+}) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-      <h2
-        className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white"
-        x-text="pageName"
-      >
-        {pageTitle}
-      </h2>
-      {/* <nav>
-        <ol className="flex items-center gap-1.5">
-          <li>
-            <Link
-              className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400"
-              href="/"
-            >
-              Home
-              <svg
-                className="stroke-current"
-                width="17"
-                height="16"
-                viewBox="0 0 17 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M6.0765 12.667L10.2432 8.50033L6.0765 4.33366"
-                  stroke=""
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
-          </li>
-          <li className="text-sm text-gray-800 dark:text-white/90">
-            {pageTitle}
-          </li>
-        </ol>
-      </nav> */}
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div className="min-w-0 space-y-1">
+        {eyebrow}
+        <h1 className="text-3xl tracking-tight text-foreground">{pageTitle}</h1>
+        {description && (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        )}
+      </div>
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );
 };

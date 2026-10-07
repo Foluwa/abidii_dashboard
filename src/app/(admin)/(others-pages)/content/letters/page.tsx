@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useLanguages } from "@/hooks/useApi";
+import { useAdminLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import type { Language } from "@/types/api";
 import Toast from "@/components/ui/toast/Toast";
@@ -34,7 +34,7 @@ interface Letter {
 }
 
 export default function LettersPage() {
-  const { languages } = useLanguages();
+  const { languages } = useAdminLanguages();
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
   const [letters, setLetters] = useState<Letter[]>([]);
   const [loading, setLoading] = useState(false);

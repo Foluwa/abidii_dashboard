@@ -145,12 +145,12 @@ export function useSystemStatus() {
  * MLflow, Lambda GPU cloud). Auto-refreshes every 60 seconds so a service
  * coming back online is reflected without a manual refresh.
  */
-export function useServicesStatus() {
+export function useServicesStatus(pause = false) {
   const { data, error, mutate } = useSWR<ServicesStatusResponse>(
     '/api/v1/admin/services-status',
     fetcher,
     {
-      refreshInterval: 60000,
+      refreshInterval: pause ? 0 : 60000,
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
       shouldRetryOnError: false,
@@ -435,6 +435,26 @@ export function useAlertHistory(filters?: AlertFilters) {
  */
 export function useLanguages() {
   const { data, error, mutate } = useSWR('/api/v1/languages', fetcher);
+
+  return {
+    languages: data?.languages || [],
+    total: data?.total || 0,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/**
+ * Every non-deleted language for content management, including ones hidden
+ * from learners (is_public = false) - notably English, the source language
+ * of the English-anchored lemma pool and a translation (gloss) language.
+ * Manager/admin only. Learner-facing pickers keep using useLanguages().
+ */
+export function useAdminLanguages() {
+  const { data, error, mutate } = useSWR('/api/v1/admin/languages?page_size=100', fetcher, {
+    revalidateOnFocus: false,
+  });
 
   return {
     languages: data?.languages || [],
@@ -1218,9 +1238,11 @@ export function useDailyActiveUsers(days: number = 30) {
  * Cohort-based Day 1/7/30 retention, a weekly returning-users series, and
  * a month-to-date returning-users summary.
  */
-export function useUserRetention(weeks: number = 4) {
+export function useUserRetention(weeks: number = 4, range?: string) {
   const { data, error, mutate } = useSWR<RetentionResponse>(
-    `/api/v1/admin/analytics/retention?weeks=${weeks}`,
+    range
+      ? `/api/v1/admin/analytics/retention?range=${encodeURIComponent(range)}`
+      : `/api/v1/admin/analytics/retention?weeks=${weeks}`,
     fetcher,
     { revalidateOnFocus: false }
   );
@@ -1308,9 +1330,11 @@ export function useGeoDistributionActiveUsers(
  * Recent Activity (Phase 1)
  * Unified feed from admin_audit_log + subscription_events.
  */
-export function useRecentActivity(limit: number = 10, days: number = 30) {
+export function useRecentActivity(limit: number = 10, days: number = 30, range?: string) {
   const { data, error, mutate } = useSWR(
-    `/api/v1/admin/analytics/recent-activity?limit=${limit}&days=${days}`,
+    range
+      ? `/api/v1/admin/analytics/recent-activity?limit=${limit}&range=${encodeURIComponent(range)}`
+      : `/api/v1/admin/analytics/recent-activity?limit=${limit}&days=${days}`,
     fetcher,
     { revalidateOnFocus: false }
   );
@@ -2010,3 +2034,85 @@ export function useFlaggedWords(filters: { page: number; limit: number; category
   );
   return { data, isLoading: !error && !data, isError: error, refresh: mutate };
 }
+
+// =============================================================================
+// DASHBOARD DATE-RANGE HOOKS (?range=7d|30d|6m|1y|all)
+// =============================================================================
+
+export interface RangeInfo {
+  key: string;
+  label: string;
+  timezone: string;
+  granularity: "day" | "week" | "month";
+  /** Effective first day; for "all" the earliest day with data (or null). */
+  start: string | null;
+  end: string;
+  previous_start?: string | null;
+  previous_end?: string | null;
+}
+
+export interface RangeSeriesPoint {
+  period_start: string;
+  period_end: string;
+  count: number;
+  new_users?: number | null;
+  returning_users?: number | null;
+  /** Bucket cut by the range bounds or still in progress. */
+  partial: boolean;
+}
+
+export interface RangeSeriesResponse {
+  range: RangeInfo;
+  data: RangeSeriesPoint[];
+  total: number;
+}
+
+export interface RangeSummaryMetric {
+  value: number;
+  previous: number | null;
+}
+
+export interface RangeSummaryResponse {
+  range: RangeInfo;
+  new_users: RangeSummaryMetric;
+  active_users: RangeSummaryMetric;
+  new_subscribers: RangeSummaryMetric;
+}
+
+/**
+ * A range-aware series: new accounts, first-time subscribers, or distinct
+ * active learners per day/week/month. The range is part of the SWR key, so
+ * switching range never shows the previous range's data (SWR starts the new
+ * key empty -> loading state).
+ */
+export function useRangeSeries(
+  kind: "user-growth" | "subscriber-growth" | "active-users",
+  range: string,
+) {
+  const { data, error, mutate } = useSWR<RangeSeriesResponse>(
+    `/api/v1/admin/analytics/range/${kind}?range=${encodeURIComponent(range)}`,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+  return {
+    data,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+export function useRangeSummary(range: string) {
+  const { data, error, mutate } = useSWR<RangeSummaryResponse>(
+    `/api/v1/admin/analytics/range/summary?range=${encodeURIComponent(range)}`,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+  return {
+    data,
+    isLoading: !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+

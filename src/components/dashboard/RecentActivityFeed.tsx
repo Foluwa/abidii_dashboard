@@ -39,8 +39,15 @@ function summarize(item: RecentActivityItem): string {
   return item.action;
 }
 
-export default function RecentActivityFeed() {
-  const { data, isLoading, isError } = useRecentActivity(10, 30);
+export default function RecentActivityFeed({
+  days = 30,
+  range,
+}: {
+  days?: number;
+  /** Dashboard range; overrides days ("all" = no lower bound). */
+  range?: string;
+}) {
+  const { data, isLoading, isError } = useRecentActivity(10, days, range);
 
   const items = useMemo(() => data as RecentActivityItem[], [data]);
 

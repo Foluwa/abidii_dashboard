@@ -280,6 +280,9 @@ export function MLTrainingOverviewPage() {
           <Link href="/operations/ml-training/jobs">
             <Button variant="outline" size="sm">Jobs</Button>
           </Link>
+          <Link href="/operations/ml-training/candidate-manifests">
+            <Button variant="outline" size="sm">Candidate Review</Button>
+          </Link>
           <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
         </div>
       </div>
@@ -361,7 +364,7 @@ export function MLTrainingOverviewPage() {
         </Panel>
         <Panel title="Model Versions" action={<>
           <Link className="text-sm font-medium text-brand-600 mr-3" href={MLFLOW_URL} target="_blank">MLflow ↗</Link>
-          <Link className="text-sm font-medium text-brand-600" href="/system/ml-training/models">View all</Link>
+          <Link className="text-sm font-medium text-brand-600" href="/operations/ml-training/models">View all</Link>
         </>}>
           {models.length > 0 ? (
             <div className="space-y-2 text-sm">
@@ -1154,7 +1157,7 @@ export function MLVerifiedPromotionManifestDetailPage() {
           Runs a tiered AI review over this manifest&apos;s pending candidates - auto-approves
           high-confidence matches, auto-rejects clear garbage, leaves everything else pending
           for you to review below. Runs as a background job; watch progress on the{" "}
-          <Link href="/admin/jobs" className="text-brand-500 hover:underline">Admin Jobs page</Link>.
+          <Link href="/system/jobs?tab=admin" className="text-brand-500 hover:underline">Admin Jobs page</Link>.
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <StyledSelect

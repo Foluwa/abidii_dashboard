@@ -19,7 +19,9 @@ export function chartTheme(theme: ChartThemeMode) {
     heading: isDark ? "#e4e4e7" : "#1f2937",
     /** grid / border lines */
     grid: isDark ? "#27272a" : "#e5e7eb",
-    /** categorical series palette (brand + Studio Admin accents) */
-    colors: ["#465fff", "#10b981", "#f79009", "#7a5af8", "#ee46bc"],
+    /** categorical series palette — deeper (600) for light, bright (400) for dark */
+    colors: isDark
+      ? ["#38bdf8", "#34d399", "#fbbf24", "#a78bfa", "#fb7185"]
+      : ["#0284c7", "#059669", "#d97706", "#7c3aed", "#e11d48"],
   };
 }

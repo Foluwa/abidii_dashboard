@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useLanguages } from "@/hooks/useApi";
+import { useAdminLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import {
   ContentPageHeader,
@@ -329,7 +329,7 @@ function formatErrorMessage(error: any, fallbackMessage: string): string {
 }
 
 export default function PhrasesPage() {
-  const { languages } = useLanguages();
+  const { languages } = useAdminLanguages();
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
   const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [loading, setLoading] = useState(false);
@@ -2247,16 +2247,14 @@ export default function PhrasesPage() {
             {isLoadingVoices ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">Loading providers...</div>
             ) : (
-              <select
+              <StyledSelect
                 value={bulkRegenerateProvider}
                 onChange={(e) => {
                   setBulkRegenerateProvider(e.target.value);
                   setBulkRegenerateVoiceId("");
                 }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-              >
-                <option value="">Select provider</option>
-                {Array.from(new Set(
+                placeholder="Select provider"
+                options={Array.from(new Set(
                   availableVoices
                     .filter((voice) => {
                       const selectedLanguageRecord = languages.find((lang: any) => lang.id === selectedLanguage);
@@ -2270,12 +2268,9 @@ export default function PhrasesPage() {
                     .filter(Boolean)
                 ))
                   .sort((a, b) => voiceProviderPriority(a) - voiceProviderPriority(b) || a.localeCompare(b))
-                  .map((provider) => (
-                    <option key={provider} value={provider}>
-                      {provider}
-                    </option>
-                  ))}
-              </select>
+                  .map((provider) => ({ value: provider, label: provider }))}
+                fullWidth
+              />
             )}
           </div>
 
@@ -2286,14 +2281,12 @@ export default function PhrasesPage() {
             {isLoadingVoices ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">Loading voices...</div>
             ) : (
-              <select
+              <StyledSelect
                 value={bulkRegenerateVoiceId}
                 onChange={(e) => setBulkRegenerateVoiceId(e.target.value)}
                 disabled={!bulkRegenerateProvider}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-              >
-                <option value="">{bulkRegenerateProvider ? "Select voice" : "Select provider first"}</option>
-                {availableVoices
+                placeholder={bulkRegenerateProvider ? "Select voice" : "Select provider first"}
+                options={availableVoices
                   .filter((voice) => {
                     const selectedLanguageRecord = languages.find((lang: any) => lang.id === selectedLanguage);
                     const voicePrefix = mapIso6393ToVoicePrefix(selectedLanguageRecord?.iso_639_3);
@@ -2303,13 +2296,12 @@ export default function PhrasesPage() {
                       && (voice.language_code === voicePrefix || voice.language_code.startsWith(`${voicePrefix}-`))
                     );
                   })
-                  .map((voice) => (
-                    <option key={voice.id} value={voice.id}>
-                      {voice.display_name || voice.voice_name} ({voice.provider})
-                      {voice.gender ? ` - ${voice.gender}` : ""}
-                    </option>
-                  ))}
-              </select>
+                  .map((voice) => ({
+                    value: voice.id,
+                    label: `${voice.display_name || voice.voice_name} (${voice.provider})${voice.gender ? ` - ${voice.gender}` : ""}`,
+                  }))}
+                fullWidth
+              />
             )}
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Provider and voice are required for bulk regeneration.

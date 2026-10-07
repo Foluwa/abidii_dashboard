@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 
 import CurriculumOpsPage from '@/app/(admin)/(others-pages)/analytics/curriculum-ops/page';
 import { renderWithProviders as render } from '@/test-utils';
+import { chooseOption } from '@/test-utils';
 
 const mockRefresh = jest.fn().mockResolvedValue(undefined);
 const mockUseAdminCurriculumOpsMetrics = jest.fn();
@@ -128,7 +129,7 @@ describe('CurriculumOpsPage', () => {
 
     expect(mockUseAdminCurriculumOpsMetrics).toHaveBeenCalledWith(7);
 
-    await userEvent.selectOptions(screen.getByLabelText('Time Range'), '30');
+    await chooseOption(userEvent, screen.getByLabelText('Time Range'), '30');
 
     expect(mockUseAdminCurriculumOpsMetrics).toHaveBeenCalledWith(30);
   });
