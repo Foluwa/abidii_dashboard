@@ -803,6 +803,7 @@ export default function LearningItemsPage() {
               Per Page
             </label>
             <StyledSelect
+                aria-label="Per Page"
               value={itemsPerPage}
               onChange={(e) => {
                 setItemsPerPage(Number(e.target.value));

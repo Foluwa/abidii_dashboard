@@ -45,7 +45,7 @@ export default function GameAnalyticsPage() {
         </Alert>
         <button
           onClick={() => refresh()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           Retry
         </button>
@@ -65,7 +65,7 @@ export default function GameAnalyticsPage() {
         </div>
         <button
           onClick={() => refresh()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           Refresh Data
         </button>
@@ -144,33 +144,33 @@ export default function GameAnalyticsPage() {
           <div className="p-6 bg-card border border-border rounded-lg">
             <p className="text-sm font-medium text-muted-foreground">Total Sessions</p>
             <p className="mt-2 text-3xl font-semibold text-foreground">
-              {analytics?.overview.total_sessions?.toLocaleString() || '0'}
+              {analytics?.overview?.total_sessions?.toLocaleString() || '0'}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {analytics?.overview.unique_users?.toLocaleString() || '0'} unique users
+              {analytics?.overview?.unique_users?.toLocaleString() || '0'} unique users
             </p>
           </div>
           <div className="p-6 bg-card border border-border rounded-lg">
             <p className="text-sm font-medium text-muted-foreground">Overall Accuracy</p>
             <p className={`mt-2 text-3xl font-semibold ${
-              (analytics?.overview.accuracy || 0) >= 80 ? 'text-green-600 dark:text-green-400' :
-              (analytics?.overview.accuracy || 0) >= 60 ? 'text-yellow-600 dark:text-yellow-400' :
+              (analytics?.overview?.accuracy || 0) >= 80 ? 'text-green-600 dark:text-green-400' :
+              (analytics?.overview?.accuracy || 0) >= 60 ? 'text-yellow-600 dark:text-yellow-400' :
               'text-red-600 dark:text-red-400'
             }`}>
-              {analytics?.overview.accuracy || 0}%
+              {analytics?.overview?.accuracy || 0}%
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {analytics?.overview.correct_answers?.toLocaleString() || '0'} / {analytics?.overview.total_rounds?.toLocaleString() || '0'} correct
+              {analytics?.overview?.correct_answers?.toLocaleString() || '0'} / {analytics?.overview?.total_rounds?.toLocaleString() || '0'} correct
             </p>
           </div>
           <div className="p-6 bg-card border border-border rounded-lg">
             <p className="text-sm font-medium text-muted-foreground">Average Score</p>
             <p className={`mt-2 text-3xl font-semibold ${
-              (analytics?.overview.avg_score || 0) >= 80 ? 'text-green-600 dark:text-green-400' :
-              (analytics?.overview.avg_score || 0) >= 60 ? 'text-yellow-600 dark:text-yellow-400' :
+              (analytics?.overview?.avg_score || 0) >= 80 ? 'text-green-600 dark:text-green-400' :
+              (analytics?.overview?.avg_score || 0) >= 60 ? 'text-yellow-600 dark:text-yellow-400' :
               'text-red-600 dark:text-red-400'
             }`}>
-              {analytics?.overview.avg_score || 0}%
+              {analytics?.overview?.avg_score || 0}%
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               Average session score
@@ -179,11 +179,11 @@ export default function GameAnalyticsPage() {
           <div className="p-6 bg-card border border-border rounded-lg">
             <p className="text-sm font-medium text-muted-foreground">Perfect Scores</p>
             <p className="mt-2 text-3xl font-semibold text-green-600 dark:text-green-400">
-              {analytics?.overview.perfect_scores?.toLocaleString() || '0'}
+              {analytics?.overview?.perfect_scores?.toLocaleString() || '0'}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {analytics?.overview.total_sessions > 0
-                ? ((analytics?.overview.perfect_scores / analytics?.overview.total_sessions) * 100).toFixed(1)
+              {analytics?.overview?.total_sessions > 0
+                ? ((analytics?.overview?.perfect_scores / analytics?.overview?.total_sessions) * 100).toFixed(1)
                 : 0}% of sessions
             </p>
           </div>

@@ -58,8 +58,8 @@ const Avatar: React.FC<AvatarProps> = ({
       {status !== "none" && (
         <span
           className={`absolute bottom-0 right-0 rounded-full border-[1.5px] border-background ${
- statusSizeClasses[size]
- } ${statusColorClasses[status] || ""}`}
+            statusSizeClasses[size]
+          } ${statusColorClasses[status] || ""}`}
         ></span>
       )}
     </div>

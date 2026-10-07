@@ -106,7 +106,7 @@ export function MLHandwritingCandidateManifestsPage() {
       <PageBreadCrumb pageTitle="Candidate Review" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Candidate Review</h1>
+          <h1 className="text-3xl tracking-tight text-foreground">Candidate Review</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             DB-backed handwriting candidate review - imports from R2 <code>drawings/</code>, reviews approve/reject
             individually or in bulk, then promotes approved candidates straight into <code>datasets/training/</code>.
@@ -432,7 +432,7 @@ export function MLHandwritingCandidateManifestDetailPage() {
       <PageBreadCrumb pageTitle="Candidate Manifest Review" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{manifestId}</h1>
+          <h1 className="text-3xl tracking-tight text-foreground">{manifestId}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Approve or reject candidates before promotion into datasets/training/*.</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>

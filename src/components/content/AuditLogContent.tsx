@@ -180,10 +180,10 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
               aria-pressed={opsMode}
               onClick={() => setOpsMode((m) => !m)}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
- opsMode
- ? 'bg-brand-600 text-primary-foreground hover:bg-brand-700'
- : 'border border-input bg-card text-foreground hover:bg-gray-50 dark:hover:bg-white/[0.05]'
- }`}
+                opsMode
+                  ? 'bg-brand-600 text-primary-foreground hover:bg-brand-700'
+                  : 'border border-input bg-card text-foreground hover:bg-gray-50 dark:hover:bg-white/[0.05]'
+              }`}
             >
               {opsMode ? 'Ops Mode ON' : 'Ops Mode'}
             </button>

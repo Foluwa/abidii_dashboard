@@ -22,6 +22,8 @@ export interface ComboboxProps {
   className?: string;
   id?: string;
   required?: boolean;
+  /** Accessible name when there is no visible `label` prop. */
+  "aria-label"?: string;
 }
 
 const REQUIRED_MESSAGE = "Please select an option.";
@@ -53,6 +55,7 @@ export const Combobox = React.forwardRef<
       className = "",
       id,
       required,
+      "aria-label": ariaLabel,
     },
     _ref,
   ) => {
@@ -178,6 +181,7 @@ export const Combobox = React.forwardRef<
               aria-controls={open ? listId : undefined}
               aria-invalid={invalid}
               aria-required={required || undefined}
+              aria-label={label ? undefined : ariaLabel}
               aria-describedby={message || helperText ? messageId : undefined}
               className={cn(
                 "inline-flex h-9 w-full items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm text-foreground shadow-xs outline-none transition-[color,box-shadow]",

@@ -10,40 +10,42 @@ import {
 } from '@/lib/notificationsApi';
 import { useUsers } from '@/hooks/useApi';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
+import { Funnel, Globe, PenLine, Target, User } from "lucide-react";
 
 type SelectedUser = { id: string; label: string };
+
+type IconComponent = React.ComponentType<{ className?: string }>;
 
 const TargetOption: React.FC<{
   active: boolean;
   onClick: () => void;
-  icon: string;
+  icon: IconComponent;
   label: string;
-}> = ({ active, onClick, icon, label }) => (
+}> = ({ active, onClick, icon: Icon, label }) => (
   <button
     type="button"
     onClick={onClick}
-    className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
- active
- ? 'bg-brand-500 text-primary-foreground shadow-sm'
- : 'bg-gray-100 text-muted-foreground hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600'
- }`}
+    aria-pressed={active}
+    className={`inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-medium shadow-xs transition-colors ${
+      active
+        ? "border-primary bg-primary text-primary-foreground"
+        : "border-input bg-background text-foreground hover:bg-accent"
+    }`}
   >
-    <span>{icon}</span>
+    <Icon className="size-4" />
     <span>{label}</span>
   </button>
 );
 
 const SectionCard: React.FC<{
-  icon: string;
+  icon: IconComponent;
   title: string;
   children: React.ReactNode;
-}> = ({ icon, title, children }) => (
-  <div className="rounded-xl border border-border bg-white p-5 dark:bg-gray-800/50">
+}> = ({ icon: Icon, title, children }) => (
+  <div className="rounded-xl border border-border bg-card p-5">
     <div className="mb-4 flex items-center gap-2">
-      <span className="text-lg">{icon}</span>
-      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-        {title}
-      </h3>
+      <Icon className="size-4 text-muted-foreground" />
+      <h3 className="text-sm font-medium text-foreground">{title}</h3>
     </div>
     {children}
   </div>
@@ -181,26 +183,26 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                 <TargetOption
                   active={targetMode === 'all'}
                   onClick={() => setTargetMode('all')}
-                  icon="🌍"
+                  icon={Globe}
                   label="All Users"
                 />
                 <TargetOption
                   active={targetMode === 'selected'}
                   onClick={() => setTargetMode('selected')}
-                  icon="👤"
+                  icon={User}
                   label="Selected"
                 />
                 <TargetOption
                   active={targetMode === 'filtered'}
                   onClick={() => setTargetMode('filtered')}
-                  icon="🔍"
+                  icon={Funnel}
                   label="Filtered"
                 />
               </div>
             </div>
 
             {/* Content Section */}
-            <SectionCard icon="✏️" title="Content">
+            <SectionCard icon={PenLine} title="Content">
               <div className="mb-4">
                 <input
                   type="text"
@@ -238,7 +240,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
             </SectionCard>
 
             {/* Targeting Section */}
-            <SectionCard icon="🎯" title="Targeting">
+            <SectionCard icon={Target} title="Targeting">
               {targetMode === 'selected' && (
                 <div>
                   <label className="mb-1 block text-sm font-medium text-foreground">

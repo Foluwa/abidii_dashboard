@@ -140,7 +140,7 @@ export function MLHandwritingVisionJobsPage() {
       <PageBreadCrumb pageTitle="Vision Jobs" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Vision Jobs</h1>
+          <h1 className="text-3xl tracking-tight text-foreground">Vision Jobs</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             LLM-assisted labeling suggestions for candidates - assist only, suggestions must be explicitly accepted
             in <Link href="/operations/ml-training/candidate-manifests" className="text-brand-500 hover:underline">Candidate Review</Link>.
@@ -332,7 +332,7 @@ export function MLHandwritingVisionJobDetailPage() {
       <PageBreadCrumb pageTitle="Vision Job Detail" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{jobId}</h1>
+          <h1 className="text-3xl tracking-tight text-foreground">{jobId}</h1>
           {job ? <p className="mt-1 text-sm text-muted-foreground">{job.provider} / {job.model} - {job.mode}</p> : null}
         </div>
         <div className="flex gap-2">

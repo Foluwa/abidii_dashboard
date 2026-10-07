@@ -359,10 +359,10 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
                 className={`py-3 px-4 border-b-2 font-medium text-sm ${
- activeTab === tab
- ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400'
- : 'border-transparent text-muted-foreground hover:text-gray-700 dark:hover:text-gray-300'
- }`}
+                  activeTab === tab
+                    ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400'
+                    : 'border-transparent text-muted-foreground hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
@@ -809,7 +809,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                       <button
                         onClick={handleGenerateCustomAudio}
                         disabled={isGeneratingAudio || !customTTSText.trim()}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg flex items-center gap-2 text-sm whitespace-nowrap"
+                        className="px-4 py-2 bg-primary hover:bg-primary/90 disabled:bg-gray-400 text-primary-foreground rounded-lg flex items-center gap-2 text-sm whitespace-nowrap"
                       >
                         {isGeneratingAudio ? (
                           <>

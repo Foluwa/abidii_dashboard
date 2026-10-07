@@ -139,7 +139,7 @@ export function CronJobsContent({ showHeader = true, isActive = true }: { showHe
         <button
           type="button"
           onClick={fetchJobs}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+          className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
         >
           Refresh
         </button>

@@ -133,10 +133,10 @@ export default function ValidationResultViewer({
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`py-2 px-3 border-b-2 font-medium text-sm ${
- activeTab === tab.key
- ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400'
- : 'border-transparent text-muted-foreground hover:text-gray-700 dark:hover:text-gray-300'
- }`}
+                activeTab === tab.key
+                  ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400'
+                  : 'border-transparent text-muted-foreground hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
             >
               {tab.label}
             </button>

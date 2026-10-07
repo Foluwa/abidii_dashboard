@@ -14,6 +14,8 @@ import {
   useSubscriptionEvents,
   useSubscriptionStats,
 } from "@/hooks/useApi";
+import { CircleCheck, CircleX, Clock, CreditCard, Smartphone, Wrench } from "lucide-react";
+import { Card, CardAction, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 
 type SubscriptionStatus = "active" | "trialing" | "past_due" | "canceled" | "expired" | "";
 type SubscriptionProvider = "apple" | "google" | "stripe" | "manual" | "";
@@ -394,9 +396,9 @@ export function SubscriptionsPageContent({
       case "stripe":
         return <svg className="inline h-4 w-4" viewBox="0 0 24 24"><path fill="#635BFF" d="M13.976 9.15c-2.172-.806-3.356-1.683-3.356-2.833 0-1.294 1.074-2.242 2.8-2.242 2.464 0 3.467 1.017 4.034 2.07l2.196-1.234C18.402 3.176 16.296 2 13.42 2 10.13 2 7.69 3.695 7.69 6.52c0 2.188 1.676 3.312 4.424 4.316 2.19.806 2.96 1.58 2.96 2.682 0 1.45-1.17 2.418-2.91 2.418-2.543 0-3.934-1.187-4.57-2.753L5.3 14.527C6.326 16.9 8.59 18.4 12.296 18.4c3.3 0 6.17-1.83 6.17-5.048 0-3.07-2.17-3.606-4.49-4.202z"/></svg>;
       case "manual":
-        return "🛠️";
+        return <Wrench className="inline size-4 text-muted-foreground" aria-hidden="true" />;
       default:
-        return "📱";
+        return <Smartphone className="inline size-4 text-muted-foreground" aria-hidden="true" />;
     }
   };
 
@@ -695,7 +697,7 @@ export function SubscriptionsPageContent({
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">
+          <h1 className="text-3xl tracking-tight text-foreground">
             Subscription Management
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -710,71 +712,32 @@ export function SubscriptionsPageContent({
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-card rounded-lg shadow p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Total Subscriptions</p>
-              <p className="text-2xl font-semibold text-foreground">
-                {statsLoading ? "..." : stats?.total ?? 0}
-              </p>
-            </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-              <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-lg shadow p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Active Subscriptions</p>
-              <p className="text-2xl font-semibold text-green-600">
-                {statsLoading ? "..." : stats?.active ?? 0}
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
-              <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-lg shadow p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Trial</p>
-              <p className="text-2xl font-semibold text-blue-600">
-                {statsLoading ? "..." : stats?.trial ?? 0}
-              </p>
-            </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-              <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-lg shadow p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Expired/Canceled</p>
-              <p className="text-2xl font-semibold text-red-600">
-                {statsLoading ? "..." : (stats?.expired ?? 0) + (stats?.canceled ?? 0)}
-              </p>
-            </div>
-            <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-              <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-          </div>
-        </div>
+      {/* Stats Cards - Studio Admin KPI cards (muted label + icon, large value) */}
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "Total Subscriptions", value: stats?.total, Icon: CreditCard },
+          { label: "Active Subscriptions", value: stats?.active, Icon: CircleCheck },
+          { label: "Trial", value: stats?.trial, Icon: Clock },
+          {
+            label: "Expired / Canceled",
+            value: (stats?.expired ?? 0) + (stats?.canceled ?? 0),
+            Icon: CircleX,
+          },
+        ].map(({ label, value, Icon }) => (
+          <Card key={label}>
+            <CardHeader>
+              <CardDescription>{label}</CardDescription>
+              <CardAction>
+                <Icon className="size-4 text-muted-foreground" />
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <span className="text-3xl leading-none tracking-tight tabular-nums">
+                {statsLoading ? "—" : (value ?? 0).toLocaleString()}
+              </span>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Filters */}
@@ -859,10 +822,10 @@ export function SubscriptionsPageContent({
               );
             }}
             className={`rounded-md px-4 py-2 text-sm font-medium transition ${
- activeView === value
- ? "bg-brand-600 text-white dark:text-gray-900"
- : "border border-input bg-card text-foreground hover:bg-gray-50 dark:hover:bg-gray-700"
- }`}
+              activeView === value
+                ? "bg-brand-600 text-white dark:text-gray-900"
+                : "border border-input bg-card text-foreground hover:bg-gray-50 dark:hover:bg-gray-700"
+            }`}
           >
             {label}
           </button>

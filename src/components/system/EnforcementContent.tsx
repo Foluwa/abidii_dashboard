@@ -127,9 +127,9 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
         {/* Page Header */}
         {showHeader && (
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground">
+            <h2 className="text-lg font-semibold text-foreground">
               Phase 2 Enforcement Observability
-            </h1>
+            </h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Monitor enforcement flag states, events, and system metrics. Read-only view. (Slice 2.8 + 2.9)
             </p>
@@ -318,7 +318,7 @@ export function EnforcementContent({ showHeader = true, isActive = true }: { sho
                   onClick={() => setEventTimeRange(hours)}
                   className={`px-3 py-1 text-sm rounded ${
                     eventTimeRange === hours
-                      ? "bg-blue-600 text-white"
+                      ? "bg-primary text-primary-foreground"
                       : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
                   }`}
                 >

@@ -1361,6 +1361,7 @@ export default function PhrasesPage() {
               Per Page
             </label>
             <StyledSelect
+                aria-label="Per Page"
               value={limit}
               onChange={(e) => {
                 setLimit(Number(e.target.value));
@@ -1426,7 +1427,7 @@ export default function PhrasesPage() {
               <p className="text-muted-foreground">No phrases found for this language</p>
               <button
                 onClick={openCreateModal}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
               >
                 Add First Phrase
               </button>
@@ -1578,7 +1579,7 @@ export default function PhrasesPage() {
               <p className="text-muted-foreground">No phrases found for this language</p>
               <button
                 onClick={openCreateModal}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
               >
                 Add First Phrase
               </button>
@@ -2219,7 +2220,7 @@ export default function PhrasesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                 >
                   {editingPhrase ? "Update" : "Create"}
                 </button>

@@ -1316,6 +1316,7 @@ export default function TimePhrasesPage() {
                 Per Page
               </label>
               <StyledSelect
+                aria-label="Per Page"
                 value={limit}
                 onChange={(e) => {
                   setLimit(Number(e.target.value));
@@ -2125,7 +2126,7 @@ export default function TimePhrasesPage() {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
               >
                 {editingPhrase ? "Update" : "Create"}
               </button>

@@ -8,6 +8,7 @@ import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
 import { ConfigEntry } from "@/types/api";
 import { useToast } from "@/contexts/ToastContext";
+import { BookOpen } from "lucide-react";
 
 export function AppConfigContent({ showHeader = true }: { showHeader?: boolean }) {
   const toast = useToast();
@@ -156,10 +157,10 @@ export function AppConfigContent({ showHeader = true }: { showHeader?: boolean }
           <button
             onClick={() => setFilterCategory("all")}
             className={`px-3 py-1 text-sm rounded-full transition-colors ${
- filterCategory === "all"
- ? "bg-brand-600 text-white dark:text-gray-900"
- : "bg-gray-200 text-foreground dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
- }`}
+              filterCategory === "all"
+                ? "bg-brand-600 text-white dark:text-gray-900"
+                : "bg-gray-200 text-foreground dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
+            }`}
           >
             All ({settings.length})
           </button>
@@ -168,10 +169,10 @@ export function AppConfigContent({ showHeader = true }: { showHeader?: boolean }
               key={cat}
               onClick={() => setFilterCategory(cat!)}
               className={`px-3 py-1 text-sm rounded-full transition-colors ${
- filterCategory === cat
- ? "bg-brand-600 text-white dark:text-gray-900"
- : "bg-gray-200 text-foreground dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
- }`}
+                filterCategory === cat
+                  ? "bg-brand-600 text-white dark:text-gray-900"
+                  : "bg-gray-200 text-foreground dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
+              }`}
             >
               {cat} ({settings.filter((s) => s.category === cat).length})
             </button>
@@ -296,7 +297,8 @@ export function AppConfigContent({ showHeader = true }: { showHeader?: boolean }
 
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900/20 dark:border-blue-800">
         <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
-          📖 Flashcard Settings Guide
+          <BookOpen className="mr-1.5 inline size-4 align-text-bottom" />
+          Flashcard Settings Guide
         </h4>
         <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
           <p>

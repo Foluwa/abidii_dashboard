@@ -427,10 +427,10 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
             value={pairCode}
             onChange={(event) => setPairCode(event.target.value)}
             className={`w-full rounded-lg border bg-background px-3 py-2 text-foreground dark:border-gray-600 ${
- pairCode && !PAIR_CODE_REGEX.test(pairCode.trim().toLowerCase())
- ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
- : 'border-gray-300 focus:border-blue-500'
- }`}
+              pairCode && !PAIR_CODE_REGEX.test(pairCode.trim().toLowerCase())
+                ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                : 'border-gray-300 focus:border-blue-500'
+            }`}
           />
           {pairCode && !PAIR_CODE_REGEX.test(pairCode.trim().toLowerCase()) && (
             <p className="mt-1 text-xs text-red-600 dark:text-red-400">
@@ -455,7 +455,7 @@ export function DictionaryGoogleSheetsBulkImport({ onImportComplete }: { onImpor
           type="button"
           onClick={handleValidate}
           disabled={validating || applying}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {validating ? 'Validating...' : 'Validate'}
         </button>

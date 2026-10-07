@@ -20,7 +20,7 @@ export default function ContentOpsPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-3xl tracking-tight text-foreground">
           Content Ops
         </h1>
         <p className="text-sm text-muted-foreground">

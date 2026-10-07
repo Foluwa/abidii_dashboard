@@ -310,6 +310,7 @@ export function LessonBlueprintsContent({ showHeader = true }: { showHeader?: bo
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Status</label>
               <StyledSelect
+                aria-label="Status"
                 value={status}
                 onChange={(e) => {
                   setStatus(e.target.value);
@@ -328,6 +329,7 @@ export function LessonBlueprintsContent({ showHeader = true }: { showHeader?: bo
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Enabled</label>
               <StyledSelect
+                aria-label="Enabled"
                 value={enabled}
                 onChange={(e) => {
                   setEnabled(e.target.value);
@@ -342,12 +344,12 @@ export function LessonBlueprintsContent({ showHeader = true }: { showHeader?: bo
                 fullWidth
               />
             </div>
-            <div className="flex items-end gap-2">
+            <div className="col-span-full flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 disabled={selectedIds.length === 0 || isBulkRunning}
                 onClick={onBulkValidate}
-                className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="whitespace-nowrap rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Validate Selected
               </button>
@@ -355,7 +357,7 @@ export function LessonBlueprintsContent({ showHeader = true }: { showHeader?: bo
                 type="button"
                 disabled={selectedIds.length === 0 || isBulkRunning}
                 onClick={() => setShowPublishConfirm(true)}
-                className="flex-1 rounded-lg border border-input bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="whitespace-nowrap rounded-md border border-input bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Publish Selected
               </button>
@@ -363,7 +365,7 @@ export function LessonBlueprintsContent({ showHeader = true }: { showHeader?: bo
                 type="button"
                 disabled={selectedIds.length === 0 || isBulkRunning}
                 onClick={() => setShowUnpublishConfirm(true)}
-                className="flex-1 rounded-lg border border-input bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="whitespace-nowrap rounded-md border border-input bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Unpublish Selected
               </button>

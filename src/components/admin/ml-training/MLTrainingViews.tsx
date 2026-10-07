@@ -39,6 +39,7 @@ import {
   validateVerifiedPromotionManifest,
 } from "@/lib/adminMlApi";
 import { createQualityReviewJob } from "@/lib/adminJobsApi";
+import { TriangleAlert } from "lucide-react";
 
 const PAGE_SIZE = 20;
 
@@ -227,8 +228,8 @@ export function MLTrainingOverviewPage() {
   const { confirm, modal: confirmModal } = useConfirm();
   const { readiness, jobs, models, loading, error, refresh } = useMlOverview();
   const latestSmoke = useMemo(() => getLatestSmoke(jobs), [jobs]);
-  const runningJobs = readiness?.training_jobs.running || 0;
-  const succeededJobs = readiness?.training_jobs.succeeded || 0;
+  const runningJobs = readiness?.training_jobs?.running || 0;
+  const succeededJobs = readiness?.training_jobs?.succeeded || 0;
   const [trainingLang, setTrainingLang] = useState("yor");
   const [trainingLoading, setTrainingLoading] = useState<"train" | "retrain" | null>(null);
 
@@ -273,7 +274,7 @@ export function MLTrainingOverviewPage() {
       <PageBreadCrumb pageTitle="ML Training" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">ML Training</h1>
+          <h1 className="text-3xl tracking-tight text-foreground">ML Training</h1>
           <p className="mt-1 text-sm text-muted-foreground">Remote handwriting training readiness, smoke status, jobs, and model versions.</p>
         </div>
         <div className="flex gap-2">
@@ -293,7 +294,7 @@ export function MLTrainingOverviewPage() {
         <SummaryCard label="Readiness Threshold" value={readiness?.threshold ?? "-"} detail="verified samples per label gate" />
         <SummaryCard label="Running Jobs" value={runningJobs} />
         <SummaryCard label="Succeeded Jobs" value={succeededJobs} />
-        <SummaryCard label="Model Versions" value={models.length} detail={`${readiness?.model_versions.production || 0} production`} />
+        <SummaryCard label="Model Versions" value={models.length} detail={`${readiness?.model_versions?.production || 0} production`} />
       </div>
 
       <Panel title="Dataset Readiness">
@@ -405,7 +406,7 @@ function JobsTable({ jobs }: { jobs: MlTrainingJob[] }) {
                 <div className="flex items-center gap-2">
                   <StatusPill status={job.status} />
                   {job.status === "running" && isHeartbeatStale(job.heartbeat_at) ? (
-                    <span title="No heartbeat in a while - may be stuck" className="text-amber-500">⚠</span>
+                    <span title="No heartbeat in a while - may be stuck"><TriangleAlert className="inline size-4 text-amber-500" aria-label="No heartbeat in a while - may be stuck" /></span>
                   ) : null}
                 </div>
               </td>
@@ -464,7 +465,7 @@ export function MLTrainingJobsPage() {
       <PageBreadCrumb pageTitle="Training Jobs" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Training Jobs</h1>
+          <h1 className="text-3xl tracking-tight text-foreground">Training Jobs</h1>
           <p className="mt-1 text-sm text-muted-foreground">Queued, running, and completed ML training jobs.</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
@@ -542,7 +543,7 @@ export function MLTrainingJobDetailPage() {
       <PageBreadCrumb pageTitle="Training Job Detail" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Training Job Detail</h1>
+          <h1 className="text-3xl tracking-tight text-foreground">Training Job Detail</h1>
           <p className="mt-1 font-mono text-xs text-muted-foreground">{jobId}</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
@@ -679,7 +680,7 @@ export function MLModelVersionsPage() {
       <PageBreadCrumb pageTitle="Model Versions" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Model Versions</h1>
+          <h1 className="text-3xl tracking-tight text-foreground">Model Versions</h1>
           <p className="mt-1 text-sm text-muted-foreground">Staging and production handwriting model registry entries.</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>
@@ -850,7 +851,7 @@ export function MLVerifiedPromotionManifestsPage() {
       <PageBreadCrumb pageTitle="Verified Dataset Review" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Verified Dataset Review</h1>
+          <h1 className="text-3xl tracking-tight text-foreground">Verified Dataset Review</h1>
           <p className="mt-1 text-sm text-muted-foreground">Review handwriting samples before promotion into datasets/verified/*.</p>
         </div>
         <div className="flex gap-2">
@@ -1126,7 +1127,7 @@ export function MLVerifiedPromotionManifestDetailPage() {
       <PageBreadCrumb pageTitle="Verified Manifest Review" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{manifestId}</h1>
+          <h1 className="text-3xl tracking-tight text-foreground">{manifestId}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Approve or reject candidates before verified dataset promotion.</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>Refresh</Button>

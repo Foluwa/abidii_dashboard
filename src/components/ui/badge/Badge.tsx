@@ -28,40 +28,29 @@ const Badge: React.FC<BadgeProps> = ({
   endIcon,
   children,
 }) => {
+  // Studio Admin badge: small rounded-md outline with a soft tint. The
+  // "solid" variant keeps its API but uses the same soft treatment - the
+  // reference never uses saturated filled status pills.
   const baseStyles =
-    "inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium";
+    "inline-flex w-fit shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border px-2 py-0.5 font-medium [&>svg]:size-3";
 
-  // Define size styles
   const sizeStyles = {
-    sm: "text-theme-xs", // Smaller padding and font size
-    md: "text-sm", // Default padding and font size
+    sm: "text-xs",
+    md: "text-xs",
   };
 
-  // Define color styles for variants
-  const variants = {
-    light: {
-      primary:
-        "bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400",
-      success:
-        "bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500",
-      error:
-        "bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-500",
-      warning:
-        "bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-orange-400",
-      info: "bg-blue-light-50 text-blue-light-500 dark:bg-blue-light-500/15 dark:text-blue-light-500",
-      light: "bg-muted text-foreground",
-      dark: "bg-gray-500 text-white dark:bg-white/5 dark:text-white",
-    },
-    solid: {
-      primary: "bg-brand-500 text-primary-foreground",
-      success: "bg-success-500 text-white dark:text-white",
-      error: "bg-error-500 text-white dark:text-white",
-      warning: "bg-warning-500 text-white dark:text-white",
-      info: "bg-blue-light-500 text-white dark:text-white",
-      light: "bg-gray-400 dark:bg-white/5 text-white dark:text-white/80",
-      dark: "bg-gray-700 text-white dark:text-white",
-    },
+  const soft = {
+    primary: "border-border bg-secondary text-secondary-foreground",
+    success:
+      "border-green-200 bg-green-500/10 text-green-700 dark:border-green-900/40 dark:bg-green-500/15 dark:text-green-300",
+    error: "border-destructive/20 bg-destructive/10 text-destructive",
+    warning:
+      "border-amber-200 bg-amber-500/10 text-amber-700 dark:border-amber-900/40 dark:bg-amber-500/15 dark:text-amber-300",
+    info: "border-sky-200 bg-sky-500/10 text-sky-700 dark:border-sky-900/40 dark:bg-sky-500/15 dark:text-sky-300",
+    light: "border-border bg-muted text-muted-foreground",
+    dark: "border-border bg-muted text-muted-foreground",
   };
+  const variants = { light: soft, solid: soft };
 
   // Get styles based on size and color variant
   const sizeClass = sizeStyles[size];

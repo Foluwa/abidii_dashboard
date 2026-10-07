@@ -23,10 +23,10 @@ export default function AnalyticsTabs() {
             key={tab.name}
             href={tab.href}
             className={`border-b-2 px-1 py-4 text-sm font-medium ${
- pathname === tab.href || (tab.href !== "/analytics" && pathname?.startsWith(tab.href))
- ? "border-blue-500 text-blue-600 dark:text-blue-400"
- : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
- }`}
+              pathname === tab.href || (tab.href !== "/analytics" && pathname?.startsWith(tab.href))
+                ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
           >
             {tab.name}
           </Link>

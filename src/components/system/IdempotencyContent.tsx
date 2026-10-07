@@ -95,7 +95,7 @@ export function IdempotencyContent({ showHeader = true }: { showHeader?: boolean
         <button
           type="button"
           onClick={fetchStats}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+          className="rounded-lg bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
         >
           Refresh
         </button>

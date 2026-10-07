@@ -65,10 +65,12 @@ export default function BillingPlansCard() {
   React.useEffect(() => {
     if (configuredCountry) return;
     const detected = browserCountryCode();
-    if (detected) {
+    // A language-only locale ("en") yields a non-country code like "EN";
+    // only switch to codes this card actually offers.
+    if (detected && countryOptions.some((o) => o.code === detected)) {
       setSelectedCountry(detected);
     }
-  }, [configuredCountry]);
+  }, [configuredCountry, countryOptions]);
   const { plans, isLoading, isError, refresh } = useBillingPlans(selectedCountry || undefined);
   const countrySuffix = selectedCountry ? `?country_code=${encodeURIComponent(selectedCountry)}` : "";
   const plansUrl = `${apiBaseUrl}/api/v1/billing/plans${countrySuffix}`;
@@ -88,16 +90,16 @@ export default function BillingPlansCard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex flex-col items-end">
-              <label className="text-[11px] text-muted-foreground">Country</label>
+            <div className="w-44">
               <StyledSelect
+                label="Country"
                 value={selectedCountry}
                 onChange={(e) => setSelectedCountry(e.target.value)}
                 options={countryOptions.map((opt) => ({
                   value: opt.code,
                   label: `${opt.code} • ${opt.name}`,
                 }))}
-                className="mt-1"
+                fullWidth
               />
             </div>
 
@@ -130,7 +132,7 @@ export default function BillingPlansCard() {
             )}
             <button
               onClick={() => refresh()}
-              className="mt-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="mt-1 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90"
             >
               Retry
             </button>
@@ -201,8 +203,8 @@ export default function BillingPlansCard() {
                       </div>
                       <ChevronDownIcon
                         className={`h-4 w-4 text-muted-foreground transition-transform ${
- isExpanded ? "rotate-180" : "rotate-0"
- }`}
+                          isExpanded ? "rotate-180" : "rotate-0"
+                        }`}
                       />
                     </div>
                   </button>

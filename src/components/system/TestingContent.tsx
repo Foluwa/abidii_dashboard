@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { apiClient } from "@/lib/api";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
+import { TriangleAlert } from "lucide-react";
 
 export function TestingContent({ showHeader = true }: { showHeader?: boolean }) {
   const [telegramLoading, setTelegramLoading] = useState(false);
@@ -117,7 +118,8 @@ export function TestingContent({ showHeader = true }: { showHeader?: boolean }) 
               Trigger a critical alert to test the emergency notification system.
             </p>
             <p className="text-sm text-red-600 dark:text-red-400 mt-2">
-              ⚠️ Warning: This will send an urgent notification to all administrators.
+              <TriangleAlert className="mr-1.5 inline size-4 align-text-bottom" />
+              Warning: This will send an urgent notification to all administrators.
             </p>
           </div>
           <button

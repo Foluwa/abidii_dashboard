@@ -495,6 +495,7 @@ export default function SentencesPage() {
               Per Page
             </label>
             <StyledSelect
+                aria-label="Per Page"
               value={pageSize}
               onChange={() => {}}
               options={[

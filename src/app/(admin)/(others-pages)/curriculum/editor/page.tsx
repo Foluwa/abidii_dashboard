@@ -282,12 +282,12 @@ function UnitRow({
     <div
       ref={attachContainerRef}
       className={`rounded-xl border bg-card transition-all ${
- isDragging
- ? 'scale-[0.99] border-brand-200 opacity-50 shadow-lg dark:border-brand-800'
- : isOverUnitDrop
- ? 'border-brand-300 shadow-md shadow-brand-900/5 dark:border-brand-700'
- : 'border-gray-200 dark:border-gray-800'
- }`}
+        isDragging
+          ? 'scale-[0.99] border-brand-200 opacity-50 shadow-lg dark:border-brand-800'
+          : isOverUnitDrop
+          ? 'border-brand-300 shadow-md shadow-brand-900/5 dark:border-brand-700'
+          : 'border-gray-200 dark:border-gray-800'
+      }`}
     >
       <div
         className={`flex items-center justify-between gap-3 rounded-t-xl px-4 py-3 transition-colors ${

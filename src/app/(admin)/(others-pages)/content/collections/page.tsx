@@ -12,7 +12,7 @@ import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { useToast } from "@/contexts/ToastContext";
 import { Lock, Volume2 } from "lucide-react";
 
-type Language = { id: string; iso_639_3: string; name: string; native_name?: string };
+type Language = { id: string; iso_639_3: string; name: string; native_name?: string; is_public?: boolean };
 type Collection = {
   collection_key: string;
   title: string;
@@ -138,7 +138,9 @@ export default function CollectionsPage() {
 
   const loadCollections = useCallback(async () => {
     const [languageResponse, collectionResponse] = await Promise.all([
-      apiClient.get<{ languages: Language[] }>("/api/v1/languages"),
+      // Admin list: includes content-only languages such as English (not
+      // public, so absent from /api/v1/languages) - needed as a translation target.
+      apiClient.get<{ languages: Language[] }>("/api/v1/admin/languages", { params: { page_size: 100 } }),
       apiClient.get<{ collections: Collection[] }>("/api/v1/admin/content-collections"),
     ]);
     setLanguages([...(languageResponse.data.languages ?? [])].sort((a, b) => a.name.localeCompare(b.name)));
@@ -488,14 +490,21 @@ export default function CollectionsPage() {
           label="Learning language"
           value={learningLanguage}
           onChange={(event) => setLearningLanguage(event.target.value)}
-          options={languages.map((language) => ({ value: language.iso_639_3, label: language.name }))}
+          // Learnable (public) languages only - the course being taught.
+          options={languages
+            .filter((language) => language.is_public !== false)
+            .map((language) => ({ value: language.iso_639_3, label: language.name }))}
           fullWidth
         />
         <StyledSelect
           label="Translation language"
           value={translationLanguage}
           onChange={(event) => setTranslationLanguage(event.target.value)}
-          options={languages.map((language) => ({ value: language.iso_639_3, label: language.name }))}
+          // Any content language, including content-only ones like English.
+          options={languages.map((language) => ({
+            value: language.iso_639_3,
+            label: language.is_public === false ? `${language.name} (content only)` : language.name,
+          }))}
           fullWidth
         />
       </div>

@@ -328,6 +328,7 @@ export default function LettersPage() {
             Language
           </label>
           <StyledSelect
+                aria-label="Language"
             value={selectedLanguage}
             onChange={(e) => handleLanguageChange(e.target.value)}
             options={[
@@ -386,8 +387,8 @@ export default function LettersPage() {
               <div
                 key={letter.id}
                 className={`bg-card rounded-lg border p-4 text-center hover:shadow-md transition-shadow ${
- isSelected ? 'border-brand-500 ring-2 ring-brand-500/20' : 'border-gray-200 dark:border-gray-700'
- }`}
+                  isSelected ? 'border-brand-500 ring-2 ring-brand-500/20' : 'border-gray-200 dark:border-gray-700'
+                }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <input
@@ -660,7 +661,7 @@ export default function LettersPage() {
                 <button
                   type="submit"
                   disabled={uploadingAudio}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploadingAudio ? "Uploading..." : editingLetter ? "Update" : "Create"}
                 </button>

@@ -187,14 +187,14 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Voice Management</h1>
+          <h2 className="text-lg font-semibold text-foreground">Voice Management</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Manage TTS voices across all providers
           </p>
         </div>
         <button
           onClick={openCreateModal}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           + Add Voice
         </button>
@@ -248,7 +248,7 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
             <p className="text-muted-foreground">No voices found</p>
             <button
               onClick={openCreateModal}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
             >
               Add First Voice
             </button>
@@ -507,7 +507,7 @@ export function VoicesContent({ showHeader = true }: { showHeader?: boolean; isA
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                 >
                   {editingVoice ? "Update" : "Create"}
                 </button>

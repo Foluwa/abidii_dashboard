@@ -8,6 +8,7 @@ import Alert from "@/components/ui/alert/SimpleAlert";
 import StatusBadge from "@/components/admin/StatusBadge";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { useToast } from "@/contexts/ToastContext";
+import { Lightbulb } from "lucide-react";
 
 interface ConfigItem {
   key: string;
@@ -349,7 +350,7 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
 
         <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900/20 dark:border-blue-800">
           <div className="space-y-2">
-            <p className="text-sm text-blue-800 dark:text-blue-300"><strong>💡 Tips:</strong></p>
+            <p className="text-sm text-blue-800 dark:text-blue-300"><Lightbulb className="mr-1 inline size-4 align-text-bottom" /><strong>Tips:</strong></p>
             <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 ml-4 list-disc">
               <li>Changes take effect immediately and invalidate caches automatically</li>
               <li>Toggle the switch to enable/disable configs without deleting them</li>

@@ -353,7 +353,7 @@ function CourseCard({
                 <button
                   onClick={handleSetPointer}
                   disabled={pointerState === 'loading' || (!pointerUnit && !pointerSection)}
-                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700 disabled:opacity-40"
+                  className="rounded-lg bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
                 >
                   {pointerState === 'loading' ? 'Saving…' : pointerState === 'success' ? '✓ Saved' : 'Save'}
                 </button>

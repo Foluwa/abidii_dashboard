@@ -27,7 +27,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const axisWeekFormatter = new Intl.DateTimeFormat("en-US", {
+const axisWeekFormatter = new Intl.DateTimeFormat("en-GB", {
   month: "short",
   day: "numeric",
   timeZone: "UTC",

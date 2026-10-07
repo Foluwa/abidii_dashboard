@@ -12,6 +12,7 @@ import {
   TTSPreviewResponse,
   Lemma
 } from '@/types/tts';
+import { Headphones, Lightbulb, ListChecks, Mic, RefreshCw } from "lucide-react";
 
 /**
  * Admin TTS Generation Page
@@ -227,9 +228,10 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
       {/* Header */}
       {showHeader && (
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground">
-            🎙️ TTS Audio Generation
-          </h1>
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <Mic className="size-4 text-muted-foreground" />
+            TTS Audio Generation
+          </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Generate text-to-speech audio for words using multiple providers (Spitch, Google, ElevenLabs)
           </p>
@@ -375,7 +377,7 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
                   Generating...
                 </span>
               ) : (
-                '🎵 Generate Audio Preview'
+                'Generate Audio Preview'
               )}
             </button>
 
@@ -401,8 +403,9 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
             {/* Audio Preview */}
             {previewUrl && previewData && (
               <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                <h2 className="mb-4 text-lg font-semibold text-foreground">
-                  🎧 Preview
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <Headphones className="size-4 text-muted-foreground" />
+                  Preview
                 </h2>
 
                 <div className="space-y-4">
@@ -455,7 +458,7 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
                         Saving...
                       </span>
                     ) : (
-                      '💾 Save Audio'
+                      'Save Audio'
                     )}
                   </button>
 
@@ -467,7 +470,8 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
                     }}
                     className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground font-medium hover:bg-accent transition-colors"
                   >
-                    🔄 Generate New Preview
+                    <RefreshCw className="size-4" />
+                    Generate New Preview
                   </button>
                 </div>
               </div>
@@ -476,8 +480,9 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
             {/* Instructions */}
             {!previewUrl && (
               <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                <h2 className="mb-4 text-lg font-semibold text-foreground">
-                  📋 Instructions
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <ListChecks className="size-4 text-muted-foreground" />
+                  Instructions
                 </h2>
                 <ol className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-start">
@@ -504,7 +509,8 @@ export function GenerateContent({ showHeader = true }: { showHeader?: boolean; i
 
                 <div className="mt-4 rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
                   <p className="text-xs text-blue-800 dark:text-blue-200">
-                    💡 <strong>Tip:</strong> You can override the text to speak if needed. Previews expire after 1 hour.
+                    <Lightbulb className="mr-1 inline size-3.5 align-text-bottom" />
+                    <strong>Tip:</strong> You can override the text to speak if needed. Previews expire after 1 hour.
                   </p>
                 </div>
               </div>

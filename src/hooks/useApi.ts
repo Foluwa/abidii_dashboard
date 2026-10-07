@@ -108,7 +108,8 @@ export function useBillingPlans(countryCode?: string) {
   );
 
   return {
-    plans: data || [],
+    // An unexpected payload shape must not crash the whole dashboard.
+    plans: Array.isArray(data) ? data : [],
     isLoading: !error && !data,
     isError: error,
     refresh: mutate,

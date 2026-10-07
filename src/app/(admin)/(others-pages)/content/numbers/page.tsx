@@ -603,6 +603,7 @@ export default function NumbersPage() {
               Language
             </label>
             <StyledSelect
+                aria-label="Language"
               value={selectedLanguage || ""}
               onChange={(e) => {
                 setSelectedLanguage(e.target.value || undefined);
@@ -641,6 +642,7 @@ export default function NumbersPage() {
               Per Page
             </label>
             <StyledSelect
+                aria-label="Per Page"
               value={limit}
               onChange={(e) => {
                 setLimit(Number(e.target.value));
@@ -662,6 +664,7 @@ export default function NumbersPage() {
             <div className="min-w-[160px]">
               <label className="mb-2 block text-xs font-medium text-foreground">Compound</label>
               <StyledSelect
+                aria-label="Compound"
                 value={filterCompound}
                 onChange={(e) => { setFilterCompound(e.target.value); setPage(1); }}
                 options={[
@@ -675,6 +678,7 @@ export default function NumbersPage() {
             <div className="min-w-[160px]">
               <label className="mb-2 block text-xs font-medium text-foreground">Difficulty</label>
               <StyledSelect
+                aria-label="Difficulty"
                 value={filterDifficulty}
                 onChange={(e) => { setFilterDifficulty(e.target.value); setPage(1); }}
                 options={[
@@ -758,6 +762,7 @@ export default function NumbersPage() {
               Provider *
             </label>
             <StyledSelect
+                aria-label="Provider"
               value={bulkRegenerateProvider}
               onChange={(e) => {
                 setBulkRegenerateProvider(e.target.value);
@@ -789,6 +794,7 @@ export default function NumbersPage() {
               Voice *
             </label>
             <StyledSelect
+                aria-label="Voice"
               value={bulkRegenerateVoiceId}
               onChange={(e) => setBulkRegenerateVoiceId(e.target.value)}
               disabled={!bulkRegenerateProvider}

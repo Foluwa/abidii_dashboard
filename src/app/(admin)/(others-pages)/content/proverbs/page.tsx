@@ -1451,6 +1451,7 @@ export default function ProverbsPage() {
               Per Page
             </label>
             <StyledSelect
+                aria-label="Per Page"
               value={limit}
               onChange={(e) => {
                 setLimit(Number(e.target.value));

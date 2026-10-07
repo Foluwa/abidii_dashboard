@@ -2228,6 +2228,7 @@ export function LessonBlueprintEditor({
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Course</label>
               <Combobox
+                aria-label="Course"
                 value={selectedCourseKey}
                 onChange={(event) => setSelectedCourseKey(event.target.value)}
                 options={courses.map((course) => ({
@@ -2249,6 +2250,7 @@ export function LessonBlueprintEditor({
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Section</label>
               <StyledSelect
+                aria-label="Section"
                 value={form.section_id}
                 onChange={(event) => setForm((prev) => ({ ...prev, section_id: event.target.value }))}
                 options={sectionOptions.map((section) => ({
@@ -2263,6 +2265,7 @@ export function LessonBlueprintEditor({
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Lesson kind</label>
               <StyledSelect
+                aria-label="Lesson kind"
                 value={form.lesson_kind}
                 onChange={(event) => setForm((prev) => ({ ...prev, lesson_kind: event.target.value }))}
                 options={lessonKindOptions}
@@ -2679,10 +2682,10 @@ export function LessonBlueprintEditor({
                         type="button"
                         onClick={() => openAssetLibrary('thumbnailUrl')}
                         className={`rounded-lg border px-3 py-2 text-xs font-medium ${
- assetLibraryTargetFieldPath === 'thumbnailUrl'
- ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
- : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
- }`}
+                          assetLibraryTargetFieldPath === 'thumbnailUrl'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                            : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
+                        }`}
                       >
                         Library
                       </button>
@@ -2710,10 +2713,10 @@ export function LessonBlueprintEditor({
                         type="button"
                         onClick={() => openAssetLibrary('characterImageUrl')}
                         className={`rounded-lg border px-3 py-2 text-xs font-medium ${
- assetLibraryTargetFieldPath === 'characterImageUrl'
- ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
- : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
- }`}
+                          assetLibraryTargetFieldPath === 'characterImageUrl'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                            : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
+                        }`}
                       >
                         Library
                       </button>
@@ -2904,6 +2907,7 @@ export function LessonBlueprintEditor({
               <div>
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">Launch route</label>
                 <StyledSelect
+                aria-label="Launch route"
                   value={
                     getString(editablePayload.launchRoute) ||
                     getString(editablePayload.launch_route) ||
@@ -3016,10 +3020,10 @@ export function LessonBlueprintEditor({
                     type="button"
                     onClick={() => openAssetLibrary('heroImageUrl')}
                     className={`rounded-lg border px-3 py-2 text-xs font-medium ${
- assetLibraryTargetFieldPath === 'heroImageUrl'
- ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
- : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
- }`}
+                      assetLibraryTargetFieldPath === 'heroImageUrl'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                        : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
+                    }`}
                   >
                     Library
                   </button>
@@ -3049,10 +3053,10 @@ export function LessonBlueprintEditor({
                     type="button"
                     onClick={() => openAssetLibrary('coverImageUrl')}
                     className={`rounded-lg border px-3 py-2 text-xs font-medium ${
- assetLibraryTargetFieldPath === 'coverImageUrl'
- ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
- : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
- }`}
+                      assetLibraryTargetFieldPath === 'coverImageUrl'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                        : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
+                    }`}
                   >
                     Library
                   </button>
@@ -3088,10 +3092,10 @@ export function LessonBlueprintEditor({
                     type="button"
                     onClick={() => openAssetLibrary('imageUrl')}
                     className={`rounded-lg border px-3 py-2 text-xs font-medium ${
- assetLibraryTargetFieldPath === 'imageUrl'
- ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
- : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
- }`}
+                      assetLibraryTargetFieldPath === 'imageUrl'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                        : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
+                    }`}
                   >
                     Library
                   </button>
@@ -3129,10 +3133,10 @@ export function LessonBlueprintEditor({
                     type="button"
                     onClick={() => openAssetLibrary('audioUrl')}
                     className={`rounded-lg border px-3 py-2 text-xs font-medium ${
- assetLibraryTargetFieldPath === 'audioUrl'
- ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
- : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
- }`}
+                      assetLibraryTargetFieldPath === 'audioUrl'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                        : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
+                    }`}
                   >
                     Library
                   </button>
@@ -3354,10 +3358,10 @@ export function LessonBlueprintEditor({
                   onDragLeave={() => setIsAssetDropActive(false)}
                   onDrop={(event) => void handleAssetDrop(event)}
                   className={`rounded-lg border-2 border-dashed px-4 py-5 text-sm transition ${
- isAssetDropActive
- ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/20 dark:text-brand-300'
- : 'border-gray-300 bg-muted/50 text-gray-500 dark:border-gray-700 dark:text-gray-400'
- }`}
+                    isAssetDropActive
+                      ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/20 dark:text-brand-300'
+                      : 'border-gray-300 bg-muted/50 text-gray-500 dark:border-gray-700 dark:text-gray-400'
+                  }`}
                 >
                   {assetLibraryTargetFieldPath
                     ? `Drop an ${inferAssetKindFromFieldPath(assetLibraryTargetFieldPath)} file here to upload directly to ${assetLibraryTargetFieldPath}.`
@@ -3371,10 +3375,10 @@ export function LessonBlueprintEditor({
                       onClick={() => setAssetLibraryTab('local')}
                       aria-pressed={assetLibraryTab === 'local'}
                       className={`rounded-full px-3 py-2 text-xs font-medium transition ${
- assetLibraryTab === 'local'
- ? 'bg-brand-600 text-white dark:text-gray-900'
- : 'border border-input bg-card text-foreground hover:bg-gray-50 dark:hover:bg-gray-800'
- }`}
+                        assetLibraryTab === 'local'
+                          ? 'bg-brand-600 text-white dark:text-gray-900'
+                          : 'border border-input bg-card text-foreground hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
                     >
                       Local assets ({filteredBlueprintLibraryAssets.length})
                     </button>
@@ -3383,10 +3387,10 @@ export function LessonBlueprintEditor({
                       onClick={() => setAssetLibraryTab('global')}
                       aria-pressed={assetLibraryTab === 'global'}
                       className={`rounded-full px-3 py-2 text-xs font-medium transition ${
- assetLibraryTab === 'global'
- ? 'bg-brand-600 text-white dark:text-gray-900'
- : 'border border-input bg-card text-foreground hover:bg-gray-50 dark:hover:bg-gray-800'
- }`}
+                        assetLibraryTab === 'global'
+                          ? 'bg-brand-600 text-white dark:text-gray-900'
+                          : 'border border-input bg-card text-foreground hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
                     >
                       Global assets ({sortedGlobalAssetLibraryItems.length})
                     </button>
@@ -3495,10 +3499,10 @@ export function LessonBlueprintEditor({
                             <div
                               key={`${item.blueprint_id}:${item.field_path}:${item.binding.storage_key}`}
                               className={`flex flex-col rounded-lg border bg-card ${
- isOtherCourse
- ? 'border-amber-200 dark:border-amber-900/50'
- : 'border-gray-200 dark:border-gray-800'
- }`}
+                                isOtherCourse
+                                  ? 'border-amber-200 dark:border-amber-900/50'
+                                  : 'border-gray-200 dark:border-gray-800'
+                              }`}
                             >
                               <div className="p-2">
                                 <MediaLinkPreview
@@ -3600,12 +3604,12 @@ export function LessonBlueprintEditor({
                       key={`${getString(step.stepId) || stepType || 'step'}-${index}`}
                       open={index === justAddedStepIndex || undefined}
                       className={`rounded-lg border bg-card p-4 ${
- hasStepErrors
- ? 'border-red-300 dark:border-red-800'
- : hasStepWarnings
- ? 'border-amber-300 dark:border-amber-800'
- : 'border-gray-200 dark:border-gray-800'
- }`}
+                        hasStepErrors
+                          ? 'border-red-300 dark:border-red-800'
+                          : hasStepWarnings
+                          ? 'border-amber-300 dark:border-amber-800'
+                          : 'border-gray-200 dark:border-gray-800'
+                      }`}
                     >
                       <summary className="flex cursor-pointer items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
@@ -3662,6 +3666,7 @@ export function LessonBlueprintEditor({
                          <div>
                            <label className="mb-1 block text-xs font-medium text-muted-foreground">Type</label>
                            <StyledSelect
+                aria-label="Type"
                              value={stepType}
                              onChange={(event) => {
                                updateStepField(index, 'type', event.target.value);
@@ -3842,6 +3847,7 @@ export function LessonBlueprintEditor({
                             <div>
                               <label className="mb-1 block text-xs font-medium text-muted-foreground">Contrast side</label>
                               <StyledSelect
+                aria-label="Contrast side"
                                 value={getString(step.contrastSide)}
                                 onChange={(event) => updateStepField(index, 'contrastSide', event.target.value)}
                                 options={[
@@ -3876,6 +3882,7 @@ export function LessonBlueprintEditor({
                             <div>
                               <label className="mb-1 block text-xs font-medium text-muted-foreground">Correct option</label>
                               <StyledSelect
+                aria-label="Correct option"
                                 value={getString(step.correctOptionId)}
                                 onChange={(event) => updateStepField(index, 'correctOptionId', event.target.value)}
                                 options={[
@@ -4021,10 +4028,10 @@ export function LessonBlueprintEditor({
                                                  type="button"
                                                  onClick={() => openAssetLibrary(imageFieldPath)}
                                                  className={`rounded-lg border px-3 py-2 text-xs font-medium ${
- assetLibraryTargetFieldPath === imageFieldPath
- ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
- : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
- }`}
+                                                   assetLibraryTargetFieldPath === imageFieldPath
+                                                     ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                                                     : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
+                                                 }`}
                                                >
                                                  Library
                                                </button>
@@ -4276,10 +4283,10 @@ export function LessonBlueprintEditor({
                                               readOnly={!!sourcePhraseId}
                                               placeholder={sourcePhraseId ? 'Filled from phrase' : 'Yoruba text'}
                                               className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none ${
- sourcePhraseId
- ? 'border-gray-200 bg-muted/50 text-gray-700 dark:border-gray-700 dark:text-gray-300'
- : 'border-gray-300 bg-card text-gray-900 focus:border-brand-500 dark:border-gray-700 dark:text-white'
- }`}
+                                                sourcePhraseId
+                                                  ? 'border-gray-200 bg-muted/50 text-gray-700 dark:border-gray-700 dark:text-gray-300'
+                                                  : 'border-gray-300 bg-card text-gray-900 focus:border-brand-500 dark:border-gray-700 dark:text-white'
+                                              }`}
                                             />
                                           </div>
                                        </div>
@@ -4306,10 +4313,10 @@ export function LessonBlueprintEditor({
                                                  type="button"
                                                  onClick={() => openAssetLibrary(pairAudioFieldPath)}
                                                  className={`rounded-lg border px-3 py-2 text-xs font-medium ${
- assetLibraryTargetFieldPath === pairAudioFieldPath
- ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
- : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
- }`}
+                                                   assetLibraryTargetFieldPath === pairAudioFieldPath
+                                                     ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                                                     : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
+                                                 }`}
                                                >
                                                  Library
                                                </button>
@@ -4362,10 +4369,10 @@ export function LessonBlueprintEditor({
                                                   type="button"
                                                   onClick={() => openAssetLibrary(pairImageFieldPath)}
                                                   className={`rounded-lg border px-3 py-2 text-xs font-medium ${
- assetLibraryTargetFieldPath === pairImageFieldPath
- ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
- : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
- }`}
+                                                    assetLibraryTargetFieldPath === pairImageFieldPath
+                                                      ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                                                      : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
+                                                  }`}
                                                 >
                                                   Library
                                                 </button>
@@ -4410,9 +4417,9 @@ export function LessonBlueprintEditor({
                                className={`rounded-lg border px-3 py-2 text-xs font-medium ${
                                  assetLibraryTargetFieldPath === `steps[${index}].imageUrl`
                                    
- ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
- : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
- }`}
+                                   ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                                   : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
+                               }`}
                              >
                                Library
                              </button>
@@ -4448,9 +4455,9 @@ export function LessonBlueprintEditor({
                                className={`rounded-lg border px-3 py-2 text-xs font-medium ${
                                  assetLibraryTargetFieldPath === `steps[${index}].audioUrl`
                                    
- ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
- : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
- }`}
+                                   ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                                   : 'border-gray-300 bg-card text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200'
+                               }`}
                              >
                                Library
                              </button>

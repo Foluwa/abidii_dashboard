@@ -508,10 +508,10 @@ export default function DetailedAnalyticsPage() {
             key={r.key}
             onClick={() => setTimeRange(r.key)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
- timeRange === r.key
- ? "bg-brand-500 text-white dark:text-gray-900"
- : "bg-white text-muted-foreground border border-border hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800"
- }`}
+              timeRange === r.key
+                ? "bg-brand-500 text-white dark:text-gray-900"
+                : "bg-white text-muted-foreground border border-border hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800"
+            }`}
           >
             {r.label}
           </button>

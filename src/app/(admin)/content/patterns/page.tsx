@@ -209,7 +209,7 @@ export default function PatternsPage() {
       <div className="mb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">
+            <h1 className="text-3xl tracking-tight text-foreground">
               Content Patterns
             </h1>
             <p className="text-muted-foreground">
@@ -234,6 +234,7 @@ export default function PatternsPage() {
             Language
           </label>
           <StyledSelect
+                aria-label="Language"
             value={selectedLanguage}
             onChange={(e) => setSelectedLanguage(e.target.value)}
             options={languages.map(l => ({ value: l.id, label: l.name }))}
@@ -245,6 +246,7 @@ export default function PatternsPage() {
             Category
           </label>
           <StyledSelect
+                aria-label="Category"
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
             options={[{ value: '', label: 'All Categories' }, ...CATEGORIES]}

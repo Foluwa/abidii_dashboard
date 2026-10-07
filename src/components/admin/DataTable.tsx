@@ -219,8 +219,8 @@ export default function DataTable<T extends Record<string, unknown>>({
             key={itemId}
             onClick={() => onRowClick?.(item)}
             className={`bg-card border border-border rounded-lg p-4 ${
- onRowClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50' : ''
- }`}
+              onRowClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50' : ''
+            }`}
           >
             {selectedIds !== undefined && (
               <div className="flex items-center mb-3 pb-3 border-b border-border">

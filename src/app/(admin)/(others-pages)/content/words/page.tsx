@@ -579,6 +579,7 @@ export default function WordsPage() {
               Sort by
             </label>
             <StyledSelect
+                aria-label="Sort by"
               value={sortBy}
               onChange={(e) => {
                 setSortBy(e.target.value as any);
@@ -618,6 +619,7 @@ export default function WordsPage() {
               Order
             </label>
             <StyledSelect
+                aria-label="Order"
               value={sortDir}
               onChange={(e) => {
                 setSortDir(e.target.value as any);
@@ -637,6 +639,7 @@ export default function WordsPage() {
               Items per page
             </label>
             <StyledSelect
+                aria-label="Items per page"
               value={limit}
               onChange={(e) => {
                 setLimit(Number(e.target.value));
@@ -891,10 +894,10 @@ export default function WordsPage() {
                       key={pos.value}
                       onClick={() => togglePosFilter(pos.value)}
                       className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
- posFilter.includes(pos.value)
- ? 'bg-brand-600 text-white dark:text-gray-900'
- : 'bg-gray-100 text-foreground hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'
- }`}
+                        posFilter.includes(pos.value)
+                          ? 'bg-brand-600 text-white dark:text-gray-900'
+                          : 'bg-gray-100 text-foreground hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'
+                      }`}
                     >
                       {pos.label}
                       {posFilter.includes(pos.value) && (

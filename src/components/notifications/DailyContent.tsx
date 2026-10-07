@@ -50,6 +50,7 @@ import type {
   OpenRateDimension,
   DailyContentPreviewItem,
 } from '@/types/notifications';
+import { CircleCheck, CircleX } from "lucide-react";
 
 function formatDate(value?: string | null) {
   if (!value) return '—';
@@ -551,9 +552,25 @@ function TeaserQuizTab({ stats }: { stats: TeaserQuizStats | null }) {
                     <td className="px-3 py-3 font-medium text-foreground">{item.word_text}</td>
                     <td className="max-w-[280px] truncate px-3 py-2 text-foreground">{item.prompt_text}</td>
                     <td className="px-3 py-3 text-foreground">{item.language_code}</td>
-                    <td className="px-3 py-3 text-foreground">{item.opened_at ? '✅' : '—'}</td>
                     <td className="px-3 py-3 text-foreground">
-                      {item.was_correct === null ? '—' : item.was_correct ? '✅ Correct' : '❌ Incorrect'}
+                      {item.opened_at ? (
+                        <CircleCheck className="size-4 text-green-600 dark:text-green-400" aria-label="Opened" />
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-foreground">
+                      {item.was_correct === null ? (
+                        '—'
+                      ) : item.was_correct ? (
+                        <span className="inline-flex items-center gap-1 text-green-700 dark:text-green-300">
+                          <CircleCheck className="size-4" aria-hidden="true" /> Correct
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-destructive">
+                          <CircleX className="size-4" aria-hidden="true" /> Incorrect
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-3 text-right text-foreground">{item.xp_awarded}</td>
                   </tr>
