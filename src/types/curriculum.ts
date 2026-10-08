@@ -86,6 +86,9 @@ export interface LessonBlueprintMediaBinding {
   file_name?: string | null;
   uploaded_at?: string | null;
   etag?: string | null;
+  /** Shared media library (content hash / media_assets id) when known. */
+  sha256?: string | null;
+  media_asset_id?: string | null;
 }
 
 export interface LessonBlueprintAssetLibraryItem {

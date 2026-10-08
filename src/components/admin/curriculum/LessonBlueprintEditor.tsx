@@ -11,6 +11,10 @@ import ValidationResultViewer from '@/components/admin/curriculum/ValidationResu
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { Combobox } from '@/components/ui/form/Combobox';
 import { Modal } from '@/components/ui/modal';
+import { DuplicateUploadDialog } from '@/components/curriculum/media/DuplicateUploadDialog';
+import { SharedMediaLibraryPanel } from '@/components/curriculum/media/SharedMediaLibraryPanel';
+import { findExistingMediaForFile, linkBlueprintAsset, linkTargetFor, mediaDisplayName } from '@/lib/mediaLibraryApi';
+import type { MediaLibraryAsset } from '@/types/mediaLibrary';
 import { useToast } from '@/contexts/ToastContext';
 import { apiClient } from '@/lib/api';
 import {
@@ -694,7 +698,14 @@ export function LessonBlueprintEditor({
   const [assetLibrarySort, setAssetLibrarySort] = useState<'recent' | 'name' | 'source'>('recent');
   const [assetLibraryKindFilter, setAssetLibraryKindFilter] = useState<'all' | 'image' | 'audio' | 'video'>('all');
   const [assetLibraryCompatibilityFilter, setAssetLibraryCompatibilityFilter] = useState<'all' | 'compatible'>('all');
-  const [assetLibraryTab, setAssetLibraryTab] = useState<'local' | 'global'>('local');
+  const [assetLibraryTab, setAssetLibraryTab] = useState<'local' | 'global' | 'shared'>('local');
+  const [duplicateUpload, setDuplicateUpload] = useState<{
+    fieldPath: string;
+    file: File;
+    acceptLabel: string;
+    asset: MediaLibraryAsset;
+  } | null>(null);
+  const [isLinkingDuplicate, setIsLinkingDuplicate] = useState(false);
   const [vocabSearch, setVocabSearch] = useState('');
   const [toneContrastSearch, setToneContrastSearch] = useState('');
   const [phrasePickerTarget, setPhrasePickerTarget] = useState<PhrasePickerTarget | null>(null);
@@ -2001,7 +2012,12 @@ export function LessonBlueprintEditor({
     }
   };
 
-  const handleAssetFileSelected = async (fieldPath: string, file: File, acceptLabel: string) => {
+  const handleAssetFileSelected = async (
+    fieldPath: string,
+    file: File,
+    acceptLabel: string,
+    options?: { skipDuplicateCheck?: boolean }
+  ) => {
     if (!blueprint?.id) {
       toast.error('Create the draft first, then upload assets to the saved blueprint.');
       return;
@@ -2020,6 +2036,16 @@ export function LessonBlueprintEditor({
     if (activeUploadTokenRef.current === uploadToken || uploadingFieldPath === fieldPath) {
       toast.info('Upload already in progress for this field.');
       return;
+    }
+
+    // Shared media library: hash the file first; when the exact same file is
+    // already stored, offer to link it instead of uploading a second copy.
+    if (!options?.skipDuplicateCheck) {
+      const existing = await findExistingMediaForFile(file);
+      if (existing) {
+        setDuplicateUpload({ fieldPath, file, acceptLabel, asset: existing });
+        return;
+      }
     }
 
     activeUploadTokenRef.current = uploadToken;
@@ -2053,6 +2079,68 @@ export function LessonBlueprintEditor({
         return next;
       });
     }
+  };
+
+  const handleUseExistingDuplicate = async () => {
+    if (!duplicateUpload || !blueprint?.id) return;
+    const { fieldPath, file, acceptLabel, asset } = duplicateUpload;
+    setIsLinkingDuplicate(true);
+    try {
+      const result = await linkBlueprintAsset(blueprint.id, {
+        field_path: fieldPath,
+        ...linkTargetFor(asset),
+        file_name: file.name,
+      });
+      replacePayload(result.blueprint.payload);
+      setPreviewResult(result);
+      onSaved?.(result);
+      setDuplicateUpload(null);
+      toast.success(`${acceptLabel} linked to the existing library file (nothing uploaded).`);
+    } catch (error) {
+      const message = extractErrorMessage(error);
+      setErrorMessage(message);
+      toast.error(message);
+    } finally {
+      setIsLinkingDuplicate(false);
+    }
+  };
+
+  const handleUploadDuplicateAnyway = () => {
+    if (!duplicateUpload) return;
+    const { fieldPath, file, acceptLabel } = duplicateUpload;
+    setDuplicateUpload(null);
+    void handleAssetFileSelected(fieldPath, file, acceptLabel, { skipDuplicateCheck: true });
+  };
+
+  const reuseSharedLibraryAsset = (asset: MediaLibraryAsset, targetFieldPath: string) => {
+    if (!asset.url) {
+      toast.error('This file has no public URL in this environment.');
+      return;
+    }
+    const assetUrl = asset.url;
+    updatePayload((prev) => {
+      let next = setPayloadFieldValue(prev, targetFieldPath, assetUrl);
+      const nextBindings = getMediaBindings(next);
+      nextBindings[targetFieldPath] = {
+        field_path: targetFieldPath,
+        asset_kind: asset.kind === 'other' ? 'file' : asset.kind,
+        storage_key: asset.storage_key,
+        asset_url: assetUrl,
+        content_type: asset.mime ?? null,
+        file_size_bytes: asset.bytes ?? null,
+        file_name: mediaDisplayName(asset),
+        uploaded_at: new Date().toISOString(),
+        ...(asset.sha256 ? { sha256: asset.sha256 } : {}),
+        ...(asset.id ? { media_asset_id: asset.id } : {}),
+      };
+      next = {
+        ...next,
+        mediaBindings: nextBindings,
+      };
+      return next;
+    });
+    setIsAssetLibraryModalOpen(false);
+    toast.success(`Reused ${mediaDisplayName(asset)} from the shared media library.`);
   };
 
   const handleRemoveAsset = async (fieldPath: string) => {
@@ -3394,9 +3482,47 @@ export function LessonBlueprintEditor({
                     >
                       Global assets ({sortedGlobalAssetLibraryItems.length})
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setAssetLibraryTab('shared')}
+                      aria-pressed={assetLibraryTab === 'shared'}
+                      className={`rounded-full px-3 py-2 text-xs font-medium transition ${
+                        assetLibraryTab === 'shared'
+                          ? 'bg-brand-600 text-white dark:text-gray-900'
+                          : 'border border-input bg-card text-foreground hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      Shared library
+                    </button>
                   </div>
 
-                  {assetLibraryTab === 'local' ? (
+                  {assetLibraryTab === 'shared' ? (
+                    <div className="rounded-lg border border-border bg-muted/50 p-4">
+                      <div className="mb-3">
+                        <h4 className="text-sm font-semibold text-foreground">Shared media library</h4>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Every stored audio clip and image across all lessons, scenes and audio tables. Reusing one
+                          links it here instead of storing another copy.
+                        </p>
+                      </div>
+                      <SharedMediaLibraryPanel
+                        kind={assetLibraryTargetFieldPath ? inferAssetKindFromFieldPath(assetLibraryTargetFieldPath) : undefined}
+                        search={globalAssetSearch}
+                        pageSize={10}
+                        gridLabel="Shared media asset grid"
+                        selectLabel="Select"
+                        isSelectable={(asset) =>
+                          Boolean(assetLibraryTargetFieldPath) &&
+                          asset.kind === inferAssetKindFromFieldPath(assetLibraryTargetFieldPath || '')
+                        }
+                        onSelect={(asset) => {
+                          if (assetLibraryTargetFieldPath) reuseSharedLibraryAsset(asset, assetLibraryTargetFieldPath);
+                        }}
+                      />
+                    </div>
+                  ) : null}
+
+                  {assetLibraryTab === 'shared' ? null : assetLibraryTab === 'local' ? (
                   <div className="rounded-lg border border-border bg-muted/50 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -3545,6 +3671,15 @@ export function LessonBlueprintEditor({
                 </div>
               </div>
             </Modal>
+
+            <DuplicateUploadDialog
+              asset={duplicateUpload?.asset ?? null}
+              fileName={duplicateUpload?.file.name}
+              isBusy={isLinkingDuplicate}
+              onUseExisting={() => void handleUseExistingDuplicate()}
+              onUploadAnyway={handleUploadDuplicateAnyway}
+              onCancel={() => setDuplicateUpload(null)}
+            />
 
             <div className="mt-6 rounded-lg border border-border bg-muted/50 p-4">
               <div className="flex items-center justify-between gap-3">
