@@ -15,6 +15,16 @@ import {
   renameBlueprintAsset,
 } from '@/lib/adminCurriculumApi';
 import { useAdminBlueprintAssetLibrary, useAdminCoursesList } from '@/hooks/useApi';
+import { MediaDuplicatesPanel } from '@/components/curriculum/media/MediaDuplicatesPanel';
+import { SharedMediaLibraryPanel } from '@/components/curriculum/media/SharedMediaLibraryPanel';
+
+type AssetView = 'all' | 'bindings' | 'duplicates';
+
+const VIEWS: Array<{ value: AssetView; label: string; hint: string }> = [
+  { value: 'all', label: 'All media', hint: 'Every audio clip and image, stored once and shared by all lessons, scenes and audio tables.' },
+  { value: 'bindings', label: 'Lesson uploads', hint: 'Media fields bound in lesson blueprints (rename, unlink, clean stale bindings).' },
+  { value: 'duplicates', label: 'Duplicates', hint: 'Identical files under different keys, and texts recorded more than once.' },
+];
 
 function formatDate(value?: string | null): string {
   if (!value) return 'Unknown';
@@ -25,6 +35,7 @@ function formatDate(value?: string | null): string {
 
 export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boolean }) {
   const toast = useToast();
+  const [view, setView] = useState<AssetView>('all');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [courseId, setCourseId] = useState('');
@@ -47,6 +58,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
     isError,
     refresh,
   } = useAdminBlueprintAssetLibrary({
+    enabled: view === 'bindings',
     page,
     limit,
     course_id: courseId || undefined,
@@ -149,6 +161,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
       <div className="flex items-start justify-between gap-4">
         {showHeader ? <PageBreadCrumb pageTitle="Curriculum Asset Library" /> : <div />}
         <div className="flex flex-wrap gap-2">
+          {view === 'bindings' ? (
           <button
             type="button"
             onClick={() => void handleCleanupOrphans()}
@@ -157,6 +170,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
           >
             {isCleaningOrphans ? 'Cleaning…' : 'Clean Stale Bindings'}
           </button>
+          ) : null}
           <Link
             href="/curriculum/lesson-blueprints"
             className="rounded-lg border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
@@ -165,6 +179,33 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
           </Link>
         </div>
       </div>
+
+      <div className="space-y-2">
+        <div role="tablist" aria-label="Asset library views" className="flex flex-wrap gap-2">
+          {VIEWS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              role="tab"
+              aria-selected={view === option.value}
+              onClick={() => setView(option.value)}
+              className={`rounded-full px-3 py-2 text-xs font-medium transition ${
+                view === option.value
+                  ? 'bg-brand-600 text-white dark:text-gray-900'
+                  : 'border border-input bg-card text-foreground hover:bg-muted/50'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">{VIEWS.find((option) => option.value === view)?.hint}</p>
+      </div>
+
+      {view === 'all' ? <SharedMediaLibraryPanel /> : null}
+      {view === 'duplicates' ? <MediaDuplicatesPanel /> : null}
+      {view === 'bindings' ? (
+      <>
 
       <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-4 lg:grid-cols-4">
@@ -342,6 +383,9 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
           </div>
         </div>
       </div>
+
+      </>
+      ) : null}
 
       <Modal
         isOpen={Boolean(renameDraft)}
