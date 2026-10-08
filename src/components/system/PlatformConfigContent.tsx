@@ -100,6 +100,21 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
     }
   };
 
+  // One click for on/off flags (e.g. rewards.cowries_enabled), instead of
+  // Edit -> pick true/false -> Save.
+  const setBoolValue = async (key: string, next: boolean) => {
+    if (!confirm(`Turn "${key}" ${next ? "ON" : "OFF"}? Apps pick this up on their next launch.`)) {
+      return;
+    }
+    try {
+      await apiClient.put(`/api/v1/admin/configs/${key}`, { value_bool: next });
+      toast.success(`"${key}" turned ${next ? "on" : "off"}`);
+      refresh();
+    } catch (error: any) {
+      setErrorMessage(error.response?.data?.detail || "Failed to update configuration");
+    }
+  };
+
   const toggleActive = async (key: string, currentStatus: boolean) => {
     try {
       await apiClient.patch(`/api/v1/admin/configs/${key}/toggle`, {
@@ -261,6 +276,28 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                         ) : (
                           (() => {
                             const actualValue = getActualValue(item);
+                            if (item.value_type === "boolean") {
+                              const on = actualValue === true;
+                              return (
+                                <button
+                                  type="button"
+                                  role="switch"
+                                  aria-checked={on}
+                                  aria-label={`${item.key}: ${on ? "on" : "off"}`}
+                                  data-testid={`bool-switch-${item.key}`}
+                                  onClick={() => setBoolValue(item.key, !on)}
+                                  className="inline-flex items-center gap-2"
+                                  title={on ? "On (click to turn off)" : "Off (click to turn on)"}
+                                >
+                                  <span className={`w-10 h-6 rounded-full transition-colors flex items-center ${on ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"}`}>
+                                    <span className={`w-4 h-4 bg-white rounded-full transition-transform ${on ? "translate-x-5" : "translate-x-1"}`} />
+                                  </span>
+                                  <span className={`text-sm font-semibold ${on ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                                    {on ? "On" : "Off"}
+                                  </span>
+                                </button>
+                              );
+                            }
                             if (actualValue == null) {
                               return (
                                 <span className="text-sm font-semibold text-muted-foreground">—</span>
