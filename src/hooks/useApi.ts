@@ -26,6 +26,11 @@ import type {
 import type { AdminAuditLogListResponse } from '@/types/audit-log';
 import type { DictionaryReportListResponse } from '@/types/dictionary-reports';
 import type {
+  ConversationSceneDetail,
+  ConversationSceneListResponse,
+} from '@/types/conversation-scenes';
+import type { MissionClaimListResponse, MissionSummaryResponse } from '@/types/daily-missions';
+import type {
   CurriculumOpsMetricsResponse,
   RoomAnalyticsResponse,
   RoomTypeFilterValue,
@@ -2117,3 +2122,75 @@ export function useRangeSummary(range: string) {
   };
 }
 
+const READ_ONLY_SWR_OPTIONS = {
+  refreshInterval: 0,
+  revalidateOnFocus: false,
+  revalidateOnReconnect: false,
+  shouldRetryOnError: false,
+};
+
+export interface AdminConversationSceneFilters {
+  page?: number;
+  limit?: number;
+  reviewed?: boolean;
+  hasProblems?: boolean;
+  q?: string;
+}
+
+export function useAdminConversationScenes(filters?: AdminConversationSceneFilters) {
+  const params = new URLSearchParams();
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.limit) params.set('limit', String(filters.limit));
+  if (filters?.reviewed !== undefined) params.set('reviewed', String(filters.reviewed));
+  if (filters?.hasProblems !== undefined) params.set('has_problems', String(filters.hasProblems));
+  if (filters?.q) params.set('q', filters.q);
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+
+  const { data, error, mutate } = useSWR<ConversationSceneListResponse>(
+    `/api/v1/admin/conversation-scenes${suffix}`,
+    fetcher,
+    READ_ONLY_SWR_OPTIONS,
+  );
+  return { data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
+
+export function useAdminConversationScene(blueprintKey?: string, sceneId?: string) {
+  const url =
+    blueprintKey && sceneId
+      ? `/api/v1/admin/conversation-scenes/${encodeURIComponent(blueprintKey)}/${encodeURIComponent(sceneId)}`
+      : null;
+  const { data, error, mutate } = useSWR<ConversationSceneDetail>(url, fetcher, READ_ONLY_SWR_OPTIONS);
+  return { data, isLoading: !!url && !error && !data, isError: error, refresh: mutate };
+}
+
+export function useAdminMissionsSummary(days: number = 14) {
+  const { data, error, mutate } = useSWR<MissionSummaryResponse>(
+    `/api/v1/admin/missions/summary?days=${days}`,
+    fetcher,
+    READ_ONLY_SWR_OPTIONS,
+  );
+  return { data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
+
+export interface AdminMissionClaimFilters {
+  page?: number;
+  limit?: number;
+  missionId?: string;
+  day?: string;
+}
+
+export function useAdminMissionClaims(filters?: AdminMissionClaimFilters) {
+  const params = new URLSearchParams();
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.limit) params.set('limit', String(filters.limit));
+  if (filters?.missionId) params.set('mission_id', filters.missionId);
+  if (filters?.day) params.set('day', filters.day);
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+
+  const { data, error, mutate } = useSWR<MissionClaimListResponse>(
+    `/api/v1/admin/missions/claims${suffix}`,
+    fetcher,
+    READ_ONLY_SWR_OPTIONS,
+  );
+  return { data, isLoading: !error && !data, isError: error, refresh: mutate };
+}

@@ -89,6 +89,16 @@ export const mainNavigationItems: AdminNavItem[] = [
         path: "/content/patterns",
       },
       {
+        name: "Conversation Scenes",
+        path: "/content/conversation-scenes",
+        permission: "content:read",
+      },
+      {
+        name: "Daily Missions",
+        path: "/content/daily-missions",
+        permission: "content:read",
+      },
+      {
         name: "Content Ops",
         path: "/content/ops",
         activePaths: [
