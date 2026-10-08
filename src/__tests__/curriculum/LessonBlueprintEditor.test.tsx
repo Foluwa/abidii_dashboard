@@ -11,6 +11,9 @@ const mockUseAdminCourseCurriculumByKey = jest.fn();
 const mockUseAdminBlueprintAssetLibrary = jest.fn();
 const mockUseCurriculumVocabLibrary = jest.fn();
 const mockUsePhonicsContrasts = jest.fn();
+const mockUseAdminMediaLibrary = jest.fn();
+const mockFindExistingMediaForFile = jest.fn();
+const mockLinkBlueprintAsset = jest.fn();
 
 jest.mock('@/hooks/useApi', () => ({
   useAdminCoursesList: (params: any) => mockUseAdminCoursesList(params),
@@ -19,7 +22,17 @@ jest.mock('@/hooks/useApi', () => ({
   useAdminBlueprintAssetLibrary: (filters: any) => mockUseAdminBlueprintAssetLibrary(filters),
   useCurriculumVocabLibrary: (filters: any) => mockUseCurriculumVocabLibrary(filters),
   usePhonicsContrasts: (languageCode: string | null) => mockUsePhonicsContrasts(languageCode),
+  useAdminMediaLibrary: (filters: any) => mockUseAdminMediaLibrary(filters),
 }));
+
+jest.mock('@/lib/mediaLibraryApi', () => {
+  const actual = jest.requireActual('@/lib/mediaLibraryApi');
+  return {
+    ...actual,
+    findExistingMediaForFile: (file: File) => mockFindExistingMediaForFile(file),
+    linkBlueprintAsset: (blueprintId: string, payload: unknown) => mockLinkBlueprintAsset(blueprintId, payload),
+  };
+});
 
 jest.mock('@/lib/adminCurriculumApi', () => ({
   createAdminBlueprint: jest.fn(),
@@ -217,6 +230,29 @@ describe('LessonBlueprintEditor', () => {
       ],
       isLoading: false,
     });
+    mockFindExistingMediaForFile.mockResolvedValue(null);
+    mockUseAdminMediaLibrary.mockReturnValue({
+      items: [
+        {
+          id: 'asset-9',
+          registered: true,
+          kind: 'audio',
+          sha256: 'c'.repeat(64),
+          storage_key: `media/audio/${'c'.repeat(64)}.mp3`,
+          url: `https://cdn.example.com/media/audio/${'c'.repeat(64)}.mp3`,
+          mime: 'audio/mpeg',
+          bytes: 1000,
+          text: 'Ẹ káàbọ̀',
+          human_recorded: true,
+          original_name: 'kaabo-human.mp3',
+          usage_count: 4,
+          usage_sources: ['lesson_blueprints.payload'],
+        },
+      ],
+      total: 1,
+      isLoading: false,
+      isError: false,
+    });
     mockUsePhonicsContrasts.mockReturnValue({
       contrasts: [
         { id: 'contrast-1', title: 'e vs e-dot', letter_a_glyph: 'e', letter_b_glyph: 'ẹ' },
@@ -335,5 +371,125 @@ describe('LessonBlueprintEditor', () => {
     expect(screen.getAllByDisplayValue('Unit 1').length).toBeGreaterThan(0);
     expect(screen.queryByText('Primary vocab target')).not.toBeInTheDocument();
     expect((screen.getByLabelText('Raw Payload JSON') as HTMLTextAreaElement).value).not.toContain('targetVocabIds');
+  });
+
+  describe('shared media library', () => {
+    const existingAsset = {
+      id: 'asset-1',
+      registered: true,
+      kind: 'audio',
+      sha256: 'a'.repeat(64),
+      storage_key: `media/audio/${'a'.repeat(64)}.mp3`,
+      url: `https://cdn.example.com/media/audio/${'a'.repeat(64)}.mp3`,
+      mime: 'audio/mpeg',
+      bytes: 2048,
+      text: 'Ẹ káàárọ̀',
+      human_recorded: false,
+      original_name: 'greeting.mp3',
+      usage_count: 3,
+      usage_sources: ['lesson_blueprints.payload'],
+    };
+
+    async function dropAudioIntoLibrary() {
+      await userEvent.click(screen.getByRole('button', { name: 'Open library' }));
+      await chooseOption(userEvent, screen.getByLabelText('Media library target field'), 'audioUrl');
+      const file = new File(['same bytes'], 'greeting-copy.mp3', { type: 'audio/mpeg' });
+      const dropZone = screen.getByText(/Drop an audio file here to upload directly to audioUrl/);
+      fireEvent.drop(dropZone, { dataTransfer: { files: [file] } });
+      return file;
+    }
+
+    function linkedResult() {
+      return {
+        blueprint: {
+          ...baseBlueprint,
+          payload: {
+            ...baseBlueprint.payload,
+            audioUrl: existingAsset.url,
+            mediaBindings: {
+              ...baseBlueprint.payload.mediaBindings,
+              audioUrl: {
+                field_path: 'audioUrl',
+                asset_kind: 'audio',
+                storage_key: existingAsset.storage_key,
+                asset_url: existingAsset.url,
+                file_name: 'greeting-copy.mp3',
+              },
+            },
+          },
+        },
+        validation: { status: 'unknown', errors: [], warnings: [] },
+      };
+    }
+
+    it('offers the existing file instead of uploading an identical copy', async () => {
+      const { uploadBlueprintAsset } = jest.requireMock('@/lib/adminCurriculumApi');
+      mockFindExistingMediaForFile.mockResolvedValue(existingAsset);
+      mockLinkBlueprintAsset.mockResolvedValue(linkedResult());
+      renderEditor({ mode: 'edit', blueprint: baseBlueprint as any });
+
+      const file = await dropAudioIntoLibrary();
+
+      const dialog = await screen.findByLabelText('Duplicate upload');
+      expect(mockFindExistingMediaForFile).toHaveBeenCalledWith(file);
+      expect(within(dialog).getByText(/used in 3 places/)).toBeInTheDocument();
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Use existing' }));
+
+      await waitFor(() =>
+        expect(mockLinkBlueprintAsset).toHaveBeenCalledWith('blueprint-1', {
+          field_path: 'audioUrl',
+          media_asset_id: 'asset-1',
+          file_name: 'greeting-copy.mp3',
+        })
+      );
+      expect(uploadBlueprintAsset).not.toHaveBeenCalled();
+      await waitFor(() => expect(screen.queryByLabelText('Duplicate upload')).not.toBeInTheDocument());
+      expect((screen.getByLabelText('Raw Payload JSON') as HTMLTextAreaElement).value).toContain(existingAsset.storage_key);
+    });
+
+    it('can still upload when the user chooses to', async () => {
+      const { uploadBlueprintAsset } = jest.requireMock('@/lib/adminCurriculumApi');
+      mockFindExistingMediaForFile.mockResolvedValue(existingAsset);
+      uploadBlueprintAsset.mockResolvedValue(linkedResult());
+      renderEditor({ mode: 'edit', blueprint: baseBlueprint as any });
+
+      await dropAudioIntoLibrary();
+      const dialog = await screen.findByLabelText('Duplicate upload');
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Upload anyway' }));
+
+      await waitFor(() => expect(uploadBlueprintAsset).toHaveBeenCalledTimes(1));
+      expect(uploadBlueprintAsset.mock.calls[0][1]).toMatchObject({ field_path: 'audioUrl' });
+      expect(mockFindExistingMediaForFile).toHaveBeenCalledTimes(1);
+      expect(mockLinkBlueprintAsset).not.toHaveBeenCalled();
+    });
+
+    it('uploads directly when the file is new', async () => {
+      const { uploadBlueprintAsset } = jest.requireMock('@/lib/adminCurriculumApi');
+      uploadBlueprintAsset.mockResolvedValue(linkedResult());
+      renderEditor({ mode: 'edit', blueprint: baseBlueprint as any });
+
+      await dropAudioIntoLibrary();
+
+      await waitFor(() => expect(uploadBlueprintAsset).toHaveBeenCalledTimes(1));
+      expect(screen.queryByLabelText('Duplicate upload')).not.toBeInTheDocument();
+    });
+
+    it('picks media from the shared library across all lessons', async () => {
+      renderEditor({ mode: 'edit', blueprint: baseBlueprint as any });
+
+      await userEvent.click(screen.getByRole('button', { name: 'Open library' }));
+      await chooseOption(userEvent, screen.getByLabelText('Media library target field'), 'audioUrl');
+      const modal = screen.getByLabelText('Media library modal content');
+      await userEvent.click(within(modal).getByRole('button', { name: 'Shared library' }));
+
+      const grid = within(modal).getByLabelText('Shared media asset grid');
+      expect(mockUseAdminMediaLibrary).toHaveBeenLastCalledWith(expect.objectContaining({ kind: 'audio' }));
+      expect(within(grid).getByRole('button', { name: 'Used in 4 places' })).toBeInTheDocument();
+      await userEvent.click(within(grid).getByRole('button', { name: 'Select' }));
+
+      const raw = (screen.getByLabelText('Raw Payload JSON') as HTMLTextAreaElement).value;
+      expect(raw).toContain(`"storage_key": "media/audio/${'c'.repeat(64)}.mp3"`);
+      expect(raw).toContain('"media_asset_id": "asset-9"');
+    });
   });
 });
