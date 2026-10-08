@@ -30,6 +30,7 @@ import type {
   ConversationSceneListResponse,
 } from '@/types/conversation-scenes';
 import type { MissionClaimListResponse, MissionSummaryResponse } from '@/types/daily-missions';
+import type { MediaDuplicateReportResponse, MediaLibraryListResponse } from '@/types/mediaLibrary';
 import type {
   CurriculumOpsMetricsResponse,
   RoomAnalyticsResponse,
@@ -517,6 +518,7 @@ export function useAdminBlueprintCapabilities() {
 }
 
 export function useAdminBlueprintAssetLibrary(filters?: {
+  enabled?: boolean;
   page?: number;
   limit?: number;
   course_id?: string;
@@ -532,7 +534,7 @@ export function useAdminBlueprintAssetLibrary(filters?: {
 
   const suffix = params.toString() ? `?${params.toString()}` : '';
   const { data, error, mutate } = useSWR<LessonBlueprintAssetLibraryResponse>(
-    `/api/v1/admin/lesson-blueprints/assets/library${suffix}`,
+    filters?.enabled === false ? null : `/api/v1/admin/lesson-blueprints/assets/library${suffix}`,
     fetcher,
     {
       refreshInterval: 0,
@@ -546,10 +548,66 @@ export function useAdminBlueprintAssetLibrary(filters?: {
     data,
     items: data?.items ?? [],
     total: data?.total ?? 0,
-    isLoading: !error && !data,
+    isLoading: filters?.enabled === false ? false : !error && !data,
     isError: error,
     refresh: mutate,
     mutate,
+  };
+}
+
+/** Shared media library: all media (library rows + every referenced object). */
+export function useAdminMediaLibrary(filters?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  kind?: string;
+  unused?: boolean;
+  enabled?: boolean;
+}) {
+  const params = new URLSearchParams();
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.limit) params.set('limit', String(filters.limit));
+  if (filters?.search) params.set('search', filters.search);
+  if (filters?.kind) params.set('kind', filters.kind);
+  if (filters?.unused !== undefined) params.set('unused', String(filters.unused));
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  const { data, error, mutate } = useSWR<MediaLibraryListResponse>(
+    filters?.enabled === false ? null : `/api/v1/admin/media-library${suffix}`,
+    fetcher,
+    {
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      shouldRetryOnError: false,
+    }
+  );
+  return {
+    data,
+    items: data?.items ?? [],
+    total: data?.total ?? 0,
+    isLoading: filters?.enabled === false ? false : !error && !data,
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/** Groups of identical-content objects and of recordings of the same text. */
+export function useAdminMediaDuplicates(enabled = true) {
+  const { data, error, mutate } = useSWR<MediaDuplicateReportResponse>(
+    enabled ? '/api/v1/admin/media-library/duplicates' : null,
+    fetcher,
+    {
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      shouldRetryOnError: false,
+    }
+  );
+  return {
+    data,
+    isLoading: enabled ? !error && !data : false,
+    isError: error,
+    refresh: mutate,
   };
 }
 
