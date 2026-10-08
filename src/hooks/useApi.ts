@@ -30,6 +30,7 @@ import type {
   ConversationSceneListResponse,
 } from '@/types/conversation-scenes';
 import type { MissionClaimListResponse, MissionSummaryResponse } from '@/types/daily-missions';
+import type { WardrobeCatalogResponse } from '@/types/wardrobe';
 import type { MediaDuplicateReportResponse, MediaLibraryListResponse } from '@/types/mediaLibrary';
 import type {
   CurriculumOpsMetricsResponse,
@@ -2247,6 +2248,15 @@ export function useAdminMissionClaims(filters?: AdminMissionClaimFilters) {
 
   const { data, error, mutate } = useSWR<MissionClaimListResponse>(
     `/api/v1/admin/missions/claims${suffix}`,
+    fetcher,
+    READ_ONLY_SWR_OPTIONS,
+  );
+  return { data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
+
+export function useAdminWardrobeCatalog() {
+  const { data, error, mutate } = useSWR<WardrobeCatalogResponse>(
+    '/api/v1/admin/wardrobe/items',
     fetcher,
     READ_ONLY_SWR_OPTIONS,
   );
