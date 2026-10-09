@@ -8,8 +8,8 @@ import StatusBadge from '@/components/admin/StatusBadge';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { Modal } from '@/components/ui/modal';
 import { useToast } from '@/contexts/ToastContext';
-import { listNotificationHistory } from '@/lib/notificationsApi';
-import type { NotificationLogItem } from '@/types/notifications';
+import { listNotificationFailures, listNotificationHistory } from '@/lib/notificationsApi';
+import type { NotificationFailureItem, NotificationLogItem } from '@/types/notifications';
 
 const FAILURE_REASON_LABELS: Record<string, string> = {
   unregistered: 'Dead token (uninstalled, permission revoked, or sender mismatch)',
@@ -27,6 +27,16 @@ function FailureReasonsModal({
 }) {
   const reasons = item.failure_reasons;
   const hasReasons = reasons && Object.keys(reasons).length > 0;
+  // Who each failure was for (recorded since backend migration 214;
+  // older sends have none).
+  const [failures, setFailures] = useState<NotificationFailureItem[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    listNotificationFailures(item.id)
+      .then((rows) => { if (!cancelled) setFailures(rows); })
+      .catch(() => { if (!cancelled) setFailures([]); });
+    return () => { cancelled = true; };
+  }, [item.id]);
 
   return (
     <Modal isOpen onClose={onClose} title="Why did this fail?" maxWidth="md">
@@ -65,6 +75,45 @@ function FailureReasonsModal({
             ))}
           </div>
         )}
+
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Who it failed for
+          </p>
+          {failures === null ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : failures.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No per-user detail recorded (sends from before this was tracked have none).
+            </p>
+          ) : (
+            <ul className="max-h-72 space-y-1 overflow-y-auto">
+              {failures.map((f, i) => (
+                <li
+                  key={`${f.user_id ?? 'unknown'}-${f.platform}-${i}`}
+                  className="flex items-start justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-foreground">
+                      {f.display_name || f.email || f.user_id || 'Unknown user'}
+                    </p>
+                    {f.email && f.display_name && (
+                      <p className="truncate text-xs text-muted-foreground">{f.email}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      {FAILURE_REASON_LABELS[f.reason] ?? f.reason}
+                      {f.error_code && f.error_code !== f.reason ? ` · ${f.error_code}` : ''}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs uppercase text-muted-foreground">
+                    {f.platform}
+                    {f.token_suffix ? ` …${f.token_suffix}` : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </Modal>
   );

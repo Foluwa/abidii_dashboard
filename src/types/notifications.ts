@@ -39,6 +39,18 @@ export interface NotificationLogItem {
   failure_reasons: NotificationFailureReasons | null;
 }
 
+/** One failed delivery: who it was for and why (backend migration 214). */
+export interface NotificationFailureItem {
+  user_id: string | null;
+  display_name: string | null;
+  email: string | null;
+  platform: string;
+  reason: string;
+  error_code: string | null;
+  token_suffix: string | null;
+  created_at: string;
+}
+
 export interface DailyContentFeedItem {
   content_log_id: string;
   content_date: string;
