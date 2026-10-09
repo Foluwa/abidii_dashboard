@@ -94,6 +94,11 @@ export const mainNavigationItems: AdminNavItem[] = [
         permission: "content:read",
       },
       {
+        name: "Scene Library",
+        path: "/content/scene-library",
+        permission: "content:update",
+      },
+      {
         name: "Daily Missions",
         path: "/content/daily-missions",
         permission: "content:read",

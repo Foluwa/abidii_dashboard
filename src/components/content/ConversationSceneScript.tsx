@@ -103,7 +103,7 @@ function ChoiceBlock({ node }: { node: ConversationChoiceNode }) {
   );
 }
 
-function SceneNode({ node }: { node: ConversationNode }) {
+export function SceneNode({ node }: { node: ConversationNode }) {
   if (node.type === 'line') {
     return (
       <div className="grid grid-cols-1 gap-3 rounded-xl border border-border bg-card p-4 md:grid-cols-[1fr_auto]">
