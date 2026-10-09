@@ -161,6 +161,11 @@ export interface UserListItem {
   current_level?: number;
   current_streak?: number;
   proficiency_level?: string | null;
+  /** The current course position (from GET /admin/users itself). */
+  learning_course_title?: string | null;
+  learning_unit_title?: string | null;
+  learning_lesson_title?: string | null;
+  learning_status?: 'current' | 'completed' | 'not_started' | null;
 
   // Learning language (content being studied) - distinct from ui_locale below.
   current_language_code?: string | null;

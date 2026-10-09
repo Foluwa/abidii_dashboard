@@ -16,6 +16,7 @@ import type {
   NotificationSchedule,
   NotificationScheduleUpdate,
   DictionarySearchResult,
+  NotificationFailureItem,
 } from '@/types/notifications';
 
 export async function sendNotification(payload: NotificationSendRequest) {
@@ -59,6 +60,13 @@ export async function listNotificationHistory(params?: {
   const suffix = usp.toString() ? `?${usp.toString()}` : '';
   const res = await apiClient.get<NotificationLogItem[]>(
     `/api/v1/notifications/history${suffix}`
+  );
+  return res.data;
+}
+
+export async function listNotificationFailures(notificationId: string) {
+  const res = await apiClient.get<NotificationFailureItem[]>(
+    `/api/v1/notifications/history/${encodeURIComponent(notificationId)}/failures`
   );
   return res.data;
 }

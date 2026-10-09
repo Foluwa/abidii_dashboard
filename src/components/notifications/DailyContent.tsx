@@ -721,7 +721,7 @@ export function DailyContent({ showHeader = true }: { showHeader?: boolean; isAc
       });
       setSchedule(updated);
       toast.success(
-        `Schedule updated — applies within 5 minutes (daily word ${updated.daily_word_time} UTC, teaser quiz ${updated.teaser_quiz_time} UTC)`
+        `Schedule updated — applies within 15 minutes (daily word ${updated.daily_word_time}, teaser quiz ${updated.teaser_quiz_time}, each user's local time)`
       );
     } catch (error: any) {
       toast.error(error?.response?.data?.detail ?? error?.message ?? 'Failed to update schedule');
@@ -777,7 +777,7 @@ export function DailyContent({ showHeader = true }: { showHeader?: boolean; isAc
       <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <h2 className="mb-1 text-lg font-semibold text-foreground">Send Time</h2>
         <p className="mb-4 text-sm text-muted-foreground">
-          UTC. Changes apply within 5 minutes — no restart needed. Current: {schedule?.daily_word_time ?? '—'} (daily word), {schedule?.teaser_quiz_time ?? '—'} (teaser quiz).
+          Each user&apos;s local time (users without a timezone get it in UTC). Changes apply within 15 minutes — no restart needed. Current: {schedule?.daily_word_time ?? '—'} (daily word), {schedule?.teaser_quiz_time ?? '—'} (teaser quiz).
         </p>
         <div className="grid gap-4 sm:grid-cols-3 sm:items-end">
           <div>

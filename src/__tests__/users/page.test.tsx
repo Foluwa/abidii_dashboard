@@ -38,12 +38,14 @@ jest.mock('@/hooks/useApi', () => ({
 
 jest.mock('@/lib/api', () => ({
   apiClient: {
+    get: jest.fn(),
     post: jest.fn(),
     delete: jest.fn(),
   },
 }));
 
 const mockApiClient = jest.requireMock('@/lib/api').apiClient as {
+  get: jest.Mock;
   post: jest.Mock;
   delete: jest.Mock;
 };
@@ -65,6 +67,10 @@ const sampleUsers = {
       proficiency_level: 'basic',
       ui_locale: 'yo',
       ui_locale_name: 'Yorùbá',
+      learning_course_title: 'Yoruba',
+      learning_unit_title: 'Sounds',
+      learning_lesson_title: 'Hear o',
+      learning_status: 'current',
     },
     {
       id: '00000000-0000-0000-0000-000000000002',
@@ -122,6 +128,18 @@ describe('UsersPage', () => {
 
       // Should NOT have Telegram column
       expect(tableQueries.queryByText('Telegram')).not.toBeInTheDocument();
+    });
+
+    it('shows fluency and course position from the list, with no per-row requests', () => {
+      render(<UsersPage />);
+
+      expect(screen.getByText('Sounds')).toBeInTheDocument();
+      expect(screen.getByText('Hear o')).toBeInTheDocument();
+      expect(screen.getAllByText('No active lesson').length).toBe(2);
+      expect(screen.getByText('basic')).toBeInTheDocument();
+      // The page used to fetch each row's detail + learning state (~40
+      // requests a page), which tripped the rate limit.
+      expect(mockApiClient.get).not.toHaveBeenCalled();
     });
 
     it('renders user data correctly', () => {
