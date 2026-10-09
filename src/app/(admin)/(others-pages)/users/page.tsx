@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useUsers, useLanguages, useUserCountries, useUserAppVersions, useUserProgressOptions } from "@/hooks/useApi";
@@ -18,13 +18,6 @@ import { FcGoogle } from "react-icons/fc";
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
 import { countryName, countryFlagEmoji } from "@/lib/country-utils";
 import DatePicker from "@/components/form/date-picker";
-import type { CourseCurriculumResponse } from "@/types/curriculum";
-import {
-  resolveUserLearningPosition,
-  selectCurrentCourse,
-  type AdminCourseLearningState,
-  type UserLearningPosition,
-} from "@/lib/user-learning-position";
 import { UserDetailsSheet } from "@/components/admin/users/UserDetailsSheet";
 import { Award, Eye, Globe, Mail, OctagonAlert, Smartphone, Trash2, UserCheck, UserX } from "lucide-react";
 import { DialogPanel } from "@/components/ui/modal/DialogPanel";
@@ -150,10 +143,6 @@ export default function UsersPage() {
   const [actionConfirm, setActionConfirm] = useState<ActionConfirm | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [fluencyByUser, setFluencyByUser] = useState<Record<string, string | null>>({});
-  const [learningPositionByUser, setLearningPositionByUser] = useState<
-    Record<string, UserLearningPosition | null>
-  >({});
 
   const role = activeTab === "all" ? undefined : activeTab;
   const isActive = statusFilter === "all" ? undefined : statusFilter === "active";
@@ -202,93 +191,6 @@ export default function UsersPage() {
   });
 
   const totalPages = users ? Math.max(1, Math.ceil(users.total / limit)) : 1;
-
-  // The existing list API predates proficiency_level, while the existing detail
-  // API already returns it. Hydrate only the visible page without requiring a
-  // backend change; settled requests ensure one unavailable profile cannot hide
-  // the rest of the table.
-  useEffect(() => {
-    const visibleUsers = (users?.users ?? []).filter(
-      (user: UserListItem) => user.proficiency_level === undefined && !(user.id in fluencyByUser),
-    );
-    let cancelled = false;
-    if (!visibleUsers.length) return;
-    Promise.allSettled(
-      visibleUsers.map(async (user: UserListItem) => {
-        const response = await apiClient.get(`/api/v1/admin/users/${user.id}`);
-        return [user.id, response.data?.proficiency_level ?? null] as const;
-      }),
-    ).then((results) => {
-      if (cancelled) return;
-      const next: Record<string, string | null> = {};
-      results.forEach((result, index) => {
-        const userId = visibleUsers[index]?.id;
-        if (!userId) return;
-        next[userId] = result.status === "fulfilled" ? result.value[1] : null;
-      });
-      setFluencyByUser((current) => ({ ...current, ...next }));
-    });
-    return () => { cancelled = true; };
-  }, [users?.users, fluencyByUser]);
-
-  // The list response does not include the learning pointer, but the existing
-  // admin learning-state endpoint does. Resolve only users on the visible page,
-  // and share curriculum requests when several learners are on the same course.
-  useEffect(() => {
-    const visibleUsers = (users?.users ?? []).filter(
-      (user: UserListItem) => !(user.id in learningPositionByUser),
-    );
-    let cancelled = false;
-    if (!visibleUsers.length) return;
-
-    const curriculumRequests = new Map<
-      string,
-      Promise<CourseCurriculumResponse>
-    >();
-    const getCurriculum = (courseId: string) => {
-      const existing = curriculumRequests.get(courseId);
-      if (existing) return existing;
-      const request = apiClient
-        .get(`/api/v1/courses/${encodeURIComponent(courseId)}/curriculum`)
-        .then((response) => response.data as CourseCurriculumResponse);
-      curriculumRequests.set(courseId, request);
-      return request;
-    };
-
-    Promise.allSettled(
-      visibleUsers.map(async (user: UserListItem) => {
-        const response = await apiClient.get(
-          `/api/v1/admin/learning-state/users/${encodeURIComponent(user.id)}`,
-        );
-        const courses = Array.isArray(response.data?.courses)
-          ? (response.data.courses as AdminCourseLearningState[])
-          : [];
-        const course = selectCurrentCourse(courses);
-        if (!course) return [user.id, null] as const;
-
-        const curriculum = await getCurriculum(course.course_id).catch(
-          () => null,
-        );
-        return [
-          user.id,
-          resolveUserLearningPosition(course, curriculum),
-        ] as const;
-      }),
-    ).then((results) => {
-      if (cancelled) return;
-      const next: Record<string, UserLearningPosition | null> = {};
-      results.forEach((result, index) => {
-        const userId = visibleUsers[index]?.id;
-        if (!userId) return;
-        next[userId] = result.status === "fulfilled" ? result.value[1] : null;
-      });
-      setLearningPositionByUser((current) => ({ ...current, ...next }));
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [users?.users, learningPositionByUser]);
 
   const tabs: { label: string; value: TabRole; count?: number }[] = [
     { label: "All Users", value: "all" },
@@ -909,39 +811,33 @@ export default function UsersPage() {
                               <span className="text-sm text-muted-foreground">—</span>
                             )}
                             <div className="text-xs text-muted-foreground">
-                              Fluency: <span className="capitalize text-foreground">{(user.proficiency_level ?? fluencyByUser[user.id])?.replace(/_/g, " ") || "Not available"}</span>
+                              Fluency: <span className="capitalize text-foreground">{user.proficiency_level?.replace(/_/g, " ") || "Not available"}</span>
                             </div>
                             <div className="text-xs text-muted-foreground">
                               {(user.total_xp ?? 0).toLocaleString()} XP
                             </div>
-                            {user.id in learningPositionByUser ? (
-                              learningPositionByUser[user.id]?.status === "current" ? (
-                                <div
-                                  className="space-y-0.5 border-t border-border pt-1.5 text-xs"
-                                  title={learningPositionByUser[user.id]?.courseTitle ?? undefined}
-                                >
-                                  <div className="text-muted-foreground">
-                                    Unit: <span className="font-medium text-foreground">
-                                      {learningPositionByUser[user.id]?.unitTitle ?? "Unknown unit"}
-                                    </span>
-                                  </div>
-                                  <div className="text-muted-foreground">
-                                    Lesson: <span className="font-medium text-foreground">
-                                      {learningPositionByUser[user.id]?.lessonTitle ?? "Unknown lesson"}
-                                    </span>
-                                  </div>
+                            {/* Course position comes with the list (one query), not per row. */}
+                            {user.learning_status === "current" ? (
+                              <div
+                                className="space-y-0.5 border-t border-border pt-1.5 text-xs"
+                                title={user.learning_course_title ?? undefined}
+                              >
+                                <div className="text-muted-foreground">
+                                  Unit: <span className="font-medium text-foreground">
+                                    {user.learning_unit_title ?? "Unknown unit"}
+                                  </span>
                                 </div>
-                              ) : (
-                                <div className="border-t border-border pt-1.5 text-xs text-muted-foreground">
-                                  {learningPositionByUser[user.id]?.status === "completed"
-                                    ? "Course completed"
-                                    : "No active lesson"}
+                                <div className="text-muted-foreground">
+                                  Lesson: <span className="font-medium text-foreground">
+                                    {user.learning_lesson_title ?? "Unknown lesson"}
+                                  </span>
                                 </div>
-                              )
+                              </div>
                             ) : (
-                              <div className="space-y-1.5 border-t border-border pt-1.5">
-                                <div className="h-2.5 w-24 animate-pulse rounded bg-muted" />
-                                <div className="h-2.5 w-28 animate-pulse rounded bg-muted" />
+                              <div className="border-t border-border pt-1.5 text-xs text-muted-foreground">
+                                {user.learning_status === "completed"
+                                  ? "Course completed"
+                                  : "No active lesson"}
                               </div>
                             )}
                           </div>
