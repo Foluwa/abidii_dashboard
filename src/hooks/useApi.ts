@@ -31,6 +31,7 @@ import type {
 } from '@/types/conversation-scenes';
 import type { MissionClaimListResponse, MissionSummaryResponse } from '@/types/daily-missions';
 import type { WardrobeCatalogResponse } from '@/types/wardrobe';
+import type { SceneDetail, SceneListResponse } from '@/types/scene-library';
 import type { MediaDuplicateReportResponse, MediaLibraryListResponse } from '@/types/mediaLibrary';
 import type {
   CurriculumOpsMetricsResponse,
@@ -2252,6 +2253,20 @@ export function useAdminMissionClaims(filters?: AdminMissionClaimFilters) {
     READ_ONLY_SWR_OPTIONS,
   );
   return { data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
+
+export function useAdminSceneLibrary() {
+  const { data, error, mutate } = useSWR<SceneListResponse>('/api/v1/admin/scene-library', fetcher, READ_ONLY_SWR_OPTIONS);
+  return { data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
+
+export function useAdminSceneLibraryScene(sceneId: string | null) {
+  const { data, error, mutate } = useSWR<SceneDetail>(
+    sceneId ? `/api/v1/admin/scene-library/${encodeURIComponent(sceneId)}` : null,
+    fetcher,
+    READ_ONLY_SWR_OPTIONS,
+  );
+  return { data, isLoading: Boolean(sceneId) && !error && !data, isError: error, refresh: mutate };
 }
 
 export function useAdminWardrobeCatalog() {
