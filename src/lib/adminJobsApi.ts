@@ -96,7 +96,7 @@ export async function createQualityReviewJob(payload: {
   return res.data;
 }
 
-export type ContentLocalizationLocale = 'fr' | 'pt-BR';
+export type ContentLocalizationLocale = 'fr' | 'es' | 'pt-BR';
 
 export type ContentLocalizationRow = {
   id: string;
@@ -107,6 +107,10 @@ export type ContentLocalizationRow = {
   value: string;
   status: 'machine_draft' | 'reviewed' | 'published' | 'stale';
   created_at?: string | null;
+  /** The English being translated, as it reads now (null if its source is gone). */
+  english_value?: string | null;
+  /** The English changed after this was generated; regenerate before publishing. */
+  is_stale?: boolean;
 };
 
 export type ListContentLocalizationsResponse = {
