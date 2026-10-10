@@ -8,6 +8,7 @@ import {
   createContentLocalizationJob,
   listContentLocalizations,
   publishContentLocalizations,
+  updateContentLocalization,
   type AdminJob,
   type AdminJobStatus,
   type ContentLocalizationLocale,
@@ -15,6 +16,7 @@ import {
 } from "@/lib/adminJobsApi";
 import { useAdminJob } from "@/hooks/useAdminJob";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
+import { Check, Pencil, X } from "lucide-react";
 
 const LOCALES: { value: ContentLocalizationLocale; label: string }[] = [
   { value: "fr", label: "French" },
@@ -45,6 +47,9 @@ export default function ContentLocalizationsPage() {
   const [total, setTotal] = useState(0);
   const [loadingRows, setLoadingRows] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("machine_draft");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const tracked = useAdminJob(job?.id);
   const currentJob = tracked.job ?? job;
@@ -102,6 +107,39 @@ export default function ContentLocalizationsPage() {
       toast.error(error);
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const startEdit = (row: ContentLocalizationRow) => {
+    setEditingId(row.id);
+    setEditText(row.value);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+
+  // Saves in place: the row keeps its position (even though a draft becomes
+  // 'reviewed') so you can carry on down the list.
+  const saveEdit = async (row: ContentLocalizationRow) => {
+    const value = editText.trim();
+    if (!value || value === row.value) {
+      cancelEdit();
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const saved = await updateContentLocalization(row.id, value);
+      setRows((prev) =>
+        prev.map((r) => (r.id === row.id ? { ...r, value: saved.value, status: saved.status } : r))
+      );
+      toast.success("Translation saved.");
+      cancelEdit();
+    } catch (error) {
+      toast.error(error);
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -189,6 +227,7 @@ export default function ContentLocalizationsPage() {
               options={[
                 { value: "", label: "All statuses" },
                 { value: "machine_draft", label: "Draft (unpublished)" },
+                { value: "reviewed", label: "Reviewed (unpublished)" },
                 { value: "published", label: "Published" },
                 { value: "stale", label: "Stale" },
               ]}
@@ -256,7 +295,57 @@ export default function ContentLocalizationsPage() {
                       <span className="italic text-gray-400">source no longer exists</span>
                     )}
                   </td>
-                  <td className="px-4 py-2.5 text-sm text-foreground">{row.value}</td>
+                  <td className="px-4 py-2.5 text-sm text-foreground">
+                    {editingId === row.id ? (
+                      <div className="flex items-start gap-2">
+                        <textarea
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) saveEdit(row);
+                            if (e.key === "Escape") cancelEdit();
+                          }}
+                          rows={Math.min(6, Math.max(2, Math.ceil(editText.length / 60)))}
+                          autoFocus
+                          aria-label="Edit translation"
+                          className="w-full min-w-[16rem] rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => saveEdit(row)}
+                          disabled={savingEdit}
+                          aria-label="Save translation"
+                          title="Save (⌘/Ctrl + Enter)"
+                          className="rounded-md p-1.5 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 dark:hover:bg-emerald-900/20"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelEdit}
+                          disabled={savingEdit}
+                          aria-label="Cancel editing"
+                          title="Cancel (Esc)"
+                          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="group flex items-start gap-2">
+                        <span>{row.value}</span>
+                        <button
+                          type="button"
+                          onClick={() => startEdit(row)}
+                          aria-label="Edit translation"
+                          title="Edit"
+                          className="shrink-0 rounded-md p-1 text-muted-foreground opacity-60 hover:bg-muted hover:text-foreground group-hover:opacity-100"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5">
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${rowStatusClass(

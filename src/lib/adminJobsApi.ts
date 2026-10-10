@@ -152,6 +152,15 @@ export async function publishContentLocalizations(
   return res.data;
 }
 
+/** Save a hand-edited translation. Drafts become 'reviewed'; published rows stay live. */
+export async function updateContentLocalization(id: string, value: string) {
+  const res = await apiClient.patch<{ id: string; value: string; status: ContentLocalizationRow['status'] }>(
+    `/api/v1/admin/content/localizations/${id}`,
+    { value }
+  );
+  return res.data;
+}
+
 export async function listAdminJobs(params?: {
   status?: string;
   type?: string;
