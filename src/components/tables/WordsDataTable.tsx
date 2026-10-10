@@ -143,9 +143,10 @@ export default function WordsDataTable({
         {visible.map((gloss) => (
           <span
             key={gloss.id}
-            className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
+            className="inline-flex max-w-[16rem] items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
+            title={gloss.text}
           >
-            {gloss.text}
+            <span className="truncate">{gloss.text}</span>
             {gloss.language_code ? (
               <span className="ml-1 text-[10px] uppercase tracking-wide text-muted-foreground">
                 {gloss.language_code}
@@ -160,7 +161,14 @@ export default function WordsDataTable({
     );
   };
 
+  // The Yoruba form is the headline; primary_translation can be the English
+  // definition when the first sense is an English gloss, so prefer a
+  // Yoruba gloss when the entry has one.
   const getPrimaryTranslation = (word: Word) => {
+    const yoruba = word.primary_glosses?.find((g) =>
+      ['yor', 'yo'].includes((g.language_code ?? '').toLowerCase())
+    );
+    if (yoruba?.text) return yoruba.text;
     if (word.primary_translation) return word.primary_translation;
     return word.primary_glosses?.[0]?.text ?? null;
   };
@@ -300,7 +308,10 @@ export default function WordsDataTable({
                         Same pattern as the mobile dictionary screens. */}
                     <TableCell className="px-5 py-4 text-start">
                       <div className="flex flex-col gap-1">
-                        <span className="text-lg font-semibold text-foreground">
+                        <span
+                          className="line-clamp-2 max-w-xl break-words text-lg font-semibold text-foreground"
+                          title={getPrimaryTranslation(word) ?? undefined}
+                        >
                           {getPrimaryTranslation(word) || (
                             <span className="italic text-muted-foreground">
                               No translation
@@ -505,7 +516,10 @@ export default function WordsDataTable({
               <div className="mb-3 flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xl font-bold text-foreground">
+                    <span
+                      className="line-clamp-2 break-words text-xl font-bold text-foreground"
+                      title={getPrimaryTranslation(word) ?? undefined}
+                    >
                       {getPrimaryTranslation(word) || (
                         <span className="italic text-muted-foreground">
                           No translation
