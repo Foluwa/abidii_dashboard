@@ -37,6 +37,11 @@ export interface WordDetail {
     difficulty_level: number | null;
     usage_notes: string | null;
     is_published: boolean;
+    // Content safety (backend migration 195): hidden from learners when true.
+    is_sensitive?: boolean;
+    sensitivity_category?: string | null;
+    sensitivity_reason?: string | null;
+    sensitivity_source?: string | null;
   };
   senses: Array<{
     id: string;
