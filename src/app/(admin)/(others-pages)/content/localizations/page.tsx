@@ -18,6 +18,7 @@ import { StyledSelect } from "@/components/ui/form/StyledSelect";
 
 const LOCALES: { value: ContentLocalizationLocale; label: string }[] = [
   { value: "fr", label: "French" },
+  { value: "es", label: "Spanish" },
   { value: "pt-BR", label: "Portuguese (Brazil)" },
 ];
 
@@ -127,8 +128,8 @@ export default function ContentLocalizationsPage() {
               Generate course/unit/section translations
             </h3>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Machine-translates course, unit, and section titles/descriptions into French or
-              Portuguese via an LLM. Writes as machine_draft only - nothing is served to users
+              Machine-translates course, unit, and section titles/descriptions and lesson text
+              into French, Spanish or Portuguese via an LLM. Writes as machine_draft only - nothing is served to users
               until you spot-check and publish below. See abidii_localisation.md.
             </p>
           </div>
@@ -215,6 +216,9 @@ export default function ContentLocalizationsPage() {
                   Field
                 </th>
                 <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
+                  English (original)
+                </th>
+                <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
                   Translation
                 </th>
                 <th className="px-4 py-2.5 text-left text-sm font-medium text-muted-foreground">
@@ -226,14 +230,14 @@ export default function ContentLocalizationsPage() {
             <tbody className="divide-y divide-border">
               {loadingRows && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-6 text-center text-sm text-muted-foreground">
                     Loading...
                   </td>
                 </tr>
               )}
               {!loadingRows && rows.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-6 text-center text-sm text-muted-foreground">
                     No rows for this locale/status.
                   </td>
                 </tr>
@@ -247,6 +251,11 @@ export default function ContentLocalizationsPage() {
                     </div>
                   </td>
                   <td className="px-4 py-2.5 text-sm text-muted-foreground">{row.field_name}</td>
+                  <td className="px-4 py-2.5 text-sm text-muted-foreground">
+                    {row.english_value ?? (
+                      <span className="italic text-gray-400">source no longer exists</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5 text-sm text-foreground">{row.value}</td>
                   <td className="px-4 py-2.5">
                     <span
@@ -256,6 +265,16 @@ export default function ContentLocalizationsPage() {
                     >
                       {row.status}
                     </span>
+                    {row.is_stale && (
+                      <span
+                        className={`ml-1 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${rowStatusClass(
+                          "stale"
+                        )}`}
+                        title="The English changed after this was translated. Regenerate before publishing."
+                      >
+                        English changed
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     {row.status !== "published" && (
