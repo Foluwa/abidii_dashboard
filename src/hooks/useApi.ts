@@ -1155,7 +1155,11 @@ export function useWords(filters?: WordsFilters) {
   if (filters?.sort_dir) params.append('sort_dir', filters.sort_dir);
 
   const url = `/api/v1/admin/content/words?${params.toString()}`;
-  const { data, error, mutate } = useSWR(url, fetcher);
+  // keepPreviousData: while a new search/filter loads, the previous results
+  // stay on screen (no spinner replacing the table and its search box).
+  // SWR ties each response to its own key, so a slow response for an older
+  // query never overwrites the current one.
+  const { data, error, mutate, isValidating } = useSWR(url, fetcher, { keepPreviousData: true });
 
   return {
     words: data?.items || [],
@@ -1163,6 +1167,7 @@ export function useWords(filters?: WordsFilters) {
     pages: data?.pages || 0,
     filtersApplied: data?.filters_applied || {},
     isLoading: !error && !data,
+    isFetching: isValidating,
     isError: error,
     refresh: mutate,
   };
@@ -2088,6 +2093,49 @@ export function useContentSafetySummary() {
     { revalidateOnFocus: false, shouldRetryOnError: false },
   );
   return { data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
+
+/** Any dictionary word (flagged or not) from GET /content-safety/search. */
+export interface WordSafety {
+  id: string;
+  lemma: string;
+  pos: string | null;
+  yoruba: string[];
+  meanings: string;
+  is_sensitive: boolean;
+  category: string | null;
+  reason: string | null;
+  source: 'openai' | 'admin' | null;
+  checked_at: string | null;
+}
+
+export interface WordSafetyList {
+  items: WordSafety[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export type WordSafetyStatus = 'all' | 'flagged' | 'safe' | 'unchecked';
+
+/**
+ * Searches ALL words by English headword or Yoruba translation, tone marks
+ * optional ("oko" finds "okó"). No request while the query is blank.
+ */
+export function useContentSafetySearch(filters: { q: string; status: WordSafetyStatus; page: number; limit: number }) {
+  const q = filters.q.trim();
+  const params = new URLSearchParams({
+    q,
+    status: filters.status,
+    page: String(filters.page),
+    limit: String(filters.limit),
+  });
+  const { data, error, mutate } = useSWR<WordSafetyList>(
+    q ? `/api/v1/admin/content-safety/search?${params.toString()}` : null,
+    fetcher,
+    { revalidateOnFocus: false, shouldRetryOnError: false, keepPreviousData: true },
+  );
+  return { data, isLoading: !!q && !error && !data, isError: error, refresh: mutate };
 }
 
 export function useFlaggedWords(filters: { page: number; limit: number; category?: string }) {

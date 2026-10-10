@@ -18,6 +18,13 @@ import { useToast } from '@/contexts/ToastContext';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { Eye, EyeOff, Loader, Pencil, Plus, RefreshCw, Save as SaveIcon, Trash2, Volume2, X } from "lucide-react";
 import { DialogPanel } from "@/components/ui/modal/DialogPanel";
+import { useAuth } from '@/context/AuthContext';
+import {
+  HiddenFromLearnersBadge,
+  WordSafetyActionButton,
+  WordSafetyDialog,
+  type WordSafetyTarget,
+} from '@/components/content/WordSafetyDialog';
 
 interface WordDetailModalProps {
   wordId: string;
@@ -30,6 +37,8 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
   const { generateExamples, isGenerating } = useExampleGeneration();
   const { deleteExample, isSubmitting } = useExampleManagement();
   const toast = useToast();
+  const { isAdmin } = useAuth();
+  const [safetyTarget, setSafetyTarget] = useState<WordSafetyTarget | null>(null);
   
   const [activeTab, setActiveTab] = useState<'overview' | 'examples' | 'audio'>('overview');
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
@@ -301,7 +310,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <DialogPanel className="bg-card rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClose={onClose} aria-label="Word details">
+      <DialogPanel className="bg-card rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClose={safetyTarget ? undefined : onClose} aria-label="Word details">
         {/* Header */}
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div className="flex-1">
@@ -332,6 +341,9 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
                 <h2 className="text-2xl font-bold text-foreground">
                   {word.lemma}
                 </h2>
+                {word.is_sensitive ? (
+                  <HiddenFromLearnersBadge category={word.sensitivity_category} />
+                ) : null}
                 <button
                   onClick={startEditLemma}
                   className="text-gray-400 hover:text-foreground"
@@ -953,14 +965,49 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
               </>
             )}
           </button>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-muted hover:bg-gray-300 dark:hover:bg-gray-600 text-foreground rounded-lg"
-          >
-            Close
-          </button>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <WordSafetyActionButton
+                word={{ is_sensitive: !!word.is_sensitive, lemma: word.lemma }}
+                className="px-4 py-2 text-sm"
+                onClick={() =>
+                  setSafetyTarget({
+                    id: word.id,
+                    lemma: word.lemma,
+                    yoruba:
+                      wordDetail.senses
+                        .flatMap((s) => s.glosses ?? [])
+                        .filter((g) => g.language_name?.toLowerCase() === 'yoruba')
+                        .map((g) => g.definition)
+                        .filter(Boolean)
+                        .join(', ') || null,
+                    is_sensitive: !!word.is_sensitive,
+                    category: word.sensitivity_category,
+                    reason: word.sensitivity_reason,
+                    source: word.sensitivity_source,
+                  })
+                }
+              />
+            )}
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-muted hover:bg-gray-300 dark:hover:bg-gray-600 text-foreground rounded-lg"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </DialogPanel>
+      {isAdmin && (
+        <WordSafetyDialog
+          word={safetyTarget}
+          onClose={() => setSafetyTarget(null)}
+          onSaved={() => {
+            mutate();
+            onUpdate();
+          }}
+        />
+      )}
     </div>
   );
 }
