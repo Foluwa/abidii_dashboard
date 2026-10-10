@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 
 // Reuse the existing standalone page components as tab content — same
@@ -37,8 +38,20 @@ const TABS: { key: LibraryTab; label: string }[] = [
   { key: "numbers", label: "Numbers" },
 ];
 
+/**
+ * ?tab=<key> opens that tab. A ?search=... link (e.g. /content/library?search=penis)
+ * is a word search - the Words tab reads it - so it opens Words.
+ */
+function initialLibraryTab(params: { get(name: string): string | null } | null): LibraryTab {
+  const tab = params?.get("tab");
+  if (tab && TABS.some((t) => t.key === tab)) return tab as LibraryTab;
+  if (params?.get("search")) return "words";
+  return "collections";
+}
+
 export default function ContentLibraryPage() {
-  const [activeTab, setActiveTab] = useState<LibraryTab>("collections");
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<LibraryTab>(() => initialLibraryTab(searchParams));
 
   return (
     <div className="space-y-6">

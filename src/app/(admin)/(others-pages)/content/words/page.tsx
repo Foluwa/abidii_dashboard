@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useWords, useAdminLanguages } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import { useToast } from "@/contexts/ToastContext";
@@ -9,13 +9,16 @@ import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
 import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import WordsDataTable from "@/components/tables/WordsDataTable";
+import { WordSafetyDialog, type WordSafetyTarget } from "@/components/content/WordSafetyDialog";
+import { useAuth } from "@/context/AuthContext";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { RegenerateAudioModal } from "@/components/modals/RegenerateAudioModal";
 import WordDetailModal from "@/components/admin/words/WordDetailModal";
 import { DictionaryGoogleSheetsBulkImport } from "@/components/admin/DictionaryGoogleSheetsBulkImport";
 import { scheduleQueuedAudioRefresh } from "@/lib/audioRegeneration";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSearchParams, usePathname } from "next/navigation";
 import Pagination from "@/components/tables/Pagination";
 import {
   ContentPageHeader,
@@ -42,7 +45,7 @@ const POS_OPTIONS = [
 
 export default function WordsPage() {
   const toast = useToast();
-  const router = useRouter();
+  const { isAdmin } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -68,6 +71,8 @@ export default function WordsPage() {
   const [showRegenerateModal, setShowRegenerateModal] = useState(false);
   const [regeneratingWord, setRegeneratingWord] = useState<any | null>(null);
   const [viewDetailWordId, setViewDetailWordId] = useState<string | null>(null);
+  // Hide/unhide from learners (content safety). Row id = lemma id.
+  const [safetyTarget, setSafetyTarget] = useState<WordSafetyTarget | null>(null);
   
   // Confirmation modal states
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -90,8 +95,13 @@ export default function WordsPage() {
   const [sortBy, setSortBy] = useState<'lemma' | 'primary_translation' | 'created_at' | 'updated_at' | 'difficulty' | 'pos'>('lemma');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
-  // Initialize filters from URL params
+  // Initialize filters from URL params - once, on first load (a shared
+  // ?search= link). Re-reading them after our own URL updates below used to
+  // reset the search box to an older value while the user was still typing.
+  const filtersReadFromUrl = useRef(false);
   useEffect(() => {
+    if (filtersReadFromUrl.current) return;
+    filtersReadFromUrl.current = true;
     const targetLangId = searchParams.get('target_language_id');
     const searchQ = searchParams.get('search');
     const primaryTranslationQ = searchParams.get('primary_translation');
@@ -138,11 +148,17 @@ export default function WordsPage() {
     }
   }, [searchParams]);
 
+  // Typing only queries the API (and the URL) once it pauses for 300 ms.
+  const debouncedSearch = useDebounce(search, 300);
+
   // Update URL when filters change
   const updateURL = useCallback(() => {
     const params = new URLSearchParams();
+    // Keep the Content Library's own ?tab= when embedded there.
+    const currentTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
+    if (currentTab) params.set('tab', currentTab);
     if (selectedTargetLanguage) params.set('target_language_id', selectedTargetLanguage);
-    if (search) params.set('search', search);
+    if (debouncedSearch) params.set('search', debouncedSearch);
     if (primaryTranslationFilter) params.set('primary_translation', primaryTranslationFilter);
     if (page > 1) params.set('page', page.toString());
     if (limit !== 50) params.set('limit', limit.toString());
@@ -162,8 +178,13 @@ export default function WordsPage() {
     if (sortDir !== 'asc') params.set('sort_dir', sortDir);
 
     const queryString = params.toString();
-    router.replace(`${pathname}${queryString ? '?' + queryString : ''}`, { scroll: false });
-  }, [selectedTargetLanguage, search, primaryTranslationFilter, page, limit, hasAudio, hasExamples, hasRelated, hasPronunciation, posFilter, startsWithFilter, endsWithFilter, containsFilter, toneMarksPresent, ipaPresent, wordLengthMin, wordLengthMax, sortBy, sortDir, router, pathname]);
+    const next = `${pathname}${queryString ? '?' + queryString : ''}`;
+    if (typeof window === 'undefined') return;
+    if (`${window.location.pathname}${window.location.search}` === next) return;
+    // Shallow URL update: history.replaceState keeps the link shareable
+    // without a router navigation (no server round-trip, no remount).
+    window.history.replaceState(window.history.state, '', next);
+  }, [selectedTargetLanguage, debouncedSearch, primaryTranslationFilter, page, limit, hasAudio, hasExamples, hasRelated, hasPronunciation, posFilter, startsWithFilter, endsWithFilter, containsFilter, toneMarksPresent, ipaPresent, wordLengthMin, wordLengthMax, sortBy, sortDir, pathname]);
 
   // Debounced URL update
   useEffect(() => {
@@ -233,9 +254,9 @@ export default function WordsPage() {
     setPage(1);
   };
 
-  const { words, total, isLoading, isError, refresh, filtersApplied } = useWords({
+  const { words, total, isLoading, isFetching, isError, refresh, filtersApplied } = useWords({
     target_language_id: selectedTargetLanguage || undefined,
-    search, 
+    search: debouncedSearch,
     primary_translation: primaryTranslationFilter || undefined,
     page, 
     limit,
@@ -946,9 +967,27 @@ export default function WordsPage() {
       <WordsDataTable
         words={uniqueWords}
         isLoading={isLoading}
+        isRefreshing={isFetching || search !== debouncedSearch}
         onDelete={handleDelete}
         onRegenerateAudio={handleRegenerateAudio}
         onViewDetails={(wordId) => setViewDetailWordId(wordId)}
+        onToggleHidden={
+          isAdmin
+            ? (w) =>
+                setSafetyTarget({
+                  id: w.id,
+                  lemma: w.headword || w.word,
+                  yoruba:
+                    w.primary_translation ??
+                    w.primary_glosses?.map((g) => g.text).join(", ") ??
+                    null,
+                  is_sensitive: !!w.is_sensitive,
+                  category: w.sensitivity_category,
+                  reason: w.sensitivity_reason,
+                  source: w.sensitivity_source,
+                })
+            : undefined
+        }
         onSearch={(query) => {
           setSearch(query);
           setPage(1);
@@ -1197,6 +1236,14 @@ export default function WordsPage() {
           scheduleQueuedAudioRefresh(refresh);
         }}
       />
+
+      {isAdmin && (
+        <WordSafetyDialog
+          word={safetyTarget}
+          onClose={() => setSafetyTarget(null)}
+          onSaved={() => refresh()}
+        />
+      )}
 
       {/* Word Detail Modal */}
       {viewDetailWordId && (
