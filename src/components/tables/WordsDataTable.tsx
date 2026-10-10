@@ -10,6 +10,7 @@ import Badge from "../ui/badge/Badge";
 import { ConfirmationModal } from "../ui/modal/ConfirmationModal";
 import InlineAudioPlayer from "@/components/ui/audio/InlineAudioPlayer";
 import { Eye, Funnel, Search as SearchIcon, Trash2, Volume2 } from "lucide-react";
+import { HiddenFromLearnersBadge, WordSafetyActionButton } from "@/components/content/WordSafetyDialog";
 
 interface Word {
   id: string;
@@ -45,9 +46,16 @@ interface Word {
   difficulty_level: number | null;
   usage_notes: string | null;
   is_published: boolean;
+  // Content safety (backend migration 195). The row id IS the lemma id.
+  is_sensitive?: boolean;
+  sensitivity_category?: string | null;
+  sensitivity_reason?: string | null;
+  sensitivity_source?: string | null;
   created_at: string;
   updated_at: string;
 }
+
+export type WordsDataTableWord = Word;
 
 interface WordsDataTableProps {
   words: Word[];
@@ -60,6 +68,10 @@ interface WordsDataTableProps {
   onSelectAll?: () => void;
   onRegenerateAudio?: (wordId: string) => void;
   onViewDetails?: (wordId: string) => void;
+  /** Hide/unhide from learners. Pass only for admins; managers see the badge only. */
+  onToggleHidden?: (word: Word) => void;
+  /** A new search/filter is loading; the current rows stay visible meanwhile. */
+  isRefreshing?: boolean;
 }
 
 export default function WordsDataTable({
@@ -73,6 +85,8 @@ export default function WordsDataTable({
   onSelectAll,
   onRegenerateAudio,
   onViewDetails,
+  onToggleHidden,
+  isRefreshing = false,
 }: WordsDataTableProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; word: string } | null>(null);
   const [regeneratingAudio, setRegeneratingAudio] = useState<string | null>(null);
@@ -180,8 +194,15 @@ export default function WordsDataTable({
               value={searchQuery}
               onChange={(e) => onSearch(e.target.value)}
               placeholder="Search headwords or translations..."
-              className="block w-full rounded-lg border border-input bg-card py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              aria-busy={isRefreshing}
+              className="block w-full rounded-lg border border-input bg-card py-2.5 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
+            {isRefreshing ? (
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3" data-testid="words-search-refreshing">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-brand-600" aria-hidden />
+                <span className="sr-only">Searching…</span>
+              </div>
+            ) : null}
           </div>
           <button className="inline-flex items-center gap-2 rounded-lg border border-input bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/50">
             <Funnel className="h-4 w-4" />
@@ -328,6 +349,7 @@ export default function WordsDataTable({
 
                     {/* Status */}
                     <TableCell className="px-4 py-3 text-start">
+                      <div className="flex flex-wrap items-center gap-1.5">
                       {word.is_published ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                           Published
@@ -337,6 +359,10 @@ export default function WordsDataTable({
                           Draft
                         </span>
                       )}
+                      {word.is_sensitive ? (
+                        <HiddenFromLearnersBadge category={word.sensitivity_category} />
+                      ) : null}
+                      </div>
                     </TableCell>
 
                     {/* Audio */}
@@ -378,6 +404,12 @@ export default function WordsDataTable({
                           >
                             <Volume2 className={`h-4 w-4 ${regeneratingAudio === word.id ? 'animate-pulse' : ''}`} />
                           </button>
+                        )}
+                        {onToggleHidden && (
+                          <WordSafetyActionButton
+                            word={{ is_sensitive: !!word.is_sensitive, lemma: word.headword || word.word }}
+                            onClick={() => onToggleHidden(word)}
+                          />
                         )}
                         <button
                           onClick={() => setDeleteConfirm({ id: word.id, word: word.word })}
@@ -442,8 +474,15 @@ export default function WordsDataTable({
             value={searchQuery}
             onChange={(e) => onSearch(e.target.value)}
             placeholder="Search headwords or translations..."
-            className="block w-full rounded-lg border border-input bg-card py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+            aria-busy={isRefreshing}
+            className="block w-full rounded-lg border border-input bg-card py-2.5 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
           />
+            {isRefreshing ? (
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3" data-testid="words-search-refreshing">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-brand-600" aria-hidden />
+                <span className="sr-only">Searching…</span>
+              </div>
+            ) : null}
         </div>
       </div>
 
@@ -498,6 +537,9 @@ export default function WordsDataTable({
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 {getPOSBadge(word.pos)}
                 {word.difficulty_level && getDifficultyBadge(word.difficulty_level)}
+                {word.is_sensitive ? (
+                  <HiddenFromLearnersBadge category={word.sensitivity_category} />
+                ) : null}
               </div>
 
               <div className="mb-3">
@@ -546,6 +588,13 @@ export default function WordsDataTable({
                   >
                     <Volume2 className={`h-4 w-4 ${regeneratingAudio === word.id ? 'animate-pulse' : ''}`} />
                   </button>
+                )}
+                {onToggleHidden && (
+                  <WordSafetyActionButton
+                    word={{ is_sensitive: !!word.is_sensitive, lemma: word.headword || word.word }}
+                    onClick={() => onToggleHidden(word)}
+                    className="flex-1 justify-center py-2"
+                  />
                 )}
                 <button
                   onClick={() => setDeleteConfirm({ id: word.id, word: word.word })}
