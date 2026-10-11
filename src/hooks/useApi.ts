@@ -30,6 +30,7 @@ import type {
   ConversationSceneListResponse,
 } from '@/types/conversation-scenes';
 import type { MissionClaimListResponse, MissionSummaryResponse } from '@/types/daily-missions';
+import type { LearnerTier, LearningPathResponse } from '@/types/learning-path';
 import type { WardrobeCatalogResponse } from '@/types/wardrobe';
 import type { SceneDetail, SceneListResponse } from '@/types/scene-library';
 import type { MediaDuplicateReportResponse, MediaLibraryListResponse } from '@/types/mediaLibrary';
@@ -2274,6 +2275,18 @@ export function useAdminConversationScene(blueprintKey?: string, sceneId?: strin
 export function useAdminMissionsSummary(days: number = 14) {
   const { data, error, mutate } = useSWR<MissionSummaryResponse>(
     `/api/v1/admin/missions/summary?days=${days}`,
+    fetcher,
+    READ_ONLY_SWR_OPTIONS,
+  );
+  return { data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
+
+/** Course -> unit -> lesson funnel, timing and progress over time. */
+export function useLearningPath(filters: { courseId?: string; range: string; tier: LearnerTier }) {
+  const params = new URLSearchParams({ range: filters.range, tier: filters.tier });
+  if (filters.courseId) params.set('course_id', filters.courseId);
+  const { data, error, mutate } = useSWR<LearningPathResponse>(
+    `/api/v1/admin/analytics/learning-path?${params.toString()}`,
     fetcher,
     READ_ONLY_SWR_OPTIONS,
   );

@@ -10,7 +10,16 @@ const tabs = [
   { name: "Curriculum Ops", href: "/analytics/curriculum-ops" },
   { name: "Detailed", href: "/analytics/detailed" },
   { name: "Learning", href: "/analytics/learning" },
+  { name: "Learning Path", href: "/analytics/learning-path" },
 ];
+
+/** Exact match, or a sub-page of the tab ("/analytics/learning/x") - but
+ * never a sibling that only shares a prefix ("/analytics/learning-path"). */
+export function isTabActive(pathname: string | null, href: string): boolean {
+  if (!pathname) return false;
+  if (pathname === href) return true;
+  return href !== "/analytics" && pathname.startsWith(`${href}/`);
+}
 
 export default function AnalyticsTabs() {
   const pathname = usePathname();
@@ -23,7 +32,7 @@ export default function AnalyticsTabs() {
             key={tab.name}
             href={tab.href}
             className={`border-b-2 px-1 py-4 text-sm font-medium ${
-              pathname === tab.href || (tab.href !== "/analytics" && pathname?.startsWith(tab.href))
+              isTabActive(pathname, tab.href)
                 ? "border-blue-500 text-blue-600 dark:text-blue-400"
                 : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
