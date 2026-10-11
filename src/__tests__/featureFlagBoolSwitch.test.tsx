@@ -1,5 +1,5 @@
 import React from 'react';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { PlatformConfigContent } from '@/components/system/PlatformConfigContent';
@@ -39,12 +39,13 @@ describe('Feature Flags one-click boolean switch', () => {
 
   it('turns an off flag on after confirming', async () => {
     mockConfig = [cowries(false)];
-    jest.spyOn(window, 'confirm').mockReturnValue(true);
     render(<PlatformConfigContent showHeader={false} />);
 
     const sw = screen.getByTestId('bool-switch-rewards.cowries_enabled');
     expect(sw).toHaveAttribute('aria-checked', 'false');
     await userEvent.click(sw);
+    // Confirm in the shared confirmation dialog
+    await userEvent.click(await screen.findByRole('button', { name: 'Turn On' }));
 
     await waitFor(() =>
       expect(mockPut).toHaveBeenCalledWith('/api/v1/admin/configs/rewards.cowries_enabled', { value_bool: true }),
@@ -54,10 +55,12 @@ describe('Feature Flags one-click boolean switch', () => {
 
   it('does nothing when the confirmation is cancelled', async () => {
     mockConfig = [cowries(true)];
-    jest.spyOn(window, 'confirm').mockReturnValue(false);
     render(<PlatformConfigContent showHeader={false} />);
 
     await userEvent.click(screen.getByTestId('bool-switch-rewards.cowries_enabled'));
+    const dialog = await screen.findByRole('dialog', { name: 'Turn Flag Off' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(mockPut).not.toHaveBeenCalled();
   });
 });

@@ -9,6 +9,7 @@ import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { useToast } from '@/contexts/ToastContext';
 import { Pause as PauseIcon, Play as PlayIcon } from "lucide-react";
 import { RefreshCw, TriangleAlert } from "lucide-react";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface AudioJob {
   id: string;
@@ -141,6 +142,7 @@ function LogsTooltip({ logs }: { logs?: string | null }) {
 }
 
 export function AudioJobsContent({ showHeader = true, isActive = true }: { showHeader?: boolean; isActive?: boolean }) {
+  const { confirm, modal: confirmModal } = useConfirm();
   const toast = useToast();
   const [jobs, setJobs] = useState<AudioJob[]>([]);
   const [loading, setLoading] = useState(true);
@@ -204,7 +206,7 @@ export function AudioJobsContent({ showHeader = true, isActive = true }: { showH
   };
 
   const cancelJob = async (jobId: string) => {
-    if (!window.confirm('Are you sure you want to cancel this job?')) return;
+    if (!(await confirm({ title: "Cancel Job", message: "Are you sure you want to cancel this job?", confirmLabel: "Cancel Job", cancelLabel: "Keep Job", variant: "danger" }))) return;
     try {
       await apiClient.delete(`/api/v1/admin/audio/jobs/${jobId}`);
       toast.success('Job cancelled successfully');
@@ -228,6 +230,7 @@ export function AudioJobsContent({ showHeader = true, isActive = true }: { showH
 
   return (
     <div className="space-y-6">
+      {confirmModal}
       {showHeader && <PageBreadCrumb pageTitle="Audio Jobs" />}
 
       {/* Stats Cards */}

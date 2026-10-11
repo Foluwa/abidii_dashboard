@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import PageBreadCrumb from '@/components/common/PageBreadCrumb';
+import { useConfirm } from "@/hooks/useConfirm";
 
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—';
@@ -183,6 +184,7 @@ function CourseCard({
   /** Called on action success to display a brief toast message in the parent. */
   onToast: (message: string) => void;
 }) {
+  const { confirm, modal: confirmModal } = useConfirm();
   const [resetState, setResetState] = useState<ActionState>('idle');
   const [resetError, setResetError] = useState<string | null>(null);
 
@@ -197,7 +199,7 @@ function CourseCard({
   const { adminResetCourseProgress, adminSetLearningPointer } = require('@/hooks/useApi');
 
   const handleReset = async () => {
-    if (!window.confirm(`Reset ALL progress for "${course.course_title ?? course.course_key}"? This cannot be undone.`)) return;
+    if (!(await confirm({ title: "Reset Course Progress", message: `Reset ALL progress for "${course.course_title ?? course.course_key}"? This cannot be undone.`, confirmLabel: "Reset", variant: "danger" }))) return;
     setResetState('loading');
     setResetError(null);
     try {
@@ -230,6 +232,7 @@ function CourseCard({
 
   return (
     <div className="rounded-xl border border-border p-4">
+      {confirmModal}
       {/* Course header */}
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>

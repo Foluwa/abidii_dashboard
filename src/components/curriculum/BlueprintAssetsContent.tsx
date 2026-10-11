@@ -17,6 +17,7 @@ import {
 import { useAdminBlueprintAssetLibrary, useAdminCoursesList } from '@/hooks/useApi';
 import { MediaDuplicatesPanel } from '@/components/curriculum/media/MediaDuplicatesPanel';
 import { SharedMediaLibraryPanel } from '@/components/curriculum/media/SharedMediaLibraryPanel';
+import { useConfirm } from "@/hooks/useConfirm";
 
 type AssetView = 'all' | 'bindings' | 'duplicates';
 
@@ -34,6 +35,7 @@ function formatDate(value?: string | null): string {
 }
 
 export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boolean }) {
+  const { confirm, modal: confirmModal } = useConfirm();
   const toast = useToast();
   const [view, setView] = useState<AssetView>('all');
   const [page, setPage] = useState(1);
@@ -111,7 +113,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
   };
 
   const handleDelete = async (blueprintId: string, fieldPath: string) => {
-    if (!window.confirm(`Delete the asset binding for ${fieldPath}? This will remove the URL from the blueprint payload and move the blueprint back to draft.`)) {
+    if (!(await confirm({ title: "Delete Asset Binding", message: `Delete the asset binding for ${fieldPath}? This will remove the URL from the blueprint payload and move the blueprint back to draft.`, confirmLabel: "Delete", variant: "danger" }))) {
       return;
     }
 
@@ -158,6 +160,7 @@ export function BlueprintAssetsContent({ showHeader = true }: { showHeader?: boo
 
   return (
     <div className="space-y-6">
+      {confirmModal}
       <div className="flex items-start justify-between gap-4">
         {showHeader ? <PageBreadCrumb pageTitle="Curriculum Asset Library" /> : <div />}
         <div className="flex flex-wrap gap-2">

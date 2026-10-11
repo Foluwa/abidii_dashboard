@@ -799,6 +799,7 @@ function countFor(manifest: VerifiedPromotionManifest, status: string) {
 }
 
 export function MLVerifiedPromotionManifestsPage() {
+  const { confirm, modal: confirmModal } = useConfirm();
   const [manifests, setManifests] = useState<VerifiedPromotionManifest[]>([]);
   const [readiness, setReadiness] = useState<VerifiedPromotionReadinessResponse | null>(null);
   const [collectionGaps, setCollectionGaps] = useState<VerifiedPromotionCollectionGapResponse | null>(null);
@@ -831,7 +832,7 @@ export function MLVerifiedPromotionManifestsPage() {
   }, [refresh]);
 
   const generate = useCallback(async () => {
-    if (!window.confirm("Generate a new pending manifest from R2 source pools? This is read-only but may take a while.")) return;
+    if (!(await confirm({ title: "Generate Manifest", message: "Generate a new pending manifest from R2 source pools? This is read-only but may take a while.", confirmLabel: "Generate", variant: "info" }))) return;
     setGenerating(true);
     setError(null);
     setSuccess(null);
@@ -844,10 +845,11 @@ export function MLVerifiedPromotionManifestsPage() {
     } finally {
       setGenerating(false);
     }
-  }, [refresh]);
+  }, [refresh, confirm]);
 
   return (
     <div className="space-y-6 p-6">
+      {confirmModal}
       <PageBreadCrumb pageTitle="Verified Dataset Review" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>

@@ -21,6 +21,7 @@ import type {
   OrphanAssetCandidateItem,
   OrphanAssetCandidateStatus,
 } from '@/types/orphan-assets';
+import { useConfirm } from "@/hooks/useConfirm";
 
 function formatDate(value?: string | null) {
   if (!value) return '—';
@@ -77,6 +78,7 @@ function mapStatusBadge(status: OrphanAssetCandidateStatus) {
 }
 
 export function OrphanAssetsContent({ showHeader = true, isActive = true }: { showHeader?: boolean; isActive?: boolean }) {
+  const { confirm, modal: confirmModal } = useConfirm();
   const toast = useToast();
   const [scanPage] = useState(1);
   const [scanLimit] = useState(10);
@@ -189,7 +191,7 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
     }
 
     if (action === 'delete_now') {
-      const confirmed = window.confirm(`Delete ${candidateIds.length} object${candidateIds.length === 1 ? '' : 's'} from R2 now? The system will re-check references first.`);
+      const confirmed = await confirm({ title: 'Delete from R2', message: `Delete ${candidateIds.length} object${candidateIds.length === 1 ? '' : 's'} from R2 now? The system will re-check references first.`, confirmLabel: 'Delete', variant: 'danger' });
       if (!confirmed) return;
     }
 
@@ -222,6 +224,7 @@ export function OrphanAssetsContent({ showHeader = true, isActive = true }: { sh
 
   return (
     <div className="space-y-6">
+      {confirmModal}
       <div className="flex flex-wrap items-start justify-between gap-4">
         {showHeader ? <PageBreadCrumb pageTitle="Orphan Assets" /> : <div />}
         <div className="flex flex-wrap gap-2">

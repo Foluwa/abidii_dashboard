@@ -10,6 +10,7 @@ import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { useToast } from "@/contexts/ToastContext";
 import { Lightbulb } from "lucide-react";
 import { DialogPanel } from "@/components/ui/modal/DialogPanel";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface ConfigItem {
   key: string;
@@ -25,6 +26,7 @@ interface ConfigItem {
 }
 
 export function PlatformConfigContent({ showHeader = true }: { showHeader?: boolean }) {
+  const { confirm, modal: confirmModal } = useConfirm();
   const toast = useToast();
   const { config, isLoading, isError, refresh } = useConfig();
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -103,7 +105,7 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
   // One click for on/off flags (e.g. rewards.cowries_enabled), instead of
   // Edit -> pick true/false -> Save.
   const setBoolValue = async (key: string, next: boolean) => {
-    if (!confirm(`Turn "${key}" ${next ? "ON" : "OFF"}? Apps pick this up on their next launch.`)) {
+    if (!(await confirm({ title: next ? "Turn Flag On" : "Turn Flag Off", message: `Turn "${key}" ${next ? "ON" : "OFF"}? Apps pick this up on their next launch.`, confirmLabel: next ? "Turn On" : "Turn Off", variant: "warning" }))) {
       return;
     }
     try {
@@ -128,7 +130,7 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
   };
 
   const deleteConfig = async (key: string) => {
-    if (!confirm(`Are you sure you want to delete "${key}"? This action cannot be undone.`)) {
+    if (!(await confirm({ title: "Delete Configuration", message: `Are you sure you want to delete "${key}"? This action cannot be undone.`, confirmLabel: "Delete", variant: "danger" }))) {
       return;
     }
     try {
@@ -173,6 +175,7 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
 
   return (
     <>
+      {confirmModal}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
