@@ -15,6 +15,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { ChevronDown, ChevronUp, Info, Pencil, Plus, Trash2 } from "lucide-react";
 import { Layers } from "lucide-react";
 import { DialogPanel } from "@/components/ui/modal/DialogPanel";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const CATEGORIES = [
   { value: 'number_formation', label: 'Number Formation' },
@@ -33,6 +34,7 @@ const DIFFICULTIES = [
 ];
 
 export default function PatternsPage() {
+  const { confirm, modal: confirmModal } = useConfirm();
   const toast = useToast();
 
   // State
@@ -142,7 +144,7 @@ export default function PatternsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this pattern?')) return;
+    if (!(await confirm({ title: "Delete Pattern", message: "Are you sure you want to delete this pattern?", confirmLabel: "Delete", variant: "danger" }))) return;
 
     try {
       await apiClient.delete(`/api/v1/admin/patterns/${id}`);
@@ -204,6 +206,7 @@ export default function PatternsPage() {
 
   return (
     <div className="p-4 mx-auto max-w-screen-2xl md:p-6">
+      {confirmModal}
       <PageBreadCrumb pageTitle="Content Patterns" />
 
       {/* Header */}

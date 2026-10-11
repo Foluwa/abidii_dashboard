@@ -25,6 +25,7 @@ import {
   WordSafetyDialog,
   type WordSafetyTarget,
 } from '@/components/content/WordSafetyDialog';
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface WordDetailModalProps {
   wordId: string;
@@ -33,6 +34,7 @@ interface WordDetailModalProps {
 }
 
 export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetailModalProps) {
+  const { confirm, modal: confirmModal } = useConfirm();
   const { wordDetail, isLoading, mutate } = useWordDetail(wordId);
   const { generateExamples, isGenerating } = useExampleGeneration();
   const { deleteExample, isSubmitting } = useExampleManagement();
@@ -123,7 +125,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
   };
 
   const handleRegenerateAudio = async () => {
-    if (!confirm('Regenerate audio for this word? This will create a new audio generation job.')) return;
+    if (!(await confirm({ title: "Regenerate Audio", message: "Regenerate audio for this word? This will create a new audio generation job.", confirmLabel: "Regenerate", variant: "warning" }))) return;
     
     setIsRegeneratingAudio(true);
     try {
@@ -190,7 +192,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
   };
 
   const handleDeleteExample = async (exampleId: string) => {
-    if (!confirm('Delete this example?')) return;
+    if (!(await confirm({ title: "Delete Example", message: "Delete this example?", confirmLabel: "Delete", variant: "danger" }))) return;
     await deleteExample(exampleId);
     mutate();
     onUpdate();
@@ -272,7 +274,7 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
     const endpoint = wordDetail.word.is_published ? 'unpublish' : 'publish';
     const action = wordDetail.word.is_published ? 'unpublish' : 'publish';
     
-    if (!confirm(`Are you sure you want to ${action} this word?`)) return;
+    if (!(await confirm({ title: action === "publish" ? "Publish Word" : "Unpublish Word", message: `Are you sure you want to ${action} this word?`, confirmLabel: action === "publish" ? "Publish" : "Unpublish", variant: "warning" }))) return;
 
     try {
       await apiClient.post(`/api/v1/admin/content/words/${wordId}/${endpoint}`);
@@ -310,7 +312,8 @@ export default function WordDetailModal({ wordId, onClose, onUpdate }: WordDetai
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <DialogPanel className="bg-card rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClose={safetyTarget ? undefined : onClose} aria-label="Word details">
+      {confirmModal}
+      <DialogPanel className="bg-card rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClose={safetyTarget || confirmModal ? undefined : onClose} aria-label="Word details">
         {/* Header */}
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div className="flex-1">

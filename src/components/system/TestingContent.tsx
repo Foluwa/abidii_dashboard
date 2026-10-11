@@ -5,7 +5,7 @@ import { apiClient } from "@/lib/api";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
 import { TriangleAlert } from "lucide-react";
-import { DialogPanel } from "@/components/ui/modal/DialogPanel";
+import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 
 export function TestingContent({ showHeader = true }: { showHeader?: boolean }) {
   const [telegramLoading, setTelegramLoading] = useState(false);
@@ -35,7 +35,6 @@ export function TestingContent({ showHeader = true }: { showHeader?: boolean }) 
     setCriticalLoading(true);
     setCriticalResult("");
     setErrorMessage("");
-    setShowCriticalConfirm(false);
     try {
       const response = await apiClient.post("/api/v1/admin/test-critical-alert");
       setCriticalResult(JSON.stringify(response.data, null, 2));
@@ -43,6 +42,7 @@ export function TestingContent({ showHeader = true }: { showHeader?: boolean }) 
       setErrorMessage(error.response?.data?.detail || "Failed to send critical alert");
     } finally {
       setCriticalLoading(false);
+      setShowCriticalConfirm(false);
     }
   };
 
@@ -175,32 +175,17 @@ export function TestingContent({ showHeader = true }: { showHeader?: boolean }) 
       </div>
 
       {/* Critical Alert Confirmation Modal */}
-      {showCriticalConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <DialogPanel className="w-full max-w-md p-6 bg-card rounded-lg" onClose={() => setShowCriticalConfirm(false)} aria-labelledby="critical-alert-dialog-title">
-            <h3 id="critical-alert-dialog-title" className="mb-4 text-lg font-semibold text-foreground">
-              Confirm Critical Alert Test
-            </h3>
-            <p className="mb-6 text-sm text-muted-foreground">
-              Are you sure you want to send a critical alert? This will notify all administrators immediately.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={testCriticalAlert}
-                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-              >
-                Yes, Send Alert
-              </button>
-              <button
-                onClick={() => setShowCriticalConfirm(false)}
-                className="flex-1 px-4 py-2 text-sm font-medium text-foreground bg-muted rounded-lg hover:bg-muted"
-              >
-                Cancel
-              </button>
-            </div>
-          </DialogPanel>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={showCriticalConfirm}
+        onClose={() => setShowCriticalConfirm(false)}
+        onConfirm={testCriticalAlert}
+        title="Confirm Critical Alert Test"
+        message="Are you sure you want to send a critical alert? This will notify all administrators immediately."
+        confirmText="Yes, Send Alert"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={criticalLoading}
+      />
     </div>
   );
 }

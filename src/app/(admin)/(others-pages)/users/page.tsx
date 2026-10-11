@@ -19,7 +19,7 @@ import { countryName, countryFlagEmoji } from "@/lib/country-utils";
 import DatePicker from "@/components/form/date-picker";
 import { UserDetailsSheet } from "@/components/admin/users/UserDetailsSheet";
 import { Eye, Globe, Mail, OctagonAlert, Smartphone, Trash2, UserCheck, UserX } from "lucide-react";
-import { DialogPanel } from "@/components/ui/modal/DialogPanel";
+import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 
 type TabRole = "all" | UserRole;
 type ActionType = "deactivate" | "reactivate" | "delete" | "purge";
@@ -934,42 +934,26 @@ export default function UsersPage() {
       </div>
 
       {/* Action Confirmation Modal */}
-      {actionConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <DialogPanel className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClose={() => setActionConfirm(null)} aria-labelledby="user-action-dialog-title">
-            <h3 id="user-action-dialog-title" className="text-lg font-semibold text-foreground mb-4">
-              Confirm {actionConfirm.action.charAt(0).toUpperCase() + actionConfirm.action.slice(1)}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-6">
-              {getActionMessage(actionConfirm.action, actionConfirm.userName)}
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setActionConfirm(null)}
-                disabled={actionLoading}
-                className="px-4 py-2 text-sm font-medium text-foreground bg-card border border-input rounded-lg hover:bg-accent disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAction}
-                disabled={actionLoading}
-                className={`px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50 ${
-                  actionConfirm.action === "purge" 
-                    ? "bg-red-700 hover:bg-red-800" 
-                    : actionConfirm.action === "delete"
-                    ? "bg-red-600 hover:bg-red-700"
-                    : actionConfirm.action === "deactivate"
-                    ? "bg-orange-600 hover:bg-orange-700"
-                    : "bg-green-600 hover:bg-green-700"
-                }`}
-              >
-                {actionLoading ? "Processing..." : `Yes, ${actionConfirm.action}`}
-              </button>
-            </div>
-          </DialogPanel>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={actionConfirm !== null}
+        onClose={() => setActionConfirm(null)}
+        onConfirm={handleAction}
+        title={
+          actionConfirm
+            ? `Confirm ${actionConfirm.action.charAt(0).toUpperCase() + actionConfirm.action.slice(1)}`
+            : ""
+        }
+        message={actionConfirm ? getActionMessage(actionConfirm.action, actionConfirm.userName) : ""}
+        confirmText={actionConfirm ? `Yes, ${actionConfirm.action}` : "Confirm"}
+        variant={
+          actionConfirm?.action === "purge" || actionConfirm?.action === "delete"
+            ? "danger"
+            : actionConfirm?.action === "deactivate"
+              ? "warning"
+              : "info"
+        }
+        isLoading={actionLoading}
+      />
 
       {/* User detail side panel */}
       <UserDetailsSheet
