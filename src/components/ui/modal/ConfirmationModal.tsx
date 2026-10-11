@@ -38,10 +38,13 @@ const VARIANTS = {
   },
 } as const;
 
+const noop = () => {};
+
 /**
  * Confirmation dialog in the shadcn alert-dialog layout: icon + message,
  * then right-aligned Cancel / Confirm. The parent closes it once its async
- * action finishes (onConfirm does not auto-close).
+ * action finishes (onConfirm does not auto-close). While `isLoading` the
+ * buttons are disabled and Escape / overlay clicks are ignored.
  */
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   isOpen,
@@ -59,7 +62,8 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      // Escape / overlay / X must not dismiss while the action is in flight.
+      onClose={isLoading ? noop : onClose}
       title={title}
       maxWidth="md"
       showCloseButton={!isLoading}

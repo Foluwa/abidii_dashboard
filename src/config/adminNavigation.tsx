@@ -85,10 +85,6 @@ export const mainNavigationItems: AdminNavItem[] = [
         path: "/content/localizations",
       },
       {
-        name: "Patterns",
-        path: "/content/patterns",
-      },
-      {
         name: "Conversation Scenes",
         path: "/content/conversation-scenes",
         permission: "content:read",

@@ -27,6 +27,7 @@ import {
 } from '@/components/admin/layout';
 import { ArrowDown, ArrowUp, Award, Book, ChartColumn, CircleCheck, CloudUpload, Globe, Image as ImageIcon, Pencil, Play, Trash2, X } from "lucide-react";
 import { ToggleLeft, ToggleRight } from "lucide-react";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const ITEM_TYPES = [
   { value: 'game', label: 'Game' },
@@ -82,6 +83,7 @@ const getIconEmoji = (iconName: string | undefined): string => {
 };
 
 export default function LearningItemsPage() {
+  const { confirm, modal: confirmModal } = useConfirm();
   const toast = useToast();
   const pathname = usePathname();
   const isGamesRoute = pathname === '/games' || pathname === '/content/library/games';
@@ -291,7 +293,7 @@ export default function LearningItemsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
+    if (!(await confirm({ title: "Delete Item", message: "Are you sure you want to delete this item?", confirmLabel: "Delete", variant: "danger" }))) return;
 
     try {
       await apiClient.delete(`/api/v1/learning-items/${id}`);
@@ -735,6 +737,7 @@ export default function LearningItemsPage() {
 
   return (
     <div className="space-y-6">
+      {confirmModal}
       <ContentPageHeader
         title={isGamesRoute ? "Games Management" : "Learning Items"}
         subtitle={`Manage ${isGamesRoute ? 'games' : 'learning items'} for each language`}

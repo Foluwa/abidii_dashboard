@@ -13,15 +13,27 @@ import {
   useSubscriptionAttempts,
   useSubscriptionEvents,
   useSubscriptionStats,
+  useBillingPlans,
 } from "@/hooks/useApi";
-import { CircleCheck, CircleX, Clock, CreditCard, Smartphone, Wrench } from "lucide-react";
+import { CircleCheck, CircleX, Clock, CreditCard, Eye, Pencil, Smartphone, Wrench } from "lucide-react";
+import {
+  AttemptResultPill,
+  EventTypePill,
+  KNOWN_PLAN_IDS,
+  PlanPill,
+  SubscriptionStatusPill,
+  SubscriptionUserCell,
+  getPlanOptions,
+  getPlanPeriod,
+  type SubscriptionUserFields,
+} from "@/components/subscriptions/subscriptionDisplay";
 import { Card, CardAction, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 type SubscriptionStatus = "active" | "trialing" | "past_due" | "canceled" | "expired" | "";
 type SubscriptionProvider = "apple" | "google" | "stripe" | "manual" | "";
 
-interface Subscription {
+interface Subscription extends SubscriptionUserFields {
   id: string;
   user_id: string;
   user_email: string | null;
@@ -38,7 +50,7 @@ interface Subscription {
   auto_renew_enabled?: boolean | null;
 }
 
-interface SubscriptionEvent {
+interface SubscriptionEvent extends SubscriptionUserFields {
   id: string;
   subscription_id: string;
   user_id: string;
@@ -51,7 +63,7 @@ interface SubscriptionEvent {
   created_at: string;
 }
 
-interface SubscriptionAttempt {
+interface SubscriptionAttempt extends SubscriptionUserFields {
   id: string;
   user_id: string;
   user_email: string | null;
@@ -67,6 +79,41 @@ interface SubscriptionAttempt {
 }
 
 type SubscriptionsView = "subscriptions" | "events" | "attempts";
+
+// Same tokens as StyledSelect's trigger so text/date inputs and dropdowns
+// in the modals look like one form in both themes. `color-scheme` keeps the
+// native datetime-local calendar/clock icon visible in dark mode.
+const FORM_INPUT_CLASS =
+  "block h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30 [color-scheme:light] dark:[color-scheme:dark]";
+const FORM_TEXTAREA_CLASS =
+  "block w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30";
+
+// Row action icon buttons - same treatment as the Users table.
+const ROW_ICON_BUTTON_CLASS =
+  "inline-flex h-8 w-8 items-center justify-center rounded-lg text-brand-600 hover:bg-brand-50 hover:text-brand-900 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:text-brand-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-300";
+
+const toDatetimeLocalValue = (iso: string | Date | null | undefined) => {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  const mm = pad(date.getMonth() + 1);
+  const dd = pad(date.getDate());
+  const hh = pad(date.getHours());
+  const min = pad(date.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+};
+
+/** `start` (datetime-local) + N months/years, as datetime-local. */
+const addPeriodToLocal = (start: string, period: "monthly" | "annual") => {
+  const base = start ? new Date(start) : new Date();
+  if (Number.isNaN(base.getTime())) return "";
+  const next = new Date(base);
+  if (period === "monthly") next.setMonth(next.getMonth() + 1);
+  else next.setFullYear(next.getFullYear() + 1);
+  return toDatetimeLocalValue(next);
+};
 
 export function SubscriptionsPageContent({
   initialView = "subscriptions",
@@ -186,18 +233,12 @@ export function SubscriptionsPageContent({
   const eventsTotalPages = Math.max(1, Math.ceil(eventsTotal / eventsLimit));
   const attemptsTotalPages = Math.max(1, Math.ceil(attemptsTotal / attemptsLimit));
 
-  const toDatetimeLocalValue = (iso: string | null | undefined) => {
-    if (!iso) return "";
-    const date = new Date(iso);
-    if (Number.isNaN(date.getTime())) return "";
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const yyyy = date.getFullYear();
-    const mm = pad(date.getMonth() + 1);
-    const dd = pad(date.getDate());
-    const hh = pad(date.getHours());
-    const min = pad(date.getMinutes());
-    return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
-  };
+  // Plan picker options come from the backend's plan catalogue
+  // (GET /api/v1/billing/plans); KNOWN_PLAN_IDS covers it being unreachable.
+  const { plans: billingPlans } = useBillingPlans();
+  const availablePlanIds: string[] =
+    billingPlans.length > 0 ? billingPlans.map((p) => p.plan_id) : [...KNOWN_PLAN_IDS];
+  const createPlanPeriod = getPlanPeriod(createPlanId);
 
   const openCreate = () => {
     setCreateError(null);
@@ -208,7 +249,7 @@ export function SubscriptionsPageContent({
     setCreateUserSuggestions([]);
     setCreatePlanId("");
     setCreateStatus("active");
-    setCreateStart("");
+    setCreateStart(toDatetimeLocalValue(new Date()));
     setCreateEnd("");
     setCreateReason("");
     setCreateOpen(true);
@@ -275,7 +316,7 @@ export function SubscriptionsPageContent({
       return;
     }
     if (!createPlanId.trim()) {
-      setCreateError("Plan ID is required.");
+      setCreateError("Plan is required.");
       return;
     }
     if (!createReason.trim()) {
@@ -371,23 +412,6 @@ export function SubscriptionsPageContent({
     }
   };
 
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-      case "trialing":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
-      case "past_due":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-      case "canceled":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-      case "expired":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-      default:
-        return "bg-gray-100 text-muted-foreground dark:bg-gray-900/30";
-    }
-  };
-
   const getProviderIcon = (provider: string) => {
     switch (provider) {
       case "apple":
@@ -475,7 +499,7 @@ export function SubscriptionsPageContent({
                       window.setTimeout(() => setCreateUserSuggestionsOpen(false), 150);
                     }}
                     placeholder="Type email or name to search"
-                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
+                    className={FORM_INPUT_CLASS}
                   />
 
                   {createUserSuggestionsLoading && (
@@ -512,12 +536,17 @@ export function SubscriptionsPageContent({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Plan ID</label>
-                  <input
+                  <StyledSelect
+                    label="Plan"
                     value={createPlanId}
-                    onChange={(e) => setCreatePlanId(e.target.value)}
-                    placeholder="premium_monthly"
-                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
+                    onChange={(e) => {
+                      setCreatePlanId(String(e.target.value));
+                      setCreateError(null);
+                    }}
+                    options={getPlanOptions(availablePlanIds)}
+                    placeholder="Select a plan"
+                    required
+                    fullWidth
                   />
                 </div>
 
@@ -538,23 +567,41 @@ export function SubscriptionsPageContent({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Start</label>
+                  <label htmlFor="create-sub-start" className="mb-2 block text-sm font-medium text-foreground">Start</label>
                   <input
+                    id="create-sub-start"
                     type="datetime-local"
                     value={createStart}
                     onChange={(e) => setCreateStart(e.target.value)}
-                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
+                    className={FORM_INPUT_CLASS}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Expires</label>
+                  <label htmlFor="create-sub-end" className="mb-2 block text-sm font-medium text-foreground">Expires</label>
                   <input
+                    id="create-sub-end"
                     type="datetime-local"
                     value={createEnd}
                     onChange={(e) => setCreateEnd(e.target.value)}
-                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
+                    className={FORM_INPUT_CLASS}
                   />
+                  <div className="mt-2 flex gap-2">
+                    {([
+                      ["monthly", "+1 month"],
+                      ["annual", "+1 year"],
+                    ] as const).map(([period, label]) => (
+                      <Button
+                        key={period}
+                        type="button"
+                        size="sm"
+                        variant={createPlanPeriod === period ? "secondary" : "outline"}
+                        onClick={() => setCreateEnd(addPeriodToLocal(createStart, period))}
+                      >
+                        {label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -565,7 +612,7 @@ export function SubscriptionsPageContent({
                   onChange={(e) => setCreateReason(e.target.value)}
                   rows={3}
                   placeholder="e.g., Manual premium grant for QA"
-                  className="block w-full px-3 py-2 rounded-md border border-input dark:bg-gray-700 dark:text-white"
+                  className={FORM_TEXTAREA_CLASS}
                 />
               </div>
             </div>
@@ -598,7 +645,7 @@ export function SubscriptionsPageContent({
               <div>
                 <h3 id="edit-sub-dialog-title" className="text-lg font-semibold text-foreground">Edit Subscription</h3>
                 <p className="text-sm text-muted-foreground">
-                  {editSub.user_email || editSub.user_id}
+                  {editSub.user_display_name || (editSub.user_username ? `@${editSub.user_username}` : null) || editSub.user_email || editSub.user_id}
                 </p>
               </div>
               <button
@@ -617,12 +664,13 @@ export function SubscriptionsPageContent({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Plan ID</label>
-                  <input
+                  <StyledSelect
+                    label="Plan"
                     value={editPlanId}
-                    onChange={(e) => setEditPlanId(e.target.value)}
-                    placeholder="premium_monthly"
-                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
+                    onChange={(e) => setEditPlanId(String(e.target.value))}
+                    options={getPlanOptions(availablePlanIds, editSub.plan_id)}
+                    placeholder="Select a plan"
+                    fullWidth
                   />
                 </div>
 
@@ -648,7 +696,7 @@ export function SubscriptionsPageContent({
                     type="datetime-local"
                     value={editStart}
                     onChange={(e) => setEditStart(e.target.value)}
-                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
+                    className={FORM_INPUT_CLASS}
                   />
                 </div>
 
@@ -658,7 +706,7 @@ export function SubscriptionsPageContent({
                     type="datetime-local"
                     value={editEnd}
                     onChange={(e) => setEditEnd(e.target.value)}
-                    className="block w-full h-11 px-3 rounded-md border border-input dark:bg-gray-700 dark:text-white"
+                    className={FORM_INPUT_CLASS}
                   />
                 </div>
               </div>
@@ -670,7 +718,7 @@ export function SubscriptionsPageContent({
                   onChange={(e) => setEditReason(e.target.value)}
                   rows={3}
                   placeholder="e.g., Manual override for testing payment failure"
-                  className="block w-full px-3 py-2 rounded-md border border-input dark:bg-gray-700 dark:text-white"
+                  className={FORM_TEXTAREA_CLASS}
                 />
               </div>
             </div>
@@ -881,26 +929,13 @@ export function SubscriptionsPageContent({
                   {subscriptions?.map((sub: Subscription) => (
                     <tr key={sub.id} className="hover:bg-accent">
                       <td className="px-3 py-2.5 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div>
-                            <div className="text-sm font-medium text-foreground">
-                              {sub.user_email || "No email"}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {sub.user_id?.slice(0, 8)}...
-                            </div>
-                          </div>
-                        </div>
+                        <SubscriptionUserCell row={sub} />
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap">
-                        <div className="text-sm text-foreground">
-                          {sub.plan_id || "—"}
-                        </div>
+                        <PlanPill planId={sub.plan_id} />
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap">
-                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(sub.status)}`}>
-                          {sub.status}
-                        </span>
+                        <SubscriptionStatusPill status={sub.status} />
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap">
                         <span className="text-sm text-foreground">
@@ -914,18 +949,24 @@ export function SubscriptionsPageContent({
                         {formatDate(sub.current_period_end)}
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap text-sm">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
                           <button
+                            type="button"
                             onClick={() => openEdit(sub)}
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                            aria-label="Edit subscription"
+                            title="Edit"
+                            className={ROW_ICON_BUTTON_CLASS}
                           >
-                            Edit
+                            <Pencil className="h-4 w-4" aria-hidden="true" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => setSelectedUserId(sub.user_id)}
-                            className="text-muted-foreground hover:text-gray-800 dark:hover:text-gray-100"
+                            aria-label="View user"
+                            title="View user"
+                            className={ROW_ICON_BUTTON_CLASS}
                           >
-                            View User
+                            <Eye className="h-4 w-4" aria-hidden="true" />
                           </button>
                         </div>
                       </td>
@@ -1054,6 +1095,9 @@ export function SubscriptionsPageContent({
                     <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Provider
                     </th>
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-card divide-y divide-border">
@@ -1063,34 +1107,36 @@ export function SubscriptionsPageContent({
                         {formatDateTime(ev.created_at)}
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap">
-                        <div className="text-sm font-medium text-foreground">
-                          {ev.user_email || "No email"}
-                        </div>
-                        <div className="text-sm text-muted-foreground">{ev.user_id?.slice(0, 8)}...</div>
-                      </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap text-sm text-foreground">
-                        {ev.event_type}
-                      </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap text-sm text-foreground">
-                        {ev.plan_id || "—"}
+                        <SubscriptionUserCell row={ev} />
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(
-                            ev.status
-                          )}`}
-                        >
-                          {ev.status}
-                        </span>
+                        <EventTypePill eventType={ev.event_type} />
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <PlanPill planId={ev.plan_id} />
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <SubscriptionStatusPill status={ev.status} />
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap text-sm text-foreground">
                         {getProviderIcon(ev.provider)} {ev.provider} ({ev.platform})
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedUserId(ev.user_id)}
+                          aria-label="View user"
+                          title="View user"
+                          className={ROW_ICON_BUTTON_CLASS}
+                        >
+                          <Eye className="h-4 w-4" aria-hidden="true" />
+                        </button>
                       </td>
                     </tr>
                   ))}
                   {(!events || events.length === 0) && (
                     <tr>
-                      <td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">
+                      <td colSpan={7} className="px-3 py-10 text-center text-muted-foreground">
                         No events found
                       </td>
                     </tr>
@@ -1174,6 +1220,9 @@ export function SubscriptionsPageContent({
                     <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
                       Message
                     </th>
+                    <th className="px-3 py-2.5 text-left text-sm font-medium text-muted-foreground">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-card divide-y divide-border">
@@ -1183,37 +1232,37 @@ export function SubscriptionsPageContent({
                         {formatDateTime(at.created_at)}
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap">
-                        <div className="text-sm font-medium text-foreground">
-                          {at.user_email || "No email"}
-                        </div>
-                        <div className="text-sm text-muted-foreground">{at.user_id?.slice(0, 8)}...</div>
+                        <SubscriptionUserCell row={at} />
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap text-sm text-foreground">
                         {getProviderIcon(at.provider)} {at.provider} ({at.platform})
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            at.success
-                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                              : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                          }`}
-                        >
-                          {at.success ? "success" : "failed"}{at.status ? ` (${at.status})` : ""}
-                        </span>
+                        <AttemptResultPill success={at.success} status={at.status} />
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap text-sm text-foreground">
-                        <div>{at.plan_id || "—"}</div>
-                        <div className="text-xs text-muted-foreground">{at.product_id || "—"}</div>
+                        <PlanPill planId={at.plan_id || at.product_id} />
+                        <div className="mt-1 text-xs text-muted-foreground">{at.product_id || "—"}</div>
                       </td>
-                      <td className="px-3 py-2.5 text-sm text-muted-foreground max-w-md truncate">
+                      <td className="px-3 py-2.5 text-sm text-muted-foreground max-w-md truncate" title={at.message || undefined}>
                         {at.message || "—"}
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap text-sm">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedUserId(at.user_id)}
+                          aria-label="View user"
+                          title="View user"
+                          className={ROW_ICON_BUTTON_CLASS}
+                        >
+                          <Eye className="h-4 w-4" aria-hidden="true" />
+                        </button>
                       </td>
                     </tr>
                   ))}
                   {(!attempts || attempts.length === 0) && (
                     <tr>
-                      <td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">
+                      <td colSpan={7} className="px-3 py-10 text-center text-muted-foreground">
                         No attempts found
                       </td>
                     </tr>

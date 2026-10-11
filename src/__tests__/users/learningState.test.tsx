@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { renderWithProviders as render } from '@/test-utils';
 
 // ===== Mocks =====
@@ -235,8 +235,6 @@ describe('UserLearningStatePage', () => {
   // ===== Phase 19 safety + observability tests =====
 
   it('confirm modal cancellation prevents reset API call', async () => {
-    // User clicks Cancel in the browser confirm dialog
-    window.confirm = jest.fn(() => false);
     mockUseAdminUserLearningState.mockReturnValue({
       state: { user_id: 'test-user-uuid-1234', courses: [sampleCourse] },
       isLoading: false,
@@ -247,15 +245,18 @@ describe('UserLearningStatePage', () => {
     render(<UserLearningStatePage />);
     fireEvent.click(screen.getByText('Reset Progress'));
 
+    // User clicks Cancel in the confirmation dialog
+    const dialog = await screen.findByRole('dialog', { name: 'Reset Course Progress' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
     await waitFor(() => {
-      expect(window.confirm).toHaveBeenCalledTimes(1);
-      // API must NOT have been called
-      expect(mockAdminResetCourseProgress).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog', { name: 'Reset Course Progress' })).not.toBeInTheDocument();
     });
+    // API must NOT have been called
+    expect(mockAdminResetCourseProgress).not.toHaveBeenCalled();
   });
 
   it('confirm modal confirmation calls reset API and then refetch', async () => {
-    window.confirm = jest.fn(() => true);
     mockAdminResetCourseProgress.mockResolvedValueOnce({ ok: true });
     mockUseAdminUserLearningState.mockReturnValue({
       state: { user_id: 'test-user-uuid-1234', courses: [sampleCourse] },
@@ -266,6 +267,7 @@ describe('UserLearningStatePage', () => {
 
     render(<UserLearningStatePage />);
     fireEvent.click(screen.getByText('Reset Progress'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Reset' }));
 
     await waitFor(() => {
       expect(mockAdminResetCourseProgress).toHaveBeenCalledWith(
@@ -301,7 +303,6 @@ describe('UserLearningStatePage', () => {
   });
 
   it('shows toast notification after successful reset', async () => {
-    window.confirm = jest.fn(() => true);
     mockAdminResetCourseProgress.mockResolvedValueOnce({ ok: true });
     mockUseAdminUserLearningState.mockReturnValue({
       state: { user_id: 'test-user-uuid-1234', courses: [sampleCourse] },
@@ -312,6 +313,7 @@ describe('UserLearningStatePage', () => {
 
     render(<UserLearningStatePage />);
     fireEvent.click(screen.getByText('Reset Progress'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Reset' }));
 
     await waitFor(() => {
       expect(screen.getByText(/Progress reset successfully/i)).toBeInTheDocument();

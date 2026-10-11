@@ -21,6 +21,7 @@ import {
 import { RegenerateAudioModal, RegenerateAudioTarget } from "@/components/modals/RegenerateAudioModal";
 import { ChartColumn, CircleCheck, Trash2, Volume2, VolumeX } from "lucide-react";
 import { DialogPanel } from "@/components/ui/modal/DialogPanel";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface Letter {
   id: string;
@@ -35,6 +36,7 @@ interface Letter {
 }
 
 export default function LettersPage() {
+  const { confirm, modal: confirmModal } = useConfirm();
   const { languages } = useAdminLanguages();
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
   const [letters, setLetters] = useState<Letter[]>([]);
@@ -264,7 +266,7 @@ export default function LettersPage() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!confirm(`Are you sure you want to delete ${selectedIds.length} letter(s)?`)) return;
+    if (!(await confirm({ title: "Delete Letters", message: `Are you sure you want to delete ${selectedIds.length} letter(s)?`, confirmLabel: "Delete", variant: "danger" }))) return;
 
     setIsDeleting(true);
     try {
@@ -285,6 +287,7 @@ export default function LettersPage() {
 
   return (
     <div className="space-y-6">
+      {confirmModal}
       {successMessage && <Toast type="success" message={successMessage} onClose={() => setSuccessMessage("")} />}
       {error && <Toast type="error" message={error} onClose={() => setError("")} />}
 

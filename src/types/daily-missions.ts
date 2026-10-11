@@ -18,6 +18,8 @@ export interface MissionDaySummary {
   missions_assigned: number;
   claims: number;
   distinct_claimers: number;
+  /** Learners who claimed every mission they were given that day (older APIs omit it). */
+  all_claimed?: number;
   bonus: number;
   missions: MissionDayStat[];
 }
