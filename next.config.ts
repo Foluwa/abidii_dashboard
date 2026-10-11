@@ -48,6 +48,9 @@ const nextConfig: NextConfig = {
       { source: '/content/library/proverbs', destination: '/content/proverbs', permanent: true },
       { source: '/content/library/letters', destination: '/content/letters', permanent: true },
       { source: '/content/library/numbers', destination: '/content/numbers', permanent: true },
+      // Content Patterns became a section of the Numbers page (every pattern
+      // is a number-formation rule; every consumer is a numbers feature).
+      { source: '/content/patterns', destination: '/content/numbers?section=patterns', permanent: false },
       { source: '/content/library/games', destination: '/content/learning-items', permanent: true },
       // NOTE: /content/library itself is now a real page (tabbed Content
       // Library) — do not redirect it away.
