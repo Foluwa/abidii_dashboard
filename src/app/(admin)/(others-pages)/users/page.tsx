@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useUsers, useLanguages, useUserCountries, useUserAppVersions, useUserProgressOptions } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/useDebounce";
+import { UserAvatar } from "@/components/common/UserAvatar";
 import { apiClient } from "@/lib/api";
 import type { UserRole } from "@/types/auth";
 import type { UserListItem } from "@/types/api";
@@ -15,11 +15,10 @@ import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import Pagination from "@/components/tables/Pagination";
 import { FaApple } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
-import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
 import { countryName, countryFlagEmoji } from "@/lib/country-utils";
 import DatePicker from "@/components/form/date-picker";
 import { UserDetailsSheet } from "@/components/admin/users/UserDetailsSheet";
-import { Award, Eye, Globe, Mail, OctagonAlert, Smartphone, Trash2, UserCheck, UserX } from "lucide-react";
+import { Eye, Globe, Mail, OctagonAlert, Smartphone, Trash2, UserCheck, UserX } from "lucide-react";
 import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 
 type TabRole = "all" | UserRole;
@@ -61,42 +60,6 @@ const isPlausibleDateString = (value: string) => {
   const match = /^(\d{4})-\d{2}-\d{2}$/.exec(value);
   return !!match && Number(match[1]) >= 2000;
 };
-
-function UserAvatar({ user, size = "w-10 h-10" }: { user: any; size?: string }) {
-  const [failed, setFailed] = useState(false);
-  const source = cleanSvgForDisplay(user.avatar_svg) || cleanSvgForDisplay(user.picture_url) || null;
-  const label = user.display_name || user.email || "User";
-
-  return (
-    <div className="relative inline-flex shrink-0">
-      {source && !failed ? (
-      <Image
-        src={source}
-        alt={`${label} avatar`}
-        width={40}
-        height={40}
-        unoptimized
-        className={`${size} rounded-full object-cover bg-muted`}
-        referrerPolicy="no-referrer"
-        onError={() => setFailed(true)}
-      />
-      ) : (
-        <div className={`${size} rounded-full ${getAvatarColor(user.id || label)} flex items-center justify-center`}>
-          <span className="font-semibold text-sm text-white">{getInitials(label)}</span>
-        </div>
-      )}
-      {user.has_premium && (
-        <span
-          className="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-background bg-amber-400 text-amber-950 shadow-sm"
-          title="Premium member"
-          aria-label="Premium member"
-        >
-          <Award className="h-3 w-3" aria-hidden="true" />
-        </span>
-      )}
-    </div>
-  );
-}
 
 type TriStateFilter = "all" | "yes" | "no";
 
