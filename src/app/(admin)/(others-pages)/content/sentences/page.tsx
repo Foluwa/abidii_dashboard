@@ -30,8 +30,10 @@ import {
 import InlineAudioPlayer from '@/components/ui/audio/InlineAudioPlayer';
 import { RegenerateAudioModal, RegenerateAudioTarget } from '@/components/modals/RegenerateAudioModal';
 import { ChartColumn, CircleCheck, Globe, Trash2, Volume2 } from "lucide-react";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export default function SentencesPage() {
+  const { confirm, modal: confirmModal } = useConfirm();
   const router = useRouter();
   const toast = useToast();
   
@@ -252,7 +254,7 @@ export default function SentencesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this sentence?')) return;
+    if (!(await confirm({ title: "Delete Sentence", message: "Are you sure you want to delete this sentence?", confirmLabel: "Delete", variant: "danger" }))) return;
 
     try {
       await apiClient.delete(`/api/v1/admin/content/sentences/${id}`);
@@ -293,7 +295,7 @@ export default function SentencesPage() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!confirm(`Are you sure you want to delete ${selectedIds.length} sentence(s)?`)) return;
+    if (!(await confirm({ title: "Delete Sentences", message: `Are you sure you want to delete ${selectedIds.length} sentence(s)?`, confirmLabel: "Delete", variant: "danger" }))) return;
 
     setIsDeleting(true);
     try {
@@ -399,6 +401,7 @@ export default function SentencesPage() {
 
   return (
     <div className="space-y-6">
+      {confirmModal}
       <ContentPageHeader
         title="Sentences"
         subtitle="Manage sentence content for language learning"
