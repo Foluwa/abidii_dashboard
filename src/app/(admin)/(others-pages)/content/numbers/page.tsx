@@ -13,6 +13,7 @@ import { Modal } from "@/components/ui/modal";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { RegenerateAudioModal, type RegenerateAudioTarget } from "@/components/modals/RegenerateAudioModal";
 import Pagination from "@/components/tables/Pagination";
+import { ContentPatternsPanel } from "@/components/content/ContentPatternsPanel";
 import {
   ContentPageHeader,
   ContentStatsCard,
@@ -556,6 +557,9 @@ export default function NumbersPage() {
         <ContentStatsCard label="Aligned" value={stats.aligned} icon={CircleCheck} iconBgClass="bg-blue-100 dark:bg-blue-900/20" iconTextClass="text-blue-600 dark:text-blue-400" />
         <ContentStatsCard label="Compound" value={stats.compound} icon={GitMerge} iconBgClass="bg-purple-100 dark:bg-purple-900/20" iconTextClass="text-purple-600 dark:text-purple-400" />
       </ContentStatsGrid>
+
+      {/* Number formation patterns (formerly Content → Patterns) */}
+      <ContentPatternsPanel languageId={selectedLanguage} />
 
       {/* Bulk Import from Google Sheets (has built-in accordion) */}
       {selectedLanguage && (
