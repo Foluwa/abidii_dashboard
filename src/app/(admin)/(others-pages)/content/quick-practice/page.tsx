@@ -1,12 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
+
 import { apiClient } from "@/lib/api";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import Alert from "@/components/ui/alert/SimpleAlert";
+import { Modal } from "@/components/ui/modal";
+import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import { useToast } from "@/contexts/ToastContext";
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
-import { DialogPanel } from "@/components/ui/modal/DialogPanel";
+import { useConfirm } from "@/hooks/useConfirm";
+import { Pill } from "@/components/subscriptions/subscriptionDisplay";
+import {
+  QuickPracticeIcon,
+  getQuickPracticeIconOptions,
+  getSortOrderFixes,
+  sortQuickPracticeItems,
+} from "@/components/content/quickPractice";
 
 interface QuickPracticeItem {
   id?: string;
@@ -18,180 +28,400 @@ interface QuickPracticeItem {
   enabled: boolean;
 }
 
+const TH_CLASS = "px-3 py-2.5 text-left text-sm font-medium text-muted-foreground";
+const TD_CLASS = "px-3 py-2.5 text-sm";
+const ROW_ICON_BUTTON_CLASS =
+  "inline-flex h-8 w-8 items-center justify-center rounded-lg text-brand-600 hover:bg-brand-50 hover:text-brand-900 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:text-brand-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-300";
+const ROW_DANGER_ICON_BUTTON_CLASS =
+  "inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-destructive/30 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300";
+const ARROW_BUTTON_CLASS =
+  "inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-30";
+const INPUT_CLASS =
+  "block w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-60";
+
+function errorDetail(e: unknown, fallback: string): string {
+  const detail = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
+  return typeof detail === "string" ? detail : fallback;
+}
+
 export default function QuickPracticePage() {
   const toast = useToast();
+  const { confirm, modal: confirmModal } = useConfirm();
   const [items, setItems] = useState<QuickPracticeItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<QuickPracticeItem | null>(null);
+  const [isNew, setIsNew] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [busyItemId, setBusyItemId] = useState<string | null>(null);
 
-  const fetchItems = async () => {
-    setIsLoading(true);
+  const sortedItems = useMemo(() => sortQuickPracticeItems(items), [items]);
+
+  const fetchItems = useCallback(async () => {
     try {
       const res = await apiClient.get("/api/v1/admin/quick-practice");
       setItems(res.data.items || []);
-    } catch (e: any) {
-      setError(e.response?.data?.detail || "Failed to load items");
+      setError("");
+    } catch (e: unknown) {
+      setError(errorDetail(e, "Failed to load items"));
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
+
+  const putItem = (item: QuickPracticeItem) =>
+    apiClient.put(`/api/v1/admin/quick-practice/${encodeURIComponent(item.item_id)}`, item);
+
+  /** Renumber to a clean 0..n-1 (fixes duplicate sort_order values). */
+  const normalizeOrder = async () => {
+    for (const { item, sort_order } of getSortOrderFixes(items)) {
+      await putItem({ ...item, sort_order });
+    }
   };
 
-  useEffect(() => { fetchItems(); }, []);
+  const closeForm = () => {
+    setEditing(null);
+    setIsNew(false);
+  };
 
   const handleSave = async () => {
     if (!editing || !editing.item_id.trim() || !editing.title.trim()) return;
+    // PUT is an upsert keyed by item_id - don't let "Add" silently
+    // overwrite an existing item.
+    if (isNew && items.some((i) => i.item_id === editing.item_id.trim())) {
+      toast.error(`An item with ID "${editing.item_id.trim()}" already exists`);
+      return;
+    }
     setIsSaving(true);
     try {
-      await apiClient.put(`/api/v1/admin/quick-practice/${editing.item_id}`, editing);
+      await putItem({ ...editing, item_id: editing.item_id.trim() });
       toast.success("Saved");
-      setEditing(null);
-      setShowForm(false);
-      fetchItems();
-    } catch (e: any) {
-      toast.error(e.response?.data?.detail || "Failed to save");
+      closeForm();
+      await fetchItems();
+    } catch (e: unknown) {
+      toast.error(errorDetail(e, "Failed to save"));
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleToggle = async (item: QuickPracticeItem) => {
+    if (
+      item.enabled &&
+      !(await confirm({
+        title: "Disable item",
+        message: `"${item.title}" will be hidden from the Quick Practice carousel on learners' home screen.`,
+        confirmLabel: "Disable",
+        variant: "warning",
+      }))
+    ) {
+      return;
+    }
+    setBusyItemId(item.item_id);
     try {
-      await apiClient.put(`/api/v1/admin/quick-practice/${item.item_id}`, { ...item, enabled: !item.enabled });
-      fetchItems();
-    } catch (e: any) {
-      toast.error("Failed to toggle");
+      await putItem({ ...item, enabled: !item.enabled });
+      await fetchItems();
+    } catch (e: unknown) {
+      toast.error(errorDetail(e, "Failed to update item"));
+    } finally {
+      setBusyItemId(null);
     }
   };
 
-  const handleReorder = async (item_id: string, direction: number) => {
+  const handleReorder = async (item_id: string, direction: -1 | 1) => {
+    setBusyItemId(item_id);
     try {
+      // Duplicate sort_order values (two rows at 3) make a swap ambiguous -
+      // renumber first so the move always does what the arrows show.
+      await normalizeOrder();
       await apiClient.post(`/api/v1/admin/quick-practice/reorder`, { item_id, direction });
-      fetchItems();
-    } catch (e: any) {
-      toast.error("Failed to reorder");
+      await fetchItems();
+    } catch (e: unknown) {
+      toast.error(errorDetail(e, "Failed to reorder"));
+      await fetchItems();
+    } finally {
+      setBusyItemId(null);
+    }
+  };
+
+  const handleDelete = async (item: QuickPracticeItem) => {
+    if (
+      !(await confirm({
+        title: "Delete item",
+        message: `Delete "${item.title}" (${item.item_id}) from the Quick Practice carousel? This cannot be undone.`,
+        confirmLabel: "Delete",
+        variant: "danger",
+      }))
+    ) {
+      return;
+    }
+    setBusyItemId(item.item_id);
+    try {
+      await apiClient.delete(`/api/v1/admin/quick-practice/${encodeURIComponent(item.item_id)}`);
+      toast.success("Deleted");
+      await fetchItems();
+    } catch (e: unknown) {
+      toast.error(errorDetail(e, "Failed to delete"));
+    } finally {
+      setBusyItemId(null);
     }
   };
 
   const handleNew = () => {
+    setIsNew(true);
     setEditing({
       item_id: "",
       title: "",
       subtitle: "",
       icon: "style",
-      sort_order: items.length,
+      sort_order: sortedItems.length,
       enabled: true,
     });
-    setShowForm(true);
   };
-
-  if (isLoading) return <div className="p-6"><PageBreadCrumb pageTitle="Quick Practice" /><p className="text-muted-foreground mt-4">Loading...</p></div>;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <PageBreadCrumb pageTitle="Quick Practice" />
-          <p className="mt-1 text-sm text-muted-foreground">Manage Quick Practice carousel items on the home screen</p>
-        </div>
-        <button onClick={handleNew} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-brand-600 rounded-lg hover:bg-brand-700">
-          <Plus className="w-4 h-4" /> Add Item
-        </button>
-      </div>
+      {confirmModal}
+      <PageBreadCrumb
+        pageTitle="Quick Practice"
+        description="Manage Quick Practice carousel items on the home screen"
+        actions={
+          <button
+            type="button"
+            onClick={handleNew}
+            className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" /> Add Item
+          </button>
+        }
+      />
 
       {error && <Alert variant="error">{error}</Alert>}
 
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border">
-            <tr>
-              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Order</th>
-              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">ID</th>
-              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Title</th>
-              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Icon</th>
-              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Subtitle</th>
-              <th className="px-4 py-2.5 text-center font-medium text-muted-foreground">Enabled</th>
-              <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {items.map((item, index) => (
-              <tr key={item.item_id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => handleReorder(item.item_id, -1)} className="p-1 hover:bg-muted rounded">
-                      <ArrowUp className="w-3 h-3" />
-                    </button>
-                    <button onClick={() => handleReorder(item.item_id, 1)} className="p-1 hover:bg-muted rounded">
-                      <ArrowDown className="w-3 h-3" />
-                    </button>
-                    <span className="ml-2 text-muted-foreground text-xs">{item.sort_order}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 font-mono text-xs text-foreground">{item.item_id}</td>
-                <td className="px-4 py-3 font-medium text-foreground">{item.title}</td>
-                <td className="px-4 py-3 font-mono text-xs">{item.icon}</td>
-                <td className="px-4 py-3 text-muted-foreground text-xs">{item.subtitle || "-"}</td>
-                <td className="px-4 py-3 text-center">
-                  <button onClick={() => handleToggle(item)}
-                    className={`px-2 py-1 text-xs font-medium rounded-full ${item.enabled ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
-                    {item.enabled ? "Yes" : "No"}
-                  </button>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button onClick={() => { setEditing({ ...item }); setShowForm(true); }}
-                    className="text-blue-600 dark:text-blue-400 hover:underline text-xs mr-3">Edit</button>
-                  <button onClick={async () => { await apiClient.delete(`/api/v1/admin/quick-practice/${item.item_id}`); fetchItems(); }}
-                    className="text-red-600 dark:text-red-400 hover:underline text-xs">Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="bg-card rounded-lg shadow overflow-hidden">
+        {isLoading ? (
+          <div className="flex h-64 items-center justify-center" role="status" aria-label="Loading">
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="border-b">
+                <tr>
+                  <th className={TH_CLASS}>Order</th>
+                  <th className={TH_CLASS}>ID</th>
+                  <th className={TH_CLASS}>Title</th>
+                  <th className={TH_CLASS}>Icon</th>
+                  <th className={TH_CLASS}>Subtitle</th>
+                  <th className={TH_CLASS}>Enabled</th>
+                  <th className={TH_CLASS}>Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-card divide-y divide-border">
+                {sortedItems.map((item, index) => {
+                  const busy = busyItemId !== null;
+                  return (
+                    <tr key={item.item_id} className="hover:bg-accent" data-testid={`qp-row-${item.item_id}`}>
+                      <td className={`${TD_CLASS} whitespace-nowrap`}>
+                        <div className="flex items-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => handleReorder(item.item_id, -1)}
+                            disabled={busy || index === 0}
+                            aria-label={`Move ${item.title} up`}
+                            title="Move up"
+                            className={ARROW_BUTTON_CLASS}
+                          >
+                            <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleReorder(item.item_id, 1)}
+                            disabled={busy || index === sortedItems.length - 1}
+                            aria-label={`Move ${item.title} down`}
+                            title="Move down"
+                            className={ARROW_BUTTON_CLASS}
+                          >
+                            <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />
+                          </button>
+                          <span
+                            className="ml-2 w-5 text-right tabular-nums text-foreground"
+                            data-testid="qp-position"
+                          >
+                            {index + 1}
+                          </span>
+                        </div>
+                      </td>
+                      <td className={`${TD_CLASS} whitespace-nowrap font-mono text-xs text-muted-foreground`}>
+                        {item.item_id}
+                      </td>
+                      <td className={`${TD_CLASS} font-medium text-foreground`}>{item.title}</td>
+                      <td className={TD_CLASS}>
+                        <QuickPracticeIcon name={item.icon} />
+                      </td>
+                      <td className={`${TD_CLASS} text-muted-foreground`}>{item.subtitle || "—"}</td>
+                      <td className={`${TD_CLASS} whitespace-nowrap`}>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={item.enabled}
+                            aria-label={`${item.title}: ${item.enabled ? "enabled" : "disabled"}`}
+                            title={item.enabled ? "Enabled (click to disable)" : "Disabled (click to enable)"}
+                            onClick={() => handleToggle(item)}
+                            disabled={busy}
+                            className="inline-flex disabled:opacity-50"
+                          >
+                            <span
+                              className={`flex h-6 w-10 items-center rounded-full transition-colors ${item.enabled ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"}`}
+                            >
+                              <span
+                                className={`h-4 w-4 rounded-full bg-white transition-transform ${item.enabled ? "translate-x-5" : "translate-x-1"}`}
+                              />
+                            </span>
+                          </button>
+                          <Pill tone={item.enabled ? "green" : "neutral"}>
+                            {item.enabled ? "Enabled" : "Disabled"}
+                          </Pill>
+                        </div>
+                      </td>
+                      <td className={`${TD_CLASS} whitespace-nowrap`}>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsNew(false);
+                              setEditing({ ...item });
+                            }}
+                            aria-label={`Edit ${item.title}`}
+                            title="Edit"
+                            className={ROW_ICON_BUTTON_CLASS}
+                          >
+                            <Pencil className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(item)}
+                            disabled={busy}
+                            aria-label={`Delete ${item.title}`}
+                            title="Delete"
+                            className={ROW_DANGER_ICON_BUTTON_CLASS}
+                          >
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {sortedItems.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-3 py-12 text-center text-muted-foreground">
+                      No Quick Practice items yet
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* Edit Modal */}
-      {showForm && editing && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <DialogPanel className="bg-card rounded-lg shadow-xl max-w-md w-full m-4" onClose={() => { setShowForm(false); setEditing(null); }} aria-labelledby="quick-practice-dialog-title">
-            <div className="p-6 border-b border-border">
-              <h2 id="quick-practice-dialog-title" className="text-xl font-semibold text-foreground">{editing.item_id ? "Edit Item" : "Add Item"}</h2>
+      <Modal
+        isOpen={editing !== null}
+        onClose={isSaving ? () => {} : closeForm}
+        title={isNew ? "Add Item" : "Edit Item"}
+        maxWidth="md"
+        showCloseButton={!isSaving}
+      >
+        {editing && (
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSave();
+            }}
+          >
+            <div>
+              <label htmlFor="qp-item-id" className="mb-1 block text-sm font-medium text-foreground">
+                Item ID *
+              </label>
+              <input
+                id="qp-item-id"
+                value={editing.item_id}
+                onChange={(e) => setEditing({ ...editing, item_id: e.target.value })}
+                disabled={!isNew}
+                className={`${INPUT_CLASS} font-mono`}
+                placeholder="e.g. flashcards"
+              />
+              {!isNew && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  The ID is the app&apos;s route key and can&apos;t be changed.
+                </p>
+              )}
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Item ID *</label>
-                <input value={editing.item_id} onChange={e => setEditing({ ...editing, item_id: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg bg-background text-foreground" placeholder="e.g. flashcards" />
+            <div>
+              <label htmlFor="qp-title" className="mb-1 block text-sm font-medium text-foreground">
+                Title *
+              </label>
+              <input
+                id="qp-title"
+                value={editing.title}
+                onChange={(e) => setEditing({ ...editing, title: e.target.value })}
+                className={INPUT_CLASS}
+                placeholder="e.g. Flashcards"
+              />
+            </div>
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <StyledSelect
+                  label="Icon"
+                  value={editing.icon}
+                  onChange={(e) => setEditing({ ...editing, icon: String(e.target.value) })}
+                  options={getQuickPracticeIconOptions(editing.icon)}
+                  fullWidth
+                />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Title *</label>
-                <input value={editing.title} onChange={e => setEditing({ ...editing, title: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg bg-background text-foreground" placeholder="e.g. Flashcards" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Icon</label>
-                <input value={editing.icon} onChange={e => setEditing({ ...editing, icon: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg bg-background text-foreground" placeholder="e.g. style, book, timer" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Subtitle</label>
-                <input value={editing.subtitle} onChange={e => setEditing({ ...editing, subtitle: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg bg-background text-foreground" placeholder="Optional subtitle" />
+              <div className="pb-1">
+                <QuickPracticeIcon name={editing.icon} />
               </div>
             </div>
-            <div className="p-6 border-t border-border flex gap-3 justify-end">
-              <button onClick={() => { setShowForm(false); setEditing(null); }}
-                className="px-4 py-2 text-sm border rounded-lg hover:bg-accent">Cancel</button>
-              <button onClick={handleSave} disabled={isSaving}
-                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50">
+            <div>
+              <label htmlFor="qp-subtitle" className="mb-1 block text-sm font-medium text-foreground">
+                Subtitle
+              </label>
+              <input
+                id="qp-subtitle"
+                value={editing.subtitle}
+                onChange={(e) => setEditing({ ...editing, subtitle: e.target.value })}
+                className={INPUT_CLASS}
+                placeholder="Optional subtitle"
+              />
+            </div>
+            <div className="flex justify-end gap-3 border-t border-border pt-4">
+              <button
+                type="button"
+                onClick={closeForm}
+                disabled={isSaving}
+                className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-accent"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving || !editing.item_id.trim() || !editing.title.trim()}
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-700 disabled:opacity-50"
+              >
                 {isSaving ? "Saving..." : "Save"}
               </button>
             </div>
-          </DialogPanel>
-        </div>
-      )}
+          </form>
+        )}
+      </Modal>
     </div>
   );
 }
