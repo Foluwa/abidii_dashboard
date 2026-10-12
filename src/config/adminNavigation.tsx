@@ -43,6 +43,7 @@ export const mainNavigationItems: AdminNavItem[] = [
       { name: "Users", path: "/users", permission: "users:read" },
       { name: "Admins", path: "/users/admins", permission: "users:read" },
       { name: "Subscriptions", path: "/subscriptions", permission: "users:read" },
+      { name: "Feedback", path: "/feedback", permission: "users:read" },
     ],
   },
   {

@@ -25,6 +25,7 @@ import type {
 } from '@/types/curriculum';
 import type { AdminAuditLogListResponse } from '@/types/audit-log';
 import type { DictionaryReportListResponse } from '@/types/dictionary-reports';
+import type { FeedbackFilters, FeedbackListResponse, FeedbackSummary } from '@/types/feedback';
 import type {
   ConversationSceneDetail,
   ConversationSceneListResponse,
@@ -848,6 +849,34 @@ export function useAdminAuditLogList(filters?: AdminAuditLogListFilters) {
   };
 }
 
+
+export function feedbackQuery(filters?: FeedbackFilters): string {
+  const params = new URLSearchParams();
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.limit) params.set('limit', String(filters.limit));
+  if (filters?.status) params.set('status', filters.status);
+  if (filters?.platform) params.set('platform', filters.platform);
+  if (filters?.language) params.set('language', filters.language);
+  if (filters?.q) params.set('q', filters.q);
+  return params.toString() ? `?${params.toString()}` : '';
+}
+
+export function useAdminFeedbackList(filters?: FeedbackFilters) {
+  const { data, error, mutate } = useSWR<FeedbackListResponse>(
+    `/api/v1/admin/feedback${feedbackQuery(filters)}`,
+    fetcher,
+    { revalidateOnFocus: false, shouldRetryOnError: false },
+  );
+  return { data, isLoading: !error && !data, isError: error, mutate };
+}
+
+export function useAdminFeedbackSummary() {
+  const { data, error, mutate } = useSWR<FeedbackSummary>('/api/v1/admin/feedback/summary', fetcher, {
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+  });
+  return { data, isLoading: !error && !data, isError: error, mutate };
+}
 
 export interface AdminDictionaryReportListFilters {
   page?: number;
