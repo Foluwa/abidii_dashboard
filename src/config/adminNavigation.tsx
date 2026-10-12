@@ -105,6 +105,15 @@ export const mainNavigationItems: AdminNavItem[] = [
         permission: "content:update",
       },
       {
+        name: "Blog",
+        permission: "content:update",
+        subItems: [
+          { name: "Posts", path: "/content/blog/posts" },
+          { name: "Tags", path: "/content/blog/tags" },
+          { name: "Authors", path: "/content/blog/authors" },
+        ],
+      },
+      {
         name: "Content Ops",
         path: "/content/ops",
         activePaths: [
