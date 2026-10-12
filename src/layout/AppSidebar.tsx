@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import Link from "next/link";
+import BrandLogo from "@/components/common/BrandLogo";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
@@ -268,31 +269,7 @@ const AppSidebar: React.FC = () => {
     >
       <div className={`py-4 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
         <Link href="/dashboard">
-          {isExpanded || isHovered || isMobileOpen ? (
-            <>
-              <Image
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <Image
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-            </>
-          ) : (
-            <Image
-              src="/images/logo/logo-icon.svg"
-              alt="Logo"
-              width={32}
-              height={32}
-            />
-          )}
+          <BrandLogo iconOnly={!(isExpanded || isHovered || isMobileOpen)} size={isExpanded || isHovered || isMobileOpen ? 36 : 32} />
         </Link>
       </div>
 
