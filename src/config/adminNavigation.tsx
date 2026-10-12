@@ -43,6 +43,7 @@ export const mainNavigationItems: AdminNavItem[] = [
       { name: "Users", path: "/users", permission: "users:read" },
       { name: "Admins", path: "/users/admins", permission: "users:read" },
       { name: "Subscriptions", path: "/subscriptions", permission: "users:read" },
+      { name: "Feedback", path: "/feedback", permission: "users:read" },
     ],
   },
   {
@@ -103,6 +104,15 @@ export const mainNavigationItems: AdminNavItem[] = [
         name: "Wardrobe Catalogue",
         path: "/content/wardrobe",
         permission: "content:update",
+      },
+      {
+        name: "Blog",
+        permission: "content:update",
+        subItems: [
+          { name: "Posts", path: "/content/blog/posts" },
+          { name: "Tags", path: "/content/blog/tags" },
+          { name: "Authors", path: "/content/blog/authors" },
+        ],
       },
       {
         name: "Content Ops",

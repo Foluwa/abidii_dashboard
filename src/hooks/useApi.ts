@@ -25,6 +25,7 @@ import type {
 } from '@/types/curriculum';
 import type { AdminAuditLogListResponse } from '@/types/audit-log';
 import type { DictionaryReportListResponse } from '@/types/dictionary-reports';
+import type { FeedbackFilters, FeedbackListResponse, FeedbackSummary } from '@/types/feedback';
 import type {
   ConversationSceneDetail,
   ConversationSceneListResponse,
@@ -32,6 +33,15 @@ import type {
 import type { MissionClaimListResponse, MissionSummaryResponse } from '@/types/daily-missions';
 import type { LearnerTier, LearningPathResponse } from '@/types/learning-path';
 import type { WardrobeCatalogResponse } from '@/types/wardrobe';
+import type {
+  BlogAuthor,
+  BlogAuthorListResponse,
+  BlogLocalesResponse,
+  BlogPost,
+  BlogPostListResponse,
+  BlogRevisionListResponse,
+  BlogTagListResponse,
+} from '@/types/blog';
 import type { SceneDetail, SceneListResponse } from '@/types/scene-library';
 import type { MediaDuplicateReportResponse, MediaLibraryListResponse } from '@/types/mediaLibrary';
 import type {
@@ -848,6 +858,34 @@ export function useAdminAuditLogList(filters?: AdminAuditLogListFilters) {
   };
 }
 
+
+export function feedbackQuery(filters?: FeedbackFilters): string {
+  const params = new URLSearchParams();
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.limit) params.set('limit', String(filters.limit));
+  if (filters?.status) params.set('status', filters.status);
+  if (filters?.platform) params.set('platform', filters.platform);
+  if (filters?.language) params.set('language', filters.language);
+  if (filters?.q) params.set('q', filters.q);
+  return params.toString() ? `?${params.toString()}` : '';
+}
+
+export function useAdminFeedbackList(filters?: FeedbackFilters) {
+  const { data, error, mutate } = useSWR<FeedbackListResponse>(
+    `/api/v1/admin/feedback${feedbackQuery(filters)}`,
+    fetcher,
+    { revalidateOnFocus: false, shouldRetryOnError: false },
+  );
+  return { data, isLoading: !error && !data, isError: error, mutate };
+}
+
+export function useAdminFeedbackSummary() {
+  const { data, error, mutate } = useSWR<FeedbackSummary>('/api/v1/admin/feedback/summary', fetcher, {
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+  });
+  return { data, isLoading: !error && !data, isError: error, mutate };
+}
 
 export interface AdminDictionaryReportListFilters {
   page?: number;
@@ -2337,4 +2375,66 @@ export function useAdminWardrobeCatalog() {
     READ_ONLY_SWR_OPTIONS,
   );
   return { data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
+
+// ------------------------------------------------------------- blog (TODO #43)
+/** Locales the blog publishes in (backend setting BLOG_LOCALES). */
+export function useBlogLocales() {
+  const { data, error, mutate } = useSWR<BlogLocalesResponse>('/api/v1/admin/blog/locales', fetcher, READ_ONLY_SWR_OPTIONS);
+  return { locales: data?.locales ?? [], data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
+
+export interface BlogPostFilters {
+  page?: number;
+  limit?: number;
+  status?: string;
+  locale?: string;
+  search?: string;
+}
+
+export function useBlogPosts(filters: BlogPostFilters = {}) {
+  const params = new URLSearchParams();
+  if (filters.page) params.set('page', String(filters.page));
+  if (filters.limit) params.set('limit', String(filters.limit));
+  if (filters.status) params.set('status', filters.status);
+  if (filters.locale) params.set('locale', filters.locale);
+  if (filters.search) params.set('search', filters.search);
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  const { data, error, mutate } = useSWR<BlogPostListResponse>(
+    `/api/v1/admin/blog/posts${suffix}`,
+    fetcher,
+    READ_ONLY_SWR_OPTIONS,
+  );
+  return { data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
+
+export function useBlogPost(postId?: string | null) {
+  const url = postId ? `/api/v1/admin/blog/posts/${encodeURIComponent(postId)}` : null;
+  const { data, error, mutate } = useSWR<BlogPost>(url, fetcher, READ_ONLY_SWR_OPTIONS);
+  return { data, isLoading: !!url && !error && !data, isError: error, refresh: mutate };
+}
+
+export function useBlogRevisions(postId?: string | null, locale?: string | null) {
+  const url =
+    postId && locale
+      ? `/api/v1/admin/blog/posts/${encodeURIComponent(postId)}/translations/${encodeURIComponent(locale)}/revisions`
+      : null;
+  const { data, error, mutate } = useSWR<BlogRevisionListResponse>(url, fetcher, READ_ONLY_SWR_OPTIONS);
+  return { data, isLoading: !!url && !error && !data, isError: error, refresh: mutate };
+}
+
+export function useBlogTags() {
+  const { data, error, mutate } = useSWR<BlogTagListResponse>('/api/v1/admin/blog/tags', fetcher, READ_ONLY_SWR_OPTIONS);
+  return { tags: data?.items ?? [], data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
+
+export function useBlogAuthors() {
+  const { data, error, mutate } = useSWR<BlogAuthorListResponse>('/api/v1/admin/blog/authors', fetcher, READ_ONLY_SWR_OPTIONS);
+  return { authors: data?.items ?? [], data, isLoading: !error && !data, isError: error, refresh: mutate };
+}
+
+export function useBlogAuthor(authorId?: string | null) {
+  const url = authorId ? `/api/v1/admin/blog/authors/${encodeURIComponent(authorId)}` : null;
+  const { data, error, mutate } = useSWR<BlogAuthor>(url, fetcher, READ_ONLY_SWR_OPTIONS);
+  return { data, isLoading: !!url && !error && !data, isError: error, refresh: mutate };
 }
