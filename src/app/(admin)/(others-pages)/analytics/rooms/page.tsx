@@ -11,6 +11,7 @@ import { StyledSelect } from "@/components/ui/form/StyledSelect";
 import AnalyticsTabs from "@/components/analytics/AnalyticsTabs";
 import RoomsTimeSeriesChart from "@/components/charts/RoomsTimeSeriesChart";
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
+import { maskEmail } from "@/lib/maskEmail";
 
 /** Tiny avatar + name cell for a room's host - previously just showed a bare
  * "—" whenever display_name was empty, with no way to identify who the
@@ -22,7 +23,7 @@ function HostCell({ host }: { host: RecentRoomItem["host"] }) {
     return <span className="text-muted-foreground">—</span>;
   }
 
-  const label = host.display_name || host.email || "Unknown user";
+  const label = host.display_name || maskEmail(host.email) || "Unknown user";
   const avatarSource = cleanSvgForDisplay(host.avatar_svg) || cleanSvgForDisplay(host.picture_url) || null;
 
   return (

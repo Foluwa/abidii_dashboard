@@ -20,6 +20,7 @@ import DatePicker from "@/components/form/date-picker";
 import { UserDetailsSheet } from "@/components/admin/users/UserDetailsSheet";
 import { Eye, Globe, Mail, OctagonAlert, Smartphone, Trash2, UserCheck, UserX } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
+import MaskedEmail from "@/components/common/MaskedEmail";
 
 type TabRole = "all" | UserRole;
 type ActionType = "deactivate" | "reactivate" | "delete" | "purge";
@@ -740,8 +741,8 @@ export default function UsersPage() {
                               <div className="text-sm font-medium text-foreground">
                                 {user.display_name || user.name || "N/A"}
                               </div>
-                              <div className="break-all text-xs leading-4 text-muted-foreground" title={user.email || undefined}>
-                                {user.email || "No email"}
+                              <div className="text-xs leading-4 text-muted-foreground">
+                                <MaskedEmail email={user.email} />
                               </div>
                               <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
                                 {getProviderIcon(user.provider)}
