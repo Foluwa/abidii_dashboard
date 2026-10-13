@@ -2,6 +2,7 @@
 
 import React from "react";
 import { UserAvatar } from "@/components/common/UserAvatar";
+import { maskEmail } from "@/lib/maskEmail";
 
 /**
  * Shared display helpers for the Subscriptions / Subscription Events /
@@ -197,13 +198,13 @@ export interface SubscriptionUserFields {
 /**
  * Avatar + name. Primary line is the display name (else @username, else
  * email); secondary line is @username when there's also a display name.
- * The email stays available as a hover tooltip for admins.
+ * The (masked) email stays available as a hover tooltip for admins.
  */
 export function SubscriptionUserCell({ row }: { row: SubscriptionUserFields }) {
   const username = row.user_username ? `@${row.user_username}` : null;
-  const primary = row.user_display_name || username || row.user_email || "Unknown user";
+  const primary = row.user_display_name || username || maskEmail(row.user_email) || "Unknown user";
   const secondary = row.user_display_name && username ? username : null;
-  const tooltip = [row.user_email, row.user_id].filter(Boolean).join(" · ");
+  const tooltip = [maskEmail(row.user_email), row.user_id].filter(Boolean).join(" · ");
 
   return (
     <div className="flex items-center gap-3" title={tooltip || undefined}>

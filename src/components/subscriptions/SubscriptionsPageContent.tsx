@@ -30,6 +30,7 @@ import {
 import { Card, CardAction, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 import MaskedEmail from "@/components/common/MaskedEmail";
+import { maskEmail } from "@/lib/maskEmail";
 
 type SubscriptionStatus = "active" | "trialing" | "past_due" | "canceled" | "expired" | "";
 type SubscriptionProvider = "apple" | "google" | "stripe" | "manual" | "";
@@ -646,7 +647,7 @@ export function SubscriptionsPageContent({
               <div>
                 <h3 id="edit-sub-dialog-title" className="text-lg font-semibold text-foreground">Edit Subscription</h3>
                 <p className="text-sm text-muted-foreground">
-                  {editSub.user_display_name || (editSub.user_username ? `@${editSub.user_username}` : null) || editSub.user_email || editSub.user_id}
+                  {editSub.user_display_name || (editSub.user_username ? `@${editSub.user_username}` : null) || maskEmail(editSub.user_email) || editSub.user_id}
                 </p>
               </div>
               <button

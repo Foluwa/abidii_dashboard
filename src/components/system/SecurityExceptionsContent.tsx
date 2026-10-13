@@ -6,6 +6,7 @@ import { apiClient } from "@/lib/api";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { useToast } from "@/contexts/ToastContext";
 import MaskedEmail from "@/components/common/MaskedEmail";
+import { maskEmail } from "@/lib/maskEmail";
 
 interface DeviceSecurityException {
   id: string;
@@ -67,7 +68,7 @@ export function SecurityExceptionsContent({ showHeader = true }: { showHeader?: 
     setIsDeleting(true);
     try {
       await apiClient.delete(`/api/v1/security/device-exceptions/${pendingDelete.id}`);
-      toast.success(`${pendingDelete.email} removed from the exception list`);
+      toast.success(`${maskEmail(pendingDelete.email)} removed from the exception list`);
       setPendingDelete(null);
       await fetchItems();
     } catch (err: any) {
@@ -180,7 +181,7 @@ export function SecurityExceptionsContent({ showHeader = true }: { showHeader?: 
         onClose={() => setPendingDelete(null)}
         onConfirm={handleDelete}
         title="Remove exception"
-        message={`Remove ${pendingDelete?.email} from the device security exception list? Their account will be locked again the next time a flagged device reports in.`}
+        message={`Remove ${maskEmail(pendingDelete?.email)} from the device security exception list? Their account will be locked again the next time a flagged device reports in.`}
         confirmText="Remove"
         variant="danger"
         isLoading={isDeleting}

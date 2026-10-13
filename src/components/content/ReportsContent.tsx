@@ -9,6 +9,7 @@ import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { Modal } from '@/components/ui/modal';
 import { useAdminDictionaryReportsList } from '@/hooks/useApi';
 import type { DictionaryReportItem } from '@/types/dictionary-reports';
+import MaskedEmail from "@/components/common/MaskedEmail";
 
 const STATUS_OPTIONS = [
   { label: 'All', value: '' },
@@ -117,7 +118,7 @@ export function ReportsContent({ showHeader = true, isActive = true }: { showHea
                           {row.reporter_display_name || row.reporter_email || '—'}
                         </div>
                         {row.reporter_email && row.reporter_display_name && (
-                          <div className="mt-0.5 text-xs text-muted-foreground">{row.reporter_email}</div>
+                          <div className="mt-0.5 text-xs text-muted-foreground"><MaskedEmail email={row.reporter_email} empty="" /></div>
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm">{statusBadgeFor(row.status)}</td>

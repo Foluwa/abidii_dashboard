@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 
 import { useRecentActivity } from "@/hooks/useApi";
+import { maskEmail } from "@/lib/maskEmail";
 
 type RecentActivityItem = {
   id: string;
@@ -90,7 +91,7 @@ export default function RecentActivityFeed({
       <div className="space-y-3 pr-2">
         {items.map((item) => {
           const actor =
-            item.actor_display_name || item.actor_email || "Unknown actor";
+            item.actor_display_name || maskEmail(item.actor_email) || "Unknown actor";
 
           return (
             <div
