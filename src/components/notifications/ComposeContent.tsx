@@ -11,6 +11,8 @@ import {
 import { useUsers } from '@/hooks/useApi';
 import { StyledSelect } from '@/components/ui/form/StyledSelect';
 import { Funnel, Globe, PenLine, Target, User } from "lucide-react";
+import MaskedEmail from "@/components/common/MaskedEmail";
+import { maskEmail } from "@/lib/maskEmail";
 
 type SelectedUser = { id: string; label: string };
 
@@ -288,7 +290,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                       </p>
                     ) : (
                       userList.map((user: any) => {
-                        const label = user.display_name || user.email || user.id;
+                        const label = user.display_name || maskEmail(user.email) || user.id;
                         const checked = selectedUserIds.includes(user.id);
                         return (
                           <label
@@ -303,7 +305,7 @@ export function ComposeContent({ showHeader = true }: { showHeader?: boolean; is
                             />
                             <span className="flex-1 truncate">{label}</span>
                             {user.email && user.display_name && (
-                              <span className="truncate text-xs text-gray-400">{user.email}</span>
+                              <MaskedEmail email={user.email} className="text-xs text-gray-400" />
                             )}
                           </label>
                         );
