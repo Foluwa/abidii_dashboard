@@ -170,3 +170,52 @@ export interface RetentionResponse {
   weekly_returning_users: WeeklyReturningUsersItem[];
   monthly_summary: RetentionMonthlySummary;
 }
+
+// GET /api/v1/admin/analytics/email-signin?days=N
+// Built from hashed sign-in events; never contains email addresses.
+export interface EmailSignInFunnel {
+  addresses: number;
+  codes_sent: number;
+  resends: number;
+  verified: number;
+  not_verified: number;
+  expired_unverified: number;
+  verify_rate: number | null;
+  median_seconds_to_verify: number | null;
+  new_accounts: number;
+}
+
+export interface EmailSignInBreakdown {
+  key: string;
+  addresses: number;
+  codes_sent: number;
+  verified: number;
+  verify_rate: number | null;
+  median_seconds_to_verify: number | null;
+}
+
+export interface EmailSignInDay {
+  date: string;
+  codes_sent: number;
+  verified: number;
+  expired: number;
+  wrong: number;
+  limited: number;
+}
+
+export interface EmailSignInAnalyticsResponse {
+  days: number;
+  since: string;
+  funnel: EmailSignInFunnel;
+  by_platform: EmailSignInBreakdown[];
+  by_language: EmailSignInBreakdown[];
+  daily: EmailSignInDay[];
+  abuse: {
+    wrong_codes: number;
+    limits_hit: number;
+    limited_by_reason: { reason: string; count: number }[];
+    locks: number;
+    locked_addresses: { address: string; locks: number; last_locked_at: string }[];
+    busiest_networks: { network: string; codes_sent: number; addresses: number; limited: number }[];
+  };
+}
