@@ -5,6 +5,7 @@ import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import { apiClient } from "@/lib/api";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import { useToast } from "@/contexts/ToastContext";
+import MaskedEmail from "@/components/common/MaskedEmail";
 
 interface DeviceSecurityException {
   id: string;
@@ -153,7 +154,7 @@ export function SecurityExceptionsContent({ showHeader = true }: { showHeader?: 
             ) : (
               items.map((item) => (
                 <tr key={item.id}>
-                  <td className="px-4 py-3 font-medium text-foreground">{item.email}</td>
+                  <td className="px-4 py-3 font-medium text-foreground"><MaskedEmail email={item.email} /></td>
                   <td className="px-4 py-3 text-muted-foreground">{item.note || "—"}</td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {new Date(item.created_at).toLocaleDateString()}

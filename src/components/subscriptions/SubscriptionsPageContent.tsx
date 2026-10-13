@@ -29,6 +29,7 @@ import {
 } from "@/components/subscriptions/subscriptionDisplay";
 import { Card, CardAction, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { DialogPanel } from "@/components/ui/modal/DialogPanel";
+import MaskedEmail from "@/components/common/MaskedEmail";
 
 type SubscriptionStatus = "active" | "trialing" | "past_due" | "canceled" | "expired" | "";
 type SubscriptionProvider = "apple" | "google" | "stripe" | "manual" | "";
@@ -521,7 +522,7 @@ export function SubscriptionsPageContent({
                           className="w-full text-left px-3 py-2 hover:bg-accent"
                         >
                           <div className="text-sm text-foreground">
-                            {u.email || "(no email)"}
+                            <MaskedEmail email={u.email} empty="(no email)" />
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {u.display_name ? `${u.display_name} • ` : ""}

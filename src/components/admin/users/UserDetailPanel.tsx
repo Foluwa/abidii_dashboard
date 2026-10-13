@@ -27,6 +27,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { UserDetail } from "@/types/api";
+import MaskedEmail from "@/components/common/MaskedEmail";
+import { maskEmail } from "@/lib/maskEmail";
 
 type ModalType = "deactivate" | "reactivate" | "delete" | "purge" | null;
 type DailyActivity = {
@@ -343,7 +345,7 @@ export function UserDetailPanel({
     u.last_active_at ??
     (u.last_request_at === undefined ? u.last_login_at : u.last_request_at);
   const avatarSource = cleanSvgForDisplay(u.avatar_svg) || cleanSvgForDisplay(u.picture_url) || null;
-  const avatarLabel = u.display_name || u.email || "User";
+  const avatarLabel = u.display_name || maskEmail(u.email) || "User";
   const isPremium = Boolean(u.has_premium || u.is_premium);
   const gameBreakdown = (player?.game_breakdown || []) as GameBreakdown[];
   const recentSessions = (player?.recent_sessions || []) as GameSession[];
@@ -408,7 +410,7 @@ export function UserDetailPanel({
             <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
               {u.username && <span className="text-foreground/80">@{u.username}</span>}
               {u.username && <span aria-hidden="true">·</span>}
-              <span className="truncate">{u.email || "No email"}</span>
+              <MaskedEmail email={u.email} className="min-w-0" />
               {u.email_verified && (
                 <BadgeCheck className="size-4 shrink-0 text-sky-600 dark:text-sky-400" aria-label="Email verified" />
               )}
