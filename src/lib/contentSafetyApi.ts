@@ -11,6 +11,10 @@ export const SENSITIVE_CATEGORIES = [
   { value: 'drugs', label: 'Drugs' },
   { value: 'self_harm', label: 'Self-harm' },
   { value: 'hate', label: 'Hate' },
+  // Staff-only reasons (the AI classifier never assigns these).
+  { value: 'debatable', label: 'Debatable' },
+  { value: 'complex', label: 'Complex' },
+  { value: 'other', label: 'Other' },
 ] as const;
 
 export type SensitiveCategory = (typeof SENSITIVE_CATEGORIES)[number]['value'];
