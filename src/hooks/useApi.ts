@@ -47,6 +47,7 @@ import type { MediaDuplicateReportResponse, MediaLibraryListResponse } from '@/t
 import type {
   CurriculumOpsMetricsResponse,
   RoomAnalyticsResponse,
+  EmailSignInAnalyticsResponse,
   RoomTypeFilterValue,
   RoomStatusFilterValue,
   RetentionResponse,
@@ -1757,6 +1758,27 @@ export function useAdminRoomsAnalytics(filters?: RoomAnalyticsFiltersInput) {
   const { enabled, isAuthLoading } = useAdminApiReady();
   const url = enabled ? `/api/v1/admin/analytics/rooms?${params.toString()}` : null;
   const { data, error, mutate } = useSWR<RoomAnalyticsResponse>(url, fetcher, {
+    revalidateOnFocus: false,
+    refreshInterval: 0,
+    shouldRetryOnError: false,
+  });
+
+  return {
+    analytics: data,
+    isLoading: isAuthLoading || (enabled && !error && !data),
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/**
+ * Email code sign-in analytics (v1.0.8)
+ * GET /api/v1/admin/analytics/email-signin?days=N
+ */
+export function useEmailSignInAnalytics(days: number = 30) {
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const url = enabled ? `/api/v1/admin/analytics/email-signin?days=${days}` : null;
+  const { data, error, mutate } = useSWR<EmailSignInAnalyticsResponse>(url, fetcher, {
     revalidateOnFocus: false,
     refreshInterval: 0,
     shouldRetryOnError: false,

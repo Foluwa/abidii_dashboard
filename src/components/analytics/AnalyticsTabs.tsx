@@ -11,6 +11,7 @@ const tabs = [
   { name: "Detailed", href: "/analytics/detailed" },
   { name: "Learning", href: "/analytics/learning" },
   { name: "Learning Path", href: "/analytics/learning-path" },
+  { name: "Email Sign-in", href: "/analytics/email-signin" },
 ];
 
 /** Exact match, or a sub-page of the tab ("/analytics/learning/x") - but
