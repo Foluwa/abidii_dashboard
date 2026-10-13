@@ -11,6 +11,7 @@ import { Modal } from '@/components/ui/modal';
 import { apiClient } from '@/lib/api';
 import { feedbackQuery, useAdminFeedbackList, useAdminFeedbackSummary } from '@/hooks/useApi';
 import type { FeedbackItem, FeedbackStatus, FeedbackSummary } from '@/types/feedback';
+import MaskedEmail from "@/components/common/MaskedEmail";
 
 // Responses from the website's feedback form (abidii.app/feedback), which
 // replaced the Google Form in app 1.0.8. Keys match the backend's
@@ -232,9 +233,12 @@ export function FeedbackContent() {
               )}
               <Detail label="Reply to">
                 {selected.contact_email ? (
-                  <a href={`mailto:${selected.contact_email}?subject=Your%20Abidii%20feedback`} className="text-primary hover:underline">
-                    {selected.contact_email}
-                  </a>
+                  <span className="inline-flex flex-wrap items-center gap-2">
+                    <MaskedEmail email={selected.contact_email} />
+                    <a href={`mailto:${selected.contact_email}?subject=Your%20Abidii%20feedback`} className="text-primary hover:underline">
+                      Reply
+                    </a>
+                  </span>
                 ) : (
                   'No email given'
                 )}

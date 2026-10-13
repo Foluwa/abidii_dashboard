@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Award } from "lucide-react";
 import { cleanSvgForDisplay, getAvatarColor, getInitials } from "@/lib/svg-utils";
+import { maskEmail } from "@/lib/maskEmail";
 
 export interface UserAvatarUser {
   id?: string | null;
@@ -32,7 +33,7 @@ export function UserAvatar({
 }) {
   const [failed, setFailed] = useState(false);
   const source = cleanSvgForDisplay(user.avatar_svg) || cleanSvgForDisplay(user.picture_url) || null;
-  const label = user.display_name || user.username || user.email || "User";
+  const label = user.display_name || user.username || maskEmail(user.email) || "User";
 
   return (
     <div className="relative inline-flex shrink-0">

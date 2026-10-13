@@ -448,7 +448,7 @@ export function UserDetailPanel({
           <Rows
             rows={[
               ["Display name", u.display_name || "Not set"],
-              ["Email", u.email || "Not set"],
+              ["Email", <MaskedEmail key="e" email={u.email} empty="Not set" />],
               ["Sign-in", <span key="p" className="capitalize">{u.provider || "device"}</span>],
               ["Country", u.country_code ? `${countryFlagEmoji(u.country_code)} ${countryName(u.country_code)}` : "Unknown"],
               ["Time zone", u.timezone || "Unknown"],

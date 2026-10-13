@@ -93,7 +93,7 @@ describe('status / event / attempt pills', () => {
 });
 
 describe('SubscriptionUserCell', () => {
-  it('shows display name + @username with email only as tooltip', () => {
+  it('shows display name + @username with the masked email only as tooltip', () => {
     const { container } = render(
       <SubscriptionUserCell
         row={{
@@ -108,13 +108,14 @@ describe('SubscriptionUserCell', () => {
     expect(screen.getByText('Ade')).toBeInTheDocument();
     expect(screen.getByText('@ade_learns')).toBeInTheDocument();
     expect(screen.queryByText('ade@example.com')).not.toBeInTheDocument();
-    expect(container.firstChild).toHaveAttribute('title', 'ade@example.com · u-1');
+    expect(container.firstChild).toHaveAttribute('title', 'ad••••@example.com · u-1');
     expect(screen.getByAltText('Ade avatar')).toBeInTheDocument();
   });
 
-  it('falls back to initials and email when no name/avatar', () => {
-    render(<SubscriptionUserCell row={{ user_id: 'u-2', user_email: 'x@example.com' }} />);
-    expect(screen.getByText('x@example.com')).toBeInTheDocument();
+  it('falls back to initials and the masked email when no name/avatar', () => {
+    render(<SubscriptionUserCell row={{ user_id: 'u-2', user_email: 'xavier@example.com' }} />);
+    expect(screen.getByText('xa••••@example.com')).toBeInTheDocument();
+    expect(screen.queryByText('xavier@example.com')).not.toBeInTheDocument();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
     expect(screen.getByText('X')).toBeInTheDocument();
   });
