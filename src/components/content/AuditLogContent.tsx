@@ -11,6 +11,7 @@ import { Modal } from '@/components/ui/modal';
 import { useAdminAuditLogList } from '@/hooks/useApi';
 import type { AdminAuditLogItem } from '@/types/audit-log';
 import DatePicker from '@/components/form/date-picker';
+import MaskedEmail from "@/components/common/MaskedEmail";
 
 type TimePreset = 'all' | '24h' | '7d' | '30d' | 'custom';
 
@@ -449,7 +450,7 @@ export function AuditLogContent({ showHeader = true, isActive = true }: { showHe
                         {new Date(row.created_at).toLocaleString()}
                       </td>
                       <td className="px-4 py-3 text-sm text-foreground">
-                        <div className="font-medium text-foreground">{row.actor_email || '—'}</div>
+                        <div className="font-medium text-foreground"><MaskedEmail email={row.actor_email} empty="—" /></div>
                         <div className="mt-0.5 text-xs text-muted-foreground">{row.actor_display_name || row.admin_user_id}</div>
                       </td>
                       <td className="px-4 py-3 text-sm text-foreground">

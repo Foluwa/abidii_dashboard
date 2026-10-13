@@ -29,6 +29,7 @@ import {
   useSubscriptionChurn,
   useGeoDistributionActiveUsers,
 } from "@/hooks/useApi";
+import { maskEmail } from "@/lib/maskEmail";
 
 type TimeRange = "24h" | "7d" | "30d" | "6m" | "all";
 
@@ -464,7 +465,7 @@ function SubscriptionChurnCard({ timeRange }: { timeRange: TimeRange }) {
                 plan_id: string; status: string; current_period_end: string; cancel_at_period_end: boolean;
               }) => (
                 <tr key={s.user_id}>
-                  <td className="py-2 text-foreground">{s.display_name || s.email || "Unknown"}</td>
+                  <td className="py-2 text-foreground">{s.display_name || maskEmail(s.email) || "Unknown"}</td>
                   <td className="py-2 text-muted-foreground">{s.plan_id}</td>
                   <td className="py-2">
                     <span className={`rounded-full px-2 py-0.5 text-xs ${

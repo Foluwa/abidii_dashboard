@@ -21,6 +21,7 @@ import { UserDetailsSheet } from "@/components/admin/users/UserDetailsSheet";
 import { Eye, Globe, Mail, OctagonAlert, Smartphone, Trash2, UserCheck, UserX } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/modal/ConfirmationModal";
 import MaskedEmail from "@/components/common/MaskedEmail";
+import { maskEmail } from "@/lib/maskEmail";
 
 type TabRole = "all" | UserRole;
 type ActionType = "deactivate" | "reactivate" | "delete" | "purge";
@@ -841,7 +842,7 @@ export default function UsersPage() {
                                 e.stopPropagation();
                                 setSelectedUserId(user.id);
                               }}
-                              aria-label={`View ${user.display_name || user.email || "user"}`}
+                              aria-label={`View ${user.display_name || maskEmail(user.email) || "user"}`}
                               title="View user"
                               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-600 hover:bg-brand-50 hover:text-brand-900 dark:text-brand-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-300"
                             >
@@ -853,9 +854,9 @@ export default function UsersPage() {
                                   // The row itself opens the user drawer; without this the
                                   // drawer opened too and locked the confirmation dialog.
                                   e.stopPropagation();
-                                  setActionConfirm({ userId: user.id, action: "deactivate", userName: user.display_name || user.email });
+                                  setActionConfirm({ userId: user.id, action: "deactivate", userName: user.display_name || maskEmail(user.email) });
                                 }}
-                                aria-label={`Deactivate ${user.display_name || user.email || "user"}`}
+                                aria-label={`Deactivate ${user.display_name || maskEmail(user.email) || "user"}`}
                                 title="Deactivate user"
                                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-orange-600 hover:bg-orange-50 hover:text-orange-900 dark:text-orange-400 dark:hover:bg-orange-900/30 dark:hover:text-orange-300"
                               >
@@ -867,9 +868,9 @@ export default function UsersPage() {
                                   // The row itself opens the user drawer; without this the
                                   // drawer opened too and locked the confirmation dialog.
                                   e.stopPropagation();
-                                  setActionConfirm({ userId: user.id, action: "reactivate", userName: user.display_name || user.email });
+                                  setActionConfirm({ userId: user.id, action: "reactivate", userName: user.display_name || maskEmail(user.email) });
                                 }}
-                                aria-label={`Reactivate ${user.display_name || user.email || "user"}`}
+                                aria-label={`Reactivate ${user.display_name || maskEmail(user.email) || "user"}`}
                                 title="Reactivate user"
                                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-green-600 hover:bg-green-50 hover:text-green-900 dark:text-green-400 dark:hover:bg-green-900/30 dark:hover:text-green-300"
                               >
@@ -881,17 +882,17 @@ export default function UsersPage() {
                                   // The row itself opens the user drawer; without this the
                                   // drawer opened too and locked the confirmation dialog.
                                   e.stopPropagation();
-                                  setActionConfirm({ userId: user.id, action: "delete", userName: user.display_name || user.email });
+                                  setActionConfirm({ userId: user.id, action: "delete", userName: user.display_name || maskEmail(user.email) });
                                 }}
-                              aria-label={`Delete ${user.display_name || user.email || "user"}`}
+                              aria-label={`Delete ${user.display_name || maskEmail(user.email) || "user"}`}
                               title="Soft delete (deactivates account, data kept, reversible in the DB)"
                               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-600 hover:bg-red-50 hover:text-red-900 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                             >
                               <Trash2 className="h-5 w-5" aria-hidden="true" />
                             </button>
                             <button
-                              onClick={() => setActionConfirm({ userId: user.id, action: "purge", userName: user.display_name || user.email })}
-                              aria-label={`Permanently purge ${user.display_name || user.email || "user"}`}
+                              onClick={() => setActionConfirm({ userId: user.id, action: "purge", userName: user.display_name || maskEmail(user.email) })}
+                              aria-label={`Permanently purge ${user.display_name || maskEmail(user.email) || "user"}`}
                               title="Hard delete (permanently erases the account and all data - irreversible)"
                               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-800 hover:bg-red-100 hover:text-red-950 dark:text-red-500 dark:hover:bg-red-900/50 dark:hover:text-red-300"
                             >
