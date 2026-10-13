@@ -10,6 +10,8 @@ import { Modal } from '@/components/ui/modal';
 import { useToast } from '@/contexts/ToastContext';
 import { listNotificationFailures, listNotificationHistory } from '@/lib/notificationsApi';
 import type { NotificationFailureItem, NotificationLogItem } from '@/types/notifications';
+import MaskedEmail from "@/components/common/MaskedEmail";
+import { maskEmail } from "@/lib/maskEmail";
 
 const FAILURE_REASON_LABELS: Record<string, string> = {
   unregistered: 'Dead token (uninstalled, permission revoked, or sender mismatch)',
@@ -95,10 +97,10 @@ function FailureReasonsModal({
                 >
                   <div className="min-w-0">
                     <p className="truncate font-medium text-foreground">
-                      {f.display_name || f.email || f.user_id || 'Unknown user'}
+                      {f.display_name || maskEmail(f.email) || f.user_id || 'Unknown user'}
                     </p>
                     {f.email && f.display_name && (
-                      <p className="truncate text-xs text-muted-foreground">{f.email}</p>
+                      <p className="truncate text-xs text-muted-foreground"><MaskedEmail email={f.email} /></p>
                     )}
                     <p className="text-xs text-muted-foreground">
                       {FAILURE_REASON_LABELS[f.reason] ?? f.reason}
