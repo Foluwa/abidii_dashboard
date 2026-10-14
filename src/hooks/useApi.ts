@@ -28,11 +28,15 @@ import type {
   AcquisitionAnalyticsResponse,
   AcquisitionOption,
   OnboardingReview,
+  SigninWord,
+  SigninWordTermMatch,
 } from '@/types/onboarding';
 import {
   ACQUISITION_ANALYTICS_URL,
   ACQUISITION_OPTIONS_URL,
   ONBOARDING_REVIEWS_URL,
+  SIGNIN_WORDS_URL,
+  signinWordTermSearchUrl,
   unwrapList,
 } from '@/lib/onboardingApi';
 import type { DictionaryReportListResponse } from '@/types/dictionary-reports';
@@ -2508,6 +2512,41 @@ export function useAcquisitionOptions() {
     isError: error,
     refresh: mutate,
   };
+}
+
+/**
+ * Sign-in words (floating Yorùbá word pills on the app's sign-in screen).
+ * GET /api/v1/admin/onboarding/signin-words
+ */
+export function useSigninWords() {
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const { data, error, mutate } = useSWR<SigninWord[]>(
+    enabled ? SIGNIN_WORDS_URL : null,
+    (url: string) => apiClient.get(url).then((res) => unwrapList<SigninWord>(res.data)),
+    { revalidateOnFocus: false, shouldRetryOnError: false },
+  );
+  return {
+    words: data,
+    isLoading: isAuthLoading || (enabled && !error && !data),
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/**
+ * Word-library matches for picking a sign-in word (up to 20). Pass an
+ * already-debounced query; an empty query doesn't fetch.
+ * GET /api/v1/admin/onboarding/signin-words/term-search?q=
+ */
+export function useSigninWordTermSearch(query: string) {
+  const { enabled } = useAdminApiReady();
+  const url = enabled ? signinWordTermSearchUrl(query) : null;
+  const { data, error } = useSWR<SigninWordTermMatch[]>(
+    url,
+    (u: string) => apiClient.get(u).then((res) => unwrapList<SigninWordTermMatch>(res.data)),
+    { revalidateOnFocus: false, shouldRetryOnError: false, keepPreviousData: true },
+  );
+  return { matches: data, isLoading: !!url && !error && !data, isError: error };
 }
 
 /**
