@@ -11,6 +11,7 @@ import { useToast } from "@/contexts/ToastContext";
 import { Lightbulb } from "lucide-react";
 import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useSearchParams } from "next/navigation";
 
 interface ConfigItem {
   key: string;
@@ -36,6 +37,9 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
   const [isSaving, setIsSaving] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  // ?key=onboarding. narrows the list to keys with that prefix (deep links from other pages).
+  const searchParams = useSearchParams();
+  const [keyPrefix, setKeyPrefix] = useState<string>(() => searchParams?.get("key") || "");
 
   const getActualValue = (item: ConfigItem) => {
     switch (item.value_type) {
@@ -143,8 +147,9 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
   };
 
   const categories = config ? Array.from(new Set(config.map((c: any) => c.category).filter(Boolean))) : [];
-  const filteredConfig = config?.filter((item: any) => 
-    filterCategory === "all" || item.category === filterCategory
+  const filteredConfig = config?.filter((item: any) =>
+    (filterCategory === "all" || item.category === filterCategory) &&
+    (!keyPrefix || String(item.key).startsWith(keyPrefix))
   ) || [];
 
   if (isLoading) {
@@ -197,6 +202,20 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
         </div>
 
         {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
+
+        {keyPrefix && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Showing keys starting with</span>
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-foreground">{keyPrefix}</code>
+            <button
+              type="button"
+              onClick={() => setKeyPrefix("")}
+              className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-400"
+            >
+              Show all
+            </button>
+          </div>
+        )}
 
         {categories.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap">
@@ -312,7 +331,7 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                                 item.value_type === "boolean" 
                                   ? actualValue ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                   : "text-gray-900 dark:text-white"
-                              }`}>
+                              } break-all`}>
                                 {String(actualValue)}
                               </span>
                             );
@@ -380,7 +399,9 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                 ) : (
                   <tr>
                     <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
-                      {filterCategory !== "all" ? `No configurations found in "${filterCategory}" category` : "No configuration items found"}
+                      {keyPrefix
+                        ? `No "${keyPrefix}*" keys yet. They appear once the backend creates them.`
+                        : filterCategory !== "all" ? `No configurations found in "${filterCategory}" category` : "No configuration items found"}
                     </td>
                   </tr>
                 )}

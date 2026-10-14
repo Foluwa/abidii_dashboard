@@ -101,6 +101,11 @@ export const mainNavigationItems: AdminNavItem[] = [
         permission: "content:read",
       },
       {
+        name: "Onboarding",
+        path: "/content/onboarding",
+        permission: "content:update",
+      },
+      {
         name: "Wardrobe Catalogue",
         path: "/content/wardrobe",
         permission: "content:update",
