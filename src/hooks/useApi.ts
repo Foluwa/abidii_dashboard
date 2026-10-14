@@ -24,6 +24,21 @@ import type {
   PublicLessonBlueprintResponse,
 } from '@/types/curriculum';
 import type { AdminAuditLogListResponse } from '@/types/audit-log';
+import type {
+  AcquisitionAnalyticsResponse,
+  AcquisitionOption,
+  OnboardingReview,
+  SigninWord,
+  SigninWordTermMatch,
+} from '@/types/onboarding';
+import {
+  ACQUISITION_ANALYTICS_URL,
+  ACQUISITION_OPTIONS_URL,
+  ONBOARDING_REVIEWS_URL,
+  SIGNIN_WORDS_URL,
+  signinWordTermSearchUrl,
+  unwrapList,
+} from '@/lib/onboardingApi';
 import type { DictionaryReportListResponse } from '@/types/dictionary-reports';
 import type { FeedbackFilters, FeedbackListResponse, FeedbackSummary } from '@/types/feedback';
 import type {
@@ -2459,4 +2474,98 @@ export function useBlogAuthor(authorId?: string | null) {
   const url = authorId ? `/api/v1/admin/blog/authors/${encodeURIComponent(authorId)}` : null;
   const { data, error, mutate } = useSWR<BlogAuthor>(url, fetcher, READ_ONLY_SWR_OPTIONS);
   return { data, isLoading: !!url && !error && !data, isError: error, refresh: mutate };
+}
+
+/**
+ * Onboarding reviews (social proof shown during onboarding).
+ * GET /api/v1/admin/onboarding/reviews
+ */
+export function useOnboardingReviews() {
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const { data, error, mutate } = useSWR<OnboardingReview[]>(
+    enabled ? ONBOARDING_REVIEWS_URL : null,
+    (url: string) => apiClient.get(url).then((res) => unwrapList<OnboardingReview>(res.data)),
+    { revalidateOnFocus: false, shouldRetryOnError: false },
+  );
+  return {
+    reviews: data,
+    isLoading: isAuthLoading || (enabled && !error && !data),
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/**
+ * "How did you hear about Abidii" options.
+ * GET /api/v1/admin/onboarding/acquisition-options
+ */
+export function useAcquisitionOptions() {
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const { data, error, mutate } = useSWR<AcquisitionOption[]>(
+    enabled ? ACQUISITION_OPTIONS_URL : null,
+    (url: string) => apiClient.get(url).then((res) => unwrapList<AcquisitionOption>(res.data)),
+    { revalidateOnFocus: false, shouldRetryOnError: false },
+  );
+  return {
+    options: data,
+    isLoading: isAuthLoading || (enabled && !error && !data),
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/**
+ * Sign-in words (floating Yorùbá word pills on the app's sign-in screen).
+ * GET /api/v1/admin/onboarding/signin-words
+ */
+export function useSigninWords() {
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const { data, error, mutate } = useSWR<SigninWord[]>(
+    enabled ? SIGNIN_WORDS_URL : null,
+    (url: string) => apiClient.get(url).then((res) => unwrapList<SigninWord>(res.data)),
+    { revalidateOnFocus: false, shouldRetryOnError: false },
+  );
+  return {
+    words: data,
+    isLoading: isAuthLoading || (enabled && !error && !data),
+    isError: error,
+    refresh: mutate,
+  };
+}
+
+/**
+ * Word-library matches for picking a sign-in word (up to 20). Pass an
+ * already-debounced query; an empty query doesn't fetch.
+ * GET /api/v1/admin/onboarding/signin-words/term-search?q=
+ */
+export function useSigninWordTermSearch(query: string) {
+  const { enabled } = useAdminApiReady();
+  const url = enabled ? signinWordTermSearchUrl(query) : null;
+  const { data, error } = useSWR<SigninWordTermMatch[]>(
+    url,
+    (u: string) => apiClient.get(u).then((res) => unwrapList<SigninWordTermMatch>(res.data)),
+    { revalidateOnFocus: false, shouldRetryOnError: false, keepPreviousData: true },
+  );
+  return { matches: data, isLoading: !!url && !error && !data, isError: error };
+}
+
+/**
+ * Acquisition analytics for a date range (YYYY-MM-DD, inclusive).
+ * GET /api/v1/admin/analytics/acquisition?from=&to=
+ */
+export function useAcquisitionAnalytics(from: string, to: string) {
+  const { enabled, isAuthLoading } = useAdminApiReady();
+  const params = new URLSearchParams({ from, to });
+  const url = enabled && from && to ? `${ACQUISITION_ANALYTICS_URL}?${params.toString()}` : null;
+  const { data, error, mutate } = useSWR<AcquisitionAnalyticsResponse>(url, fetcher, {
+    revalidateOnFocus: false,
+    refreshInterval: 0,
+    shouldRetryOnError: false,
+  });
+  return {
+    analytics: data,
+    isLoading: isAuthLoading || (!!url && !error && !data),
+    isError: error,
+    refresh: mutate,
+  };
 }
