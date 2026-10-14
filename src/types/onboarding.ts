@@ -90,3 +90,41 @@ export interface AcquisitionAnalyticsResponse {
   over_time: AcquisitionDayCount[];
   other_texts: AcquisitionOtherText[];
 }
+
+/** Translations of a sign-in word's meaning. English is required. */
+export const SIGNIN_WORD_MEANING_LANGUAGES = ['en', 'fr', 'es', 'pt'] as const;
+export type SigninWordMeaningLanguage = (typeof SIGNIN_WORD_MEANING_LANGUAGES)[number];
+
+export type SigninWordMeanings = { en: string } & Partial<Record<Exclude<SigninWordMeaningLanguage, 'en'>, string | null>>;
+
+export const SIGNIN_WORD_YORUBA_MAX = 40;
+export const SIGNIN_WORD_MEANING_MAX = 60;
+/** The app shows at most this many enabled words on the sign-in screen. */
+export const SIGNIN_WORDS_APP_LIMIT = 8;
+
+/** A short positive Yorùbá word floating as a pill on the app's sign-in screen. */
+export interface SigninWord {
+  id: string;
+  yoruba: string;
+  meanings: SigninWordMeanings;
+  /** Word-library term this was picked from (its audio is reused). */
+  term_id: string | null;
+  /** Manual audio override: a URL or a storage key. */
+  audio_url: string | null;
+  enabled: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  /** Read-only: the playable audio URL (override, else the term's audio). */
+  resolved_audio_url: string | null;
+}
+
+export type SigninWordInput = Pick<SigninWord, 'yoruba' | 'meanings' | 'term_id' | 'audio_url' | 'enabled' | 'sort_order'>;
+
+/** A word-library match from the term search. */
+export interface SigninWordTermMatch {
+  term_id: string;
+  yoruba: string;
+  gloss_en: string | null;
+  audio_url: string | null;
+}

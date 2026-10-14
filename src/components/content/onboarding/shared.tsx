@@ -155,3 +155,12 @@ export function reorderUpdates<T>(
     .filter(([, order, previous]) => order !== previous)
     .map(([id, order]) => [id, order]);
 }
+
+/**
+ * Font stack for Yorùbá text: Noto Sans (loaded in the root layout) first,
+ * since it positions combining tone marks and under-dots correctly.
+ */
+export const YORUBA_FONT_STYLE: React.CSSProperties = {
+  fontFamily: '"Noto Sans", "Geist", "Segoe UI", "Helvetica Neue", Arial, system-ui, sans-serif',
+  fontFeatureSettings: '"ccmp", "mark", "mkmk"',
+};

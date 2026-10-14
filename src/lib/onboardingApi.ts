@@ -3,17 +3,24 @@ import type {
   AcquisitionOption,
   OnboardingReview,
   OnboardingReviewInput,
+  SigninWord,
+  SigninWordInput,
 } from '@/types/onboarding';
 
 export const ONBOARDING_REVIEWS_URL = '/api/v1/admin/onboarding/reviews';
 export const ACQUISITION_OPTIONS_URL = '/api/v1/admin/onboarding/acquisition-options';
 export const ACQUISITION_ANALYTICS_URL = '/api/v1/admin/analytics/acquisition';
+export const SIGNIN_WORDS_URL = '/api/v1/admin/onboarding/signin-words';
+export const SIGNIN_WORD_TERM_SEARCH_URL = `${SIGNIN_WORDS_URL}/term-search`;
 
 /** Config keys (System → Configuration) that switch the onboarding steps. */
 export const ONBOARDING_CONFIG_KEYS = [
   'onboarding.reviews_enabled',
   'onboarding.acquisition_enabled',
   'onboarding.welcome_audio_url',
+  'onboarding.signin_words_enabled',
+  /** Experimental. */
+  'onboarding.hear_it_first_enabled',
 ] as const;
 
 /** Configuration screen (Feature Flags tab), filtered to the onboarding.* keys. */
@@ -57,6 +64,27 @@ export async function updateAcquisitionOption(key: string, payload: Partial<Acqu
 
 export async function deleteAcquisitionOption(key: string) {
   await apiClient.delete(`${ACQUISITION_OPTIONS_URL}/${encodeURIComponent(key)}`);
+}
+
+export async function createSigninWord(payload: SigninWordInput) {
+  const res = await apiClient.post<SigninWord>(SIGNIN_WORDS_URL, payload);
+  return res.data;
+}
+
+export async function updateSigninWord(id: string, payload: Partial<SigninWordInput>) {
+  const res = await apiClient.put<SigninWord>(`${SIGNIN_WORDS_URL}/${encodeURIComponent(id)}`, payload);
+  return res.data;
+}
+
+export async function deleteSigninWord(id: string) {
+  await apiClient.delete(`${SIGNIN_WORDS_URL}/${encodeURIComponent(id)}`);
+}
+
+/** Term-search URL for a query, or null when there's nothing to search. */
+export function signinWordTermSearchUrl(query: string): string | null {
+  const q = query.trim();
+  if (!q) return null;
+  return `${SIGNIN_WORD_TERM_SEARCH_URL}?${new URLSearchParams({ q }).toString()}`;
 }
 
 /** A readable message for a failed admin call; 404 means the backend for
