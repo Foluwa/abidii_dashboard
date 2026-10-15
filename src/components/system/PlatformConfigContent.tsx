@@ -26,6 +26,12 @@ interface ConfigItem {
   updated_at?: string;
 }
 
+// String settings that only take a few values (the API refuses others):
+// shown as one-click choices instead of a free-text box.
+export const CONFIG_CHOICES: Record<string, string[]> = {
+  "learning_path.default_view": ["list", "map"],
+};
+
 export function PlatformConfigContent({ showHeader = true }: { showHeader?: boolean }) {
   const { confirm, modal: confirmModal } = useConfirm();
   const toast = useToast();
@@ -115,6 +121,20 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
     try {
       await apiClient.put(`/api/v1/admin/configs/${key}`, { value_bool: next });
       toast.success(`"${key}" turned ${next ? "on" : "off"}`);
+      refresh();
+    } catch (error: any) {
+      setErrorMessage(error.response?.data?.detail || "Failed to update configuration");
+    }
+  };
+
+  // One click for settings with a few allowed values (CONFIG_CHOICES).
+  const setChoiceValue = async (key: string, next: string) => {
+    if (!(await confirm({ title: "Change Setting", message: `Set "${key}" to "${next}"? Apps pick this up on their next launch.`, confirmLabel: "Change", variant: "warning" }))) {
+      return;
+    }
+    try {
+      await apiClient.put(`/api/v1/admin/configs/${key}`, { value_text: next });
+      toast.success(`"${key}" set to ${next}`);
       refresh();
     } catch (error: any) {
       setErrorMessage(error.response?.data?.detail || "Failed to update configuration");
@@ -318,6 +338,29 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                                     {on ? "On" : "Off"}
                                   </span>
                                 </button>
+                              );
+                            }
+                            const choices = item.value_type === "string" ? CONFIG_CHOICES[item.key] : undefined;
+                            if (choices) {
+                              return (
+                                <div role="radiogroup" aria-label={item.key} className="inline-flex rounded-full border border-input p-0.5">
+                                  {choices.map((choice) => {
+                                    const selected = actualValue === choice;
+                                    return (
+                                      <button
+                                        key={choice}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={selected}
+                                        data-testid={`choice-${item.key}-${choice}`}
+                                        onClick={() => { if (!selected) setChoiceValue(item.key, choice); }}
+                                        className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${selected ? "bg-green-500 text-white" : "text-muted-foreground hover:bg-muted"}`}
+                                      >
+                                        {choice}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
                               );
                             }
                             if (actualValue == null) {
