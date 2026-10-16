@@ -20,6 +20,7 @@ interface ConfigItem {
   value_bool?: boolean | null;
   value_text?: string | null;
   value_float?: number | null;
+  value_json?: unknown;
   description?: string;
   category?: string;
   is_active: boolean;
@@ -57,6 +58,8 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
         return item.value_text ?? null;
       case "float":
         return item.value_float ?? null;
+      case "json":
+        return item.value_json ?? null;
       default:
         return item.value_text ?? null;
     }
@@ -65,7 +68,12 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
   const startEdit = (item: ConfigItem) => {
     setEditingKey(item.key);
     const actualValue = getActualValue(item);
-    setEditValue(actualValue ?? (item.value_type === "boolean" ? false : ""));
+    if (item.value_type === "json") {
+      // Edited as pretty-printed text; parsed (and checked) on Save.
+      setEditValue(actualValue == null ? "" : JSON.stringify(actualValue, null, 2));
+    } else {
+      setEditValue(actualValue ?? (item.value_type === "boolean" ? false : ""));
+    }
     setEditDescription(item.description || "");
     setErrorMessage("");
   };
@@ -98,6 +106,15 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
           break;
         case "float":
           payload.value_float = editValue === "" || editValue == null ? null : parseFloat(editValue);
+          break;
+        case "json":
+          try {
+            payload.value_json = JSON.parse(String(editValue ?? ""));
+          } catch (e: any) {
+            setErrorMessage(`"${key}" is not valid JSON: ${e?.message || e}`);
+            setIsSaving(false);
+            return;
+          }
           break;
       }
 
@@ -305,6 +322,16 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                                 ]}
                                 fullWidth
                               />
+                            ) : item.value_type === "json" ? (
+                              <textarea
+                                value={editValue ?? ""}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                rows={16}
+                                spellCheck={false}
+                                aria-label={`${item.key} (JSON)`}
+                                data-testid={`json-editor-${item.key}`}
+                                className="w-full min-w-[22rem] px-3 py-1 text-xs font-mono border border-input rounded dark:bg-gray-800 dark:text-white"
+                              />
                             ) : (
                               <input
                                 type={item.value_type === "int" || item.value_type === "float" ? "number" : "text"}
@@ -361,6 +388,18 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                                     );
                                   })}
                                 </div>
+                              );
+                            }
+                            if (item.value_type === "json" && actualValue != null) {
+                              return (
+                                <details>
+                                  <summary className="cursor-pointer text-sm font-semibold text-foreground">
+                                    {Array.isArray(actualValue) ? `JSON list (${actualValue.length})` : "JSON"} (Edit to change)
+                                  </summary>
+                                  <pre className="mt-1 max-h-60 overflow-auto text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all">
+                                    {JSON.stringify(actualValue, null, 2)}
+                                  </pre>
+                                </details>
                               );
                             }
                             if (actualValue == null) {
