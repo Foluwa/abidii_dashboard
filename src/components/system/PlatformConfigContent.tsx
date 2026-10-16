@@ -11,6 +11,7 @@ import { useToast } from "@/contexts/ToastContext";
 import { Lightbulb } from "lucide-react";
 import { DialogPanel } from "@/components/ui/modal/DialogPanel";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useSearchParams } from "next/navigation";
 
 interface ConfigItem {
   key: string;
@@ -25,6 +26,12 @@ interface ConfigItem {
   updated_at?: string;
 }
 
+// String settings that only take a few values (the API refuses others):
+// shown as one-click choices instead of a free-text box.
+export const CONFIG_CHOICES: Record<string, string[]> = {
+  "learning_path.default_view": ["list", "map"],
+};
+
 export function PlatformConfigContent({ showHeader = true }: { showHeader?: boolean }) {
   const { confirm, modal: confirmModal } = useConfirm();
   const toast = useToast();
@@ -36,6 +43,9 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
   const [isSaving, setIsSaving] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  // ?key=onboarding. narrows the list to keys with that prefix (deep links from other pages).
+  const searchParams = useSearchParams();
+  const [keyPrefix, setKeyPrefix] = useState<string>(() => searchParams?.get("key") || "");
 
   const getActualValue = (item: ConfigItem) => {
     switch (item.value_type) {
@@ -117,6 +127,20 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
     }
   };
 
+  // One click for settings with a few allowed values (CONFIG_CHOICES).
+  const setChoiceValue = async (key: string, next: string) => {
+    if (!(await confirm({ title: "Change Setting", message: `Set "${key}" to "${next}"? Apps pick this up on their next launch.`, confirmLabel: "Change", variant: "warning" }))) {
+      return;
+    }
+    try {
+      await apiClient.put(`/api/v1/admin/configs/${key}`, { value_text: next });
+      toast.success(`"${key}" set to ${next}`);
+      refresh();
+    } catch (error: any) {
+      setErrorMessage(error.response?.data?.detail || "Failed to update configuration");
+    }
+  };
+
   const toggleActive = async (key: string, currentStatus: boolean) => {
     try {
       await apiClient.patch(`/api/v1/admin/configs/${key}/toggle`, {
@@ -143,8 +167,9 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
   };
 
   const categories = config ? Array.from(new Set(config.map((c: any) => c.category).filter(Boolean))) : [];
-  const filteredConfig = config?.filter((item: any) => 
-    filterCategory === "all" || item.category === filterCategory
+  const filteredConfig = config?.filter((item: any) =>
+    (filterCategory === "all" || item.category === filterCategory) &&
+    (!keyPrefix || String(item.key).startsWith(keyPrefix))
   ) || [];
 
   if (isLoading) {
@@ -197,6 +222,20 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
         </div>
 
         {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
+
+        {keyPrefix && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Showing keys starting with</span>
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-foreground">{keyPrefix}</code>
+            <button
+              type="button"
+              onClick={() => setKeyPrefix("")}
+              className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-400"
+            >
+              Show all
+            </button>
+          </div>
+        )}
 
         {categories.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap">
@@ -301,6 +340,29 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                                 </button>
                               );
                             }
+                            const choices = item.value_type === "string" ? CONFIG_CHOICES[item.key] : undefined;
+                            if (choices) {
+                              return (
+                                <div role="radiogroup" aria-label={item.key} className="inline-flex rounded-full border border-input p-0.5">
+                                  {choices.map((choice) => {
+                                    const selected = actualValue === choice;
+                                    return (
+                                      <button
+                                        key={choice}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={selected}
+                                        data-testid={`choice-${item.key}-${choice}`}
+                                        onClick={() => { if (!selected) setChoiceValue(item.key, choice); }}
+                                        className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${selected ? "bg-green-500 text-white" : "text-muted-foreground hover:bg-muted"}`}
+                                      >
+                                        {choice}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            }
                             if (actualValue == null) {
                               return (
                                 <span className="text-sm font-semibold text-muted-foreground">—</span>
@@ -312,7 +374,7 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                                 item.value_type === "boolean" 
                                   ? actualValue ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                   : "text-gray-900 dark:text-white"
-                              }`}>
+                              } break-all`}>
                                 {String(actualValue)}
                               </span>
                             );
@@ -380,7 +442,9 @@ export function PlatformConfigContent({ showHeader = true }: { showHeader?: bool
                 ) : (
                   <tr>
                     <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
-                      {filterCategory !== "all" ? `No configurations found in "${filterCategory}" category` : "No configuration items found"}
+                      {keyPrefix
+                        ? `No "${keyPrefix}*" keys yet. They appear once the backend creates them.`
+                        : filterCategory !== "all" ? `No configurations found in "${filterCategory}" category` : "No configuration items found"}
                     </td>
                   </tr>
                 )}
